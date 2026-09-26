@@ -4,45 +4,38 @@
   <img src="quickshell/assets/cyshell.png" width="180" alt="CyShell Desktop logo">
 </p>
 
-**CyShell Desktop** is an agent-native Wayland desktop shell by **Cytech Team Development**. It is built for Labwc first and combines a native desktop experience with semantic desktop APIs, safe automation, an embedded CyCom runtime, and a dedicated CyShell Greeter.
+**CyShell Desktop** is an agent-native Wayland desktop shell by **Cytech Team Development**, built for Labwc and designed around deep desktop integration, semantic control, and safe automation.
 
-CyShell is both a desktop shell and the reference implementation of the CyShell framework: the desktop itself uses the same semantic control surface exposed to agents and external MCP clients.
+CyShell is not just a desktop UI. The shell exposes the same structured control surface to users, agents, MCP clients, and internal automation, allowing the desktop itself to act as a programmable system layer.
 
 ## Highlights
 
-- Blue-first CyShell visual identity with a matching shell and login experience.
-- Native panel/taskbar, launcher, settings, notifications, OSD, clipboard, lock screen and desktop integrations.
-- **CyShell Greeter** on top of greetd, using CyShell UI, theme state and its own cache path.
-- **CyStart** unified Start + Search using the shell launcher engine.
-- Embedded **CyCom** agent runtime with permissions, audit, caller attribution and emergency stop.
-- Semantic settings, applications, windows, workspaces and machine controls.
-- Reversible machine/settings actions through short-lived rollback receipts.
-- Native Labwc workspace support through `ext-workspace-v1`.
-- `cyshell-mcp` for external MCP clients without creating a second agent runtime.
-- `cyshell` is the primary user-facing CLI; `dms` remains an implementation compatibility alias while migration continues.
+- **Agent-native desktop control** for applications, windows, workspaces, settings, and system actions.
+- **Embedded CyCom runtime** with permissions, auditing, caller attribution, and emergency-stop controls.
+- **Semantic desktop APIs** so agents can operate on real desktop concepts instead of fragile screen coordinates.
+- **CyShell MCP bridge** for external MCP clients without spawning a second agent runtime.
+- **CyShell Greeter** integrated with greetd for a native login and session experience.
+- **CyStart** unified Start + Search powered by the shell launcher engine.
+- **Native Labwc workspace integration** through `ext-workspace-v1`.
+- **Reversible system actions** with short-lived rollback receipts where supported.
+- **Integrated desktop shell features** including taskbar/panel, launcher, settings, notifications, OSD, clipboard, lock screen, session controls, and desktop services.
+- **Single desktop control surface** shared between the UI, CLI, agents, and automation.
+- **Primary `cyshell` CLI** with legacy `dms` compatibility retained during migration.
 
-## Current desktop stack
+## Architecture
 
 ```text
-greetd
-└── cyshell-greeter
-    └── CyShell QML / Quickshell UI
-        ├── CyShell blue theme
-        ├── CyShell settings + session state
-        └── CyShell Greeter cache
-
 CyShell Desktop
 ├── Quickshell UI
 ├── CyShell Core (Go)
 ├── CyCom runtime
-└── cyshell-mcp
+├── cyshell-mcp
+└── CyShell Greeter
 ```
 
-The default CyShell palette is **Blue**. In dark mode the primary color is `#42a5f5`, with `#0d47a1` as the primary container and `#8ab4f8` as the secondary accent.
+CyShell keeps the UI, desktop services, semantic APIs, and agent runtime connected through one system instead of treating automation as an external layer bolted onto the desktop.
 
-## Architecture
-
-See [CYSHELL.md](CYSHELL.md) for architecture, compatibility policy, implementation status and roadmap.
+See [CYSHELL.md](CYSHELL.md) for architecture, compatibility policy, implementation status, and roadmap.
 
 ## Development
 
@@ -61,7 +54,7 @@ cyshell agent status
 cyshell-mcp
 ```
 
-Greeter status can be checked with:
+Greeter status:
 
 ```sh
 cyshell-greeter status
@@ -69,11 +62,9 @@ cyshell-greeter status
 
 ## Compatibility
 
-CyShell Desktop originally started as a fork of [AvengeMedia/DankMaterialShell](https://github.com/AvengeMedia/DankMaterialShell) and has since evolved into an independently developed project by **Cytech Team Development**. Some internal identifiers such as `Dank*` QML components, `DMSService`, legacy configuration paths, and the `dms` command/service surface are intentionally retained while the migration is staged.
+CyShell Desktop originally started as a fork of [AvengeMedia/DankMaterialShell](https://github.com/AvengeMedia/DankMaterialShell) and has since evolved into an independently developed project by **Cytech Team Development**.
 
-Those are compatibility implementation details, not the CyShell product brand. New user-facing features should use CyShell naming.
-
-The old `/var/cache/dms-greeter` path may exist as a compatibility link, while the active CyShell Greeter state lives under `/var/cache/cyshell-greeter`.
+Some internal identifiers such as `Dank*` QML components, `DMSService`, legacy configuration paths, and the `dms` command/service surface are intentionally retained while migration continues. These are compatibility details, not the CyShell product identity.
 
 ## Upstream attribution
 
