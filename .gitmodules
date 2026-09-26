@@ -1,7 +1,7 @@
 [submodule "dank-qml-common"]
 	path = dank-qml-common
-	url = https://github.com/AvengeMedia/dank-qml-common.git
-	branch = master
+	url = https://github.com/Cytech-Team/CyShell-QML-Common.git
+	branch = cyshell-dev
 
 [submodule "agent/cycom/runtime"]
 	path = agent/cycom/runtime
