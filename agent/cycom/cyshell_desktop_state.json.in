@@ -1,0 +1,21 @@
+{
+  "name": "cyshell_desktop_state",
+  "title": "CyShell semantic desktop state",
+  "description": "Read non-sensitive semantic state from the active CyShell desktop, including shell capabilities, displays, network, Bluetooth, brightness, and session state when available.",
+  "command": "@CYSHELL_AGENT_BRIDGE@",
+  "args": ["desktop-state"],
+  "timeout_seconds": 10,
+  "max_output_bytes": 8388608,
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "reason": {
+        "type": "string",
+        "minLength": 1,
+        "description": "Why the agent needs the current CyShell desktop state."
+      }
+    },
+    "required": ["reason"],
+    "additionalProperties": false
+  }
+}

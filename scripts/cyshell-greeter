@@ -1,0 +1,119 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+CYSHELL_UI="${CYSHELL_GREETER_SHELL_DIR:-/home/namkrub/Code/CyShell-Desktop/quickshell}"
+CYSHELL_CACHE="${CYSHELL_GREETER_CACHE_DIR:-/var/cache/cyshell-greeter}"
+CYSHELL_ENGINE="${CYSHELL_GREETER_ENGINE:-/usr/local/lib/cyshell/cyshell-greeter-engine}"
+GREETD_CONFIG="/etc/greetd/config.toml"
+
+# The engine still understands the upstream compatibility environment names;
+# keep them internal while the public command/cache/config are CyShell-owned.
+export CYSHELL_GREET_CFG_DIR="$CYSHELL_CACHE"
+export DMS_GREETER_SHELL_DIR="$CYSHELL_UI"
+export DMS_GREET_CFG_DIR="$CYSHELL_CACHE"
+export CYSHELL_RUN_GREETER=1
+
+write_greetd_config() {
+  install -d -m 0755 /etc/greetd
+  if [[ -f "$GREETD_CONFIG" ]]; then
+    cp -a "$GREETD_CONFIG" "$GREETD_CONFIG.bak-cyshell-$(date +%Y%m%d-%H%M%S)"
+  fi
+  cat > "$GREETD_CONFIG" <<'EOF'
+[terminal]
+vt = 1
+
+[default_session]
+command = "env XKB_DEFAULT_LAYOUT=us,th XKB_DEFAULT_OPTIONS=grp:alt_shift_toggle /usr/local/bin/cyshell-greeter --command labwc"
+user = "greeter"
+EOF
+  chmod 0644 "$GREETD_CONFIG"
+  systemctl enable greetd.service >/dev/null 2>&1 || true
+}
+
+run_engine_subcommand() {
+  exec "$CYSHELL_ENGINE" --shell-dir "$CYSHELL_UI" "$@"
+}
+
+cmd="${1:-}"
+case "$cmd" in
+  status)
+    if ! grep -q '/usr/local/bin/cyshell-greeter' "$GREETD_CONFIG" 2>/dev/null; then
+      echo '=== CyShell Greeter Status ==='
+      echo
+      echo 'Greeter Configuration:'
+      echo '  ✗ CyShell Greeter is NOT enabled'
+      echo "    Run 'cyshell-greeter enable --terminal' to enable it."
+      exit 1
+    fi
+    echo '=== CyShell Greeter Status ==='
+    echo
+    echo 'Greeter Configuration:'
+    echo '  ✓ CyShell Greeter is enabled in greetd'
+    echo "  UI: $CYSHELL_UI"
+    echo "  Cache: $CYSHELL_CACHE"
+    echo
+    set +e
+    status_out=$("$CYSHELL_ENGINE" --shell-dir "$CYSHELL_UI" status 2>&1)
+    rc=$?
+    set -e
+    printf '%s\n' "$status_out" \
+      | sed -e 's/DMS/CyShell/g' -e 's/dms-greeter/cyshell-greeter/g' \
+      | sed '/Greeter Configuration:/,/Group Membership:/d' \
+      | sed '1{/^=== CyShell Greeter Status ===$/d;}' \
+      | sed '/⚠ Some issues detected/,$d'
+    # The engine's "enabled" detector only knows its upstream executable name;
+    # CyShell already verified the greetd command above, so do not inherit that false warning.
+    exit 0
+    ;;
+  enable)
+    shift
+    terminal=0
+    for arg in "$@"; do [[ "$arg" == "--terminal" || "$arg" == "-t" ]] && terminal=1; done
+    if [[ $terminal -eq 1 && $EUID -ne 0 ]]; then
+      term="${TERMINAL:-qterminal}"
+      command -v "$term" >/dev/null 2>&1 || term=qterminal
+      exec "$term" -e bash -lc "sudo /usr/local/bin/cyshell-greeter enable --yes; rc=\$?; echo; if [ \$rc -eq 0 ]; then echo 'CyShell Greeter enabled.'; else echo 'Enable failed.'; fi; sleep 2; exit \$rc"
+    fi
+    if [[ $EUID -ne 0 ]]; then
+      exec sudo /usr/local/bin/cyshell-greeter enable --yes
+    fi
+    write_greetd_config
+    echo 'CyShell Greeter enabled.'
+    exit 0
+    ;;
+  sync)
+    shift
+    terminal=0
+    args=()
+    for arg in "$@"; do
+      if [[ "$arg" == "--terminal" || "$arg" == "-t" ]]; then
+        terminal=1
+      else
+        args+=("$arg")
+      fi
+    done
+    if [[ $terminal -eq 1 && $EUID -ne 0 ]]; then
+      term="${TERMINAL:-qterminal}"
+      command -v "$term" >/dev/null 2>&1 || term=qterminal
+      exec "$term" -e bash -lc "cyshell-greeter sync ${args[*]@Q}; rc=\$?; echo; if [ \$rc -eq 0 ]; then echo 'CyShell Greeter sync complete.'; else echo 'Sync failed.'; fi; sleep 2; exit \$rc"
+    fi
+    set +e
+    sync_out=$("$CYSHELL_ENGINE" --shell-dir "$CYSHELL_UI" sync "${args[@]}" 2>&1)
+    rc=$?
+    set -e
+    printf '%s\n' "$sync_out" | sed -e 's#/var/cache/dms-greeter#/var/cache/cyshell-greeter#g' -e 's/DMS/CyShell/g' -e 's/dms-greeter/cyshell-greeter/g'
+    if [[ $rc -eq 0 && $EUID -ne 0 ]]; then
+      # Upstream sync may rewrite greetd back to its own executable. Restore the CyShell-owned entry while sudo is warm.
+      if ! grep -q '/usr/local/bin/cyshell-greeter' "$GREETD_CONFIG" 2>/dev/null; then
+        sudo /usr/local/bin/cyshell-greeter enable --yes >/dev/null 2>&1 || true
+      fi
+    fi
+    exit $rc
+    ;;
+  completion|help|install|kill|restart|run|uninstall|version)
+    run_engine_subcommand "$@"
+    ;;
+  *)
+    exec "$CYSHELL_ENGINE" --cache-dir "$CYSHELL_CACHE" --shell-dir "$CYSHELL_UI" "$@"
+    ;;
+esac

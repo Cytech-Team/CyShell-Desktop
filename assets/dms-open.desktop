@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=CyShell
+Comment=Select an application to open links and files
+Exec=cyshell open %u
+Icon=com.danklinux.dms
+Terminal=false
+NoDisplay=true
+MimeType=x-scheme-handler/http;x-scheme-handler/https;x-scheme-handler/dms;text/html;application/xhtml+xml;
+Categories=Utility;

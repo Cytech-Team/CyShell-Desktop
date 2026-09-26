@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=CyShell Notepad
+GenericName=Text Editor
+Comment=Quick notes and text files in CyShell Desktop
+Exec=cyshell ipc call notepad openFile %f
+Icon=com.danklinux.dms
+Terminal=false
+NoDisplay=true
+Categories=Utility;TextEditor;
+MimeType=text/plain;text/markdown;
+StartupNotify=false

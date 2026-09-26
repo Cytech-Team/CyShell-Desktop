@@ -1,0 +1,9 @@
+[submodule "dank-qml-common"]
+	path = dank-qml-common
+	url = https://github.com/AvengeMedia/dank-qml-common.git
+	branch = master
+
+[submodule "agent/cycom/runtime"]
+	path = agent/cycom/runtime
+	url = https://github.com/Cytech-Team/CyComAgent-MCP.git
+	branch = main

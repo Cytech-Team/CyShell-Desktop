@@ -1,0 +1,1685 @@
+package main
+
+import (
+	"encoding/json"
+	"errors"
+	"fmt"
+	"maps"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"regexp"
+	"runtime"
+	"slices"
+	"strings"
+
+	"github.com/AvengeMedia/DankMaterialShell/core/internal/blur"
+	"github.com/AvengeMedia/DankMaterialShell/core/internal/clipboard"
+	"github.com/AvengeMedia/DankMaterialShell/core/internal/config"
+	"github.com/AvengeMedia/DankMaterialShell/core/internal/distros"
+	"github.com/AvengeMedia/DankMaterialShell/core/internal/matugen"
+	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/brightness"
+	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/network"
+	"github.com/AvengeMedia/DankMaterialShell/core/internal/tui"
+	"github.com/AvengeMedia/DankMaterialShell/core/internal/utils"
+	"github.com/AvengeMedia/DankMaterialShell/core/internal/version"
+	"github.com/charmbracelet/lipgloss"
+	"github.com/spf13/cobra"
+)
+
+type status string
+
+const (
+	statusOK    status = "ok"
+	statusWarn  status = "warn"
+	statusError status = "error"
+	statusInfo  status = "info"
+)
+
+func (s status) IconStyle(styles tui.Styles) (string, lipgloss.Style) {
+	switch s {
+	case statusOK:
+		return "●", styles.Success
+	case statusWarn:
+		return "●", styles.Warning
+	case statusError:
+		return "●", styles.Error
+	default:
+		return "○", styles.Subtle
+	}
+}
+
+type DoctorStatus struct {
+	Errors   []checkResult
+	Warnings []checkResult
+	OK       []checkResult
+	Info     []checkResult
+}
+
+func (ds *DoctorStatus) Add(r checkResult) {
+	switch r.status {
+	case statusError:
+		ds.Errors = append(ds.Errors, r)
+	case statusWarn:
+		ds.Warnings = append(ds.Warnings, r)
+	case statusOK:
+		ds.OK = append(ds.OK, r)
+	case statusInfo:
+		ds.Info = append(ds.Info, r)
+	}
+}
+
+func (ds *DoctorStatus) HasIssues() bool {
+	return len(ds.Errors) > 0 || len(ds.Warnings) > 0
+}
+
+func (ds *DoctorStatus) ErrorCount() int {
+	return len(ds.Errors)
+}
+
+func (ds *DoctorStatus) WarningCount() int {
+	return len(ds.Warnings)
+}
+
+func (ds *DoctorStatus) OKCount() int {
+	return len(ds.OK)
+}
+
+var (
+	quickshellVersionRegex = regexp.MustCompile(`(?i)quickshell (\d+\.\d+\.\d+)`)
+	hyprlandVersionRegex   = regexp.MustCompile(`v?(\d+\.\d+\.\d+)`)
+	niriVersionRegex       = regexp.MustCompile(`niri (\d+\.\d+)`)
+	swayVersionRegex       = regexp.MustCompile(`sway version (\d+\.\d+)`)
+	riverVersionRegex      = regexp.MustCompile(`river (\d+\.\d+)`)
+	wayfireVersionRegex    = regexp.MustCompile(`wayfire (\d+\.\d+)`)
+	labwcVersionRegex      = regexp.MustCompile(`labwc (\d+\.\d+\.\d+)`)
+	mangowcVersionRegex    = regexp.MustCompile(`mango (\d+\.\d+\.\d+)`)
+	miracleVersionRegex    = regexp.MustCompile(`miracle-wm v?(\d+\.\d+\.\d+)`)
+	scrollVersionRegex     = regexp.MustCompile(`scroll version (\d+\.\d+)`)
+	aqueousVersionRegex    = regexp.MustCompile(`(?i)aqueous v?(\d+\.\d+(?:\.\d+)?)`)
+)
+
+var doctorCmd = &cobra.Command{
+	Use:   "doctor",
+	Short: "Diagnose CyShell installation and dependencies",
+	Long:  "Check system health, verify dependencies, and diagnose configuration issues for CyShell",
+	Run:   runDoctor,
+}
+
+var (
+	doctorVerbose bool
+	doctorJSON    bool
+	doctorCopy    bool
+)
+
+func init() {
+	doctorCmd.Flags().BoolVarP(&doctorVerbose, "verbose", "v", false, "Show detailed output including paths and versions")
+	doctorCmd.Flags().BoolVarP(&doctorJSON, "json", "j", false, "Output results in JSON format")
+	doctorCmd.Flags().BoolVarP(&doctorCopy, "copy", "C", false, "Copy results to clipboard in GitHub-friendly format")
+}
+
+type category int
+
+const (
+	catSystem category = iota
+	catVersions
+	catInstallation
+	catCompositor
+	catQuickshellFeatures
+	catOptionalFeatures
+	catConfigFiles
+	catServices
+	catEnvironment
+	catFonts
+)
+
+func (c category) String() string {
+	switch c {
+	case catSystem:
+		return "System"
+	case catVersions:
+		return "Versions"
+	case catInstallation:
+		return "Installation"
+	case catCompositor:
+		return "Compositor"
+	case catQuickshellFeatures:
+		return "Quickshell Features"
+	case catOptionalFeatures:
+		return "Optional Features"
+	case catConfigFiles:
+		return "Config Files"
+	case catServices:
+		return "Services"
+	case catEnvironment:
+		return "Environment"
+	case catFonts:
+		return "Fonts"
+	default:
+		return "Unknown"
+	}
+}
+
+const (
+	checkNameMaxLength = 21
+	doctorDocsURL      = "https://danklinux.com/docs/dankmaterialshell/cli-doctor"
+)
+
+type checkResult struct {
+	category category
+	name     string
+	status   status
+	message  string
+	details  string
+	url      string
+}
+
+type checkResultJSON struct {
+	Category string `json:"category"`
+	Name     string `json:"name"`
+	Status   string `json:"status"`
+	Message  string `json:"message"`
+	Details  string `json:"details,omitempty"`
+	URL      string `json:"url,omitempty"`
+}
+
+type doctorOutputJSON struct {
+	Summary struct {
+		Errors   int `json:"errors"`
+		Warnings int `json:"warnings"`
+		OK       int `json:"ok"`
+		Info     int `json:"info"`
+	} `json:"summary"`
+	Results []checkResultJSON `json:"results"`
+}
+
+func (r checkResult) toJSON() checkResultJSON {
+	return checkResultJSON{
+		Category: r.category.String(),
+		Name:     r.name,
+		Status:   string(r.status),
+		Message:  r.message,
+		Details:  r.details,
+		URL:      r.url,
+	}
+}
+
+func runDoctor(cmd *cobra.Command, args []string) {
+	if !doctorJSON && !doctorCopy {
+		printDoctorHeader()
+	}
+
+	qsFeatures, qsMissingFeatures := checkQuickshellFeatures()
+
+	results := slices.Concat(
+		checkSystemInfo(),
+		checkVersions(qsMissingFeatures),
+		checkDMSInstallation(),
+		checkWindowManagers(),
+		qsFeatures,
+		checkOptionalDependencies(),
+		checkConfigurationFiles(),
+		checkSystemdServices(),
+		checkEnvironmentVars(),
+		checkFonts(),
+	)
+
+	switch {
+	case doctorCopy:
+		text := formatResultsPlain(results)
+		if err := clipboard.CopyOpts([]byte(text), "text/plain;charset=utf-8", false, false); err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to copy to clipboard: %v\n", err)
+			os.Exit(1)
+		}
+		fmt.Println("Doctor report copied to clipboard")
+	case doctorJSON:
+		printResultsJSON(results)
+	default:
+		printResults(results)
+		printSummary(results, qsMissingFeatures)
+	}
+}
+
+func printDoctorHeader() {
+	theme := tui.TerminalTheme()
+	styles := tui.NewStyles(theme)
+
+	fmt.Println(getThemedASCII())
+	fmt.Println(styles.Title.Render("System Health Check"))
+	fmt.Println(styles.Subtle.Render("──────────────────────────────────────"))
+	fmt.Println()
+}
+
+func checkSystemInfo() []checkResult {
+	var results []checkResult
+
+	osInfo, err := distros.GetOSInfo()
+	if err != nil {
+		status, message, details := statusWarn, fmt.Sprintf("Unknown (%v)", err), ""
+
+		if strings.Contains(err.Error(), "Unsupported distribution") {
+			osRelease := readOSRelease()
+			switch {
+			case osRelease["ID"] == "nixos":
+				status = statusOK
+				message = osRelease["PRETTY_NAME"]
+				if message == "" {
+					message = fmt.Sprintf("NixOS %s", osRelease["VERSION_ID"])
+				}
+				details = "Supported for runtime (install via NixOS module or Flake)"
+			case osRelease["PRETTY_NAME"] != "":
+				message = fmt.Sprintf("%s (not supported by dms setup)", osRelease["PRETTY_NAME"])
+				details = "CyShell may work but automatic installation is not available"
+			}
+		}
+
+		results = append(results, checkResult{catSystem, "Operating System", status, message, details, doctorDocsURL + "#operating-system"})
+	} else {
+		status := statusOK
+		message := osInfo.PrettyName
+		if message == "" {
+			message = fmt.Sprintf("%s %s", osInfo.Distribution.ID, osInfo.VersionID)
+		}
+		if distros.IsUnsupportedDistro(osInfo.Distribution.ID, osInfo.VersionID) {
+			status = statusWarn
+			message += " (version may not be fully supported)"
+		}
+		results = append(results, checkResult{
+			catSystem, "Operating System", status, message,
+			fmt.Sprintf("ID: %s, Version: %s, Arch: %s", osInfo.Distribution.ID, osInfo.VersionID, osInfo.Architecture),
+			doctorDocsURL + "#operating-system",
+		})
+	}
+
+	arch := runtime.GOARCH
+	archStatus := statusOK
+	if arch != "amd64" && arch != "arm64" {
+		archStatus = statusError
+	}
+	results = append(results, checkResult{catSystem, "Architecture", archStatus, arch, "", doctorDocsURL + "#architecture"})
+
+	waylandDisplay := os.Getenv("WAYLAND_DISPLAY")
+	xdgSessionType := os.Getenv("XDG_SESSION_TYPE")
+
+	switch {
+	case waylandDisplay != "" || xdgSessionType == "wayland":
+		results = append(results, checkResult{
+			catSystem, "Display Server", statusOK, "Wayland",
+			fmt.Sprintf("WAYLAND_DISPLAY=%s", waylandDisplay),
+			doctorDocsURL + "#display-server",
+		})
+	case xdgSessionType == "x11":
+		results = append(results, checkResult{catSystem, "Display Server", statusError, "X11 (CyShell requires Wayland)", "", doctorDocsURL + "#display-server"})
+	default:
+		results = append(results, checkResult{
+			catSystem, "Display Server", statusWarn, "Unknown (ensure you're running Wayland)",
+			fmt.Sprintf("XDG_SESSION_TYPE=%s", xdgSessionType),
+			doctorDocsURL + "#display-server",
+		})
+	}
+
+	return results
+}
+
+func checkEnvironmentVars() []checkResult {
+	var results []checkResult
+	results = append(results, checkEnvVar("QT_QPA_PLATFORMTHEME")...)
+	results = append(results, checkQtPlatformThemePlugin("QT_QPA_PLATFORMTHEME")...)
+	results = append(results, checkEnvVar("QT_QPA_PLATFORMTHEME_QT6")...)
+	if os.Getenv("QT_QPA_PLATFORMTHEME_QT6") != os.Getenv("QT_QPA_PLATFORMTHEME") {
+		results = append(results, checkQtPlatformThemePlugin("QT_QPA_PLATFORMTHEME_QT6")...)
+	}
+	results = append(results, checkEnvVar("QS_ICON_THEME")...)
+	results = append(results, checkXDGMenuPrefix()...)
+	if matugen.QtengineActive() {
+		results = append(results, checkQtenginePlugin()...)
+	}
+	return results
+}
+
+func checkEnvVar(name string) []checkResult {
+	value := os.Getenv(name)
+	if value != "" {
+		return []checkResult{{catEnvironment, name, statusInfo, value, "", doctorDocsURL + "#environment-variables"}}
+	}
+	if doctorVerbose {
+		return []checkResult{{catEnvironment, name, statusInfo, "Not set", "", doctorDocsURL + "#environment-variables"}}
+	}
+	return nil
+}
+
+func checkXDGMenuPrefix() []checkResult {
+	menuPrefix := os.Getenv("XDG_MENU_PREFIX")
+	if menuPrefix != "" {
+		if checkXDGMenuFile(menuPrefix) {
+			return []checkResult{{catEnvironment, "XDG_MENU_PREFIX", statusInfo, menuPrefix, "", doctorDocsURL + "#xdg-menu-prefix"}}
+		}
+		return []checkResult{{catEnvironment, "XDG_MENU_PREFIX", statusWarn, fmt.Sprintf("%s (menu file not found)", menuPrefix), fmt.Sprintf("Dolphin 'Open with…' dialog may be empty. Ensure /etc/xdg/menus/%sapplications.menu exists.", menuPrefix), doctorDocsURL + "#xdg-menu-prefix"}}
+	}
+	if _, err := exec.LookPath("keditfiletype"); err == nil {
+		return []checkResult{{catEnvironment, "XDG_MENU_PREFIX", statusWarn, "Not set", "Dolphin file associations and 'Open with…' dialog may be empty. Set XDG_MENU_PREFIX=plasma- in your compositor's environment block.", doctorDocsURL + "#xdg-menu-prefix"}}
+	}
+	if doctorVerbose {
+		return []checkResult{{catEnvironment, "XDG_MENU_PREFIX", statusInfo, "Not set", "", doctorDocsURL + "#xdg-menu-prefix"}}
+	}
+	return nil
+}
+
+// qtQueryBinaries are the Qt build tools that can be asked where Qt looks for
+// plugins, in probe order. A binary's name does not reliably say which Qt it
+// belongs to — plain "qmake" is Qt5 on Arch and Qt6 elsewhere — so each one is
+// asked for QT_VERSION and the major is taken from the answer.
+var qtQueryBinaries = []struct{ bin, flag string }{
+	{"qmake6", "-query"},
+	{"qmake-qt6", "-query"},
+	{"qtpaths6", "--query"},
+	{"qtpaths-qt6", "--query"},
+	{"qmake-qt5", "-query"},
+	{"qtpaths-qt5", "--query"},
+	{"qmake", "-query"},
+	{"qtpaths", "--query"},
+}
+
+// checkQtenginePlugin verifies the qtengine platform theme plugin is installed
+// where Qt actually searches, for every Qt major that can be interrogated.
+//
+// Qt is asked where it looks rather than the filesystem searched, because a
+// package can install the Qt5 plugin under a prefix Qt5 does not search, after
+// which Qt5 apps silently fall back while Qt6 apps look correct. A search would
+// find the plugin and report OK on exactly that bug.
+func checkQtenginePlugin() []checkResult {
+	url := doctorDocsURL + "#environment-variables"
+
+	pluginRoots := qtPluginRoots()
+
+	// qmake/qtpaths ship in dev packages most users lack — never warn on a Qt
+	// that could not be interrogated, and never claim it is fine either.
+	if len(pluginRoots) == 0 {
+		return []checkResult{{
+			catEnvironment, "qtengine plugin", statusInfo, "Cannot verify (no qmake/qtpaths)",
+			"Install a Qt development package to let dms doctor check the plugin against the path Qt actually searches.",
+			url,
+		}}
+	}
+
+	// Qt also searches QT_PLUGIN_PATH, so a plugin found there is loadable.
+	envRoots := filepath.SplitList(os.Getenv("QT_PLUGIN_PATH"))
+
+	var results []checkResult
+	for _, major := range slices.Sorted(maps.Keys(pluginRoots)) {
+		// qtengine only ships Qt5 and Qt6 plugins.
+		if major != "5" && major != "6" {
+			continue
+		}
+
+		root := pluginRoots[major]
+		name := fmt.Sprintf("qtengine plugin (Qt%s)", major)
+
+		plugin := qtenginePluginPath(append([]string{root}, envRoots...), major)
+		if plugin == "" {
+			expected := qtenginePluginFile(root, major)
+			results = append(results, checkResult{
+				catEnvironment, name, statusWarn, fmt.Sprintf("Not found in Qt%s plugin path", major),
+				fmt.Sprintf("Expected %s — Qt%s apps will silently fall back to an unthemed palette. The plugin is likely installed under a prefix Qt%s does not search.", expected, major, major),
+				url,
+			})
+			continue
+		}
+		results = append(results, checkResult{catEnvironment, name, statusOK, "Installed", plugin, url})
+	}
+
+	return results
+}
+
+// checkQtPlatformThemePlugin validates one of the QT_QPA_PLATFORMTHEME
+// variables beyond mere presence: the value must name a platform theme whose
+// plugin Qt can actually load. A wrong value fails silently at run time — Qt
+// apps fall back to a built-in theme, icon lookups return nothing, and
+// Quickshell tray menus draw a placeholder for every icon an app publishes.
+func checkQtPlatformThemePlugin(varName string) []checkResult {
+	value := os.Getenv(varName)
+	// Unset is reported by checkEnvVar; qtengine has its own plugin check.
+	if value == "" || value == "qtengine" {
+		return nil
+	}
+
+	url := doctorDocsURL + "#environment-variables"
+
+	// qt6ct-kde is the AUR package name, not the theme value: with it set,
+	// Qt finds no platform theme at all and every Qt app falls back silently.
+	if value == "qt6ct-kde" {
+		return []checkResult{{
+			catEnvironment, value, statusWarn, "Package name, not a theme",
+			fmt.Sprintf("qt6ct-kde is the AUR package name; the theme value Qt expects is qt6ct. Qt apps get no platform theme, so palettes stay unstyled and icon lookups fail. Set %s=qt6ct, then restart the shell.", varName),
+			url,
+		}}
+	}
+
+	// DMS themes Qt6 through these variables; qt5ct is the Qt5 counterpart.
+	major := "6"
+	if value == "qt5ct" {
+		major = "5"
+	}
+	files := qtPlatformThemePluginFiles(value)
+	name := fmt.Sprintf("%s plugin (Qt%s)", value, major)
+
+	root := qtPluginRoots()[major]
+	// qmake/qtpaths ship in dev packages most users lack — never warn on a Qt
+	// that could not be interrogated, and never claim it is fine either.
+	if root == "" {
+		return []checkResult{{
+			catEnvironment, name, statusInfo, "Cannot verify (no qmake/qtpaths)",
+			"Install a Qt development package to let dms doctor check the plugin against the path Qt actually searches.",
+			url,
+		}}
+	}
+
+	// Qt also searches QT_PLUGIN_PATH, so a plugin found there is loadable.
+	plugin := qtPluginPath(append([]string{root}, filepath.SplitList(os.Getenv("QT_PLUGIN_PATH"))...), files...)
+	if plugin == "" {
+		// plasma-integration ships the kde theme under a file name that has
+		// changed across versions; a miss says nothing reliable about the
+		// install, so degrade to info instead of warning at a working setup.
+		if value == "kde" {
+			return []checkResult{{
+				catEnvironment, name, statusInfo, "Cannot verify (plasma-integration)",
+				"The kde theme comes from plasma-integration, whose plugin file name varies across versions. Verify visually that Qt apps follow your theme.",
+				url,
+			}}
+		}
+		expected := filepath.Join(root, "platformthemes", files[0])
+		return []checkResult{{
+			catEnvironment, name, statusWarn, fmt.Sprintf("Not found in Qt%s plugin path", major),
+			fmt.Sprintf("Expected %s — Qt apps silently fall back to a built-in theme, breaking icon lookups and palettes. Install the package providing it, or correct %s.", expected, varName),
+			url,
+		}}
+	}
+	return []checkResult{{catEnvironment, name, statusOK, "Installed", plugin, url}}
+}
+
+// qtPlatformThemePluginFiles lists the plugin file names that can provide a
+// QT_QPA_PLATFORMTHEME value, most conventional first. Qt resolves the value
+// through plugin metadata keys rather than file names, so these are the names
+// each integration is known to ship; unmapped values fall back to Qt's
+// libq<value> naming convention.
+func qtPlatformThemePluginFiles(value string) []string {
+	if files, ok := map[string][]string{
+		"qt6ct": {"libqt6ct.so"},
+		"qt5ct": {"libqt5ct.so"},
+		"gtk3":  {"libqgtk3.so"},
+		"kde":   {"libqkdeplatformtheme.so"},
+	}[value]; ok {
+		return files
+	}
+	return []string{"libq" + value + ".so", "lib" + value + ".so"}
+}
+
+// qtPluginRoots asks every available Qt build tool where its Qt looks for
+// plugins, keyed by Qt major. A binary's name does not reliably say which Qt
+// it belongs to — plain "qmake" is Qt5 on Arch and Qt6 elsewhere — so each one
+// is asked for QT_VERSION and the major is taken from the answer.
+func qtPluginRoots() map[string]string {
+	pluginRoots := make(map[string]string)
+	for _, q := range qtQueryBinaries {
+		if _, err := exec.LookPath(q.bin); err != nil {
+			continue
+		}
+		major, _, _ := strings.Cut(qtQuery(q.bin, q.flag, "QT_VERSION"), ".")
+		if major == "" || pluginRoots[major] != "" {
+			continue
+		}
+		if root := qtQuery(q.bin, q.flag, "QT_INSTALL_PLUGINS"); root != "" {
+			pluginRoots[major] = root
+		}
+	}
+	return pluginRoots
+}
+
+// qtPluginPath returns the first of roots that holds any of files under
+// platformthemes/, or "" if none does.
+func qtPluginPath(roots []string, files ...string) string {
+	for _, root := range roots {
+		if root == "" {
+			continue
+		}
+		for _, file := range files {
+			path := filepath.Join(root, "platformthemes", file)
+			if _, err := os.Stat(path); err == nil {
+				return path
+			}
+		}
+	}
+	return ""
+}
+
+// qtenginePluginPath returns the first of roots that holds the qtengine platform
+// theme plugin for the given Qt major, or "" if none does.
+func qtenginePluginPath(roots []string, major string) string {
+	return qtPluginPath(roots, fmt.Sprintf("libqt%sengine-plugin.so", major))
+}
+
+func qtenginePluginFile(root, major string) string {
+	return filepath.Join(root, "platformthemes", fmt.Sprintf("libqt%sengine-plugin.so", major))
+}
+
+// qtQuery asks a Qt build tool for a single QLibraryInfo property.
+func qtQuery(bin, flag, key string) string {
+	output, err := exec.Command(bin, flag, key).Output()
+	if err != nil {
+		return ""
+	}
+	return qtQueryValue(string(output), key)
+}
+
+// qtQueryValue extracts one property from a Qt query. Most tools print the bare
+// value, but some ignore the requested property and dump every one as
+// "KEY:value" lines; taking the whole output there would yield a bogus path.
+func qtQueryValue(output, key string) string {
+	lines := strings.Split(strings.TrimSpace(output), "\n")
+	for _, line := range lines {
+		if value, found := strings.CutPrefix(strings.TrimSpace(line), key+":"); found {
+			return strings.TrimSpace(value)
+		}
+	}
+	if len(lines) == 1 {
+		return strings.TrimSpace(lines[0])
+	}
+	return ""
+}
+
+func checkXDGMenuFile(prefix string) bool {
+	menuPath := fmt.Sprintf("/etc/xdg/menus/%sapplications.menu", prefix)
+	_, err := os.Stat(menuPath)
+	return err == nil
+}
+
+func readOSRelease() map[string]string {
+	result := make(map[string]string)
+	data, err := os.ReadFile("/etc/os-release")
+	if err != nil {
+		return result
+	}
+	for line := range strings.SplitSeq(string(data), "\n") {
+		if parts := strings.SplitN(line, "=", 2); len(parts) == 2 {
+			result[parts[0]] = strings.Trim(parts[1], "\"")
+		}
+	}
+	return result
+}
+
+func checkVersions(qsMissingFeatures bool) []checkResult {
+	dmsCliPath, _ := os.Executable()
+	dmsCliDetails := ""
+	if doctorVerbose {
+		dmsCliDetails = dmsCliPath
+	}
+
+	results := []checkResult{
+		{catVersions, "CyShell CLI", statusOK, formatVersion(Version), dmsCliDetails, doctorDocsURL + "#dms-cli"},
+	}
+
+	qsVersion, qsStatus, qsPath, qsDetails := getQuickshellVersionInfo(qsMissingFeatures)
+	if doctorVerbose && qsPath != "" && qsDetails == "" {
+		qsDetails = qsPath
+	}
+	results = append(results, checkResult{catVersions, "Quickshell", qsStatus, qsVersion, qsDetails, doctorDocsURL + "#quickshell"})
+
+	dmsVersion, dmsPath := getDMSShellVersion()
+	if dmsVersion != "" {
+		results = append(results, checkResult{catVersions, "CyShell Shell", statusOK, dmsVersion, dmsPath, doctorDocsURL + "#dms-shell"})
+	} else {
+		results = append(results, checkResult{catVersions, "CyShell Shell", statusError, "Not installed or not detected", "Run 'dms setup' to install", doctorDocsURL + "#dms-shell"})
+	}
+
+	return results
+}
+
+func getDMSShellVersion() (version, path string) {
+	if err := shellApp.ResolveConfig(nil, nil); err == nil && shellApp.ConfigPath() != "" {
+		versionFile := filepath.Join(shellApp.ConfigPath(), "VERSION")
+		if data, err := os.ReadFile(versionFile); err == nil {
+			return strings.TrimSpace(string(data)), shellApp.ConfigPath()
+		}
+		return "installed", shellApp.ConfigPath()
+	}
+
+	if dmsPath, err := config.LocateDMSConfig(); err == nil {
+		versionFile := filepath.Join(dmsPath, "VERSION")
+		if data, err := os.ReadFile(versionFile); err == nil {
+			return strings.TrimSpace(string(data)), dmsPath
+		}
+		return "installed", dmsPath
+	}
+
+	return "", ""
+}
+
+func getQuickshellVersionInfo(missingFeatures bool) (string, status, string, string) {
+	if !utils.CommandExists("qs") {
+		return "Not installed", statusError, "", ""
+	}
+
+	qsPath, _ := exec.LookPath("qs")
+
+	output, err := exec.Command("qs", "--version").Output()
+	if err != nil {
+		details := "Run 'qs --version' to inspect the failure."
+		var exitErr *exec.ExitError
+		if errors.As(err, &exitErr) {
+			details = quickshellVersionFailureDetails(string(exitErr.Stderr))
+		}
+		return "Installed (version check failed)", statusWarn, qsPath, details
+	}
+
+	fullVersion := strings.TrimSpace(string(output))
+	if matches := quickshellVersionRegex.FindStringSubmatch(fullVersion); len(matches) >= 2 {
+		if version.CompareVersions(matches[1], "0.2.0") < 0 {
+			return fmt.Sprintf("%s (needs >= 0.2.0)", fullVersion), statusError, qsPath, ""
+		}
+		if missingFeatures {
+			return fullVersion, statusWarn, qsPath, ""
+		}
+		return fullVersion, statusOK, qsPath, ""
+	}
+
+	return fullVersion, statusWarn, qsPath, ""
+}
+
+func quickshellVersionFailureDetails(stderr string) string {
+	if strings.Contains(stderr, "undefined symbol:") && strings.Contains(stderr, "Qt_6_PRIVATE_API") {
+		return "Quickshell is incompatible with the installed Qt libraries. Rebuild or reinstall Quickshell against the current Qt version."
+	}
+
+	return "Run 'qs --version' to inspect the failure."
+}
+
+func checkDMSInstallation() []checkResult {
+	var results []checkResult
+
+	dmsPath := resolveDoctorShellPath()
+
+	if dmsPath == "" {
+		return []checkResult{{catInstallation, "CyShell Configuration", statusError, "Not found", "shell.qml not found in any config path", doctorDocsURL + "#dms-configuration"}}
+	}
+
+	results = append(results, checkResult{catInstallation, "CyShell Configuration", statusOK, "Found", dmsPath, doctorDocsURL + "#dms-configuration"})
+
+	shellQml := filepath.Join(dmsPath, "shell.qml")
+	if _, err := os.Stat(shellQml); err != nil {
+		results = append(results, checkResult{catInstallation, "shell.qml", statusError, "Missing", shellQml, doctorDocsURL + "#dms-configuration"})
+	} else {
+		results = append(results, checkResult{catInstallation, "shell.qml", statusOK, "Present", shellQml, doctorDocsURL + "#dms-configuration"})
+	}
+
+	if doctorVerbose {
+		installType := "Unknown"
+		switch {
+		case strings.Contains(dmsPath, "/nix/store"):
+			installType = "Nix store"
+		case strings.Contains(dmsPath, ".local/share") || strings.Contains(dmsPath, "/usr/share"):
+			installType = "System package"
+		case strings.Contains(dmsPath, ".config"):
+			installType = "User config"
+		}
+		results = append(results, checkResult{catInstallation, "Install Type", statusInfo, installType, dmsPath, doctorDocsURL + "#dms-configuration"})
+	}
+
+	return results
+}
+
+func checkWindowManagers() []checkResult {
+	compositors := []struct {
+		name, versionCmd, versionArg string
+		versionRegex                 *regexp.Regexp
+		commands                     []string
+	}{
+		{"Hyprland", "Hyprland", "--version", hyprlandVersionRegex, []string{"hyprland", "Hyprland"}},
+		{"niri", "niri", "--version", niriVersionRegex, []string{"niri"}},
+		{"Sway", "sway", "--version", swayVersionRegex, []string{"sway"}},
+		{"River", "river", "-version", riverVersionRegex, []string{"river"}},
+		{"Wayfire", "wayfire", "--version", wayfireVersionRegex, []string{"wayfire"}},
+		{"labwc", "labwc", "--version", labwcVersionRegex, []string{"labwc"}},
+		{"mangowc", "mango", "-v", mangowcVersionRegex, []string{"mango"}},
+		{"Miracle WM", "miracle-wm", "--version", miracleVersionRegex, []string{"miracle-wm"}},
+		{"Scroll", "scroll", "--version", scrollVersionRegex, []string{"scroll"}},
+		{"Aqueous", "aqueous", "-version", aqueousVersionRegex, []string{"aqueous"}},
+	}
+
+	var results []checkResult
+	foundAny := false
+
+	for _, c := range compositors {
+		if !slices.ContainsFunc(c.commands, utils.CommandExists) {
+			continue
+		}
+		foundAny = true
+		var compositorPath string
+		for _, cmd := range c.commands {
+			if path, err := exec.LookPath(cmd); err == nil {
+				compositorPath = path
+				break
+			}
+		}
+		details := ""
+		if doctorVerbose && compositorPath != "" {
+			details = compositorPath
+		}
+		results = append(results, checkResult{
+			catCompositor, c.name, statusOK,
+			getVersionFromCommand(c.versionCmd, c.versionArg, c.versionRegex), details,
+			doctorDocsURL + "#compositor-checks",
+		})
+	}
+
+	if !foundAny {
+		results = append(results, checkResult{
+			catCompositor, "Compositor", statusError,
+			"No supported Wayland compositor found",
+			"Install Hyprland, niri, Sway, River, Wayfire, labwc, mangowc, miracle-wm, Scroll, or Aqueous",
+			doctorDocsURL + "#compositor-checks",
+		})
+	}
+
+	if wm := detectRunningWM(); wm != "" {
+		results = append(results, checkResult{catCompositor, "Active", statusInfo, wm, "", doctorDocsURL + "#compositor"})
+	}
+
+	if os.Getenv("AQUEOUS_SOCKET") != "" {
+		results = append(results, checkAqueousConfigHelper())
+	}
+
+	results = append(results, checkCompositorBlurSupport())
+
+	return results
+}
+
+func checkAqueousConfigHelper() checkResult {
+	url := doctorDocsURL + "#compositor-checks"
+	path, err := exec.LookPath("aqueous-config")
+	if err != nil {
+		return checkResult{catCompositor, "aqueous-config", statusWarn, "Not found", "Keybind and display settings edits from the shell need the aqueous-config helper", url}
+	}
+	details := "Keybind and display settings edits from the shell"
+	if doctorVerbose {
+		details = path
+	}
+	return checkResult{catCompositor, "aqueous-config", statusOK, "Installed", details, url}
+}
+
+func checkCompositorBlurSupport() checkResult {
+	supported, err := blur.ProbeSupport()
+	if err != nil {
+		return checkResult{catCompositor, "Background Blur", statusInfo, "Unable to verify", err.Error(), doctorDocsURL + "#compositor-checks"}
+	}
+
+	if supported {
+		return checkResult{catCompositor, "Background Blur", statusOK, "Supported", "Compositor supports ext-background-effect-v1", doctorDocsURL + "#compositor-checks"}
+	}
+
+	return checkResult{catCompositor, "Background Blur", statusWarn, "Unsupported", "Compositor does not support ext-background-effect-v1", doctorDocsURL + "#compositor-checks"}
+}
+
+func getVersionFromCommand(cmd, arg string, regex *regexp.Regexp) string {
+	output, err := exec.Command(cmd, arg).CombinedOutput()
+	if err != nil && len(output) == 0 {
+		return "installed"
+	}
+
+	outStr := string(output)
+	if matches := regex.FindStringSubmatch(outStr); len(matches) > 1 {
+		ver := matches[1]
+		if strings.Contains(outStr, "git") || strings.Contains(outStr, "dirty") {
+			return ver + " (git)"
+		}
+		return ver
+	}
+	return strings.TrimSpace(outStr)
+}
+
+func detectRunningWM() string {
+	switch {
+	case os.Getenv("AQUEOUS_SOCKET") != "":
+		return "Aqueous"
+	case os.Getenv("HYPRLAND_INSTANCE_SIGNATURE") != "":
+		return "Hyprland"
+	case os.Getenv("NIRI_SOCKET") != "":
+		return "niri"
+	case os.Getenv("MANGO_INSTANCE_SIGNATURE") != "":
+		return "MangoWC"
+	case os.Getenv("MIRACLESOCK") != "":
+		return "Miracle WM"
+	case os.Getenv("XDG_CURRENT_DESKTOP") != "":
+		return os.Getenv("XDG_CURRENT_DESKTOP")
+	}
+	return ""
+}
+
+func checkQuickshellFeatures() ([]checkResult, bool) {
+	if !utils.CommandExists("qs") {
+		return nil, false
+	}
+
+	tmpDir := os.TempDir()
+	testScript := filepath.Join(tmpDir, "qs-feature-test.qml")
+	defer os.Remove(testScript)
+
+	qmlContent := `
+import QtQuick
+import Quickshell
+import Quickshell.Wayland
+
+ShellRoot {
+	id: root
+
+	property bool polkitAvailable: false
+	property bool idleMonitorAvailable: false
+	property bool idleInhibitorAvailable: false
+	property bool shortcutInhibitorAvailable: false
+	property bool backgroundBlurAvailable: false
+
+	Timer {
+		interval: 50
+		running: true
+		repeat: false
+		onTriggered: {
+			try {
+				var polkitTest = Qt.createQmlObject(
+					'import Quickshell.Services.Polkit; import QtQuick; Item {}',
+					root
+				)
+				root.polkitAvailable = true
+				polkitTest.destroy()
+			} catch (e) {}
+
+			try {
+				var testItem = Qt.createQmlObject(
+					'import Quickshell; import Quickshell.Wayland; import QtQuick; QtObject { ' +
+					'readonly property bool hasIdleMonitor: typeof IdleMonitor !== "undefined"; ' +
+					'readonly property bool hasIdleInhibitor: typeof IdleInhibitor !== "undefined"; ' +
+					'readonly property bool hasShortcutInhibitor: typeof ShortcutInhibitor !== "undefined"; ' +
+					'readonly property bool hasBackgroundBlur: typeof BackgroundEffect !== "undefined" ' +
+					'}',
+					root
+				)
+				root.idleMonitorAvailable = testItem.hasIdleMonitor
+				root.idleInhibitorAvailable = testItem.hasIdleInhibitor
+				root.shortcutInhibitorAvailable = testItem.hasShortcutInhibitor
+				root.backgroundBlurAvailable = testItem.hasBackgroundBlur
+				testItem.destroy()
+			} catch (e) {}
+
+			console.warn(root.polkitAvailable ? "FEATURE:Polkit:OK" : "FEATURE:Polkit:UNAVAILABLE")
+			console.warn(root.idleMonitorAvailable ? "FEATURE:IdleMonitor:OK" : "FEATURE:IdleMonitor:UNAVAILABLE")
+			console.warn(root.idleInhibitorAvailable ? "FEATURE:IdleInhibitor:OK" : "FEATURE:IdleInhibitor:UNAVAILABLE")
+			console.warn(root.shortcutInhibitorAvailable ? "FEATURE:ShortcutInhibitor:OK" : "FEATURE:ShortcutInhibitor:UNAVAILABLE")
+
+			console.warn(root.backgroundBlurAvailable ? "FEATURE:BackgroundBlur:OK" : "FEATURE:BackgroundBlur:UNAVAILABLE")
+
+			Quickshell.execDetached(["kill", "-TERM", String(Quickshell.processId)])
+		}
+	}
+}
+`
+
+	if err := os.WriteFile(testScript, []byte(qmlContent), 0o644); err != nil {
+		return nil, false
+	}
+
+	cmd := exec.Command("qs", "-p", testScript)
+	cmd.Env = append(os.Environ(), "NO_COLOR=1")
+	output, _ := cmd.CombinedOutput()
+	outputStr := string(output)
+
+	features := []struct{ name, desc string }{
+		{"Polkit", "Authentication prompts"},
+		{"IdleMonitor", "Idle detection"},
+		{"IdleInhibitor", "Prevent idle/sleep"},
+		{"ShortcutInhibitor", "Allow shortcut management (niri, Aqueous)"},
+		{"BackgroundBlur", "Background blur API support in Quickshell"},
+	}
+
+	var results []checkResult
+	missingFeatures := false
+
+	for _, f := range features {
+		available := strings.Contains(outputStr, fmt.Sprintf("FEATURE:%s:OK", f.name))
+		status, message := statusOK, "Available"
+		if !available {
+			status, message = statusInfo, "Not available"
+			missingFeatures = true
+		}
+		results = append(results, checkResult{catQuickshellFeatures, f.name, status, message, f.desc, doctorDocsURL + "#quickshell-features"})
+	}
+
+	return results, missingFeatures
+}
+
+func checkI2CAvailability() checkResult {
+	ddc, err := brightness.NewDDCBackend()
+	if err != nil {
+		return checkResult{catOptionalFeatures, "I2C/DDC", statusInfo, "Not available", "External monitor brightness control", doctorDocsURL + "#optional-features"}
+	}
+	defer ddc.Close()
+
+	devices, err := ddc.GetDevices()
+	if err != nil || len(devices) == 0 {
+		return checkResult{catOptionalFeatures, "I2C/DDC", statusInfo, "No monitors detected", "External monitor brightness control", doctorDocsURL + "#optional-features"}
+	}
+
+	return checkResult{catOptionalFeatures, "I2C/DDC", statusOK, fmt.Sprintf("%d monitor(s) detected", len(devices)), "External monitor brightness control", doctorDocsURL + "#optional-features"}
+}
+
+func checkImageFormatPlugins() []checkResult {
+	url := doctorDocsURL + "#optional-features"
+
+	pluginDirs := findQtPluginDirs()
+	if len(pluginDirs) == 0 {
+		return []checkResult{
+			{catOptionalFeatures, "qt6-imageformats", statusInfo, "Cannot detect (plugin dir not found)", "WebP, TIFF, JP2 support", url},
+			{catOptionalFeatures, "kimageformats", statusInfo, "Cannot detect (plugin dir not found)", "AVIF, HEIF, JXL support", url},
+		}
+	}
+
+	type pluginCheck struct {
+		name    string
+		desc    string
+		plugins []struct{ file, format string }
+	}
+
+	checks := []pluginCheck{
+		{
+			name: "qt6-imageformats",
+			desc: "WebP, TIFF, GIF, JP2 support",
+			plugins: []struct{ file, format string }{
+				{"libqwebp.so", "WebP"},
+				{"libqtiff.so", "TIFF"},
+				{"libqgif.so", "GIF"},
+				{"libqjp2.so", "JP2"},
+				{"libqicns.so", "ICNS"},
+			},
+		},
+		{
+			name: "kimageformats",
+			desc: "AVIF, HEIF, JXL support",
+			plugins: []struct{ file, format string }{
+				{"kimg_avif.so", "AVIF"},
+				{"kimg_heif.so", "HEIF"},
+				{"kimg_jxl.so", "JXL"},
+				{"kimg_exr.so", "EXR"},
+			},
+		},
+	}
+
+	var results []checkResult
+	for _, c := range checks {
+		var found []string
+		var foundDirs []string
+		for _, pluginDir := range pluginDirs {
+			imageFormatsDir := filepath.Join(pluginDir, "imageformats")
+			for _, p := range c.plugins {
+				if _, err := os.Stat(filepath.Join(imageFormatsDir, p.file)); err == nil {
+					if !slices.Contains(found, p.format) {
+						found = append(found, p.format)
+					}
+					if !slices.Contains(foundDirs, imageFormatsDir) {
+						foundDirs = append(foundDirs, imageFormatsDir)
+					}
+				}
+			}
+		}
+
+		var result checkResult
+		switch {
+		case len(found) == 0:
+			result = checkResult{catOptionalFeatures, c.name, statusWarn, "Not installed", c.desc, url}
+		default:
+			details := ""
+			if doctorVerbose {
+				details = fmt.Sprintf("Formats: %s (%s)", strings.Join(found, ", "), strings.Join(foundDirs, ":"))
+			}
+			result = checkResult{catOptionalFeatures, c.name, statusOK, fmt.Sprintf("Installed (%d formats)", len(found)), details, url}
+		}
+		results = append(results, result)
+	}
+
+	return results
+}
+
+func findQtPluginDirs() []string {
+	var dirs []string
+
+	addDir := func(dir string) {
+		if dir != "" {
+			if _, err := os.Stat(filepath.Join(dir, "imageformats")); err == nil {
+				dirs = append(dirs, dir)
+			}
+		}
+	}
+
+	// Check all paths in QT_PLUGIN_PATH env var (used by NixOS and custom setups)
+	for _, dir := range filepath.SplitList(os.Getenv("QT_PLUGIN_PATH")) {
+		addDir(dir)
+	}
+
+	for _, q := range qtQueryBinaries {
+		if _, err := exec.LookPath(q.bin); err != nil {
+			continue
+		}
+		addDir(qtQuery(q.bin, q.flag, "QT_INSTALL_PLUGINS"))
+	}
+
+	// Fallback: common distro paths
+	for _, dir := range []string{
+		"/usr/lib/qt6/plugins",
+		"/usr/lib64/qt6/plugins",
+		"/usr/lib/x86_64-linux-gnu/qt6/plugins",
+		"/usr/lib/aarch64-linux-gnu/qt6/plugins",
+	} {
+		addDir(dir)
+	}
+
+	return dirs
+}
+
+func detectNetworkBackend(stackResult *network.DetectResult) string {
+	switch stackResult.Backend {
+	case network.BackendNetworkManager:
+		return "NetworkManager"
+	case network.BackendIwd:
+		return "iwd"
+	case network.BackendNetworkd:
+		if stackResult.HasIwd {
+			return "iwd + systemd-networkd"
+		}
+		return "systemd-networkd"
+	case network.BackendConnMan:
+		return "ConnMan"
+	case network.BackendWpaSupplicant:
+		return "wpa_supplicant"
+	default:
+		return ""
+	}
+}
+
+func getOptionalDBusStatus(busName string) (status, string) {
+	if utils.IsDBusServiceAvailable(busName) {
+		return statusOK, "Available"
+	} else {
+		return statusWarn, "Not available"
+	}
+}
+
+func checkOptionalDependencies() []checkResult {
+	var results []checkResult
+
+	optionalFeaturesURL := doctorDocsURL + "#optional-features"
+
+	accountsStatus, accountsMsg := getOptionalDBusStatus("org.freedesktop.Accounts")
+	results = append(results, checkResult{catOptionalFeatures, "accountsservice", accountsStatus, accountsMsg, "User accounts", optionalFeaturesURL})
+
+	ppdStatus, ppdMsg := getOptionalDBusStatus("org.freedesktop.UPower.PowerProfiles")
+	results = append(results, checkResult{catOptionalFeatures, "power-profiles-daemon", ppdStatus, ppdMsg, "Power profile management", optionalFeaturesURL})
+
+	logindStatus, logindMsg := getOptionalDBusStatus("org.freedesktop.login1")
+	results = append(results, checkResult{catOptionalFeatures, "logind", logindStatus, logindMsg, "Session management", optionalFeaturesURL})
+
+	cupsPkHelperBus := "org.opensuse.CupsPkHelper.Mechanism"
+	var cupsPkStatus status
+	var cupsPkMsg string
+	switch {
+	case utils.IsDBusServiceAvailable(cupsPkHelperBus):
+		cupsPkStatus, cupsPkMsg = statusOK, "Running"
+	case utils.IsDBusServiceActivatable(cupsPkHelperBus):
+		cupsPkStatus, cupsPkMsg = statusOK, "Available"
+	default:
+		cupsPkStatus, cupsPkMsg = statusWarn, "Not available (install cups-pk-helper)"
+	}
+	results = append(results, checkResult{catOptionalFeatures, "cups-pk-helper", cupsPkStatus, cupsPkMsg, "Printer management", optionalFeaturesURL})
+
+	results = append(results, checkI2CAvailability())
+	results = append(results, checkImageFormatPlugins()...)
+
+	terminals := []string{"ghostty", "kitty", "alacritty", "foot", "wezterm"}
+	terminals = slices.DeleteFunc(terminals, func(t string) bool {
+		return !utils.CommandExists(t)
+	})
+
+	if len(terminals) > 0 {
+		results = append(results, checkResult{catOptionalFeatures, "Terminal", statusOK, strings.Join(terminals, ", "), "", optionalFeaturesURL})
+	} else {
+		results = append(results, checkResult{catOptionalFeatures, "Terminal", statusWarn, "None found", "Install ghostty, kitty, foot or alacritty", optionalFeaturesURL})
+	}
+
+	networkResult, err := network.DetectNetworkStack()
+	networkStatus, networkMessage, networkDetails := statusOK, "Not available", "Network management"
+
+	if err == nil && networkResult.Backend != network.BackendNone {
+		networkMessage = detectNetworkBackend(networkResult)
+		if doctorVerbose {
+			networkDetails = networkResult.ChosenReason
+		}
+	} else {
+		networkStatus = statusInfo
+	}
+
+	results = append(results, checkResult{catOptionalFeatures, "Network", networkStatus, networkMessage, networkDetails, optionalFeaturesURL})
+
+	deps := []struct {
+		name, cmd, desc string
+		important       bool
+	}{
+		{"matugen", "matugen", "Dynamic theming", true},
+		{"cava", "cava", "Audio visualizer", true},
+		{"khal", "khal", "Calendar events", false},
+		{"danksearch", "dsearch", "File search", false},
+		{"dankcalendar", "dcal", "Calendar app", false},
+		{"fprintd", "fprintd-list", "Fingerprint auth", false},
+	}
+
+	for _, d := range deps {
+		found := utils.CommandExists(d.cmd)
+
+		switch {
+		case found:
+			results = append(results, checkResult{catOptionalFeatures, d.name, statusOK, "Installed", d.desc, optionalFeaturesURL})
+		case d.important:
+			results = append(results, checkResult{catOptionalFeatures, d.name, statusWarn, "Missing", d.desc, optionalFeaturesURL})
+		default:
+			results = append(results, checkResult{catOptionalFeatures, d.name, statusInfo, "Not installed", d.desc, optionalFeaturesURL})
+		}
+	}
+
+	results = append(results, checkAdwGtk3())
+
+	return results
+}
+
+// Mirrors the search in quickshell/scripts/gtk.sh: user theme dirs, then XDG_DATA_DIRS.
+func checkAdwGtk3() checkResult {
+	optionalFeaturesURL := doctorDocsURL + "#optional-features"
+	home, _ := os.UserHomeDir()
+	dataHome := os.Getenv("XDG_DATA_HOME")
+	if dataHome == "" {
+		dataHome = filepath.Join(home, ".local", "share")
+	}
+	userRoots := []string{filepath.Join(dataHome, "themes"), filepath.Join(home, ".themes")}
+
+	dataDirs := os.Getenv("XDG_DATA_DIRS")
+	if dataDirs == "" {
+		dataDirs = "/usr/local/share:/usr/share"
+	}
+	var systemRoots []string
+	for _, d := range strings.Split(dataDirs, ":") {
+		if d != "" {
+			systemRoots = append(systemRoots, filepath.Join(d, "themes"))
+		}
+	}
+
+	locate := func(roots []string, variant string) bool {
+		for _, root := range roots {
+			if info, err := os.Stat(filepath.Join(root, "adw-gtk3"+variant, "gtk-3.0")); err == nil && info.IsDir() {
+				return true
+			}
+		}
+		return false
+	}
+
+	userLight := locate(userRoots, "")
+	userDark := locate(userRoots, "-dark")
+	sysLight := locate(systemRoots, "")
+	sysDark := locate(systemRoots, "-dark")
+
+	switch {
+	case userLight && userDark:
+		return checkResult{catOptionalFeatures, "adw-gtk3", statusOK, "Installed", "GTK3 dynamic theming (user copy)", optionalFeaturesURL}
+	case sysLight && sysDark:
+		return checkResult{catOptionalFeatures, "adw-gtk3", statusOK, "Installed", "GTK3 dynamic theming (system copy, applied on next theme apply)", optionalFeaturesURL}
+	case userLight || userDark || sysLight || sysDark:
+		missing := "adw-gtk3-dark"
+		if userDark || sysDark {
+			missing = "adw-gtk3"
+		}
+		return checkResult{catOptionalFeatures, "adw-gtk3", statusWarn, "Missing " + missing, "GTK3 dynamic theming needs both variants", optionalFeaturesURL}
+	default:
+		return checkResult{catOptionalFeatures, "adw-gtk3", statusInfo, "Not installed", "GTK3 dynamic theming; without it the global CSS override applies", optionalFeaturesURL}
+	}
+}
+
+func checkConfigurationFiles() []checkResult {
+	configDir, _ := os.UserConfigDir()
+	cacheDir, _ := os.UserCacheDir()
+	dmsDir := "DankMaterialShell"
+
+	configFiles := []struct{ name, path string }{
+		{"settings.json", filepath.Join(configDir, dmsDir, "settings.json")},
+		{"clsettings.json", filepath.Join(configDir, dmsDir, "clsettings.json")},
+		{"plugin_settings.json", filepath.Join(configDir, dmsDir, "plugin_settings.json")},
+		{"session.json", filepath.Join(utils.XDGStateHome(), dmsDir, "session.json")},
+		{"dms-colors.json", filepath.Join(cacheDir, dmsDir, "dms-colors.json")},
+	}
+
+	var results []checkResult
+	for _, cf := range configFiles {
+		info, err := os.Stat(cf.path)
+		if err != nil {
+			results = append(results, checkResult{catConfigFiles, cf.name, statusInfo, "Not yet created", cf.path, doctorDocsURL + "#config-files"})
+			continue
+		}
+
+		status := statusOK
+		message := "Present"
+		if info.Mode().Perm()&0o200 == 0 {
+			status = statusWarn
+			message += " (read-only)"
+		}
+		// The shell falls back to defaults on a parse failure, so a broken file must not report ok.
+		if data, readErr := os.ReadFile(cf.path); readErr == nil && len(data) > 0 && !json.Valid(data) {
+			status = statusError
+			message = "Invalid JSON - the shell ignores this file and runs on defaults"
+		}
+		results = append(results, checkResult{catConfigFiles, cf.name, status, message, cf.path, doctorDocsURL + "#config-files"})
+	}
+	return results
+}
+
+func checkSystemdServices() []checkResult {
+	if !utils.CommandExists("systemctl") {
+		return nil
+	}
+
+	var results []checkResult
+
+	dmsState := getServiceState("dms", true)
+	if !dmsState.exists {
+		results = append(results, checkResult{catServices, "dms.service", statusInfo, "Not installed", "Optional user service", doctorDocsURL + "#services"})
+	} else {
+		status, message := statusOK, dmsState.enabled
+		if dmsState.active != "" {
+			message = fmt.Sprintf("%s, %s", dmsState.enabled, dmsState.active)
+		}
+		switch {
+		case dmsState.active == "failed":
+			status = statusError
+		case dmsState.active == "active":
+		case dmsState.enabled == "disabled":
+			status, message = statusWarn, "Disabled"
+		case dmsState.active == "inactive":
+			status = statusError
+		}
+		results = append(results, checkResult{catServices, "dms.service", status, message, "", doctorDocsURL + "#services"})
+	}
+
+	if dmsState.exists && dmsState.enabled == "enabled" {
+		gsState := getServiceState("graphical-session.target", true)
+		if gsState.exists && gsState.active != "active" {
+			results = append(results, checkResult{catServices, "graphical-session.target", statusWarn, "Inactive", "Compositor session never activated it, so dms.service cannot autostart. On Hyprland, hyprland-session.target must exist and be started by the compositor.", doctorDocsURL + "#services"})
+		}
+	}
+
+	greetdState := getServiceState("greetd", false)
+	switch {
+	case greetdState.exists:
+		status := statusOK
+		if greetdState.enabled == "disabled" {
+			status = statusInfo
+		}
+		results = append(results, checkResult{catServices, "greetd", status, greetdState.enabled, "", doctorDocsURL + "#services"})
+	case doctorVerbose:
+		results = append(results, checkResult{catServices, "greetd", statusInfo, "Not installed", "Optional greeter service", doctorDocsURL + "#services"})
+	}
+
+	return results
+}
+
+type serviceState struct {
+	exists  bool
+	enabled string
+	active  string
+}
+
+func getServiceState(name string, userService bool) serviceState {
+	args := []string{"is-enabled", name}
+	if userService {
+		args = []string{"--user", "is-enabled", name}
+	}
+
+	output, _ := exec.Command("systemctl", args...).Output()
+	enabled := strings.TrimSpace(string(output))
+
+	if enabled == "" || enabled == "not-found" {
+		return serviceState{}
+	}
+
+	state := serviceState{exists: true, enabled: enabled}
+
+	if userService {
+		output, _ = exec.Command("systemctl", "--user", "is-active", name).Output()
+		if active := strings.TrimSpace(string(output)); active != "" && active != "unknown" {
+			state.active = active
+		}
+	}
+
+	return state
+}
+
+func printResults(results []checkResult) {
+	theme := tui.TerminalTheme()
+	styles := tui.NewStyles(theme)
+
+	currentCategory := category(-1)
+	for _, r := range results {
+		if r.category != currentCategory {
+			if currentCategory != -1 {
+				fmt.Println()
+			}
+			fmt.Printf("  %s\n", styles.Bold.Render(r.category.String()))
+			currentCategory = r.category
+		}
+		printResultLine(r, styles)
+	}
+}
+
+func printResultsJSON(results []checkResult) {
+	var ds DoctorStatus
+	for _, r := range results {
+		ds.Add(r)
+	}
+
+	output := doctorOutputJSON{}
+	output.Summary.Errors = ds.ErrorCount()
+	output.Summary.Warnings = ds.WarningCount()
+	output.Summary.OK = ds.OKCount()
+	output.Summary.Info = len(ds.Info)
+
+	output.Results = make([]checkResultJSON, 0, len(results))
+	for _, r := range results {
+		output.Results = append(output.Results, r.toJSON())
+	}
+
+	encoder := json.NewEncoder(os.Stdout)
+	encoder.SetIndent("", "  ")
+	if err := encoder.Encode(output); err != nil {
+		fmt.Fprintf(os.Stderr, "Error encoding JSON: %v\n", err)
+		os.Exit(1)
+	}
+}
+
+func printResultLine(r checkResult, styles tui.Styles) {
+	icon, style := r.status.IconStyle(styles)
+
+	name := r.name
+	nameLen := len(name)
+
+	if nameLen > checkNameMaxLength {
+		name = name[:checkNameMaxLength-1] + "…"
+		nameLen = checkNameMaxLength
+	}
+	dots := strings.Repeat("·", checkNameMaxLength-nameLen)
+
+	fmt.Printf("    %s %s %s %s\n", style.Render(icon), name, styles.Subtle.Render(dots), r.message)
+
+	if doctorVerbose && r.details != "" {
+		fmt.Printf("      %s\n", styles.Subtle.Render("└─ "+r.details))
+	}
+
+	if (r.status == statusError || r.status == statusWarn) && r.url != "" {
+		fmt.Printf("      %s\n", styles.Subtle.Render("→ "+r.url))
+	}
+}
+
+func printSummary(results []checkResult, qsMissingFeatures bool) {
+	theme := tui.TerminalTheme()
+	styles := tui.NewStyles(theme)
+
+	var ds DoctorStatus
+	for _, r := range results {
+		ds.Add(r)
+	}
+
+	fmt.Println()
+	fmt.Printf("  %s\n", styles.Subtle.Render("──────────────────────────────────────"))
+
+	if !ds.HasIssues() {
+		fmt.Printf("  %s\n", styles.Success.Render("✓ All checks passed!"))
+	} else {
+		var parts []string
+
+		if ds.ErrorCount() > 0 {
+			parts = append(parts, styles.Error.Render(fmt.Sprintf("%d error(s)", ds.ErrorCount())))
+		}
+		if ds.WarningCount() > 0 {
+			parts = append(parts, styles.Warning.Render(fmt.Sprintf("%d warning(s)", ds.WarningCount())))
+		}
+		parts = append(parts, styles.Success.Render(fmt.Sprintf("%d ok", ds.OKCount())))
+		fmt.Printf("  %s\n", strings.Join(parts, ", "))
+
+		if qsMissingFeatures {
+			fmt.Println()
+			fmt.Printf("  %s\n", styles.Subtle.Render("→ Consider using quickshell-git for full feature support"))
+		}
+	}
+	fmt.Println()
+}
+
+func formatResultsPlain(results []checkResult) string {
+	var sb strings.Builder
+	sb.WriteString("## CyShell Doctor Report\n\n")
+
+	currentCategory := category(-1)
+	for _, r := range results {
+		if r.category != currentCategory {
+			if currentCategory != -1 {
+				sb.WriteString("\n")
+			}
+			fmt.Fprintf(&sb, "**%s**\n", r.category.String())
+			currentCategory = r.category
+		}
+
+		fmt.Fprintf(&sb, "- [%s] %s: %s\n", r.status, r.name, r.message)
+
+		if doctorVerbose && r.details != "" {
+			fmt.Fprintf(&sb, "  - %s\n", r.details)
+		}
+	}
+
+	var ds DoctorStatus
+	for _, r := range results {
+		ds.Add(r)
+	}
+
+	sb.WriteString("\n---\n")
+	fmt.Fprintf(&sb, "**Summary:** %d error(s), %d warning(s), %d ok\n",
+		ds.ErrorCount(), ds.WarningCount(), ds.OKCount())
+
+	return sb.String()
+}
+
+const (
+	defaultDoctorFontFamily     = "Google Sans Flex"
+	defaultDoctorMonoFontFamily = "Fira Code"
+	defaultDoctorDisplayFamily  = "DM Serif Display"
+)
+
+var bundledFontRelPaths = map[string][]string{
+	"google sans flex": {
+		"DankCommon/assets/fonts/google-sans-flex/GoogleSansFlex.ttf",
+	},
+	"fira code": {
+		"DankCommon/assets/fonts/nerd-fonts/FiraCodeNerdFont-Regular.ttf",
+		"assets/fonts/nerd-fonts/FiraCodeNerdFont-Regular.ttf",
+	},
+	"firacode nerd font": {
+		"DankCommon/assets/fonts/nerd-fonts/FiraCodeNerdFont-Regular.ttf",
+		"assets/fonts/nerd-fonts/FiraCodeNerdFont-Regular.ttf",
+	},
+	"dm serif display": {
+		"DankCommon/assets/fonts/dm-serif-display/DMSerifDisplay-Regular.ttf",
+	},
+	"notable": {
+		"DankCommon/assets/fonts/notable/Notable-Regular.ttf",
+	},
+}
+
+func resolveDoctorShellPath() string {
+	if err := shellApp.ResolveConfig(nil, nil); err == nil && shellApp.ConfigPath() != "" {
+		return shellApp.ConfigPath()
+	}
+	if path, err := config.LocateDMSConfig(); err == nil {
+		return path
+	}
+	return ""
+}
+
+func findBundledFontFile(shellPath, family string) string {
+	if shellPath == "" {
+		return ""
+	}
+	relPaths, ok := bundledFontRelPaths[strings.ToLower(strings.TrimSpace(family))]
+	if !ok {
+		return ""
+	}
+	for _, rel := range relPaths {
+		path := filepath.Join(shellPath, rel)
+		if info, err := os.Stat(path); err == nil && !info.IsDir() {
+			return path
+		}
+	}
+	return ""
+}
+
+func isBundledDefaultFont(family string) bool {
+	_, ok := bundledFontRelPaths[strings.ToLower(strings.TrimSpace(family))]
+	return ok
+}
+
+func fontInFcList(name, cacheLower string) bool {
+	target := strings.ToLower(strings.TrimSpace(name))
+	if target == "" {
+		return false
+	}
+	for line := range strings.SplitSeq(cacheLower, "\n") {
+		for fam := range strings.SplitSeq(strings.TrimSpace(line), ",") {
+			if strings.TrimSpace(fam) == target {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func checkConfiguredFont(label, family, shellPath, fcCache string, fcListAvailable bool, url string) checkResult {
+	if bundled := findBundledFontFile(shellPath, family); bundled != "" {
+		details := "Bundled (Qt FontLoader)"
+		if doctorVerbose {
+			details = bundled
+		}
+		return checkResult{catFonts, label, statusOK, family, details, url}
+	}
+
+	if isBundledDefaultFont(family) {
+		if shellPath == "" {
+			return checkResult{
+				catFonts, label, statusWarn,
+				fmt.Sprintf("'%s' not verified", family),
+				"Could not locate shell config to verify bundled font files.",
+				url,
+			}
+		}
+		return checkResult{
+			catFonts, label, statusWarn,
+			fmt.Sprintf("'%s' bundled file missing", family),
+			"Expected font file missing from shell install. Reinstall CyShell or check the compatibility QML assets.",
+			url,
+		}
+	}
+
+	if !fcListAvailable {
+		return checkResult{
+			catFonts, label, statusWarn,
+			fmt.Sprintf("'%s' not verified", family),
+			"fc-list not installed; cannot verify custom fonts in fontconfig.",
+			url,
+		}
+	}
+
+	if fcCache == "" {
+		return checkResult{
+			catFonts, label, statusWarn,
+			fmt.Sprintf("'%s' not found", family),
+			"Fontconfig cache is empty or unreadable. Try running 'fc-cache -fv'.",
+			url,
+		}
+	}
+
+	if fontInFcList(family, fcCache) {
+		return checkResult{catFonts, label, statusOK, family, "Available via fontconfig", url}
+	}
+
+	return checkResult{
+		catFonts, label, statusWarn,
+		fmt.Sprintf("'%s' not found", family),
+		"Font is not registered with fontconfig. Try running 'fc-cache -fv' or install the font.",
+		url,
+	}
+}
+
+func checkFonts() []checkResult {
+	var results []checkResult
+	url := doctorDocsURL + "#fonts"
+
+	fontFamily := defaultDoctorFontFamily
+	monoFontFamily := defaultDoctorMonoFontFamily
+	displayFontFamily := defaultDoctorDisplayFamily
+
+	if configDir, err := os.UserConfigDir(); err == nil {
+		settingsPath := filepath.Join(configDir, "DankMaterialShell", "settings.json")
+		if data, err := os.ReadFile(settingsPath); err == nil {
+			var settings struct {
+				FontFamily        string `json:"fontFamily"`
+				MonoFontFamily    string `json:"monoFontFamily"`
+				DisplayFontFamily string `json:"displayFontFamily"`
+			}
+			if err := json.Unmarshal(data, &settings); err == nil {
+				if settings.FontFamily != "" {
+					fontFamily = settings.FontFamily
+				}
+				if settings.MonoFontFamily != "" {
+					monoFontFamily = settings.MonoFontFamily
+				}
+				if settings.DisplayFontFamily != "" {
+					displayFontFamily = settings.DisplayFontFamily
+				}
+			}
+		}
+	}
+
+	shellPath := resolveDoctorShellPath()
+	needFontconfig := !isBundledDefaultFont(fontFamily) || !isBundledDefaultFont(monoFontFamily) || !isBundledDefaultFont(displayFontFamily)
+
+	fcListAvailable := utils.CommandExists("fc-list")
+	fcCache := ""
+
+	if needFontconfig {
+		if !fcListAvailable {
+			results = append(results, checkResult{catFonts, "Fontconfig Tools", statusWarn, "fc-list not installed", "Cannot verify custom fonts in fontconfig cache.", url})
+		} else {
+			output, err := exec.Command("fc-list", ":", "family").Output()
+			if err != nil {
+				results = append(results, checkResult{catFonts, "Fontconfig Cache", statusError, "Failed to query font list", "Fontconfig cache query failed. Try running 'fc-cache -fv'.", url})
+			} else {
+				fcCache = strings.ToLower(string(output))
+				if len(strings.TrimSpace(fcCache)) == 0 {
+					results = append(results, checkResult{catFonts, "Fontconfig Cache", statusError, "Cache is empty", "No fonts found in fontconfig cache. Try running 'fc-cache -fv'.", url})
+				}
+			}
+		}
+	}
+
+	results = append(results,
+		checkConfiguredFont("Normal Font", fontFamily, shellPath, fcCache, fcListAvailable, url),
+		checkConfiguredFont("Monospace Font", monoFontFamily, shellPath, fcCache, fcListAvailable, url),
+		checkConfiguredFont("Display Font", displayFontFamily, shellPath, fcCache, fcListAvailable, url),
+	)
+
+	return results
+}

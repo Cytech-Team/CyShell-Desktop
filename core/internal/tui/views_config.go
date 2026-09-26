@@ -1,0 +1,292 @@
+package tui
+
+import (
+	"context"
+	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
+
+	"github.com/AvengeMedia/DankMaterialShell/core/internal/config"
+	"github.com/AvengeMedia/DankMaterialShell/core/internal/deps"
+	"github.com/AvengeMedia/DankMaterialShell/core/internal/distros"
+	tea "github.com/charmbracelet/bubbletea"
+)
+
+type configDeploymentResult struct {
+	results []config.DeploymentResult
+	error   error
+}
+
+type ExistingConfigInfo struct {
+	ConfigType string
+	Path       string
+	Exists     bool
+}
+
+type configCheckResult struct {
+	configs []ExistingConfigInfo
+	error   error
+}
+
+func (m Model) viewDeployingConfigs() string {
+	var b strings.Builder
+
+	b.WriteString(m.renderBanner())
+	b.WriteByte('\n')
+	b.WriteString(m.styles.Title.Render("Deploying Configurations"))
+	b.WriteString("\n\n")
+	fmt.Fprintf(&b, "%s %s", m.spinner.View(), m.styles.Normal.Render("Setting up configuration files..."))
+	b.WriteString("\n\n")
+	b.WriteString(m.styles.Subtle.Render("• Creating backups of existing configurations\n• Deploying optimized configurations\n• Detecting system paths"))
+
+	if len(m.installationLogs) > 0 {
+		b.WriteString("\n\n")
+		m.writeRecentLogs(&b, m.styles.Subtle.Render("Configuration Log:"), 5)
+	}
+
+	return b.String()
+}
+
+func (m Model) updateDeployingConfigsState(msg tea.Msg) (tea.Model, tea.Cmd) {
+	result, ok := msg.(configDeploymentResult)
+	if !ok {
+		return m, m.listenForLogs()
+	}
+
+	if result.error != nil {
+		m.err = result.error
+		m.state = StateError
+		m.isLoading = false
+		return m, nil
+	}
+
+	for _, deployResult := range result.results {
+		if !deployResult.Deployed {
+			continue
+		}
+		logLine := fmt.Sprintf("✓ %s configuration deployed", deployResult.ConfigType)
+		if deployResult.BackupPath != "" {
+			logLine += fmt.Sprintf(" (backup: %s)", deployResult.BackupPath)
+		}
+		m.installationLogs = append(m.installationLogs, logLine)
+	}
+
+	m.state = StateInstallComplete
+	m.isLoading = false
+	return m, nil
+}
+
+func (m Model) deployConfigurations() tea.Cmd {
+	return func() tea.Msg {
+		deployer := config.NewConfigDeployer(m.logChan)
+		results, err := deployer.DeployConfigurationsSelectiveWithReinstallsAndSystemd(
+			context.Background(), m.chosenWindowManager(), m.chosenTerminal(),
+			m.dependencies, m.replaceConfigs, m.reinstallItems, m.useSystemdConfig())
+		return configDeploymentResult{results: results, error: err}
+	}
+}
+
+func (m Model) optionalDepSelected(name string) bool {
+	if m.disabledItems[name] {
+		return false
+	}
+	for _, dep := range m.dependencies {
+		if dep.Name == name {
+			return true
+		}
+	}
+	return false
+}
+
+func (m Model) useSystemdConfig() bool {
+	if m.osInfo == nil {
+		return true
+	}
+	distroConfig, exists := distros.Registry[m.osInfo.Distribution.ID]
+	if !exists {
+		return true
+	}
+	return distroConfig.Family != distros.FamilyVoid
+}
+
+func (m Model) viewConfigConfirmation() string {
+	var b strings.Builder
+
+	b.WriteString(m.renderBanner())
+	b.WriteByte('\n')
+	b.WriteString(m.styles.Title.Render("Configuration Deployment"))
+	b.WriteString("\n\n")
+
+	if len(m.existingConfigs) == 0 {
+		b.WriteString(m.styles.Normal.Render("No existing configurations found. Proceeding with deployment..."))
+		return b.String()
+	}
+
+	for i, cfg := range m.existingConfigs {
+		if !cfg.Exists {
+			continue
+		}
+
+		marker, status := "🔄 ", m.styles.Warning.Render("Will replace")
+		if !m.replaceConfigs[cfg.ConfigType] {
+			marker, status = "✓ ", m.styles.Success.Render("Keep existing")
+		}
+
+		cursor, style := "  ", m.styles.Normal
+		if i == m.selectedConfig {
+			cursor, style = "▶ ", m.styles.SelectedOption
+		}
+
+		b.WriteString(style.Render(fmt.Sprintf("%s%s%-15s %s\n    %s", cursor, marker, cfg.ConfigType, status, cfg.Path)))
+		b.WriteString("\n\n")
+	}
+
+	b.WriteString(m.styles.Success.Render("✓ Replaced configurations will be backed up with timestamp"))
+	b.WriteString("\n\n")
+
+	if note := m.configReplacementNote(); note != "" {
+		b.WriteString(m.styles.Subtle.Render(note))
+		b.WriteString("\n\n")
+	}
+
+	b.WriteString(m.styles.Subtle.Render("↑/↓: Navigate, Space: Toggle replace/keep, Enter: Continue"))
+	return b.String()
+}
+
+func (m Model) configReplacementNote() string {
+	if m.selectedConfig < 0 || m.selectedConfig >= len(m.existingConfigs) {
+		return ""
+	}
+	configInfo := m.existingConfigs[m.selectedConfig]
+	if !configInfo.Exists {
+		return ""
+	}
+
+	switch configInfo.ConfigType {
+	case "Niri":
+		if m.useSystemdConfig() {
+			return "Replacing Niri writes the CyShell Niri template and uses the user systemd dms service for shell autostart."
+		}
+		return `Replacing Niri writes the CyShell Niri template and starts CyShell from Niri with spawn-at-startup "dms" "run".`
+	case "Hyprland":
+		if m.useSystemdConfig() {
+			return "Replacing Hyprland writes the CyShell Lua template and uses the user systemd dms service for shell autostart."
+		}
+		return `Replacing Hyprland writes the CyShell Lua template and starts CyShell from Hyprland with hl.exec_cmd("dms run").`
+	case "Mango":
+		return "Replacing Mango writes the CyShell Mango template and starts CyShell from Mango with exec-once=dms run."
+	case "Ghostty":
+		return "Replacing Ghostty writes the CyShell terminal defaults and theme include."
+	case "Kitty":
+		return "Replacing Kitty writes the CyShell terminal defaults, theme include, and tab styling."
+	case "Alacritty":
+		return "Replacing Alacritty writes the CyShell terminal defaults and theme import."
+	default:
+		return ""
+	}
+}
+
+func (m Model) updateConfigConfirmationState(msg tea.Msg) (tea.Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	case configCheckResult:
+		return m.applyConfigCheck(msg)
+
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "up":
+			m.selectedConfig = m.nearestExistingConfig(m.selectedConfig, -1)
+		case "down":
+			m.selectedConfig = m.nearestExistingConfig(m.selectedConfig, 1)
+		case " ":
+			if m.selectedConfig < len(m.existingConfigs) && m.existingConfigs[m.selectedConfig].Exists {
+				configType := m.existingConfigs[m.selectedConfig].ConfigType
+				m.replaceConfigs[configType] = !m.replaceConfigs[configType]
+			}
+		case "enter":
+			m.state = StateDeployingConfigs
+			return m, m.deployConfigurations()
+		}
+	}
+	return m, nil
+}
+
+func (m Model) applyConfigCheck(result configCheckResult) (tea.Model, tea.Cmd) {
+	if result.error != nil {
+		m.err = result.error
+		m.state = StateError
+		return m, nil
+	}
+
+	m.existingConfigs = result.configs
+
+	hasExisting := false
+	for i, cfg := range result.configs {
+		if !cfg.Exists {
+			continue
+		}
+		m.replaceConfigs[cfg.ConfigType] = true
+		if !hasExisting {
+			m.selectedConfig = i
+		}
+		hasExisting = true
+	}
+
+	if !hasExisting {
+		m.state = StateDeployingConfigs
+		return m, m.deployConfigurations()
+	}
+	return m, nil
+}
+
+func (m Model) nearestExistingConfig(from, direction int) int {
+	for i := from + direction; i >= 0 && i < len(m.existingConfigs); i += direction {
+		if m.existingConfigs[i].Exists {
+			return i
+		}
+	}
+	return from
+}
+
+func statConfig(configType string, paths ...string) ExistingConfigInfo {
+	for _, path := range paths {
+		if _, err := os.Stat(path); err == nil {
+			return ExistingConfigInfo{ConfigType: configType, Path: path, Exists: true}
+		}
+	}
+	return ExistingConfigInfo{ConfigType: configType, Path: paths[0]}
+}
+
+func (m Model) wmConfigInfo() ExistingConfigInfo {
+	configDir := filepath.Join(os.Getenv("HOME"), ".config")
+	switch m.chosenWindowManager() {
+	case deps.WindowManagerNiri:
+		return statConfig("Niri", filepath.Join(configDir, "niri", "config.kdl"))
+	case deps.WindowManagerMango:
+		return statConfig("Mango",
+			filepath.Join(configDir, "mango", "config.conf"),
+			filepath.Join(configDir, "mango", "mango.conf"))
+	default:
+		return statConfig("Hyprland",
+			filepath.Join(configDir, "hypr", "hyprland.lua"),
+			filepath.Join(configDir, "hypr", "hyprland.conf"))
+	}
+}
+
+func (m Model) terminalConfigInfo() ExistingConfigInfo {
+	configDir := filepath.Join(os.Getenv("HOME"), ".config")
+	switch m.chosenTerminal() {
+	case deps.TerminalGhostty:
+		return statConfig("Ghostty", filepath.Join(configDir, "ghostty", "config"))
+	case deps.TerminalKitty:
+		return statConfig("Kitty", filepath.Join(configDir, "kitty", "kitty.conf"))
+	default:
+		return statConfig("Alacritty", filepath.Join(configDir, "alacritty", "alacritty.toml"))
+	}
+}
+
+func (m Model) checkExistingConfigurations() tea.Cmd {
+	return func() tea.Msg {
+		return configCheckResult{configs: []ExistingConfigInfo{m.wmConfigInfo(), m.terminalConfigInfo()}}
+	}
+}

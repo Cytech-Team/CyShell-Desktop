@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=CyShell Desktop
+GenericName=Desktop Shell
+Comment=Agent-native desktop shell for Wayland compositors
+Exec=cyshell run
+Icon=com.danklinux.dms
+Terminal=false
+NoDisplay=true
+StartupNotify=false
+Categories=Utility;
