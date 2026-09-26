@@ -4,9 +4,9 @@
   <img src="quickshell/assets/cyshell.png" width="180" alt="CyShell Desktop logo">
 </p>
 
-**CyShell Desktop** is an agent-native Wayland desktop shell by **Cytech Team Development**, built for Labwc and designed around deep desktop integration, semantic control, and safe automation.
+**CyShell Desktop** is an agent-native Wayland desktop shell by **Cytech Team Development**, built exclusively for **Labwc** and designed around deep desktop integration, semantic control, and safe automation.
 
-CyShell is not just a desktop UI. The shell exposes the same structured control surface to users, agents, MCP clients, and internal automation, allowing the desktop itself to act as a programmable system layer.
+CyShell is not just a desktop UI. The shell exposes the same structured control surface to users, agents, MCP clients, and internal automation, allowing the desktop itself to act as a programmable system layer. CyShell intentionally targets one compositor: **Labwc**. Niri, Hyprland, Sway, Mango and other compositor compatibility layers are not supported.
 
 ## Highlights
 
@@ -25,12 +25,13 @@ CyShell is not just a desktop UI. The shell exposes the same structured control 
 ## Architecture
 
 ```text
-CyShell Desktop
-├── Quickshell UI
-├── CyShell Core (Go)
-├── CyCom runtime
-├── cyshell-mcp
-└── CyShell Greeter
+Labwc
+└── CyShell Desktop
+    ├── Quickshell UI
+    ├── CyShell Core (Go)
+    ├── CyCom runtime
+    ├── cyshell-mcp
+    └── CyShell Greeter
 ```
 
 CyShell keeps the UI, desktop services, semantic APIs, and agent runtime connected through one system instead of treating automation as an external layer bolted onto the desktop.

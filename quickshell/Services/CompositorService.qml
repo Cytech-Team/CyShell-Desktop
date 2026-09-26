@@ -16,16 +16,18 @@ Singleton {
     id: root
     readonly property var log: Log.scoped("CompositorService")
 
-    property bool isHyprland: false
-    property bool isNiri: false
-    property bool isMango: false
-    property bool isSway: false
-    property bool isScroll: false
-    property bool isMiracle: false
-    property bool isLabwc: false
-    property bool isAqueous: false
-    property string compositor: "unknown"
-    property bool compositorDetected: false
+    // CyShell is Labwc-only. Keep legacy flags as read-only false values until
+    // compositor-specific dead code is fully removed from inherited modules.
+    readonly property bool isHyprland: false
+    readonly property bool isNiri: false
+    readonly property bool isMango: false
+    readonly property bool isSway: false
+    readonly property bool isScroll: false
+    readonly property bool isMiracle: false
+    readonly property bool isLabwc: true
+    readonly property bool isAqueous: false
+    readonly property string compositor: "labwc"
+    readonly property bool compositorDetected: true
     property bool outputPowerAvailable: false
     readonly property bool genericPowerBackend: compositorDetected && !isNiri && !isHyprland && !isMango && !isSway && !isScroll && !isMiracle && !isLabwc
     onGenericPowerBackendChanged: probeOutputPower()
@@ -64,8 +66,8 @@ Singleton {
             root.probeOutputPower();
         }
     }
-    readonly property bool frameCompositorLayoutReady: (!isNiri || NiriService.frameLayoutReady) && (!isHyprland || HyprlandService.frameLayoutReady)
-    readonly property bool useHyprlandFocusGrab: isHyprland && Quickshell.env("DMS_HYPRLAND_EXCLUSIVE_FOCUS") !== "1"
+    readonly property bool frameCompositorLayoutReady: true
+    readonly property bool useHyprlandFocusGrab: false
 
     readonly property string hyprlandSignature: Quickshell.env("HYPRLAND_INSTANCE_SIGNATURE")
     readonly property string niriSocket: Quickshell.env("NIRI_SOCKET")
@@ -73,8 +75,8 @@ Singleton {
     readonly property string miracleSocket: Quickshell.env("MIRACLESOCK")
     readonly property string labwcPid: Quickshell.env("LABWC_PID")
     readonly property string mangoSignature: Quickshell.env("MANGO_INSTANCE_SIGNATURE")
-    property bool useNiriSorting: isNiri && NiriService
-    property bool useMangoSorting: isMango && MangoService
+    readonly property bool useNiriSorting: false
+    readonly property bool useMangoSorting: false
 
     property var randrScales: ({})
     property bool randrReady: false
@@ -137,59 +139,23 @@ Singleton {
     readonly property bool workspaceReorderSupported: isNiri
 
     readonly property bool isKnownCompositor: configKey !== ""
-    readonly property bool supportsWindowRules: isNiri || isHyprland || isMango
-    readonly property bool supportsLayoutConfig: isNiri || isHyprland || isMango
-    readonly property bool supportsCursorConfig: isNiri || isHyprland || isMango
-    readonly property bool supportsDisplayConfig: isNiri || isHyprland || isMango || isAqueous
-    readonly property bool supportsBarAutoHideReveal: isNiri || isHyprland || isMango
-    readonly property bool supportsWorkspaces: isNiri || isHyprland || isMango || isAqueous || isLabwc
+    readonly property bool supportsWindowRules: false
+    readonly property bool supportsLayoutConfig: false
+    readonly property bool supportsCursorConfig: false
+    readonly property bool supportsDisplayConfig: false
+    readonly property bool supportsBarAutoHideReveal: false
+    readonly property bool supportsWorkspaces: ExtWorkspaceService.available
     // compositors where a workspace that does not exist yet is still a valid switch target
     readonly property bool supportsPersistentWorkspaces: isHyprland || isMango || isSway || isScroll || isMiracle
-    readonly property bool supportsWorkspaceUrgency: isKnownCompositor && !isLabwc
-    readonly property bool supportsWorkspaceFollowFocus: isKnownCompositor && !isLabwc
-    readonly property bool supportsSmartDock: isNiri || isHyprland || isMango || isAqueous
-    readonly property bool supportsNativeOverview: isNiri || isAqueous
-    readonly property bool supportsPointerConfig: isNiri || isMango
-    readonly property bool supportsInputConfig: isNiri
+    readonly property bool supportsWorkspaceUrgency: false
+    readonly property bool supportsWorkspaceFollowFocus: false
+    readonly property bool supportsSmartDock: false
+    readonly property bool supportsNativeOverview: false
+    readonly property bool supportsPointerConfig: false
+    readonly property bool supportsInputConfig: false
 
-    readonly property string displayName: {
-        switch (compositor) {
-        case "niri":
-            return "Niri";
-        case "hyprland":
-            return "Hyprland";
-        case "mango":
-            return "MangoWC";
-        case "sway":
-            return "Sway";
-        case "scroll":
-            return "Scroll";
-        case "miracle":
-            return "Miracle WM";
-        case "labwc":
-            return "Labwc";
-        case "aqueous":
-            return "Aqueous";
-        default:
-            return "";
-        }
-    }
-
-    readonly property string configKey: {
-        switch (compositor) {
-        case "niri":
-        case "hyprland":
-        case "mango":
-        case "sway":
-        case "scroll":
-        case "miracle":
-        case "labwc":
-        case "aqueous":
-            return compositor;
-        default:
-            return "";
-        }
-    }
+    readonly property string displayName: "Labwc"
+    readonly property string configKey: "labwc"
 
     property var _workspaceRecords: ({})
 
@@ -1383,247 +1349,32 @@ Singleton {
         interval: 100
         running: true
         repeat: false
-        onTriggered: {
-            detectCompositor();
-            compositorDetected = true;
-            Qt.callLater(() => {
-                NiriService.generateNiriLayoutConfig();
-                HyprlandService.generateLayoutConfig();
-                MangoService.generateLayoutConfig();
-            });
-        }
+        onTriggered: verifyLabwcSession()
     }
 
-    // Primary detection asks the kernel which process owns the $WAYLAND_DISPLAY
-    // socket — the compositor quickshell is actually connected to. Env vars like
-    // HYPRLAND_INSTANCE_SIGNATURE / MANGO_INSTANCE_SIGNATURE can leak into the
-    // systemd user environment from previous sessions and lie. Unset
-    // WAYLAND_DISPLAY falls back to "wayland-0", mirroring wl_display_connect.
-    // /proc/net/unix: field 6 is state (01 = listening), 7 inode, 8 bound path.
-    // The BSDs have no /proc/net; sockstat(1) -l -u lists listening unix
-    // sockets as USER COMMAND PID FD PROTO LOCAL-ADDRESS.
-    function detectCompositor() {
-        const procScript = 'sock="${WAYLAND_DISPLAY:-wayland-0}"; case "$sock" in /*) ;; *) sock="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/$sock" ;; esac; inode=$(awk -v p="$sock" \'$8 == p && $6 == 1 {print $7; exit}\' /proc/net/unix); [ -n "$inode" ] || exit 1; fd=$(find /proc/[0-9]*/fd/ -mindepth 1 -maxdepth 1 -lname "socket:\\[$inode\\]" 2>/dev/null | head -n1); [ -n "$fd" ] || exit 1; pid="${fd#/proc/}"; cat "/proc/${pid%%/*}/comm"';
-        const sockstatScript = 'sock="${WAYLAND_DISPLAY:-wayland-0}"; case "$sock" in /*) ;; *) sock="${XDG_RUNTIME_DIR:-/var/run/user/$(id -u)}/$sock" ;; esac; sockstat -l -u | awk -v p="$sock" \'$6 == p {print $2; exit}\'';
-        const script = Qt.platform.os === "unix" ? sockstatScript : procScript;
-        Proc.runCommand("waylandSocketOwner", ["sh", "-c", script], (output, exitCode) => {
-            const comm = (exitCode === 0 && output) ? output.trim().toLowerCase() : "";
-            const name = _compositorNameFromComm(comm);
-            if (name) {
-                _applyCompositor(name);
-                log.info("Detected", name, "from Wayland socket owner:", comm);
-                return;
-            }
-            if (comm)
-                log.info("Unrecognized Wayland socket owner:", comm, "- falling back to env detection");
-            _detectFromEnv(0);
-        }, 0, 3000);
-    }
-
-    function _compositorNameFromComm(comm) {
-        switch (comm) {
-        case "niri":
-            return "niri";
-        case "hyprland":
-            return "hyprland";
-        case "sway":
-            return "sway";
-        case "scroll":
-            return "scroll";
-        case "mango":
-            return "mango";
-        case "miracle-wm":
-            return "miracle";
-        case "labwc":
-            return "labwc";
-        case "aqueous":
-            return "aqueous";
-        default:
-            return "";
-        }
-    }
-
-    function _applyCompositor(name) {
-        isHyprland = name === "hyprland";
-        isNiri = name === "niri";
-        isMango = name === "mango";
-        isSway = name === "sway";
-        isScroll = name === "scroll";
-        isMiracle = name === "miracle";
-        isLabwc = name === "labwc";
-        isAqueous = name === "aqueous";
-        compositor = name;
-        compositorDetected = true;
-        if (isNiri)
-            NiriService.generateNiriBlurrule();
-        Qt.callLater(applyDmsWindowFloatingRule);
-    }
-
-    function applyDmsWindowFloatingRule() {
-        if (!compositorDetected || (!isNiri && !isHyprland && !isMango))
-            return;
-        const floating = typeof SettingsData === "undefined" || (SettingsData.dmsWindowsFloating ?? true);
-        if (!floating) {
-            Proc.runCommand("dms-windowrule-float-remove", [Proc.dmsBin, "config", "windowrules", "remove", compositor, "dms-floating-windows"], (output, exitCode) => {
-                if (exitCode !== 0) {
-                    log.warn("failed to remove CyShell floating window rule", exitCode, output);
-                    return;
-                }
-                if (isMango)
-                    MangoService.reloadConfig();
-            });
+    // CyShell intentionally supports one compositor: Labwc. The shell still
+    // verifies the session so launching it under another compositor fails
+    // visibly instead of silently selecting an inherited compatibility path.
+    function verifyLabwcSession() {
+        const pid = Quickshell.env("LABWC_PID") || "";
+        const desktop = String(Quickshell.env("XDG_CURRENT_DESKTOP") || "").toLowerCase();
+        if (pid || desktop.includes("labwc")) {
+            log.info("CyShell Labwc session detected");
             return;
         }
-        const ruleJson = JSON.stringify({
-            "id": "dms-floating-windows",
-            "name": "CyShell Floating Windows",
-            "enabled": true,
-            "matchCriteria": {
-                "appId": "^com.danklinux.dms$"
-            },
-            "actions": {
-                "openFloating": true
-            }
-        });
-        Proc.runCommand("dms-windowrule-float-add", [Proc.dmsBin, "config", "windowrules", "add", compositor, ruleJson], (output, exitCode) => {
-            if (exitCode !== 0) {
-                log.warn("failed to add CyShell floating window rule", exitCode, output);
-                return;
-            }
-            if (isNiri)
-                NiriService.validate();
-            if (isMango)
-                MangoService.reloadConfig();
-        });
-    }
-
-    // Fallback when the socket owner can't be resolved (no ss, unrecognized
-    // comm). Same priority order as before, but every candidate must prove
-    // liveness; a dead socket/PID falls through to the next candidate instead
-    // of winning on a stale env var.
-    function _envDetectionCandidates() {
-        const runtimeDir = Quickshell.env("XDG_RUNTIME_DIR") || "";
-        const aqueousSocket = Quickshell.env("AQUEOUS_SOCKET") || "";
-        return [
-            {
-                name: "aqueous",
-                present: !!aqueousSocket,
-                test: ["test", "-S", aqueousSocket],
-                detail: "AQUEOUS_SOCKET " + aqueousSocket
-            },
-            {
-                name: "mango",
-                present: !!mangoSignature,
-                test: ["test", "-S", mangoSignature],
-                detail: "MANGO_INSTANCE_SIGNATURE " + mangoSignature
-            },
-            {
-                name: "niri",
-                present: !!niriSocket,
-                test: ["test", "-S", niriSocket],
-                detail: "NIRI_SOCKET " + niriSocket
-            },
-            {
-                name: "miracle",
-                present: !!miracleSocket,
-                test: ["test", "-S", miracleSocket],
-                detail: "MIRACLESOCK " + miracleSocket
-            },
-            {
-                name: "sway",
-                present: !!swaySocket,
-                test: ["test", "-S", swaySocket],
-                resolve: () => {
-                    const desktop = String(Quickshell.env("XDG_CURRENT_DESKTOP") || "").toLowerCase();
-                    return desktop.includes("sway") ? "sway" : "scroll";
-                },
-                detail: "SWAYSOCK " + swaySocket
-            },
-            {
-                name: "labwc",
-                present: !!labwcPid,
-                test: ["sh", "-c", "[ \"$(ps -p \"$LABWC_PID\" -o comm= 2>/dev/null)\" = labwc ]"],
-                detail: "LABWC_PID " + labwcPid
-            },
-            {
-                name: "hyprland",
-                present: !!hyprlandSignature,
-                test: ["test", "-S", runtimeDir + "/hypr/" + hyprlandSignature + "/.socket.sock"],
-                detail: "HYPRLAND_INSTANCE_SIGNATURE " + hyprlandSignature
-            }
-        ];
-    }
-
-    function _detectFromEnv(index) {
-        const candidates = _envDetectionCandidates();
-        for (let i = index; i < candidates.length; i++) {
-            const c = candidates[i];
-            if (!c.present)
-                continue;
-            const next = i + 1;
-            Proc.runCommand(c.name + "SocketCheck", c.test, (output, exitCode) => {
-                if (exitCode !== 0) {
-                    log.warn(c.detail, "is set but not alive, skipping");
-                    _detectFromEnv(next);
-                    return;
-                }
-                const name = c.resolve ? c.resolve() : c.name;
-                _applyCompositor(name);
-                log.info("Detected", name, "via", c.detail);
-            }, 0);
-            return;
-        }
-        _applyCompositor("unknown");
-        log.warn("No compositor detected");
+        log.error("Unsupported compositor. CyShell requires Labwc.");
+        ToastService.showError(I18n.tr("Unsupported compositor"), I18n.tr("CyShell requires Labwc."));
+        Qt.callLater(() => Qt.quit());
     }
 
     function powerOffMonitors() {
-        if (isNiri)
-            return NiriService.powerOffMonitors();
-        if (isHyprland)
-            return HyprlandService.dpmsOff();
-        if (isMango)
-            return MangoService.powerOffMonitors();
-        if (isSway || isScroll || isMiracle) {
-            try {
-                I3.dispatch("output * dpms off");
-            } catch (_) {}
-            return;
-        }
-        if (isLabwc) {
-            Quickshell.execDetached(["dms", "dpms", "off"]);
-            return;
-        }
-        if (outputPowerAvailable) {
-            setOutputPower(false);
-            return;
-        }
-        log.warn("Cannot power off monitors, unknown compositor");
+        Quickshell.execDetached([Proc.dmsBin, "dpms", "off"]);
     }
 
     function powerOnMonitors() {
-        if (isNiri)
-            return NiriService.powerOnMonitors();
-        if (isHyprland)
-            return HyprlandService.dpmsOn();
-        if (isMango)
-            return MangoService.powerOnMonitors();
-        if (isSway || isScroll || isMiracle) {
-            try {
-                I3.dispatch("output * dpms on");
-            } catch (_) {}
-            return;
-        }
-        if (isLabwc) {
-            Quickshell.execDetached(["dms", "dpms", "on"]);
-            return;
-        }
-        if (outputPowerAvailable) {
-            setOutputPower(true);
-            return;
-        }
-        log.warn("Cannot power on monitors, unknown compositor");
+        Quickshell.execDetached([Proc.dmsBin, "dpms", "on"]);
     }
+
     function escapeSwayWorkspaceName(name) {
         return String(name ?? "").replace(/\\/g, "\\\\").replace(/"/g, "\\\"");
     }

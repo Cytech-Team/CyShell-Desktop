@@ -30,9 +30,10 @@ This repository is forked from DankMaterialShell (DMS) to accelerate development
    - Components have stable IDs and API versions.
    - Updates use compatibility checks and migration paths; user overrides should not be silently overwritten.
 
-6. **Compositor abstraction**
-   - Labwc is the first-class development target.
-   - Compositor-specific logic belongs behind a backend API so Hyprland, Niri, Sway, and others can be added later.
+6. **Labwc-only compositor model**
+   - Labwc is the only supported compositor for CyShell Desktop.
+   - Niri, Hyprland, Sway, Mango and other inherited compositor backends are outside the CyShell compatibility contract.
+   - Desktop features may use Labwc and standard Wayland protocols directly instead of maintaining a multi-compositor abstraction.
 
 7. **Open development**
    - Preserve upstream attribution and license requirements.

@@ -34,6 +34,26 @@ run_engine_subcommand() {
   exec "$CYSHELL_ENGINE" --shell-dir "$CYSHELL_UI" "$@"
 }
 
+# CyShell supports Labwc only. Reject inherited compositor options before they
+# reach the upstream-compatible greeter engine.
+prev=""
+for arg in "$@"; do
+  if [[ "$prev" == "--command" && "$arg" != "labwc" ]]; then
+    echo "CyShell Greeter supports Labwc only (got: $arg)." >&2
+    exit 2
+  fi
+  case "$arg" in
+    --command=*)
+      compositor="${arg#--command=}"
+      if [[ "$compositor" != "labwc" ]]; then
+        echo "CyShell Greeter supports Labwc only (got: $compositor)." >&2
+        exit 2
+      fi
+      ;;
+  esac
+  prev="$arg"
+done
+
 cmd="${1:-}"
 case "$cmd" in
   status)
@@ -110,7 +130,21 @@ case "$cmd" in
     fi
     exit $rc
     ;;
-  completion|help|install|kill|restart|run|uninstall|version)
+  run)
+    shift
+    has_command=0
+    prev=""
+    for arg in "$@"; do
+      [[ "$prev" == "--command" || "$arg" == --command=* ]] && has_command=1
+      prev="$arg"
+    done
+    if [[ $has_command -eq 0 ]]; then
+      run_engine_subcommand run --command labwc "$@"
+    else
+      run_engine_subcommand run "$@"
+    fi
+    ;;
+  completion|help|install|kill|restart|uninstall|version)
     run_engine_subcommand "$@"
     ;;
   *)
