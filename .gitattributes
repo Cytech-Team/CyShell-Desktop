@@ -1,0 +1,14 @@
+# GitHub Linguist configuration for CyShell Desktop
+#
+# The embedded shell tree is generated from the canonical quickshell/ source.
+# Exclude it from repository language statistics so QML/JS are not counted twice.
+core/internal/shellembed/dist/** linguist-generated=true
+
+# Compiled Qt shader blobs and packaged/generated artifacts are not source languages.
+**/*.qsb binary linguist-detectable=false
+**/*.wasm binary linguist-detectable=false
+
+# Keep the canonical source trees detectable and classified normally.
+quickshell/** linguist-generated=false
+core/**/*.go linguist-generated=false
+scripts/** linguist-generated=false
