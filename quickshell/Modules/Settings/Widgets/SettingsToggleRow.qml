@@ -32,7 +32,7 @@ SettingsRow {
         toggled(!checked);
     }
 
-    DankToggle {
+    CyToggle {
         hideText: true
         text: root.text
         description: root.description

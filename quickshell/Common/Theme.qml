@@ -3,14 +3,14 @@ pragma ComponentBehavior: Bound
 
 import QtCore
 import QtQuick
-import "../DankCommon/Common/Shape.js" as Shape
-import "../DankCommon/Common/Surface.js" as Surface
-import "../DankCommon/Common/Contrast.js" as Contrast
-import "../DankCommon/Common/Accents.js" as Accents
+import "../CyCommon/Common/Shape.js" as Shape
+import "../CyCommon/Common/Surface.js" as Surface
+import "../CyCommon/Common/Contrast.js" as Contrast
+import "../CyCommon/Common/Accents.js" as Accents
 import Quickshell
 import Quickshell.Io
 import qs.Common
-import qs.DankCommon.Common as DankCommon
+import qs.CyCommon.Common as CyCommon
 import qs.Services
 import qs.Modules.Greetd
 import "StockThemes.js" as StockThemes
@@ -20,8 +20,8 @@ Singleton {
     id: root
     readonly property var log: Log.scoped("Theme")
 
-    readonly property string stateDir: Paths.strip(StandardPaths.writableLocation(StandardPaths.GenericCacheLocation).toString()) + "/DankMaterialShell"
-    readonly property bool envDisableMatugen: Quickshell.env("DMS_DISABLE_MATUGEN") === "1" || Quickshell.env("DMS_DISABLE_MATUGEN") === "true"
+    readonly property string stateDir: Paths.strip(StandardPaths.writableLocation(StandardPaths.GenericCacheLocation).toString()) + "/CyShell"
+    readonly property bool envDisableMatugen: Quickshell.env("CYSHELL_DISABLE_MATUGEN") === "1" || Quickshell.env("CYSHELL_DISABLE_MATUGEN") === "true"
     readonly property string defaultFontFamily: "Google Sans Flex"
     readonly property string defaultMonoFontFamily: "Fira Code"
     readonly property string defaultDisplayFontFamily: "DM Serif Display"
@@ -102,6 +102,9 @@ Singleton {
         return SessionData.wallpaperPath;
     }
 
+    readonly property string uiRole: Quickshell.env("CYSHELL_UI_ROLE") || ""
+    readonly property bool globalOwner: Quickshell.env("CYSHELL_GLOBAL_OWNER") === "1" || uiRole.length === 0
+    readonly property bool secondaryUiProcess: !globalOwner
     property bool matugenAvailable: false
     property var workerRunning: false
     property var pendingThemeRequest: null
@@ -160,7 +163,7 @@ Singleton {
     Component.onCompleted: {
         Quickshell.execDetached(["mkdir", "-p", stateDir]);
         Proc.runCommand("matugenCheck", ["sh", "-c", "command -v matugen"], (output, code) => {
-            matugenAvailable = (code === 0) && !envDisableMatugen;
+            matugenAvailable = (code === 0) && !envDisableMatugen && !root.secondaryUiProcess;
             const isGreeterMode = (typeof SessionData !== "undefined" && SessionData.isGreeterMode);
 
             if (!matugenAvailable || isGreeterMode) {
@@ -204,12 +207,14 @@ Singleton {
         }, 0);
         if (typeof SessionData !== "undefined") {
             SessionData.isLightModeChanged.connect(root.onLightModeChanged);
+            Qt.callLater(() => root.syncSystemAppearance(SessionData.isLightMode ? "light" : "dark"));
         }
 
         if (typeof SettingsData !== "undefined" && SettingsData.currentThemeName) {
             switchTheme(SettingsData.currentThemeName, false, false);
             const currentIsLight = (typeof SessionData !== "undefined") ? SessionData.isLightMode : false;
-            SettingsData.updateCosmicThemeMode(currentIsLight);
+            if (!root.secondaryUiProcess)
+                SettingsData.updateCosmicThemeMode(currentIsLight);
         }
     }
 
@@ -1185,14 +1190,14 @@ Singleton {
 
     property string fontFamily: {
         if (typeof SettingsData === "undefined")
-            return DankCommon.Fonts.sans;
+            return CyCommon.Fonts.sans;
         if (SettingsData.isGreeterMode && SettingsData.lockScreenFontFamily !== "")
             return resolvedFontFamily(SettingsData.lockScreenFontFamily);
         return resolvedFontFamily(SettingsData.fontFamily);
     }
 
-    property string monoFontFamily: typeof SettingsData !== "undefined" ? resolvedMonoFontFamily(SettingsData.monoFontFamily) : DankCommon.Fonts.mono
-    property string displayFontFamily: typeof SettingsData !== "undefined" ? resolvedDisplayFontFamily(SettingsData.displayFontFamily) : DankCommon.Fonts.display
+    property string monoFontFamily: typeof SettingsData !== "undefined" ? resolvedMonoFontFamily(SettingsData.monoFontFamily) : CyCommon.Fonts.mono
+    property string displayFontFamily: typeof SettingsData !== "undefined" ? resolvedDisplayFontFamily(SettingsData.displayFontFamily) : CyCommon.Fonts.display
 
     readonly property var fontChoices: [
         {
@@ -1203,26 +1208,26 @@ Singleton {
             "value": "display",
             "text": I18n.tr("Display", "Display font role option")
         }
-    ].concat(DankCommon.Fonts.bundledFamilies.map(family => ({
+    ].concat(CyCommon.Fonts.bundledFamilies.map(family => ({
                 "value": family,
                 "text": family
             })))
 
     function resolvedFontFamily(family) {
         if (family === defaultFontFamily)
-            return DankCommon.Fonts.sans;
+            return CyCommon.Fonts.sans;
         return family;
     }
 
     function resolvedMonoFontFamily(family) {
         if (family === defaultMonoFontFamily)
-            return DankCommon.Fonts.mono;
+            return CyCommon.Fonts.mono;
         return family;
     }
 
     function resolvedDisplayFontFamily(family) {
         if (family === defaultDisplayFontFamily)
-            return DankCommon.Fonts.display;
+            return CyCommon.Fonts.display;
         return family;
     }
 
@@ -1725,13 +1730,29 @@ Singleton {
         }
     }
 
+    function syncSystemAppearance(mode) {
+        if (root.secondaryUiProcess)
+            return;
+        const iconTheme = (typeof SettingsData !== "undefined" && SettingsData.iconTheme) ? SettingsData.iconTheme : "System Default";
+        Quickshell.execDetached([
+            "cyshell-theme-sync",
+            "--mode", mode,
+            "--icon-theme", iconTheme,
+            "--config-dir", configDir
+        ]);
+    }
+
     function onLightModeChanged() {
+        const mode = (typeof SessionData !== "undefined" && SessionData.isLightMode) ? "light" : "dark";
+        syncSystemAppearance(mode);
         if (currentTheme === "custom" && customThemeFileView.path) {
             customThemeFileView.reload();
         }
     }
 
     function setDesiredTheme(kind, value, isLight, iconTheme, matugenType, stockColors) {
+        if (root.secondaryUiProcess)
+            return;
         if (!matugenAvailable) {
             log.warn("matugen not available or disabled - cannot set system theme");
             return;
@@ -1766,7 +1787,7 @@ Singleton {
         log.debug("Starting matugen worker");
         workerRunning = true;
 
-        const args = ["dms", "matugen", "queue", "--state-dir", stateDir, "--shell-dir", shellDir, "--config-dir", configDir, "--kind", desired.kind, "--value", desired.value, "--mode", desired.mode, "--icon-theme", desired.iconTheme, "--matugen-type", desired.matugenType,];
+        const args = [Proc.cyshellBin, "matugen", "queue", "--state-dir", stateDir, "--shell-dir", shellDir, "--config-dir", configDir, "--kind", desired.kind, "--value", desired.value, "--mode", desired.mode, "--icon-theme", desired.iconTheme, "--matugen-type", desired.matugenType,];
 
         if (!desired.runUserTemplates) {
             args.push("--run-user-templates=false");
@@ -1783,8 +1804,8 @@ Singleton {
         if (typeof SettingsData !== "undefined" && SettingsData.matugenContrast !== 0) {
             args.push("--contrast", SettingsData.matugenContrast.toString());
         }
-        // Only sent when it would change something. A shell newer than the dms
-        // binary is a supported setup (DMS_SHELL_DIR / -c), and an older binary
+        // Only sent when it would change something. A shell newer than the CyShell backend
+        // binary is a supported setup (CYSHELL_SHELL_DIR / -c), and an older binary
         // exits with "unknown flag: --source-mode" rather than ignoring it, so
         // the default must not put the flag on the command line at all.
         const seedColor = (typeof SettingsData !== "undefined" && !stockColors) ? SettingsData.matugenSeedColor : "";
@@ -1864,7 +1885,7 @@ Singleton {
 
     function generateSystemThemesFromCurrentTheme() {
         const isGreeterMode = (typeof SessionData !== "undefined" && SessionData.isGreeterMode);
-        if (!matugenAvailable || isGreeterMode)
+        if (root.secondaryUiProcess || !matugenAvailable || isGreeterMode)
             return;
 
         _lastGenerateMs = Date.now();
@@ -2122,7 +2143,7 @@ Singleton {
         });
 
         if (isQtengineActive) {
-            Proc.runCommand("qtengineApplier", [Proc.dmsBin, "matugen", "qtengine", "--config-dir", configDir], (output, exitCode) => {
+            Proc.runCommand("qtengineApplier", [Proc.cyshellBin, "matugen", "qtengine", "--config-dir", configDir], (output, exitCode) => {
                 qtengineFailed = exitCode !== 0;
                 finishApplyQtColors(exitCode === 0);
             });
@@ -2310,10 +2331,12 @@ Singleton {
             case 0:
                 log.info("Matugen worker completed successfully");
                 root.matugenCompleted(currentMode, "success");
+                root.syncSystemAppearance(currentMode);
                 break;
             case 2:
                 log.debug("Matugen worker completed with code 2 (no changes needed)");
                 root.matugenCompleted(currentMode, "no-changes");
+                root.syncSystemAppearance(currentMode);
                 break;
             default:
                 if (typeof ToastService !== "undefined") {
@@ -2365,7 +2388,7 @@ Singleton {
         }
     }
 
-    readonly property string _greeterCacheDir: Quickshell.env("CYSHELL_GREET_CFG_DIR") || Quickshell.env("DMS_GREET_CFG_DIR") || "/var/cache/cyshell-greeter"
+    readonly property string _greeterCacheDir: Quickshell.env("CYSHELL_GREET_CFG_DIR") || "/var/cache/cyshell-greeter"
 
     property string greeterColorsBaseDir: root._greeterCacheDir
 
@@ -2387,7 +2410,7 @@ Singleton {
         path: {
             if (SessionData.isGreeterMode)
                 return root.greeterColorsBaseDir ? (root.greeterColorsBaseDir + "/colors.json") : "";
-            return stateDir + "/dms-colors.json";
+            return stateDir + "/cyshell-colors.json";
         }
         blockLoading: false
         watchChanges: !SessionData.isGreeterMode
@@ -2397,7 +2420,7 @@ Singleton {
                 const colorsText = dynamicColorsFileView.text();
                 if (colorsText) {
                     root.matugenColors = JSON.parse(colorsText);
-                    if (typeof SettingsData !== "undefined" && SettingsData.matugenSmartMode && currentTheme === dynamic && root.matugenColors && root.matugenColors.mode && typeof SessionData !== "undefined" && !SessionData.isSwitchingMode) {
+                    if (!root.secondaryUiProcess && typeof SettingsData !== "undefined" && SettingsData.matugenSmartMode && currentTheme === dynamic && root.matugenColors && root.matugenColors.mode && typeof SessionData !== "undefined" && !SessionData.isSwitchingMode) {
                         const resolvedLight = root.matugenColors.mode === "light";
                         if (SessionData.isLightMode !== resolvedLight) {
                             SessionData.setLightMode(resolvedLight, true);

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -34,19 +35,27 @@ func maybeServeHTTP() bool {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/mcp", bridge.handleMCP)
 	mux.HandleFunc("/livez", func(w http.ResponseWriter, _ *http.Request) {
-		writeJSON(w, http.StatusOK, map[string]any{"ok": true, "transport": "cyshell-embedded"})
+		writeJSON(w, http.StatusOK, map[string]any{
+			"ok":                 true,
+			"transport":          "cyshell-agent-gateway",
+			"fallbackConfigured": fallbackMCPURL() != "",
+		})
 	})
 	mux.HandleFunc("/readyz", func(w http.ResponseWriter, _ *http.Request) {
 		tools, err := callShell("cycom.tools.list", nil)
-		if err != nil {
-			writeJSON(w, http.StatusServiceUnavailable, map[string]any{"ok": false, "error": err.Error()})
+		if err == nil {
+			count := 0
+			if list, ok := tools.([]any); ok {
+				count = len(list)
+			}
+			writeJSON(w, http.StatusOK, map[string]any{"ok": true, "backend": "cyshell-embedded", "toolCount": count})
 			return
 		}
-		count := 0
-		if list, ok := tools.([]any); ok {
-			count = len(list)
+		if fallbackReady() {
+			writeJSON(w, http.StatusOK, map[string]any{"ok": true, "backend": "cycom-companion-fallback"})
+			return
 		}
-		writeJSON(w, http.StatusOK, map[string]any{"ok": true, "backend": "cyshell-embedded", "toolCount": count})
+		writeJSON(w, http.StatusServiceUnavailable, map[string]any{"ok": false, "error": err.Error()})
 	})
 
 	srv := &http.Server{
@@ -69,6 +78,11 @@ func (b *httpBridge) handleMCP(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "forbidden origin", http.StatusForbidden)
 		return
 	}
+	if fallbackMCPURL() != "" && !embeddedMCPReady() {
+		if proxyFallbackMCP(w, r) {
+			return
+		}
+	}
 	switch r.Method {
 	case http.MethodPost:
 		b.handlePOST(w, r)
@@ -78,6 +92,104 @@ func (b *httpBridge) handleMCP(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Allow", "POST, GET")
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 	}
+}
+
+func fallbackMCPURL() string {
+	raw := strings.TrimSpace(os.Getenv("CYSHELL_MCP_FALLBACK_URL"))
+	if raw == "" {
+		return ""
+	}
+	u, err := url.Parse(raw)
+	if err != nil || u.Scheme != "http" || u.Host == "" {
+		return ""
+	}
+	host := strings.TrimSpace(u.Hostname())
+	if strings.EqualFold(host, "localhost") {
+		return u.String()
+	}
+	ip := net.ParseIP(host)
+	if ip == nil || !ip.IsLoopback() {
+		return ""
+	}
+	return u.String()
+}
+
+func embeddedMCPReady() bool {
+	_, err := callShell("cycom.tools.list", nil)
+	return err == nil
+}
+
+func fallbackReady() bool {
+	raw := fallbackMCPURL()
+	if raw == "" {
+		return false
+	}
+	u, err := url.Parse(raw)
+	if err != nil {
+		return false
+	}
+	u.Path = "/readyz"
+	u.RawQuery = ""
+	client := &http.Client{Timeout: 1200 * time.Millisecond}
+	resp, err := client.Get(u.String())
+	if err != nil {
+		return false
+	}
+	defer resp.Body.Close()
+	return resp.StatusCode >= 200 && resp.StatusCode < 300
+}
+
+func proxyFallbackMCP(w http.ResponseWriter, r *http.Request) bool {
+	raw := fallbackMCPURL()
+	if raw == "" {
+		return false
+	}
+
+	var body []byte
+	var err error
+	if r.Body != nil {
+		r.Body = http.MaxBytesReader(w, r.Body, maxHTTPBodyBytes)
+		body, err = io.ReadAll(r.Body)
+		if err != nil {
+			return false
+		}
+		_ = r.Body.Close()
+	}
+
+	req, err := http.NewRequestWithContext(r.Context(), r.Method, raw, bytes.NewReader(body))
+	if err != nil {
+		return false
+	}
+	for _, name := range []string{
+		"Content-Type",
+		"Accept",
+		"Authorization",
+		"X-CyCom-Token",
+		"MCP-Protocol-Version",
+		"Mcp-Method",
+		"Mcp-Name",
+	} {
+		if value := r.Header.Get(name); value != "" {
+			req.Header.Set(name, value)
+		}
+	}
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return false
+	}
+	defer resp.Body.Close()
+
+	for _, name := range []string{"Content-Type", "Cache-Control", "X-CyCom-Compatibility"} {
+		if value := resp.Header.Get(name); value != "" {
+			w.Header().Set(name, value)
+		}
+	}
+	w.Header().Set("X-CyShell-Agent-Backend", "cycom-companion")
+	w.WriteHeader(resp.StatusCode)
+	_, _ = io.Copy(w, resp.Body)
+	return true
 }
 
 func (b *httpBridge) handlePOST(w http.ResponseWriter, r *http.Request) {

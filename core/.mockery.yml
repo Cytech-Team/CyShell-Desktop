@@ -6,13 +6,13 @@ template: testify
 template-data:
   unroll-variadic: true
 packages:
-  github.com/AvengeMedia/DankMaterialShell/core/internal/geolocation:
+  github.com/Cytech-Team/CyShell-Desktop/core/internal/geolocation:
     config:
       dir: internal/mocks/geolocation
       pkgname: mocks_geolocation
     interfaces:
       Client: {}
-  github.com/AvengeMedia/DankMaterialShell/core/internal/server/cups:
+  github.com/Cytech-Team/CyShell-Desktop/core/internal/server/cups:
     config:
       dir: internal/mocks/cups
       pkgname: mocks_cups
@@ -22,31 +22,31 @@ packages:
         config:
           dir: internal/mocks/cups_pkhelper
           pkgname: mocks_cups_pkhelper
-  github.com/AvengeMedia/DankMaterialShell/core/internal/server/evdev:
+  github.com/Cytech-Team/CyShell-Desktop/core/internal/server/evdev:
     config:
       dir: internal/mocks/evdev
       pkgname: mocks_evdev
     interfaces:
       EvdevDevice: {}
-  github.com/AvengeMedia/DankMaterialShell/core/internal/server/network:
+  github.com/Cytech-Team/CyShell-Desktop/core/internal/server/network:
     config:
       dir: internal/mocks/network
       pkgname: mocks_network
     interfaces:
       Backend: {}
-  github.com/AvengeMedia/DankMaterialShell/core/internal/server/wlcontext:
+  github.com/Cytech-Team/CyShell-Desktop/core/internal/server/wlcontext:
     config:
       dir: internal/mocks/wlcontext
       pkgname: mocks_wlcontext
     interfaces:
       WaylandContext: {}
-  github.com/AvengeMedia/DankMaterialShell/core/internal/utils:
+  github.com/Cytech-Team/CyShell-Desktop/core/internal/utils:
     config:
       dir: internal/mocks/utils
       pkgname: mocks_utils
     interfaces:
       AppChecker: {}
-  github.com/AvengeMedia/DankMaterialShell/core/internal/version:
+  github.com/Cytech-Team/CyShell-Desktop/core/internal/version:
     config:
       dir: internal/mocks/version
       pkgname: mocks_version
@@ -58,10 +58,10 @@ packages:
       pkgname: mocks_wlclient
     interfaces:
       WaylandDisplay: {}
-  github.com/AvengeMedia/DankMaterialShell/core/internal/plugins:
+  github.com/Cytech-Team/CyShell-Desktop/core/internal/plugins:
     interfaces:
       GitClient: {}
-  github.com/AvengeMedia/DankMaterialShell/core/internal/server/brightness:
+  github.com/Cytech-Team/CyShell-Desktop/core/internal/server/brightness:
     config:
       dir: internal/mocks/brightness
       pkgname: mocks_brightness

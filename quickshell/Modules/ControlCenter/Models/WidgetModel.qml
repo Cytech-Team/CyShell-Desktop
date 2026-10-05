@@ -29,10 +29,6 @@ QtObject {
             "id": "builtin_tailscale",
             "component": tailscaleComponent
         },
-        {
-            "id": "builtin_display_profiles",
-            "component": displayProfilesComponent
-        }
     ]
 
     readonly property Component vpnComponent: Component {
@@ -44,10 +40,6 @@ QtObject {
     readonly property Component tailscaleComponent: Component {
         TailscaleWidget {}
     }
-    readonly property Component displayProfilesComponent: Component {
-        DisplayProfilesWidget {}
-    }
-
     readonly property Instantiator builtinLoaders: Instantiator {
         model: root.builtinDefinitions
 
@@ -210,7 +202,7 @@ QtObject {
         },
         {
             "id": "wifi",
-            "text": I18n.tr("Network"),
+            "text": I18n.tr("Wi-Fi"),
             "description": I18n.tr("Wi-Fi and Ethernet connection"),
             "icon": "wifi",
             "type": "connection",
@@ -300,8 +292,8 @@ QtObject {
             "description": I18n.tr("VPN Connections"),
             "icon": "vpn_key",
             "type": "builtin_plugin",
-            "enabled": DMSNetworkService.available,
-            "warning": !DMSNetworkService.available ? I18n.tr("VPN not available") : undefined,
+            "enabled": CyNetworkService.available,
+            "warning": !CyNetworkService.available ? I18n.tr("VPN not available") : undefined,
             "isBuiltinPlugin": true
         },
         {

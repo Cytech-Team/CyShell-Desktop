@@ -45,7 +45,7 @@ PluginSettings {
                 value: "processList"
             },
             {
-                label: "DankDash",
+                label: "CyDash",
                 value: "dankDash"
             },
             {

@@ -125,7 +125,7 @@ Singleton {
         }, 0);
     }
 
-    function createUser(username, password, addToAdmin, addToGreeter, callback) {
+    function createUser(username, password, addToAdmin, addToGreeter, avatarPath, callback) {
         if (!isValidUsername(username)) {
             _emit("create", username, false, I18n.tr("Invalid username"), callback);
             return;
@@ -138,7 +138,7 @@ Singleton {
             _emit("create", username, false, I18n.tr("User already exists"), callback);
             return;
         }
-        _runUseradd(username, password, addToAdmin === true, addToGreeter === true, callback);
+        _runUseradd(username, password, addToAdmin === true, addToGreeter === true, String(avatarPath || ""), callback);
     }
 
     function setPassword(username, newPassword, callback) {
@@ -188,9 +188,36 @@ Singleton {
         _runGreeterToggle(username, enable === true, callback);
     }
 
-    function _finishCreateUser(targetUser, addAdmin, addGreeter, outerCb) {
+    function _finishCreateUser(targetUser, addAdmin, addGreeter, avatarPath, outerCb) {
         function finish(success, message) {
             root._emit("create", targetUser, success, message, outerCb);
+        }
+
+        function createMessage() {
+            let base = I18n.tr("User created");
+            if (addAdmin && addGreeter)
+                base = I18n.tr("User created with administrator and greeter login access");
+            else if (addAdmin)
+                base = I18n.tr("User created with administrator privileges");
+            else if (addGreeter)
+                base = I18n.tr("User created with greeter login access");
+            if (avatarPath)
+                base += " · " + I18n.tr("Profile picture applied");
+            return base;
+        }
+
+        function maybeAvatar(onDone) {
+            if (!avatarPath) {
+                onDone();
+                return;
+            }
+            root._setUserAvatar(targetUser, avatarPath, (avatarOk, avatarMsg) => {
+                if (avatarOk) {
+                    onDone();
+                    return;
+                }
+                finish(false, I18n.tr("User was created, but the profile picture could not be applied: %1").arg(avatarMsg));
+            });
         }
 
         function maybeGreeter(onDone) {
@@ -206,14 +233,8 @@ Singleton {
             }
         }
 
-        function createMessage() {
-            if (addAdmin && addGreeter)
-                return I18n.tr("User created with administrator and greeter login access");
-            if (addAdmin)
-                return I18n.tr("User created with administrator privileges");
-            if (addGreeter)
-                return I18n.tr("User created with greeter login access");
-            return I18n.tr("User created");
+        function finishAccessSetup() {
+            maybeGreeter(() => maybeAvatar(() => finish(true, createMessage())));
         }
 
         if (addAdmin) {
@@ -222,11 +243,28 @@ Singleton {
                     finish(false, adminMsg);
                     return;
                 }
-                maybeGreeter(() => finish(true, createMessage()));
+                finishAccessSetup();
             });
         } else {
-            maybeGreeter(() => finish(true, createMessage()));
+            finishAccessSetup();
         }
+    }
+
+    function _setUserAvatar(username, avatarPath, callback) {
+        if (!CyShellService.isConnected || !(CyShellService.capabilities || []).includes("freedesktop")) {
+            callback(false, I18n.tr("AccountsService integration is unavailable"));
+            return;
+        }
+        CyShellService.sendRequest("freedesktop.accounts.setUserIconFile", {
+            username: username,
+            path: avatarPath
+        }, response => {
+            if (response.error) {
+                callback(false, String(response.error));
+                return;
+            }
+            callback(true, "");
+        }, 15000);
     }
 
     function _emit(op, username, success, message, callback) {
@@ -248,6 +286,7 @@ Singleton {
             property string targetPassword: ""
             property bool addAdmin: false
             property bool addGreeter: false
+            property string avatarPath: ""
             property var cb: null
             property string capturedErr: ""
             running: false
@@ -266,6 +305,7 @@ Singleton {
                 const targetPassword = useraddProc.targetPassword;
                 const addAdmin = useraddProc.addAdmin;
                 const addGreeter = useraddProc.addGreeter;
+                const avatarPath = useraddProc.avatarPath;
                 const outerCb = useraddProc.cb;
                 Qt.callLater(() => useraddProc.destroy());
 
@@ -274,7 +314,7 @@ Singleton {
                         svc._emit("create", targetUser, false, pwMsg, outerCb);
                         return;
                     }
-                    svc._finishCreateUser(targetUser, addAdmin, addGreeter, outerCb);
+                    svc._finishCreateUser(targetUser, addAdmin, addGreeter, avatarPath, outerCb);
                 });
             }
         }
@@ -418,13 +458,14 @@ Singleton {
         }
     }
 
-    function _runUseradd(username, password, addToAdmin, addToGreeter, callback) {
+    function _runUseradd(username, password, addToAdmin, addToGreeter, avatarPath, callback) {
         const proc = useraddComp.createObject(root, {
             command: root.isBSD ? ["pkexec", "pw", "useradd", "-n", username, "-m", "-s", "/bin/sh"] : ["pkexec", "useradd", "-m", "-s", "/bin/bash", username],
             targetUser: username,
             targetPassword: password,
             addAdmin: addToAdmin,
             addGreeter: addToGreeter,
+            avatarPath: avatarPath,
             cb: callback
         });
         proc.running = true;

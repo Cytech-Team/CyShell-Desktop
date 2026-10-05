@@ -59,7 +59,7 @@ Column {
         title: I18n.tr("Docks", "noun plural, settings card title listing configured docks")
         settingKey: "dockConfiguration"
         tags: ["dock", "configuration", "add", "remove", "name", "show", "enable"]
-        headerActions: DankButton {
+        headerActions: CyButton {
             text: I18n.tr("Add", "verb, button that adds a new item to a list")
             iconName: "add"
             buttonHeight: Theme.buttonHeightXS
@@ -92,7 +92,7 @@ Column {
             subtitle: root.editingDockId ? "" : dock.config?.name ?? ""
             visible: dock.hasConfig
 
-            DankActionButton {
+            CyActionButton {
                 iconName: root.editingDockId ? "check" : "edit"
                 Accessible.name: root.editingDockId ? I18n.tr("Save") : I18n.tr("Rename")
                 onClicked: {
@@ -104,7 +104,7 @@ Column {
                     root.editingDockId = dock.selectedDockId;
                 }
             }
-            DankActionButton {
+            CyActionButton {
                 visible: root.editingDockId !== ""
                 iconName: "close"
                 Accessible.name: I18n.tr("Cancel")
@@ -115,7 +115,7 @@ Column {
                 width: parent.width
                 active: root.editingDockId !== ""
                 visible: active
-                sourceComponent: DankTextField {
+                sourceComponent: CyTextField {
                     id: renameField
                     width: parent.width
                     outlined: true

@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/highlight/styles"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/highlight/styles"
 	"github.com/alecthomas/chroma/v2/formatters/html"
 	"github.com/yuin/goldmark"
 )

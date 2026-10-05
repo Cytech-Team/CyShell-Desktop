@@ -9,6 +9,7 @@ import qs.Modules.Settings.Widgets
 Item {
     id: root
 
+    property var parentModal: null
     property string statusText: ""
     property bool statusIsError: false
     property bool operationPending: false
@@ -17,6 +18,7 @@ Item {
     property string pendingConfirm: ""
     property bool pendingAdmin: false
     property bool pendingGreeter: false
+    property string pendingAvatar: ""
 
     function _resetForm() {
         pendingUsername = "";
@@ -24,6 +26,7 @@ Item {
         pendingConfirm = "";
         pendingAdmin = false;
         pendingGreeter = false;
+        pendingAvatar = "";
         usernameField.text = "";
         passwordField.text = "";
         confirmField.text = "";
@@ -67,11 +70,53 @@ Item {
             visible: PolkitService.polkitAvailable
 
             SettingsRow {
+                settingKey: "createUserAvatar"
+                tags: ["user", "account", "avatar", "image", "profile", "picture"]
+                title: I18n.tr("Profile picture")
+                subtitle: root.pendingAvatar !== ""
+                    ? I18n.tr("Selected image will be applied to the new account")
+                    : I18n.tr("Optional · Uses the default avatar if no image is selected")
+
+                leading: CyCircularImage {
+                    width: SettingsMetrics.avatarSize
+                    height: width
+                    imageSource: root.pendingAvatar
+                    fallbackIcon: "person"
+                }
+
+                Row {
+                    spacing: Theme.spacingS
+
+                    CyButton {
+                        text: root.pendingAvatar !== ""
+                            ? I18n.tr("Change image")
+                            : I18n.tr("Choose image")
+                        iconName: "image"
+                        enabled: !root.operationPending
+                        onClicked: root.parentModal?.openProfileBrowserFor(path => {
+                            if (path)
+                                root.pendingAvatar = path;
+                        }, true)
+                    }
+
+                    CyButton {
+                        visible: root.pendingAvatar !== ""
+                        text: I18n.tr("Use default")
+                        iconName: "person"
+                        backgroundColor: "transparent"
+                        textColor: Theme.surfaceText
+                        enabled: !root.operationPending
+                        onClicked: root.pendingAvatar = ""
+                    }
+                }
+            }
+
+            SettingsRow {
                 body: Column {
                     width: parent.width
                     spacing: Theme.spacingXS
 
-                    DankTextField {
+                    CyTextField {
                         id: usernameField
                         outlined: true
                         leftIconName: "person"
@@ -112,7 +157,7 @@ Item {
                     width: parent.width
                     spacing: Theme.spacingXS
 
-                    DankTextField {
+                    CyTextField {
                         id: passwordField
                         outlined: true
                         leftIconName: "lock"
@@ -130,7 +175,7 @@ Item {
                     width: parent.width
                     spacing: Theme.spacingXS
 
-                    DankTextField {
+                    CyTextField {
                         id: confirmField
                         outlined: true
                         leftIconName: "lock"
@@ -178,7 +223,7 @@ Item {
                     width: parent.width
                     spacing: Theme.spacingM
 
-                    DankButton {
+                    CyButton {
                         text: root.operationPending ? I18n.tr("Working...", "create user button text while the operation runs") : I18n.tr("Create user")
                         iconName: "person_add"
                         backgroundColor: Theme.primary
@@ -189,7 +234,7 @@ Item {
                                 return;
                             root.operationPending = true;
                             root.statusText = "";
-                            UsersService.createUser(root.pendingUsername, root.pendingPassword, root.pendingAdmin, root.pendingGreeter, null);
+                            UsersService.createUser(root.pendingUsername, root.pendingPassword, root.pendingAdmin, root.pendingGreeter, root.pendingAvatar, null);
                         }
                     }
 

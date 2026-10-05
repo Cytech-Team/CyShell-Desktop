@@ -22,7 +22,7 @@ SettingsRow {
     subtitle: confirmingDelete ? I18n.tr("Confirm Delete") : summary
     subtitleColor: confirmingDelete ? Theme.error : Theme.surfaceVariantText
 
-    DankToggle {
+    CyToggle {
         visible: root.toggleVisible
         hideText: true
         text: root.title
@@ -32,7 +32,7 @@ SettingsRow {
         onToggled: value => root.toggled(value)
     }
 
-    DankActionButton {
+    CyActionButton {
         visible: root.deletable
         iconName: root.confirmingDelete ? "warning" : "delete"
         iconColor: root.confirmingDelete ? Theme.error : Theme.surfaceVariantText

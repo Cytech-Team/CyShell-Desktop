@@ -3,7 +3,7 @@ import qs.Common
 import qs.Services
 import qs.Widgets
 
-DankOSD {
+CyOSD {
     id: root
 
     property int currentProfile: 0

@@ -11,11 +11,11 @@ An example dms plugin that displays cycling emojis in your bar with an emoji pic
 
 ## Installation
 
-1. Copy this directory to `~/.config/DankMaterialShell/plugins/ExampleEmojiPlugin`
+1. Copy this directory to `~/.config/CyShell/plugins/ExampleEmojiPlugin`
 2. Open DMS Settings → Plugins
 3. Click "Scan for Plugins"
 4. Enable "Emoji Cycler"
-5. Add `exampleEmojiPlugin` to your DankBar widget list
+5. Add `exampleEmojiPlugin` to your CyBar widget list
 
 ## Settings
 

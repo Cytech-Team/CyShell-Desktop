@@ -6,7 +6,7 @@ import qs.Common
 
 Singleton {
     readonly property real sheetWidthDefault: sheetWidthFor(defaultColumns)
-    readonly property int defaultColumns: 8
+    readonly property int defaultColumns: 6
     readonly property int minimumColumns: 6
     readonly property real sheetPadding: PopoutMetrics.contentPadding
     readonly property real columnWidth: tileHeight
@@ -34,7 +34,7 @@ Singleton {
         return sheetPadding * 2 + columns * columnWidth + (columns - 1) * gridGap;
     }
     readonly property real maxHeightInset: 100
-    readonly property real minHeight: 300
+    readonly property real minHeight: 420
     readonly property real fallbackScreenHeight: 1080
     readonly property real triggerWidth: 80
 
@@ -47,8 +47,8 @@ Singleton {
     readonly property real iconScale: SettingsData.controlCenterIconScale
     readonly property real tileIconSize: Theme.iconSizeLarge * iconScale
     readonly property real iconBoxSize: Theme.minimumTouchTargetSize * iconScale
-    readonly property real tileActiveRadius: Theme.scaledRadius(24, tileHeight / 2)
-    readonly property real tallTileRadius: Theme.cornerRadiusXL
+    readonly property real tileActiveRadius: Theme.cornerRadiusL
+    readonly property real tallTileRadius: Theme.cornerRadiusL
     readonly property real iconBoxActiveRadius: Theme.cornerRadiusL
     readonly property real iconBoxIconSize: Theme.iconSize * iconScale
     readonly property real tallMeterThickness: 28
@@ -56,8 +56,8 @@ Singleton {
     readonly property real headerActionSize: Theme.iconButtonSize * iconScale
     readonly property real headerActionIconSize: Theme.iconSize * iconScale
 
-    readonly property real headerAvatarSize: 56
-    readonly property real headerHeight: tileHeight
+    readonly property real headerAvatarSize: 52
+    readonly property real headerHeight: 78
 
     readonly property real pageHeaderHeight: Theme.fontSizeXXLarge + Theme.spacingM * 2
     readonly property real pageTitleSize: Theme.fontSizeXXLarge

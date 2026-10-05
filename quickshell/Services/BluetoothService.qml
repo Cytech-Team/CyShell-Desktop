@@ -17,8 +17,8 @@ Singleton {
     readonly property bool available: adapter !== null
     readonly property bool enabled: (adapter && adapter.enabled) ?? false
     readonly property bool discovering: (adapter && adapter.discovering) ?? false
-    readonly property bool dbusBridgeAvailable: DMSService.isConnected && DMSService.capabilities.includes("dbus")
-    readonly property bool bluetoothBridgeAvailable: DMSService.isConnected && DMSService.capabilities.includes("bluetooth")
+    readonly property bool dbusBridgeAvailable: CyShellService.isConnected && CyShellService.capabilities.includes("dbus")
+    readonly property bool bluetoothBridgeAvailable: CyShellService.isConnected && CyShellService.capabilities.includes("bluetooth")
     property bool wpexecAvailable: false
     property bool wpexecChecked: false
     property var pendingCodecActions: []
@@ -31,7 +31,7 @@ Singleton {
     readonly property string cardProfileScript: Quickshell.shellDir + "/scripts/bluez-card-profile.lua"
     readonly property bool codecControlAvailable: wpexecChecked && wpexecAvailable
     readonly property var devices: adapter ? adapter.devices : null
-    readonly property bool enhancedPairingAvailable: DMSService.dmsAvailable && DMSService.apiVersion >= 9 && DMSService.capabilities.includes("bluetooth")
+    readonly property bool enhancedPairingAvailable: CyShellService.backendAvailable && CyShellService.apiVersion >= 9 && CyShellService.capabilities.includes("bluetooth")
     readonly property bool connected: {
         if (!adapter || !adapter.devices) {
             return false;
@@ -84,7 +84,7 @@ Singleton {
 
     function setBluetoothEnabled(enabled) {
         if (bluetoothBridgeAvailable) {
-            DMSService.sendRequest("bluetooth.setPowered", {
+            CyShellService.sendRequest("bluetooth.setPowered", {
                 "powered": enabled,
                 "adapter": adapter?.dbusPath ?? ""
             }, response => {
@@ -99,8 +99,8 @@ Singleton {
     }
 
     function toggleBluetooth() {
-        if (bluetoothBridgeAvailable && DMSService.apiVersion >= 33) {
-            DMSService.sendRequest("bluetooth.togglePowered", {
+        if (bluetoothBridgeAvailable && CyShellService.apiVersion >= 33) {
+            CyShellService.sendRequest("bluetooth.togglePowered", {
                 "adapter": adapter?.dbusPath ?? ""
             }, response => {
                 if (response.error)
@@ -113,7 +113,7 @@ Singleton {
     }
 
     Connections {
-        target: DMSService
+        target: CyShellService
 
         function onConnectionStateChanged() {
             root._codecSignalsSubscribed = false;
@@ -146,9 +146,9 @@ Singleton {
         if (!dbusBridgeAvailable || _codecSignalsSubscribed)
             return;
         _codecSignalsSubscribed = true;
-        DMSService.dbusSubscribe("system", bluezService, "", objectManagerIface, "InterfacesAdded", null);
-        DMSService.dbusSubscribe("system", bluezService, "", objectManagerIface, "InterfacesRemoved", null);
-        DMSService.dbusSubscribe("system", bluezService, "", propertiesIface, "PropertiesChanged", null);
+        CyShellService.dbusSubscribe("system", bluezService, "", objectManagerIface, "InterfacesAdded", null);
+        CyShellService.dbusSubscribe("system", bluezService, "", objectManagerIface, "InterfacesRemoved", null);
+        CyShellService.dbusSubscribe("system", bluezService, "", propertiesIface, "PropertiesChanged", null);
     }
 
     function handleCodecDbusSignal(data) {
@@ -240,7 +240,7 @@ Singleton {
             return;
         }
 
-        DMSService.dbusCall("system", bluezService, "/", objectManagerIface, "GetManagedObjects", [], response => {
+        CyShellService.dbusCall("system", bluezService, "/", objectManagerIface, "GetManagedObjects", [], response => {
             if (response.error) {
                 callback([], "");
                 return;
@@ -412,10 +412,10 @@ Singleton {
             return;
         }
 
-        // The DMS backend actually implements a bluez agent, so we can pair anything
+        // The CyShell backend actually implements a bluez agent, so we can pair anything
         if (enhancedPairingAvailable) {
             const devicePath = getDevicePath(device);
-            DMSService.bluetoothPair(devicePath, callback);
+            CyShellService.bluetoothPair(devicePath, callback);
             return;
         }
 

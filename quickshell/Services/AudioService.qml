@@ -43,7 +43,7 @@ Singleton {
     }
 
     property var deviceAliases: ({})
-    property string wireplumberConfigPath: Paths.strip(StandardPaths.writableLocation(StandardPaths.ConfigLocation)) + "/wireplumber/wireplumber.conf.d/51-dms-audio-aliases.conf"
+    property string wireplumberConfigPath: Paths.strip(StandardPaths.writableLocation(StandardPaths.ConfigLocation)) + "/wireplumber/wireplumber.conf.d/51-cyshell-audio-aliases.conf"
     property bool wireplumberReloading: false
 
     property var sinkPorts: ({})
@@ -124,7 +124,53 @@ Singleton {
         function onValuesChanged() {
             root.rebuildTypedNodeLists();
             root.adoptPendingCardSink();
+            root.scheduleLockedDefaults();
         }
+    }
+
+    property bool lockedDefaultsPending: false
+
+    function scheduleLockedDefaults() {
+        if (lockedDefaultsPending)
+            return;
+        lockedDefaultsPending = true;
+        Qt.callLater(() => {
+            root.lockedDefaultsPending = false;
+            root.restoreLockedDefaults();
+        });
+    }
+
+    function restoreLockedDefaults() {
+        const output = typedSinks.find(node => !node.isStream && node.name === SessionData.lockedAudioOutputName);
+        const input = typedSources.find(node => !node.isStream && node.name === SessionData.lockedAudioInputName);
+        if (output && Pipewire.preferredDefaultAudioSink !== output)
+            Pipewire.preferredDefaultAudioSink = output;
+        if (input && Pipewire.preferredDefaultAudioSource !== input)
+            Pipewire.preferredDefaultAudioSource = input;
+    }
+
+    onSinkChanged: scheduleLockedDefaults()
+    onSourceChanged: scheduleLockedDefaults()
+
+    Connections {
+        target: Pipewire
+        function onPreferredDefaultAudioSinkChanged() { root.scheduleLockedDefaults(); }
+        function onPreferredDefaultAudioSourceChanged() { root.scheduleLockedDefaults(); }
+    }
+
+    Connections {
+        target: SessionData
+        function onLockedAudioOutputNameChanged() { root.scheduleLockedDefaults(); }
+        function onLockedAudioInputNameChanged() { root.scheduleLockedDefaults(); }
+        function onLoaded() { root.scheduleLockedDefaults(); }
+    }
+
+    function lockDefaultDevice(isInput, enabled): bool {
+        const node = isInput ? source : sink;
+        if (enabled && (!node?.audio || node.isStream))
+            return false;
+        SessionData.setLockedAudioDevice(isInput, enabled ? node.name : "");
+        return true;
     }
 
     Connections {
@@ -135,15 +181,19 @@ Singleton {
     }
 
     function setSink(node: PwNode): bool {
-        if (!node)
+        if (!node?.audio || node.isStream)
             return false;
+        if (SessionData.lockedAudioOutputName)
+            SessionData.setLockedAudioDevice(false, node.name);
         Pipewire.preferredDefaultAudioSink = node;
         return true;
     }
 
     function setSource(node: PwNode): bool {
-        if (!node)
+        if (!node?.audio || node.isStream)
             return false;
+        if (SessionData.lockedAudioInputName)
+            SessionData.setLockedAudioDevice(true, node.name);
         Pipewire.preferredDefaultAudioSource = node;
         return true;
     }
@@ -1020,14 +1070,14 @@ EOFCONFIG
     function playLoginSoundIfApplicable() {
         if (SettingsData.soundsEnabled && SettingsData.soundLogin && !notificationsAudioMuted) {
             // plays login sound on session start, but only if a specific file doesn't exist,
-            // to prevent it from playing on every DMS restart during the session
+            // to prevent it from playing on every CyShell restart during the session
             const runtimeDir = Quickshell.env("XDG_RUNTIME_DIR");
             const sessionId = Quickshell.env("XDG_SESSION_ID") || "0";
 
             if (!runtimeDir)
                 return;
 
-            const loginFile = `${runtimeDir}/danklinux.login-${sessionId}`;
+            const loginFile = `${runtimeDir}/cyshell.login-${sessionId}`;
 
             // if file doesn't exist, touch it (0)
             // If it exists, do nothing (1)
@@ -1427,6 +1477,7 @@ EOFCONFIG
 
     Component.onCompleted: {
         rebuildTypedNodeLists();
+        scheduleLockedDefaults();
         loadDeviceAliases();
         if (SettingsData.soundsEnabled && SettingsData.useSystemSoundTheme)
             getCurrentSoundTheme();

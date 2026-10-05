@@ -15,8 +15,10 @@ Item {
     property color dateColor: textColor
     property color separatorColor: Theme.outlineButton
     property bool segmented: false
+    property bool dateClickEnabled: false
     property var locale: I18n.locale()
     property date date: systemClock.date
+    signal dateClicked
 
     readonly property string timeText: date.toLocaleTimeString(locale, SettingsData.getEffectiveTimeFormat())
     readonly property string dateText: date.toLocaleDateString(locale, SettingsData.getEffectiveDateFormat())
@@ -129,9 +131,23 @@ Item {
     Component {
         id: dateComponent
 
-        StackedLines {
-            lines: root.dateLines
-            color: root.dateColor
+        Item {
+            implicitWidth: root.vertical ? root.availableWidth : dateLines.implicitWidth
+            implicitHeight: dateLines.implicitHeight
+
+            StackedLines {
+                id: dateLines
+                lines: root.dateLines
+                color: root.dateColor
+            }
+
+            MouseArea {
+                anchors.fill: parent
+                enabled: root.dateClickEnabled
+                acceptedButtons: Qt.LeftButton
+                cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+                onClicked: root.dateClicked()
+            }
         }
     }
 

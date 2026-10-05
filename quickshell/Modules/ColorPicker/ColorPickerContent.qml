@@ -7,9 +7,9 @@ import qs.Common
 import qs.Services
 import qs.Widgets
 import qs.Modules.Settings.Widgets
-import qs.DankCommon.Widgets as CommonWidgets
+import qs.CyCommon.Widgets as CommonWidgets
 
-DankDialog {
+CyDialog {
     id: root
 
     readonly property var log: Log.scoped("ColorPickerContent")
@@ -82,7 +82,7 @@ DankDialog {
     }
 
     function copyColor(text) {
-        Quickshell.execDetached([Proc.dmsBin, "cl", "copy", text]);
+        Quickshell.execDetached([Proc.cyshellBin, "cl", "copy", text]);
         ToastService.showInfo(I18n.tr("Color %1 copied", "color picker toast, %1 is the copied color value").arg(text));
         SessionData.addRecentColor(currentColor);
     }
@@ -108,7 +108,7 @@ DankDialog {
                 copyColor(result.hex);
             }
         } catch (error) {
-            log.warn("Failed to parse dms color pick JSON:", error);
+            log.warn("Failed to parse cyshell color pick JSON:", error);
         }
         showRequested();
     }
@@ -130,7 +130,7 @@ DankDialog {
         if (!pickingFromScreen)
             return;
         const generation = screenPickGeneration;
-        Proc.runCommand(null, [Proc.dmsBin, "color", "pick", "--json"], (output, exitCode) => {
+        Proc.runCommand(null, [Proc.cyshellBin, "color", "pick", "--json"], (output, exitCode) => {
             if (generation === root.screenPickGeneration)
                 root.finishScreenPick(output, exitCode);
         }, 0, Proc.noTimeout, root);
@@ -140,7 +140,7 @@ DankDialog {
         width: parent.width
         spacing: Theme.spacingS
 
-        CommonWidgets.DankSaturationValuePicker {
+        CommonWidgets.CySaturationValuePicker {
             id: gradientPicker
 
             width: parent.width
@@ -155,7 +155,7 @@ DankDialog {
             }
         }
 
-        DankSlider {
+        CySlider {
             id: hueSlider
 
             width: parent.width
@@ -223,7 +223,7 @@ DankDialog {
             Layout.preferredWidth: Theme.fieldDefaultWidth
             spacing: Theme.spacingS
 
-            DankColorSwatch {
+            CyColorSwatch {
                 Layout.preferredWidth: hexInput.controlHeight
                 Layout.preferredHeight: hexInput.controlHeight
                 Layout.topMargin: hexInput.containerTop
@@ -231,7 +231,7 @@ DankDialog {
                 minPreviewAlpha: 0
             }
 
-            DankTextField {
+            CyTextField {
                 id: hexInput
 
                 Layout.fillWidth: true
@@ -245,7 +245,7 @@ DankDialog {
                 onEditingFinished: root.applyHex()
             }
 
-            DankActionButton {
+            CyActionButton {
                 Layout.topMargin: hexInput.containerTop
                 iconName: "content_copy"
                 Accessible.name: I18n.tr("Copy")
@@ -256,7 +256,7 @@ DankDialog {
                 }
             }
 
-            DankActionButton {
+            CyActionButton {
                 Layout.topMargin: hexInput.containerTop
                 iconName: "colorize"
                 Accessible.name: I18n.tr("Pick Color")
@@ -288,7 +288,7 @@ DankDialog {
                 }
             }
 
-            DankSlider {
+            CySlider {
                 id: opacitySlider
 
                 width: parent.width
@@ -320,7 +320,7 @@ DankDialog {
             paddingH: Theme.spacingL
             paddingV: Theme.spacingS
 
-            DankActionButton {
+            CyActionButton {
                 iconName: "content_copy"
                 Accessible.name: I18n.tr("Copy")
                 onClicked: root.copyColor(root.rgbText)
@@ -333,7 +333,7 @@ DankDialog {
             paddingH: Theme.spacingL
             paddingV: Theme.spacingS
 
-            DankActionButton {
+            CyActionButton {
                 iconName: "content_copy"
                 Accessible.name: I18n.tr("Copy")
                 onClicked: root.copyColor(root.hsvText)
@@ -355,7 +355,7 @@ DankDialog {
             Repeater {
                 model: root.standardColors
 
-                CommonWidgets.DankColorButton {
+                CommonWidgets.CyColorButton {
                     required property string modelData
                     width: palette.width / palette.columns
                     height: Theme.buttonHeightXS
@@ -388,7 +388,7 @@ DankDialog {
             Repeater {
                 model: SessionData.recentColors.slice(0, 5)
 
-                CommonWidgets.DankColorButton {
+                CommonWidgets.CyColorButton {
                     required property var modelData
                     swatchColor: modelData
                     selected: Qt.colorEqual(root.currentColor, swatchColor)
@@ -398,7 +398,7 @@ DankDialog {
         }
     }
 
-    actions: DankButton {
+    actions: CyButton {
         maximumWidth: root.actionWidth
         wrapText: true
         text: I18n.tr("Save")

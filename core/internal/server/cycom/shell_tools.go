@@ -11,9 +11,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/qsipc"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/utils"
 	cycomembed "github.com/Cytech-Team/CyComAgent-MCP/embed"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/qsipc"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/utils"
 )
 
 const shellToolSource = "cyshell:native"

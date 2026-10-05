@@ -19,7 +19,7 @@ Item {
         color: Theme.primaryContainer
         antialiasing: true
 
-        DankIcon {
+        CyIcon {
             anchors.centerIn: parent
             name: "music_note"
             size: root.placeholderIconSize

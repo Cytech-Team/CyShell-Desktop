@@ -13,7 +13,8 @@ import (
 
 const (
 	OfficialName = "official"
-	officialURL  = "https://github.com/AvengeMedia/dms-plugin-registry.git"
+	// CyShell currently consumes the upstream registry as a compatibility source.
+	officialURL = "https://github.com/AvengeMedia/dms-plugin-registry.git"
 )
 
 // Source identifies a registry repository. Name doubles as the per-registry
@@ -34,7 +35,7 @@ func configPath() (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to get user config dir: %w", err)
 	}
-	return filepath.Join(configDir, "DankMaterialShell", "registries.json"), nil
+	return filepath.Join(configDir, "CyShell", "registries.json"), nil
 }
 
 // Load returns the official registry followed by any user-configured extras.

@@ -315,7 +315,7 @@ Item {
                     Layout.fillWidth: true
                     spacing: Theme.spacingM
 
-                    DankIcon {
+                    CyIcon {
                         Layout.alignment: Qt.AlignVCenter
                         name: "sync_problem"
                         size: Theme.iconSize - 2
@@ -333,7 +333,7 @@ Item {
                         elide: Text.ElideRight
                     }
 
-                    DankActionButton {
+                    CyActionButton {
                         Layout.alignment: Qt.AlignVCenter
                         iconName: "close"
                         Accessible.name: I18n.tr("Dismiss")
@@ -656,7 +656,7 @@ Item {
         id: confirmationDialogLoader
         active: false
 
-        DankModal {
+        CyModal {
             id: confirmationDialog
 
             modalWidth: 400
@@ -799,7 +799,7 @@ Item {
                         }
                     }
 
-                    DankActionButton {
+                    CyActionButton {
                         anchors.top: parent.top
                         anchors.right: parent.right
                         anchors.topMargin: Theme.spacingM

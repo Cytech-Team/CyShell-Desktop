@@ -64,7 +64,7 @@ PluginSettings {
                         color: Theme.surfaceVariantText
                     }
 
-                    DankTextField {
+                    CyTextField {
                         id: nameField
                         width: parent.width
                         placeholderText: "Variant Name"
@@ -81,7 +81,7 @@ PluginSettings {
                         color: Theme.surfaceVariantText
                     }
 
-                    DankTextField {
+                    CyTextField {
                         id: iconField
                         width: parent.width
                         placeholderText: "star"
@@ -98,7 +98,7 @@ PluginSettings {
                         color: Theme.surfaceVariantText
                     }
 
-                    DankTextField {
+                    CyTextField {
                         id: textField
                         width: parent.width
                         placeholderText: "Display Text"
@@ -106,7 +106,7 @@ PluginSettings {
                 }
             }
 
-            DankButton {
+            CyButton {
                 text: "Create Variant"
                 iconName: "add"
                 onClicked: {
@@ -178,7 +178,7 @@ PluginSettings {
                             height: Theme.iconSize
                             anchors.verticalCenter: parent.verticalCenter
 
-                            DankIcon {
+                            CyIcon {
                                 anchors.centerIn: parent
                                 name: model.icon || "widgets"
                                 size: Theme.iconSize
@@ -221,7 +221,7 @@ PluginSettings {
                             color: deleteArea.containsMouse ? Theme.error : Theme.withAlpha(Theme.error, 0)
                             anchors.verticalCenter: parent.verticalCenter
 
-                            DankIcon {
+                            CyIcon {
                                 anchors.centerIn: parent
                                 name: "delete"
                                 size: 16
@@ -275,7 +275,7 @@ PluginSettings {
             Row {
                 spacing: Theme.spacingM
 
-                DankIcon {
+                CyIcon {
                     name: "info"
                     size: Theme.iconSize
                     color: Theme.primary

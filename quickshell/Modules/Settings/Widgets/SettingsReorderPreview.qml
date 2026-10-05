@@ -24,7 +24,7 @@ SettingsRow {
         width: Theme.iconButtonSize
         height: Theme.iconButtonSize
 
-        DankIcon {
+        CyIcon {
             anchors.centerIn: parent
             name: "drag_indicator"
             size: Theme.iconSizeMedium

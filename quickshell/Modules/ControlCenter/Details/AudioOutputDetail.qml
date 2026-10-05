@@ -34,7 +34,7 @@ Item {
         CacheData.set("audioOutputDevicePins", QmlUtils.togglePinEntry(CacheData.audioOutputDevicePins, "preferredOutput", name, CcMetrics.maxPins));
     }
 
-    DankFlickable {
+    CyFlickable {
         anchors.fill: parent
         contentHeight: column.height
         clip: true
@@ -98,7 +98,7 @@ Item {
                                 AudioService.setDefaultSinkByName(modelData.name);
                         }
 
-                        DankActionButton {
+                        CyActionButton {
                             anchors.verticalCenter: parent.verticalCenter
                             visible: AudioService.sinkHasMultiplePorts(deviceRow.modelData)
                             buttonSize: Theme.buttonHeightXS

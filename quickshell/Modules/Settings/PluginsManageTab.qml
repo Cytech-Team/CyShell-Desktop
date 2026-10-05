@@ -14,26 +14,26 @@ FocusScope {
     focus: true
 
     function refreshRegistries() {
-        if (!DMSService.dmsAvailable || DMSService.apiVersion < 29)
+        if (!CyShellService.backendAvailable || CyShellService.apiVersion < 29)
             return;
         registryBusy = true;
         registryError = "";
-        DMSService.listRegistries(response => {
+        CyShellService.listRegistries(response => {
             registryBusy = false;
             registryError = response.error || "";
         });
     }
 
     Component.onCompleted: {
-        if (DMSService.dmsAvailable && DMSService.apiVersion >= 29)
+        if (CyShellService.backendAvailable && CyShellService.apiVersion >= 29)
             root.refreshRegistries();
     }
 
     Connections {
-        target: DMSService
+        target: CyShellService
 
-        function onDmsAvailableChanged() {
-            if (DMSService.dmsAvailable && DMSService.apiVersion >= 29)
+        function onBackendAvailableChanged() {
+            if (CyShellService.backendAvailable && CyShellService.apiVersion >= 29)
                 root.refreshRegistries();
         }
     }
@@ -74,7 +74,7 @@ FocusScope {
                 width: parent.width
                 spacing: Theme.spacingS
 
-                DankButton {
+                CyButton {
                     text: PluginService.pluginDirectoryExists ? I18n.tr("Open folder") : I18n.tr("Create folder")
                     iconName: PluginService.pluginDirectoryExists ? "folder_open" : "create_new_folder"
                     maximumWidth: parent.width
@@ -87,18 +87,18 @@ FocusScope {
                         PluginService.createPluginDirectory();
                     }
                 }
-                DankButton {
+                CyButton {
                     text: I18n.tr("Scan", "verb, button that scans for plugins, wifi networks or bluetooth devices")
                     iconName: "refresh"
                     backgroundColor: Theme.secondaryContainer
                     textColor: Theme.onSecondaryContainer
                     maximumWidth: parent.width
                     wrapText: true
-                    enabled: !DMSService.checkingPluginUpdates
+                    enabled: !CyShellService.checkingPluginUpdates
                     onClicked: {
                         PluginService.scanPlugins();
-                        if (DMSService.dmsAvailable && DMSService.apiVersion >= 8)
-                            DMSService.listInstalled(undefined, true);
+                        if (CyShellService.backendAvailable && CyShellService.apiVersion >= 8)
+                            CyShellService.listInstalled(undefined, true);
                     }
                 }
             }
@@ -109,7 +109,7 @@ FocusScope {
             title: I18n.tr("Registries", "plugin settings card title, plugin registry sources")
             settingKey: "pluginRegistries"
             tags: ["plugins", "registry", "registries", "sources", "git", "themes"]
-            visible: DMSService.dmsAvailable && DMSService.apiVersion >= 29
+            visible: CyShellService.backendAvailable && CyShellService.apiVersion >= 29
 
             SettingsRow {
                 body: StyledText {
@@ -127,7 +127,7 @@ FocusScope {
                 title: I18n.tr("Error")
                 subtitle: root.registryError
                 subtitleColor: Theme.error
-                DankButton {
+                CyButton {
                     text: I18n.tr("Retry", "retry failed action button")
                     enabled: !root.registryBusy
                     onClicked: root.refreshRegistries()
@@ -135,7 +135,7 @@ FocusScope {
             }
 
             Repeater {
-                model: DMSService.registries
+                model: CyShellService.registries
 
                 SettingsRow {
                     id: registryRow
@@ -145,7 +145,7 @@ FocusScope {
                     subtitle: modelData.url
                     trailingBadge: modelData.official ? I18n.tr("official") : ""
 
-                    DankActionButton {
+                    CyActionButton {
                         anchors.verticalCenter: parent.verticalCenter
                         iconName: "delete"
                         iconColor: Theme.error
@@ -155,7 +155,7 @@ FocusScope {
                         onClicked: {
                             root.registryBusy = true;
                             root.registryError = "";
-                            DMSService.removeRegistry(registryRow.modelData.name, response => {
+                            CyShellService.removeRegistry(registryRow.modelData.name, response => {
                                 root.registryBusy = false;
                                 root.registryError = response.error || "";
                             });
@@ -176,13 +176,13 @@ FocusScope {
                 text: I18n.tr("URL", "Plugin registry repository address")
                 placeholderText: "https://github.com/user/registry.git"
 
-                actions: DankButton {
+                actions: CyButton {
                     text: I18n.tr("Add")
                     enabled: !root.registryBusy && registryNameField.value.trim() !== "" && registryUrlField.value.trim() !== ""
                     onClicked: {
                         root.registryBusy = true;
                         root.registryError = "";
-                        DMSService.addRegistry(registryNameField.value.trim(), registryUrlField.value.trim(), response => {
+                        CyShellService.addRegistry(registryNameField.value.trim(), registryUrlField.value.trim(), response => {
                             root.registryBusy = false;
                             if (response.error) {
                                 root.registryError = response.error;

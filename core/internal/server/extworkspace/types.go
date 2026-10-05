@@ -4,8 +4,8 @@ import (
 	"sort"
 	"sync"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/proto/ext_workspace"
 	wlclient "github.com/AvengeMedia/dankgo/wayland/client"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/proto/ext_workspace"
 )
 
 type Workspace struct {

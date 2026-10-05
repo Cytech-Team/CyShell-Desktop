@@ -2,7 +2,7 @@ import QtQuick
 import qs.Common
 import qs.Widgets
 
-DankFilterChips {
+CyFilterChips {
     multiSelect: true
     model: [
         {

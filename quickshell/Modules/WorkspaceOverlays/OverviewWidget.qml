@@ -25,12 +25,12 @@ Item {
     }
 
     // scratchpad windows are not in the grid, so the menu only ever offers a move in
-    DankContextMenu {
+    CyContextMenu {
         id: windowMenu
 
         property string targetWindow: ""
 
-        layerNamespace: "dms:overview-window-context-menu"
+        layerNamespace: "cyshell:overview-window-context-menu"
         menuItems: CompositorService.specialWorkspaceNames.map(name => ({
                     type: "item",
                     icon: "inbox",

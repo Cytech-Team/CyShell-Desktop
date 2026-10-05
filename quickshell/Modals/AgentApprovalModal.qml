@@ -4,7 +4,7 @@ import qs.Common
 import qs.Services
 import qs.Widgets
 
-DankFloatingWindow {
+CyFloatingWindow {
     id: root
 
     readonly property var approval: AgentApprovalService.currentApproval
@@ -15,11 +15,48 @@ DankFloatingWindow {
 
     objectName: "agentApprovalModal"
     title: I18n.tr("Agent permission")
-    minimumSize: Qt.size(Math.min(520, screen?.width ?? 520), Math.min(420, screen?.height ?? 420))
+    readonly property int modalWidth: Math.min(520, screen?.width ?? 520)
+    readonly property int modalHeight: Math.min(420, screen?.height ?? 420)
+
+    // Labwc may map a FloatingWindow at Qt's tiny fallback size before
+    // minimumSize is applied. Give the surface its real size up front.
+    width: modalWidth
+    height: modalHeight
+    minimumSize: Qt.size(modalWidth, modalHeight)
     maximumSize: minimumSize
     visible: false
 
     signal closingModal
+
+    function requestTitle() {
+        const scopes = approval?.scopes || [];
+        const target = approval?.appName || I18n.tr("this application");
+        if (scopes.includes("app.control"))
+            return I18n.tr("Let Agent control %1?", "agent approval app name").arg(target);
+        if (scopes.includes("screen.capture"))
+            return I18n.tr("Let Agent view %1?", "agent approval app name").arg(target);
+        if (scopes.includes("app.read"))
+            return I18n.tr("Let Agent read %1?", "agent approval app name").arg(target);
+        if (scopes.includes("files.write"))
+            return I18n.tr("Allow Agent to change files?");
+        if (scopes.includes("system.control"))
+            return I18n.tr("Allow Agent to run a system action?");
+        if (scopes.includes("remote.control"))
+            return I18n.tr("Allow Agent to control a remote target?");
+        if (scopes.includes("power.control"))
+            return I18n.tr("Allow Agent to change the power or session state?");
+        if (scopes.includes("network.access"))
+            return I18n.tr("Allow Agent to access the network?");
+        return I18n.tr("Allow this Agent action?");
+    }
+
+    function requestSummary() {
+        const scopes = approval?.scopes || [];
+        const labels = scopes.map(scope => AgentApprovalService.scopeLabel(String(scope)));
+        if (labels.length === 0)
+            return I18n.tr("The Agent needs access to continue your request.");
+        return labels.join(" · ");
+    }
 
     function show() {
         if (!approval)
@@ -84,7 +121,7 @@ DankFloatingWindow {
                 radius: Theme.cornerRadius
                 color: Theme.withAlpha(Theme.warning, 0.14)
 
-                DankIcon {
+                CyIcon {
                     anchors.centerIn: parent
                     name: "shield_question"
                     size: Theme.iconSizeLarge
@@ -98,7 +135,7 @@ DankFloatingWindow {
 
                 StyledText {
                     Layout.fillWidth: true
-                    text: I18n.tr("Allow Agent access to %1?", "agent approval app name").arg(root.approval?.appName || I18n.tr("this application"))
+                    text: root.requestTitle()
                     color: Theme.surfaceText
                     font.pixelSize: Theme.fontSizeLarge
                     font.weight: Font.DemiBold
@@ -107,7 +144,9 @@ DankFloatingWindow {
 
                 StyledText {
                     Layout.fillWidth: true
-                    text: root.pendingCount > 1 ? I18n.tr("%1 permission requests are waiting", "agent pending approval count").arg(root.pendingCount) : I18n.tr("The request is paused until you decide")
+                    text: root.pendingCount > 1
+                        ? I18n.tr("%1 permission requests are waiting.", "agent pending approval count").arg(root.pendingCount)
+                        : I18n.tr("Choose whether to allow this action once, for this session, or remember access when available.")
                     color: Theme.surfaceVariantText
                     font.pixelSize: Theme.fontSizeSmall
                     wrapMode: Text.WordWrap
@@ -129,29 +168,16 @@ DankFloatingWindow {
 
                 StyledText {
                     Layout.fillWidth: true
-                    text: I18n.tr("Requested capabilities")
+                    text: I18n.tr("Requested access")
                     color: Theme.surfaceText
                     font.weight: Font.DemiBold
                 }
 
-                Repeater {
-                    model: root.approval?.scopes || []
-                    delegate: RowLayout {
-                        required property var modelData
-                        Layout.fillWidth: true
-                        spacing: Theme.spacingS
-
-                        DankIcon {
-                            name: "check_circle"
-                            size: Theme.iconSizeSmall
-                            color: Theme.primary
-                        }
-                        StyledText {
-                            Layout.fillWidth: true
-                            text: AgentApprovalService.scopeLabel(String(modelData))
-                            color: Theme.surfaceText
-                        }
-                    }
+                StyledText {
+                    Layout.fillWidth: true
+                    text: root.requestSummary()
+                    color: Theme.surfaceText
+                    wrapMode: Text.WordWrap
                 }
 
                 StyledText {
@@ -165,10 +191,12 @@ DankFloatingWindow {
 
                 StyledText {
                     Layout.fillWidth: true
-                    text: I18n.tr("Tool: %1", "agent approval tool name").arg(String(root.approval?.tool || ""))
+                    text: root.approval?.canRemember === true
+                        ? I18n.tr("Remembered application access can be changed later in Settings → Agent → Application permissions.")
+                        : I18n.tr("Session access expires when CyShell Agent restarts.")
                     color: Theme.surfaceVariantText
                     font.pixelSize: Theme.fontSizeSmall
-                    wrapMode: Text.WrapAnywhere
+                    wrapMode: Text.WordWrap
                 }
             }
         }
@@ -179,7 +207,7 @@ DankFloatingWindow {
             Layout.fillWidth: true
             spacing: Theme.spacingS
 
-            DankButton {
+            CyButton {
                 Layout.fillWidth: true
                 text: I18n.tr("Deny")
                 iconName: "block"
@@ -187,30 +215,17 @@ DankFloatingWindow {
                 onClicked: root.decide("deny_once")
             }
 
-            DankButton {
+            CyButton {
                 Layout.fillWidth: true
-                text: I18n.tr("Allow once")
-                iconName: "check"
+                text: I18n.tr("Allow for session")
+                iconName: "schedule"
                 enabled: !root.decisionInFlight
-                onClicked: root.decide("allow_once")
-            }
-        }
-
-        RowLayout {
-            Layout.fillWidth: true
-            visible: root.approval?.canRemember === true
-            spacing: Theme.spacingS
-
-            DankButton {
-                Layout.fillWidth: true
-                text: I18n.tr("Always deny")
-                iconName: "do_not_disturb_on"
-                enabled: !root.decisionInFlight
-                onClicked: root.decide("deny_always")
+                onClicked: root.decide("allow_session")
             }
 
-            DankButton {
+            CyButton {
                 Layout.fillWidth: true
+                visible: root.approval?.canRemember === true
                 text: I18n.tr("Always allow")
                 iconName: "verified_user"
                 enabled: !root.decisionInFlight

@@ -5,7 +5,7 @@ import qs.Services
 import qs.Widgets
 import "../Common/PamStack.js" as PamStack
 
-DankDialog {
+CyDialog {
     id: root
 
     property var currentFlow: PolkitService.agent?.flow
@@ -146,7 +146,7 @@ DankDialog {
         visible: text !== ""
     }
 
-    DankTextField {
+    CyTextField {
         id: passwordField
 
         width: parent.width
@@ -171,7 +171,7 @@ DankDialog {
     }
 
     actions: [
-        DankButton {
+        CyButton {
             maximumWidth: root.actionWidth
             wrapText: true
             text: I18n.tr("Cancel")
@@ -179,7 +179,7 @@ DankDialog {
             textColor: Theme.primary
             onClicked: root.cancelAuth()
         },
-        DankButton {
+        CyButton {
             maximumWidth: root.actionWidth
             wrapText: true
             text: I18n.tr("Authenticate", "verb, polkit password dialog submit button")

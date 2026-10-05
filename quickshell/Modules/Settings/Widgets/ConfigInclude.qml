@@ -18,7 +18,7 @@ QtObject {
     readonly property bool compositorSupported: ConfigIncludeResolve.includeSpec(includeKind, CompositorService.compositor) !== null
     readonly property bool included: status.included === true
     readonly property bool readOnly: CompositorService.isHyprland && status.readOnly === true
-    readonly property string fragmentLabel: "dms/" + includeKind
+    readonly property string fragmentLabel: "cyshell/" + includeKind
 
     signal fixed
 
@@ -53,7 +53,7 @@ QtObject {
             return;
         }
         checking = true;
-        Proc.runCommand("check-" + procTag, [Proc.dmsBin, "config", "resolve-include", ...args], (output, exitCode) => {
+        Proc.runCommand("check-" + procTag, [Proc.cyshellBin, "config", "resolve-include", ...args], (output, exitCode) => {
             checking = false;
             if (exitCode !== 0) {
                 status = defaultStatus();
@@ -68,7 +68,7 @@ QtObject {
     }
 
     function showReadOnlyWarning() {
-        ToastService.showWarning(I18n.tr("Hyprland conf mode"), I18n.tr("This install is still using hyprland.conf. Run dms setup to migrate before changing these settings."), "dms setup", warningCategory);
+        ToastService.showWarning(I18n.tr("Hyprland conf mode"), I18n.tr("This install is still using hyprland.conf. Run cyshell setup to migrate before changing these settings."), "cyshell setup", warningCategory);
     }
 
     function fix() {

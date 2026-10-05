@@ -3,7 +3,7 @@ import Quickshell.Io
 import qs.Common
 import qs.Widgets
 import qs.Modules.Settings.Widgets
-import qs.Modules.DankDash
+import qs.Modules.CyDash
 import qs.Services
 
 Item {
@@ -77,8 +77,8 @@ Item {
                 settingKey: "bluetoothMpris"
                 tags: ["bluetooth", "headphones", "media", "mpris", "avrcp"]
                 resetKeys: ["bluetoothMprisEnabled"]
-                text: I18n.tr("Bluetooth media controls", "Title for the setting that routes Bluetooth headset media buttons through DMS")
-                description: root.mprisProxyRunning ? I18n.tr("mpris-proxy is running and will create duplicate Bluetooth players. Disable it with: systemctl --user disable --now mpris-proxy.service", "Warning shown when the legacy BlueZ MPRIS proxy conflicts with DMS Bluetooth media controls") : I18n.tr("Route Bluetooth headset controls to the active CyShell media player", "Description of how Bluetooth headset media buttons select a player")
+                text: I18n.tr("Bluetooth media controls", "Title for the setting that routes Bluetooth headset media buttons through CyShell")
+                description: root.mprisProxyRunning ? I18n.tr("mpris-proxy is running and will create duplicate Bluetooth players. Disable it with: systemctl --user disable --now mpris-proxy.service", "Warning shown when the legacy BlueZ MPRIS proxy conflicts with CyShell Bluetooth media controls") : I18n.tr("Route Bluetooth headset controls to the active CyShell media player", "Description of how Bluetooth headset media buttons select a player")
                 descriptionColor: root.mprisProxyRunning ? Theme.error : Theme.surfaceVariantText
                 checked: SettingsData.bluetoothMprisEnabled
                 onToggled: checked => SettingsData.set("bluetoothMprisEnabled", checked)
@@ -99,7 +99,7 @@ Item {
                 resetKeys: ["audioWheelScrollAmount"]
                 title: I18n.tr("Volume step")
 
-                DankTextField {
+                CyTextField {
                     outlined: true
                     leftIconName: "volume_up"
                     width: Theme.fieldHeight * 2
@@ -140,7 +140,7 @@ Item {
             settingKey: "mediaLyricsProviders"
             tags: ["lyrics", "provider", "priority", "order", "source", "lrclib", "better lyrics", "unison", "lyricsplus"]
 
-            headerActions: DankActionButton {
+            headerActions: CyActionButton {
                 iconName: "restart_alt"
                 tooltipText: I18n.tr("Reset to default")
                 enabled: !SettingsData.isDefault(["mediaLyricsProviders"])
@@ -166,7 +166,7 @@ Item {
                     clickable: true
                     onClicked: MediaOptions.setLyricsProviderEnabled(modelData, !provider?.enabled)
 
-                    DankToggle {
+                    CyToggle {
                         hideText: true
                         Accessible.name: providerRow.title
                         checked: providerRow.provider?.enabled ?? false
@@ -192,14 +192,14 @@ Item {
                 onAccepted: root.addExcludedPlayer()
 
                 actions: [
-                    DankIconButton {
+                    CyIconButton {
                         variant: "filled"
                         iconName: "add"
                         Accessible.name: I18n.tr("Add")
                         enabled: excludeEditor.value.trim() !== ""
                         onClicked: root.addExcludedPlayer()
                     },
-                    DankIconButton {
+                    CyIconButton {
                         iconName: "apps"
                         tooltipText: I18n.tr("Browse")
                         onClicked: appBrowserPopup.show()
@@ -217,7 +217,7 @@ Item {
                     title: modelData
                     iconName: "music_off"
 
-                    DankActionButton {
+                    CyActionButton {
                         anchors.verticalCenter: parent.verticalCenter
                         iconName: "delete"
                         iconColor: Theme.error

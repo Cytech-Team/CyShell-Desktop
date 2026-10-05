@@ -4,9 +4,9 @@ import Quickshell
 import qs.Common
 import qs.Services
 import qs.Modules.OSD
-import qs.Modules.DankIsland
-import qs.Modules.DankIsland.Activities
-import qs.DankCommon.Common as DC
+import qs.Modules.CyIsland
+import qs.Modules.CyIsland.Activities
+import qs.CyCommon.Common as DC
 
 ShellRoot {
     id: root

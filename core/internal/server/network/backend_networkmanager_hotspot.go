@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/errdefs"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/log"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/errdefs"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/log"
 	"github.com/Wifx/gonetworkmanager/v2"
 )
 
@@ -16,8 +16,8 @@ const (
 	nmWiFiDeviceCapFreq2GHz  uint32 = 0x00000200
 	nmWiFiDeviceCapFreq5GHz  uint32 = 0x00000400
 
-	dmsHotspotConnectionID = "DankMaterialShell Hotspot"
-	dmsHotspotStableID     = "dms-hotspot"
+	cyShellHotspotConnectionID = "CyShell Hotspot"
+	cyShellHotspotStableID     = "cyshell-hotspot"
 )
 
 var _ HotspotBackend = (*NetworkManagerBackend)(nil)
@@ -184,10 +184,10 @@ func (b *NetworkManagerBackend) networkManagerSettings() (gonetworkmanager.Setti
 
 func buildHotspotSettings(req HotspotRequest, existing gonetworkmanager.ConnectionSettings) gonetworkmanager.ConnectionSettings {
 	connection := map[string]any{
-		"id":          dmsHotspotConnectionID,
+		"id":          cyShellHotspotConnectionID,
 		"type":        "802-11-wireless",
 		"autoconnect": false,
-		"stable-id":   dmsHotspotStableID,
+		"stable-id":   cyShellHotspotStableID,
 	}
 	if req.Device != "" {
 		connection["interface-name"] = req.Device
@@ -286,7 +286,7 @@ func isDMSHotspotConnection(settings gonetworkmanager.ConnectionSettings) bool {
 	}
 
 	stableID, _ := connMeta["stable-id"].(string)
-	return stableID == dmsHotspotStableID
+	return stableID == cyShellHotspotStableID
 }
 
 func wifiConnectionSettings(settings gonetworkmanager.ConnectionSettings) (map[string]any, map[string]any, bool) {
@@ -321,10 +321,10 @@ func isClientWiFiConnection(settings gonetworkmanager.ConnectionSettings) bool {
 	return ok && !isAPModeWiFiConnection(settings)
 }
 
-// activeDMSHotspotDevicePaths returns only the devices hosting the DMS-owned
+// activeCyShellHotspotDevicePaths returns only the devices hosting the CyShell-owned
 // hotspot, unlike activeAPModeWiFiDevicePaths which matches any AP-mode
 // connection (as the client-state isolation requires).
-func (b *NetworkManagerBackend) activeDMSHotspotDevicePaths() map[string]bool {
+func (b *NetworkManagerBackend) activeCyShellHotspotDevicePaths() map[string]bool {
 	paths := make(map[string]bool)
 	active, err := b.findActiveDMSHotspotConnection()
 	if err != nil || active == nil {
@@ -405,9 +405,9 @@ func (b *NetworkManagerBackend) getAPCapableWiFiDevice(deviceName string, band s
 	}
 	sort.Strings(deviceNames)
 
-	dmsHotspotDevicePaths := b.activeDMSHotspotDevicePaths()
+	dmsHotspotDevicePaths := b.activeCyShellHotspotDevicePaths()
 
-	// Rank 0: already hosting the DMS hotspot (keep it where it is). Radios
+	// Rank 0: already hosting the CyShell hotspot (keep it where it is). Radios
 	// hosting foreign AP-mode connections must not get this preference and
 	// rank as busy through their Activated state instead.
 	// Rank 1: genuinely disconnected, so starting the AP disturbs nothing.

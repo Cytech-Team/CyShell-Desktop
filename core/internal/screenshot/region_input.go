@@ -3,8 +3,8 @@ package screenshot
 import (
 	"math"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/wayland/keymap"
 	"github.com/AvengeMedia/dankgo/wayland/client"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/wayland/keymap"
 )
 
 func (r *RegionSelector) setupInput() {

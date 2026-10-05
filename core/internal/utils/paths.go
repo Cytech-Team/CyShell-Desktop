@@ -8,7 +8,7 @@ import (
 	"github.com/AvengeMedia/dankgo/paths"
 )
 
-var app = paths.New("danklinux")
+var app = paths.New("cyshell")
 
 func App() paths.App { return app }
 

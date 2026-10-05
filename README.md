@@ -44,7 +44,7 @@ Build the current core:
 
 ```sh
 make build
-./core/bin/dms run -c ./quickshell
+./core/bin/cyshell run -c ./quickshell
 ```
 
 For an installed build:
@@ -65,7 +65,7 @@ cyshell-greeter status
 
 CyShell Desktop originally started as a fork of [AvengeMedia/DankMaterialShell](https://github.com/AvengeMedia/DankMaterialShell) and has since evolved into an independently developed project by **Cytech Team Development**.
 
-Some internal identifiers such as `Dank*` QML components, `DMSService`, legacy configuration paths, and the `dms` command/service surface are intentionally retained while migration continues. These are compatibility details, not the CyShell product identity.
+Legacy adapters are retained only where compatibility requires them: the `dms` CLI alias, migration reads for old DMS configuration/state, and DMS/Noctalia plugin hosts. New runtime paths, services, APIs, assets, and UI components use the CyShell identity.
 
 ## Upstream attribution
 

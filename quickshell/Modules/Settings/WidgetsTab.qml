@@ -541,7 +541,7 @@ Item {
                     width: parent.width
                     spacing: Theme.spacingM
 
-                    DankIcon {
+                    CyIcon {
                         name: "toolbar"
                         size: Theme.iconSize
                         color: Theme.primary
@@ -557,7 +557,7 @@ Item {
                     }
                 }
 
-                DankButtonGroup {
+                CyButtonGroup {
                     id: barSelectorGroup
                     width: parent.width
                     model: SettingsData.barConfigs.map(cfg => cfg.name || ("Bar " + (SettingsData.barConfigs.indexOf(cfg) + 1)))
@@ -594,7 +594,7 @@ Item {
                     width: parent.width
                     spacing: Theme.spacingM
 
-                    DankIcon {
+                    CyIcon {
                         name: "widgets"
                         size: Theme.iconSize
                         color: Theme.primary
@@ -627,7 +627,7 @@ Item {
                             anchors.centerIn: parent
                             spacing: Theme.spacingXS
 
-                            DankIcon {
+                            CyIcon {
                                 name: "refresh"
                                 size: 14
                                 color: Theme.surfaceText

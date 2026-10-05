@@ -59,12 +59,14 @@ Item {
         return repeater.itemAt(index);
     }
     readonly property bool barHosted: surfaceContext.kind === "bar"
-    readonly property var pinnedApps: barHosted ? SessionData.barPinnedApps : SessionData.getDockPins(surfaceContext.configId)
+    readonly property string pinDockId: surfaceContext.kind === "dock" ? (surfaceContext.config?.id ?? "") : ""
+    readonly property var pinnedApps: surfaceContext.kind === "dock" ? SessionData.getDockPins(pinDockId) : SessionData.barPinnedApps
     function setPinnedApps(apps) {
-        if (barHosted)
-            SessionData.setBarPinnedApps(apps);
-        else
-            SessionData.setDockPins(surfaceContext.configId, apps);
+        if (surfaceContext.kind === "dock") {
+            SessionData.setDockPins(pinDockId, apps);
+            return;
+        }
+        SessionData.setBarPinnedApps(apps);
     }
     function isPinnedApp(id) {
         return pinnedApps.includes(id);
@@ -283,7 +285,7 @@ Item {
                     pinnedGroups.forEach(item => items.push(item));
                     insertLauncher(items);
 
-                    if (pinnedGroups.length > 0 && unpinnedGroups.length > 0) {
+                    if (separatePinnedAndRunning && pinnedGroups.length > 0 && unpinnedGroups.length > 0) {
                         items.push(ApplicationModel.separator("separator_grouped"));
                     }
                     unpinnedGroups.forEach(item => items.push(item));
@@ -351,7 +353,7 @@ Item {
                     root.pinnedAppCount = pinnedApps.length + (root.options.launcherEnabled ? 1 : 0);
                     insertLauncher(items);
 
-                    if (pinnedApps.length > 0 && remainingWindowItems.length > 0) {
+                    if (separatePinnedAndRunning && pinnedApps.length > 0 && remainingWindowItems.length > 0) {
                         items.push(ApplicationModel.separator("separator_ungrouped"));
                     }
                     remainingWindowItems.forEach(item => items.push(item));
@@ -403,25 +405,57 @@ Item {
         }
     }
 
-    DankTooltip {
+    CyTooltip {
         id: tooltip
         screen: root.dockScreen
     }
-    onHoveredButtonChanged: {
+
+    DockWindowPreview {
+        id: windowPreview
+        targetScreen: root.dockScreen
+        options: root.options
+    }
+
+    readonly property bool previewInteractionActive: root.barHosted && windowPreview.interactionActive
+
+    function isPreviewableButton(button) {
+        if (!button?.getPreviewToplevels)
+            return false;
+        return button.getPreviewToplevels().length > 0;
+    }
+
+    function handleButtonHover(button) {
         tooltip.hide();
-        if (!barHosted || !hoveredButton || !surfaceContext.live)
+
+        if (!barHosted)
             return;
-        const position = surfaceContext.screenPoint(hoveredButton, hoveredButton.width / 2, hoveredButton.height / 2);
+
+        if (!button || !surfaceContext.live) {
+            windowPreview.scheduleHide();
+            return;
+        }
+
+        if (isPreviewableButton(button)) {
+            windowPreview.scheduleShow(button, dockScreen, options);
+            return;
+        }
+
+        windowPreview.scheduleHide();
+        const position = surfaceContext.screenPoint(button, button.width / 2, button.height / 2);
         if (!position)
             return;
         const edge = options.position;
         const bounds = SettingsData.getBarBounds(dockScreen, surfaceContext.thickness, edge, surfaceContext.config);
         const x = isVertical ? (edge === SettingsData.Position.Left ? bounds.x + bounds.width : bounds.x) : position.x;
         const y = isVertical ? position.y : (edge === SettingsData.Position.Top ? bounds.y + bounds.height + Theme.spacingS : bounds.y - Theme.listItemHeight);
-        tooltip.show(hoveredButton.tooltipText, x, y, dockScreen, isVertical && edge === SettingsData.Position.Left, isVertical && edge === SettingsData.Position.Right);
+        tooltip.show(button.tooltipText, x, y, dockScreen, isVertical && edge === SettingsData.Position.Left, isVertical && edge === SettingsData.Position.Right);
     }
-    onVisibleChanged: if (!visible)
-        tooltip.hide()
+    onVisibleChanged: {
+        if (!visible) {
+            tooltip.hide();
+            windowPreview.forceHide();
+        }
+    }
 
     readonly property var settingsAppIdSubstitutions: SettingsData.appIdSubstitutions
 
@@ -438,7 +472,7 @@ Item {
     onDockScreenChanged: modelUpdate.schedule()
     readonly property var visibleWindows: options.currentWorkspace && dockScreen ? CompositorService.filterCurrentWorkspace(CompositorService.sortedToplevels, dockScreen.name) : CompositorService.sortedToplevels
     onVisibleWindowsChanged: modelUpdate.schedule()
-    readonly property string windowMetadata: JSON.stringify(visibleWindows.map(toplevel => [toplevel.appId, ["org.quickshell", "com.danklinux.dms"].includes(toplevel.appId) ? toplevel.title : "", options.isolateDisplays ? (toplevel.screens || []).map(screen => screen.name) : null]))
+    readonly property string windowMetadata: JSON.stringify(visibleWindows.map(toplevel => [toplevel.appId, ["org.quickshell", "com.cytechteam.cyshell"].includes(toplevel.appId) ? toplevel.title : "", options.isolateDisplays ? (toplevel.screens || []).map(screen => screen.name) : null]))
     onWindowMetadataChanged: modelUpdate.schedule()
     readonly property var searchCoreApps: AppSearchService.coreApps
 

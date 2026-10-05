@@ -14,7 +14,7 @@ function service() {
         refCount: 0,
         enabledModules: [],
         SettingsData: { controlCenterWidgets: [{ id: "diskUsage", enabled: true }] },
-        DMSService: { sendRequest: (method, params, callback) => requests.push({ method, params, callback }) },
+        CyShellService: { sendRequest: (method, params, callback) => requests.push({ method, params, callback }) },
         log: { warn() {} },
         statsUpdated() {}
     });

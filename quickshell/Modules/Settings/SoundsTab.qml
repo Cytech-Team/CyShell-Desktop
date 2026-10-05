@@ -150,7 +150,7 @@ Item {
                 anchors.margins: Theme.spacingM
                 spacing: Theme.spacingM
 
-                DankIcon {
+                CyIcon {
                     name: "info"
                     size: Theme.iconSizeSmall
                     color: Theme.warning

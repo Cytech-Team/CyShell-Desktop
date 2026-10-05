@@ -110,18 +110,21 @@ Loader {
             } catch (e) {}
         }
 
-        if (item.pluginService !== undefined) {
-            var parts = widgetId.split(":");
-            var pluginId = parts[0];
-            var variantId = parts.length > 1 ? parts[1] : null;
+        var parts = widgetId.split(":");
+        var pluginId = parts[0];
+        var variantId = parts.length > 1 ? parts[1] : null;
+        const nativeCyWidget = ["cyStart", "cytechSearch", "cytechTaskView", "cytechLanguage", "cytechClock", "cytechPeek"].includes(pluginId);
 
+        if (!nativeCyWidget) {
             if (item.pluginId !== undefined)
                 item.pluginId = pluginId;
             if (item.variantId !== undefined)
                 item.variantId = variantId;
             if (item.variantData !== undefined && variantId)
                 item.variantData = PluginService.getPluginVariantData(pluginId, variantId);
-            item.pluginService = PluginService;
+            if (item.pluginService !== undefined)
+                item.pluginService = PluginService;
+            PluginService.injectCompatApi(item, pluginId);
         }
 
         if (item.popoutService !== undefined)

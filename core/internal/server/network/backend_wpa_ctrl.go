@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/utils"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/utils"
 )
 
 const (
@@ -29,7 +29,7 @@ type wpaCtrlConn struct {
 }
 
 func newWpaCtrlConn(sockPath string) (*wpaCtrlConn, error) {
-	localDir, err := os.MkdirTemp(utils.RuntimeDir(), "dms-wpa-")
+	localDir, err := os.MkdirTemp(utils.RuntimeDir(), "cyshell-wpa-")
 	if err != nil {
 		return nil, fmt.Errorf("create wpa_ctrl socket dir: %w", err)
 	}

@@ -1,6 +1,6 @@
 {
   "$schema": "vscode://schemas/color-theme",
-  "name": "Dynamic Base16 DankShell Light",
+  "name": "Dynamic Base16 CyShell Light",
   "semanticHighlighting": true,
   "colors": {
     "foreground": "{{colors.on_surface.light.hex}}",

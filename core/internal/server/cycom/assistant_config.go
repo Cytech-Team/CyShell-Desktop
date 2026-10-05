@@ -12,7 +12,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/secretstore"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/secretstore"
 )
 
 const assistantSecretSchema = "org.cyshell.Agent"
@@ -113,6 +113,7 @@ func (a *Assistant) loadConfig() error {
 			return err
 		}
 		a.baseURL = endpoint
+		a.configured = true
 	}
 	a.model = strings.TrimSpace(cfg.Model)
 	return nil
@@ -288,6 +289,7 @@ func (a *Assistant) Configure(ctx context.Context, provider, endpoint, model, ap
 	a.baseURL = normalized
 	a.model = strings.TrimSpace(model)
 	a.profiles[normalizedProvider] = AssistantProviderProfile{Endpoint: normalized, Model: a.model}
+	a.configured = true
 	a.configError = ""
 	if err := a.persistConfig(); err != nil {
 		a.configError = err.Error()

@@ -44,7 +44,7 @@ Rectangle {
             elide: Text.ElideRight
         }
 
-        DankButton {
+        CyButton {
             id: addButton
             anchors.verticalCenter: parent.verticalCenter
             buttonHeight: Theme.buttonHeightS
@@ -58,7 +58,7 @@ Rectangle {
             onClicked: root.addRequested(addButton)
         }
 
-        DankActionButton {
+        CyActionButton {
             id: settingsButton
             anchors.verticalCenter: parent.verticalCenter
             buttonSize: Theme.buttonHeightS
@@ -69,7 +69,7 @@ Rectangle {
             onClicked: root.settingsRequested()
         }
 
-        DankButton {
+        CyButton {
             id: finishButton
             anchors.verticalCenter: parent.verticalCenter
             buttonHeight: Theme.buttonHeightS

@@ -1,7 +1,7 @@
 package themes
 
 import (
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/themes"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/themes"
 )
 
 type VariantInfo struct {

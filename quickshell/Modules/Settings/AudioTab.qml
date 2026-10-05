@@ -23,6 +23,27 @@ Item {
     property bool showHiddenOutputDevices: false
     property bool showHiddenInputDevices: false
 
+    readonly property var outputChoices: deviceChoices(outputDevices.filter(device => !device.isStream))
+    readonly property var inputChoices: deviceChoices(inputDevices.filter(device => !device.isStream))
+
+    function deviceChoices(devices) {
+        const counts = {};
+        for (const device of devices) {
+            const name = AudioService.displayName(device);
+            counts[name] = (counts[name] ?? 0) + 1;
+        }
+        return devices.map(device => {
+            const name = AudioService.displayName(device);
+            const label = counts[name] > 1 ? I18n.tr("%1 (device %2)").arg(name).arg(device.id) : name;
+            return {node: device, label: label};
+        });
+    }
+
+    function choiceLabel(choices, selected) {
+        const choice = choices.find(item => item.node === selected);
+        return choice?.label ?? (selected ? AudioService.displayName(selected) : I18n.tr("No device selected"));
+    }
+
     function persistHiddenOutputDeviceNames(deviceNames) {
         const uniqueNames = [...new Set(deviceNames)];
         hiddenOutputDeviceNames = uniqueNames;
@@ -126,6 +147,27 @@ Item {
             settingKey: "audioOutputDevices"
             iconName: "volume_up"
 
+            SettingsDropdownRow {
+                text: I18n.tr("Default output device")
+                description: I18n.tr("Used for app and system sound.")
+                currentValue: root.choiceLabel(root.outputChoices, AudioService.sink)
+                options: root.outputChoices.map(choice => choice.label)
+                enabled: root.outputChoices.length > 0
+                onValueChanged: value => {
+                    const choice = root.outputChoices.find(item => item.label === value);
+                    if (choice)
+                        AudioService.setSink(choice.node);
+                }
+            }
+
+            SettingsToggleRow {
+                text: I18n.tr("Remember this output device")
+                description: I18n.tr("Restore it as the default when it reconnects.")
+                checked: SessionData.lockedAudioOutputName.length > 0
+                enabled: checked || root.outputChoices.length > 0
+                onToggled: value => AudioService.lockDefaultDevice(false, value)
+            }
+
             SettingsToggleRow {
                 tab: "audio"
                 tags: ["audio", "virtual", "stream", "obs", "loopback", "device", "sink"]
@@ -138,7 +180,7 @@ Item {
             SettingsRow {
                 body: StyledText {
                     width: parent.width
-                    text: I18n.tr("Set custom names for your audio output devices", "Audio settings description")
+                    text: I18n.tr("Rename or hide output devices", "Audio settings description")
                     font.pixelSize: Theme.fontSizeSmall
                     color: Theme.surfaceVariantText
                     wrapMode: Text.WordWrap
@@ -186,7 +228,7 @@ Item {
                             horizontalAlignment: Text.AlignLeft
                         }
 
-                        DankSlider {
+                        CySlider {
                             id: maxVolSlider
                             anchors.left: maxVolLabel.right
                             anchors.leftMargin: Theme.spacingS
@@ -241,7 +283,7 @@ Item {
                             anchors.verticalCenter: parent.verticalCenter
                             spacing: Theme.spacingS
 
-                            DankIcon {
+                            CyIcon {
                                 name: "visibility_off"
                                 size: Theme.iconSizeMedium
                                 color: Theme.surfaceVariantText
@@ -256,7 +298,7 @@ Item {
                             }
                         }
 
-                        DankIcon {
+                        CyIcon {
                             name: root.showHiddenOutputDevices ? "expand_less" : "expand_more"
                             size: Theme.iconSizeMedium
                             color: Theme.surfaceVariantText
@@ -303,6 +345,27 @@ Item {
             settingKey: "audioInputDevices"
             iconName: "mic"
 
+            SettingsDropdownRow {
+                text: I18n.tr("Default input device")
+                description: I18n.tr("Used as the microphone for apps and calls.")
+                currentValue: root.choiceLabel(root.inputChoices, AudioService.source)
+                options: root.inputChoices.map(choice => choice.label)
+                enabled: root.inputChoices.length > 0
+                onValueChanged: value => {
+                    const choice = root.inputChoices.find(item => item.label === value);
+                    if (choice)
+                        AudioService.setSource(choice.node);
+                }
+            }
+
+            SettingsToggleRow {
+                text: I18n.tr("Remember this input device")
+                description: I18n.tr("Restore it as the default when it reconnects.")
+                checked: SessionData.lockedAudioInputName.length > 0
+                enabled: checked || root.inputChoices.length > 0
+                onToggled: value => AudioService.lockDefaultDevice(true, value)
+            }
+
             SettingsRow {
                 body: Column {
                     width: parent.width
@@ -310,7 +373,7 @@ Item {
 
                     StyledText {
                         width: parent.width
-                        text: I18n.tr("Set custom names for your audio input devices", "Audio settings description")
+                        text: I18n.tr("Rename or hide input devices", "Audio settings description")
                         font.pixelSize: Theme.fontSizeSmall
                         color: Theme.surfaceVariantText
                         wrapMode: Text.WordWrap
@@ -364,7 +427,7 @@ Item {
                                 anchors.verticalCenter: parent.verticalCenter
                                 spacing: Theme.spacingS
 
-                                DankIcon {
+                                CyIcon {
                                     name: "visibility_off"
                                     size: Theme.iconSizeMedium
                                     color: Theme.surfaceVariantText
@@ -379,7 +442,7 @@ Item {
                                 }
                             }
 
-                            DankIcon {
+                            CyIcon {
                                 name: root.showHiddenInputDevices ? "expand_less" : "expand_more"
                                 size: Theme.iconSizeMedium
                                 color: Theme.surfaceVariantText
@@ -439,7 +502,7 @@ Item {
                 color: Theme.primaryContainer
                 anchors.horizontalCenter: parent.horizontalCenter
 
-                DankIcon {
+                CyIcon {
                     id: spinningIcon
                     name: "refresh"
                     size: 40
@@ -528,7 +591,7 @@ Item {
                     width: parent.width
                     spacing: Theme.spacingM
 
-                    DankIcon {
+                    CyIcon {
                         name: root.editingDeviceType === "input" ? "mic" : "speaker"
                         size: Theme.iconSizeLarge
                         color: Theme.primary
@@ -575,7 +638,7 @@ Item {
                     width: parent.width
                     spacing: Theme.spacingM
 
-                    DankTextField {
+                    CyTextField {
                         id: nameInput
                         outlined: true
                         leftIconName: "edit"
@@ -636,7 +699,7 @@ Item {
                             anchors.centerIn: parent
                             spacing: Theme.spacingS
 
-                            DankIcon {
+                            CyIcon {
                                 name: "check"
                                 size: Theme.iconSizeMedium
                                 color: Theme.onPrimary

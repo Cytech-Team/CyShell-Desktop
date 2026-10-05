@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/errdefs"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/errdefs"
 )
 
 // DistroInfo contains basic information about a distribution

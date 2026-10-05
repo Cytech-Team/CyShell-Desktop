@@ -1,3 +1,3 @@
-import qs.DankCommon.Widgets as DankCommon
+import qs.CyCommon.Widgets as CyCommon
 
-DankCommon.StyledText {}
+CyCommon.StyledText {}

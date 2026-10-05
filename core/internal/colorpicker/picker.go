@@ -4,16 +4,16 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/log"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/proto/keyboard_shortcuts_inhibit"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/proto/wlr_layer_shell"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/proto/wlr_screencopy"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/proto/wp_color_management"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/proto/wp_viewporter"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/utils"
-	wlhelpers "github.com/AvengeMedia/DankMaterialShell/core/internal/wayland/client"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/wayland/keymap"
 	"github.com/AvengeMedia/dankgo/wayland/client"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/log"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/proto/keyboard_shortcuts_inhibit"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/proto/wlr_layer_shell"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/proto/wlr_screencopy"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/proto/wp_color_management"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/proto/wp_viewporter"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/utils"
+	wlhelpers "github.com/Cytech-Team/CyShell-Desktop/core/internal/wayland/client"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/wayland/keymap"
 )
 
 type Config struct {
@@ -388,7 +388,7 @@ func (p *Picker) createLayerSurface(output *Output) (*LayerSurface, error) {
 		surface,
 		output.wlOutput,
 		uint32(wlr_layer_shell.ZwlrLayerShellV1LayerOverlay),
-		"dms-colorpicker",
+		"cyshell-colorpicker",
 	)
 	if err != nil {
 		return nil, fmt.Errorf("get layer surface: %w", err)

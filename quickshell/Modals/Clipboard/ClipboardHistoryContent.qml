@@ -217,7 +217,7 @@ FocusScope {
             return;
         }
 
-        DMSService.sendRequest("clipboard.getEntry", {
+        CyShellService.sendRequest("clipboard.getEntry", {
             "id": requestedId
         }, function (response) {
             if (response.error || !response.result) {

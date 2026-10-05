@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/log"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/log"
 )
 
 func NewManager() (*Manager, error) {

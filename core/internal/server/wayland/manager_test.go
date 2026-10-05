@@ -14,9 +14,9 @@ import (
 
 	wlclient "github.com/AvengeMedia/dankgo/wayland/client"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/icc"
-	mocks_wlclient "github.com/AvengeMedia/DankMaterialShell/core/internal/mocks/wlclient"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/proto/wlr_gamma_control"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/icc"
+	mocks_wlclient "github.com/Cytech-Team/CyShell-Desktop/core/internal/mocks/wlclient"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/proto/wlr_gamma_control"
 )
 
 func TestManager_ActorSerializesOutputStateAccess(t *testing.T) {

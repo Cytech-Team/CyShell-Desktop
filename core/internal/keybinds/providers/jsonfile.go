@@ -6,8 +6,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/keybinds"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/utils"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/keybinds"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/utils"
 )
 
 type JSONFileProvider struct {

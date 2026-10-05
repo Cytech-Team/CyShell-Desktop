@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/registries"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/registries"
 	"github.com/spf13/afero"
 )
 

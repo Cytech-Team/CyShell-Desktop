@@ -2,7 +2,7 @@ import QtQuick
 import Quickshell
 import qs.Common
 import qs.Services
-import qs.DankCommon.Common as DC
+import qs.CyCommon.Common as DC
 
 ShellRoot {
     id: root
@@ -12,7 +12,7 @@ ShellRoot {
         DC.Style.theme = Theme;
         DC.Style.settings = SettingsData;
         DC.I18n.backend = I18n;
-        const paths = ["Modals/DankLauncherV2/DankLauncherV2ModalHost.qml", "Modules/DankIsland/Activities/LauncherExpanded.qml"];
+        const paths = ["Modals/CyLauncherV2/CyLauncherV2ModalHost.qml", "Modules/CyIsland/Activities/LauncherExpanded.qml"];
         let failed = false;
         for (const path of paths) {
             const component = Qt.createComponent(path);

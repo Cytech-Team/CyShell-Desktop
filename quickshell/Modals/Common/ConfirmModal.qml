@@ -3,10 +3,10 @@ import qs.Common
 import qs.Modals.Common
 import qs.Widgets
 
-DankModal {
+CyModal {
     id: root
 
-    layerNamespace: "dms:confirm-modal"
+    layerNamespace: "cyshell:confirm-modal"
     keepPopoutsOpen: true
 
     property string confirmTitle: ""

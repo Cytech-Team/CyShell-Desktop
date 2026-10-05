@@ -36,7 +36,7 @@ SettingsRow {
         width: parent.width
         spacing: Theme.spacingS
 
-        DankTextField {
+        CyTextField {
             id: field
             outlined: true
             labelText: root.text
@@ -49,7 +49,7 @@ SettingsRow {
             onEditingFinished: root.editingFinished(text)
             onAccepted: root.accepted(text)
 
-            DankActionButton {
+            CyActionButton {
                 id: resetButton
                 anchors.right: parent.right
                 anchors.rightMargin: Theme.spacingXS

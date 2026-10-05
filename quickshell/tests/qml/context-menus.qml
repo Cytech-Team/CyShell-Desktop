@@ -4,9 +4,9 @@ import Quickshell
 import qs.Common
 import qs.Services
 import qs.Modals.Clipboard
-import qs.Modals.DankLauncherV2
+import qs.Modals.CyLauncherV2
 import qs.Modules.Notifications
-import qs.DankCommon.Common as DC
+import qs.CyCommon.Common as DC
 
 ShellRoot {
     id: root

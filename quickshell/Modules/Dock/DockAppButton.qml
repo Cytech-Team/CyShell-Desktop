@@ -121,6 +121,41 @@ Item {
         return appData?.allWindows?.map(w => w.toplevel).filter(t => t !== null) || [];
     }
 
+    function normalizedPreviewAppId(appId) {
+        if (!appId)
+            return "";
+        const normalized = Paths.moddedAppId(appId) || appId;
+        return String(normalized).toLowerCase();
+    }
+
+    function getPreviewToplevels() {
+        if (!appData)
+            return [];
+
+        if (appData.type === "window") {
+            const toplevel = getToplevelObject();
+            return toplevel ? [toplevel] : [];
+        }
+
+        if (appData.type === "grouped")
+            return getGroupedToplevels();
+
+        if (!appData.isRunning || !appData.appId)
+            return [];
+
+        const targetAppId = normalizedPreviewAppId(appData.appId);
+        const candidates = dockApps?.visibleWindows ?? CompositorService.sortedToplevels ?? [];
+        return candidates.filter(toplevel => normalizedPreviewAppId(toplevel?.appId) === targetAppId);
+    }
+
+    function activatePreviewToplevel(waylandToplevel) {
+        if (!waylandToplevel)
+            return;
+        if (restoreSpecialWorkspaceWindow(waylandToplevel))
+            return;
+        CompositorService.activateToplevel(waylandToplevel);
+    }
+
     function restoreSpecialWorkspaceWindow(waylandToplevel) {
         if (!root.options.restoreSpecialWorkspaceOnClick || !waylandToplevel)
             return false;
@@ -147,7 +182,7 @@ Item {
     function showContextMenu() {
         if (!contextMenu)
             return;
-        const shouldHidePin = appData.appId === "org.quickshell" || appData.appId === "com.danklinux.dms";
+        const shouldHidePin = appData.appId === "org.quickshell" || appData.appId === "com.cytechteam.cyshell";
         contextMenu.showForButton(root, appData, root.height, shouldHidePin, cachedDesktopEntry, parentDockScreen, dockApps);
     }
     function activate() {
@@ -320,7 +355,14 @@ Item {
                         CompositorService.toggleToplevel(groupedToplevel);
                     }
                 } else {
-                    root.showContextMenu();
+                    const groupedToplevels = getGroupedToplevels();
+                    if (groupedToplevels.length === 0)
+                        return;
+                    const activeIndex = getActiveGroupedToplevelIndex(groupedToplevels);
+                    const groupedToplevel = groupedToplevels[activeIndex >= 0 ? activeIndex : 0];
+                    if (restoreSpecialWorkspaceWindow(groupedToplevel))
+                        return;
+                    CompositorService.toggleToplevel(groupedToplevel);
                 }
                 break;
             }
@@ -442,10 +484,14 @@ Item {
         Item {
             id: iconSlot
 
-            x: root.isVertical && !root.indicatorAtFarEdge ? root.indicatorLane : 0
-            y: !root.isVertical && !root.indicatorAtFarEdge ? root.indicatorLane : 0
-            width: parent.width - (root.isVertical ? root.indicatorLane : 0)
-            height: parent.height - (root.isVertical ? 0 : root.indicatorLane)
+            // Windows-style taskbar indicators sit on top of the button edge;
+            // they must not steal layout space from the icon. Reserving the
+            // indicator lane shifted every app icon a few pixels away from the
+            // visual center, so Start/system widgets and app icons did not line up.
+            x: root.options.taskbarVisuals ? 0 : (root.isVertical && !root.indicatorAtFarEdge ? root.indicatorLane : 0)
+            y: root.options.taskbarVisuals ? 0 : (!root.isVertical && !root.indicatorAtFarEdge ? root.indicatorLane : 0)
+            width: root.options.taskbarVisuals ? parent.width : parent.width - (root.isVertical ? root.indicatorLane : 0)
+            height: root.options.taskbarVisuals ? parent.height : parent.height - (root.isVertical ? 0 : root.indicatorLane)
             scale: root.options.enlargeOnHover && root.isHovered ? (root.options.enlargePercentage ?? 125) / 100 : 1
 
             AppIconRenderer {
@@ -465,7 +511,7 @@ Item {
                 id: iconImg
 
                 anchors.centerIn: parent
-                implicitSize: appData && (appData.appId === "org.quickshell" || appData.appId === "com.danklinux.dms") ? actualIconSize * 0.85 : actualIconSize
+                implicitSize: actualIconSize
                 source: {
                     if (!appData || appData.appId === "__SEPARATOR__") {
                         return "";
@@ -480,7 +526,7 @@ Item {
                 asynchronous: true
                 visible: status === Image.Ready && !coreIcon.visible
                 opacity: root.isMinimized ? 0.4 : 1
-                layer.enabled: appData && (appData.appId === "org.quickshell" || appData.appId === "com.danklinux.dms")
+                layer.enabled: appData && (appData.appId === "org.quickshell" || appData.appId === "com.cytechteam.cyshell")
                 layer.smooth: true
                 layer.mipmap: true
                 layer.effect: MultiEffect {
@@ -522,7 +568,7 @@ Item {
                 }
             }
 
-            DankIcon {
+            CyIcon {
                 anchors.centerIn: parent
                 size: actualIconSize
                 name: "sports_esports"

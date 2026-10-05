@@ -120,40 +120,40 @@ Singleton {
 
     property var activeService: null
 
-    readonly property string socketPath: Quickshell.env("DMS_SOCKET")
+    readonly property string socketPath: Quickshell.env("CYSHELL_SOCKET")
 
     // Backend adoption must be state-checked here, not only edge-triggered below:
     // with staged shell loading this singleton can be instantiated after
-    // DMSNetworkService already resolved its capabilities, so the change signal
+    // CyNetworkService already resolved its capabilities, so the change signal
     // may never fire again.
     Component.onCompleted: {
         log.info("Initializing...");
         if (!socketPath || socketPath.length === 0) {
-            log.info("DMS_SOCKET not set, network backend unavailable");
+            log.info("CYSHELL_SOCKET not set, network backend unavailable");
             return;
         }
-        if (DMSNetworkService.networkAvailable) {
-            log.info("Network capability already available, using DMSNetworkService");
-            useDMSService();
+        if (CyNetworkService.networkAvailable) {
+            log.info("Network capability already available, using CyNetworkService");
+            useCyShellService();
             return;
         }
-        log.debug("DMS_SOCKET found, waiting for capabilities...");
+        log.debug("CYSHELL_SOCKET found, waiting for capabilities...");
     }
 
     Connections {
-        target: DMSNetworkService
+        target: CyNetworkService
 
         function onNetworkAvailableChanged() {
-            if (!activeService && DMSNetworkService.networkAvailable) {
-                log.info("Network capability detected, using DMSNetworkService");
-                useDMSService();
+            if (!activeService && CyNetworkService.networkAvailable) {
+                log.info("Network capability detected, using CyNetworkService");
+                useCyShellService();
             }
         }
     }
 
-    function useDMSService() {
-        activeService = DMSNetworkService;
-        log.info("Switched to DMSNetworkService, networkAvailable:", networkAvailable);
+    function useCyShellService() {
+        activeService = CyNetworkService;
+        log.info("Switched to CyNetworkService, networkAvailable:", networkAvailable);
         connectSignals();
     }
 

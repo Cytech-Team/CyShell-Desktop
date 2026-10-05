@@ -4,7 +4,7 @@ import qs.Modals.Common
 import qs.Services
 import qs.Widgets
 
-DankModal {
+CyModal {
     id: root
 
     property bool lockOnSwitch: false
@@ -51,7 +51,7 @@ DankModal {
         close();
     }
 
-    layerNamespace: "dms:switch-user-modal"
+    layerNamespace: "cyshell:switch-user-modal"
     shouldBeVisible: false
     allowStacking: true
     modalWidth: Math.min(Theme.dialogMaxWidth, screenWidth - Theme.spacingXL * 2)
@@ -67,7 +67,7 @@ DankModal {
         }
     }
 
-    content: DankDialog {
+    content: CyDialog {
         id: sessionDialog
         title: I18n.tr("Switch User")
         supportingText: SessionsService.otherSessions().length > 0 ? I18n.tr("Select an active session to switch to. The current session stays running in the background.") : ""
@@ -97,7 +97,7 @@ DankModal {
                         anchors.margins: Theme.spacingM
                         spacing: Theme.spacingM
 
-                        DankIcon {
+                        CyIcon {
                             name: "account_circle"
                             size: Theme.iconSize + 4
                             color: Theme.primary
@@ -133,7 +133,7 @@ DankModal {
                             }
                         }
 
-                        DankIcon {
+                        CyIcon {
                             id: chevron
                             name: I18n.isRtl ? "chevron_left" : "chevron_right"
                             size: Theme.iconSize
@@ -166,7 +166,7 @@ DankModal {
                     anchors.margins: Theme.spacingM
                     spacing: Theme.spacingM
 
-                    DankIcon {
+                    CyIcon {
                         name: "info"
                         size: Theme.iconSize
                         color: Theme.surfaceVariantText
@@ -199,7 +199,7 @@ DankModal {
         }
 
         actions: [
-            DankButton {
+            CyButton {
                 maximumWidth: sessionDialog.actionWidth
                 wrapText: true
                 text: I18n.tr("Close")
@@ -207,7 +207,7 @@ DankModal {
                 textColor: Theme.primary
                 onClicked: root.close()
             },
-            DankButton {
+            CyButton {
                 maximumWidth: sessionDialog.actionWidth
                 wrapText: true
                 visible: SessionsService.otherSessions().length === 0 && !root.lockOnSwitch

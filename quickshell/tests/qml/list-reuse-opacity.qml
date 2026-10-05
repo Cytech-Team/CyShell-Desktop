@@ -3,7 +3,7 @@ import QtTest
 import Quickshell
 import qs.Common
 import qs.Widgets
-import qs.DankCommon.Common as DC
+import qs.CyCommon.Common as DC
 
 ShellRoot {
     id: root
@@ -34,7 +34,7 @@ ShellRoot {
             left: true
         }
 
-        DankListView {
+        CyListView {
             id: list
             anchors.fill: parent
             reuseItems: true
@@ -44,7 +44,7 @@ ShellRoot {
                 values: root.values
                 objectProp: "id"
             }
-            delegate: DankListItem {
+            delegate: CyListItem {
                 required property int index
                 required property var modelData
                 width: list.width

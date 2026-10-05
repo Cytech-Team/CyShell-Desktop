@@ -4,10 +4,10 @@ import qs.Modals.Common
 import qs.Services
 import qs.Widgets
 
-DankModal {
+CyModal {
     id: root
 
-    layerNamespace: "dms:wifi-password"
+    layerNamespace: "cyshell:wifi-password"
     keepPopoutsOpen: true
     allowStacking: true
     shouldBeVisible: false
@@ -293,7 +293,7 @@ DankModal {
         }
     }
 
-    DankDialog {
+    CyDialog {
         id: contentFocusScope
 
         anchors.fill: parent
@@ -365,7 +365,7 @@ DankModal {
             }
         }
 
-        DankTextField {
+        CyTextField {
             id: ssidInput
             visible: isHiddenNetwork
             outlined: true
@@ -385,7 +385,7 @@ DankModal {
             id: dynamicFieldsRepeater
             model: fieldsInfo
 
-            delegate: DankTextField {
+            delegate: CyTextField {
                 id: fieldInput
                 required property var modelData
                 required property int index
@@ -437,7 +437,7 @@ DankModal {
                     color: Theme.surfaceVariantText
                 }
 
-                DankDropdown {
+                CyDropdown {
                     width: parent.width
                     dropdownWidth: parent.width
                     compactMode: true
@@ -461,7 +461,7 @@ DankModal {
                     color: Theme.surfaceVariantText
                 }
 
-                DankDropdown {
+                CyDropdown {
                     width: parent.width
                     dropdownWidth: parent.width
                     compactMode: true
@@ -472,7 +472,7 @@ DankModal {
             }
         }
 
-        DankTextField {
+        CyTextField {
             id: usernameInput
             visible: showUsernameField
             outlined: true
@@ -490,7 +490,7 @@ DankModal {
             onAccepted: passwordInput.forceActiveFocus()
         }
 
-        DankTextField {
+        CyTextField {
             id: passwordInput
             visible: showPasswordField
             outlined: true
@@ -518,7 +518,7 @@ DankModal {
             }
         }
 
-        DankTextField {
+        CyTextField {
             id: anonInput
             visible: showAnonField
             outlined: true
@@ -536,7 +536,7 @@ DankModal {
             onAccepted: domainMatchInput.forceActiveFocus()
         }
 
-        DankTextField {
+        CyTextField {
             id: domainMatchInput
             visible: showDomainField
             outlined: true
@@ -554,7 +554,7 @@ DankModal {
             onAccepted: submitCredentialsAndClose()
         }
 
-        DankToggle {
+        CyToggle {
             id: savePasswordCheckbox
 
             width: parent.width
@@ -565,7 +565,7 @@ DankModal {
         }
 
         actions: [
-            DankButton {
+            CyButton {
                 maximumWidth: contentFocusScope.actionWidth
                 wrapText: true
                 text: I18n.tr("Cancel")
@@ -573,7 +573,7 @@ DankModal {
                 textColor: Theme.primary
                 onClicked: clearAndClose()
             },
-            DankButton {
+            CyButton {
                 id: connectButton
                 maximumWidth: contentFocusScope.actionWidth
                 wrapText: true

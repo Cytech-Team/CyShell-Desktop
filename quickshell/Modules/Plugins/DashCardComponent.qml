@@ -1,6 +1,6 @@
 import QtQuick
 import qs.Common
-import qs.Modules.DankDash.Overview
+import qs.Modules.CyDash.Overview
 
 Card {
     id: root

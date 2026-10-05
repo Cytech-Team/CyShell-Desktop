@@ -18,19 +18,32 @@ Singleton {
     signal stateChanged
     signal configurationApplied(bool success, string message)
 
+    property bool savedRestoreAttempted: false
+    property string restoredTopologyKey: ""
+
+    Timer {
+        id: savedRestoreTimer
+        interval: 650
+        repeat: false
+        onTriggered: root.restoreSavedConfiguration()
+    }
+
     Connections {
-        target: DMSService
+        target: CyShellService
 
         function onCapabilitiesReceived() {
             checkCapabilities();
         }
 
         function onConnectionStateChanged() {
-            if (DMSService.isConnected) {
+            if (CyShellService.isConnected) {
                 checkCapabilities();
                 return;
             }
             wlrOutputAvailable = false;
+            savedRestoreAttempted = false;
+            restoredTopologyKey = "";
+            savedRestoreTimer.stop();
         }
 
         function onWlrOutputStateUpdate(data) {
@@ -42,19 +55,19 @@ Singleton {
     }
 
     Component.onCompleted: {
-        if (!DMSService.dmsAvailable) {
+        if (!CyShellService.backendAvailable) {
             return;
         }
         checkCapabilities();
     }
 
     function checkCapabilities() {
-        if (!DMSService.capabilities || !Array.isArray(DMSService.capabilities)) {
+        if (!CyShellService.capabilities || !Array.isArray(CyShellService.capabilities)) {
             wlrOutputAvailable = false;
             return;
         }
 
-        const hasWlrOutput = DMSService.capabilities.includes("wlroutput");
+        const hasWlrOutput = CyShellService.capabilities.includes("wlroutput");
         if (hasWlrOutput && !wlrOutputAvailable) {
             wlrOutputAvailable = true;
             log.info("wlr-output-management capability detected");
@@ -68,11 +81,11 @@ Singleton {
     }
 
     function requestState() {
-        if (!DMSService.isConnected || !wlrOutputAvailable) {
+        if (!CyShellService.isConnected || !wlrOutputAvailable) {
             return;
         }
 
-        DMSService.sendRequest("wlroutput.getState", null, response => {
+        CyShellService.sendRequest("wlroutput.getState", null, response => {
             if (!response.result) {
                 return;
             }
@@ -93,6 +106,191 @@ Singleton {
             });
         }
         stateChanged();
+
+        const topology = outputTopologyKey();
+        if (outputs.length > 0 && topology !== restoredTopologyKey) {
+            restoredTopologyKey = topology;
+            savedRestoreAttempted = false;
+            savedRestoreTimer.restart();
+        }
+    }
+
+    function outputTopologyKey() {
+        return (outputs || []).map(output => {
+            return [
+                String(output.name || ""),
+                String(output.serialNumber || ""),
+                String(output.make || ""),
+                String(output.model || "")
+            ].join("|");
+        }).sort().join(";");
+    }
+
+    function _currentHead(output) {
+        const head = {
+            "name": output.name,
+            "enabled": output.enabled !== false
+        };
+
+        if (!head.enabled)
+            return head;
+
+        const current = output.currentMode
+            || (output.modes || []).find(mode => mode.preferred)
+            || output.modes?.[0]
+            || null;
+
+        if (current?.id !== undefined)
+            head.modeId = current.id;
+
+        head.position = {
+            "x": output.x ?? 0,
+            "y": output.y ?? 0
+        };
+        head.scale = output.scale > 0 ? output.scale : 1.0;
+        head.transform = output.transform ?? 0;
+        if (output.adaptiveSyncSupported)
+            head.adaptiveSync = output.adaptiveSync ?? 0;
+        return head;
+    }
+
+    function _savedOutputForLive(savedOutputs, live) {
+        if (!savedOutputs || !live)
+            return null;
+
+        if (savedOutputs[live.name])
+            return savedOutputs[live.name];
+
+        const entries = Object.values(savedOutputs);
+        if (live.serialNumber) {
+            const serialMatches = entries.filter(entry => entry?.serialNumber
+                && entry.serialNumber === live.serialNumber);
+            if (serialMatches.length === 1)
+                return serialMatches[0];
+        }
+
+        if (live.make && live.model) {
+            const modelMatches = entries.filter(entry => entry?.make === live.make
+                && entry?.model === live.model);
+            if (modelMatches.length === 1)
+                return modelMatches[0];
+        }
+
+        return null;
+    }
+
+    function _modeForSaved(output, savedMode) {
+        const modes = output?.modes || [];
+        if (!savedMode)
+            return output?.currentMode || modes.find(mode => mode.preferred) || modes[0] || null;
+
+        let exact = modes.find(mode => mode.width === savedMode.width
+            && mode.height === savedMode.height
+            && Math.abs((mode.refresh || 0) - (savedMode.refresh || 0)) <= 2);
+        if (exact)
+            return exact;
+
+        const sameResolution = modes.filter(mode => mode.width === savedMode.width
+            && mode.height === savedMode.height);
+        if (sameResolution.length > 0) {
+            sameResolution.sort((a, b) => Math.abs((a.refresh || 0) - (savedMode.refresh || 0))
+                - Math.abs((b.refresh || 0) - (savedMode.refresh || 0)));
+            return sameResolution[0];
+        }
+
+        return output?.currentMode || modes.find(mode => mode.preferred) || modes[0] || null;
+    }
+
+    function _restoreHeads(savedConfig) {
+        const savedOutputs = savedConfig?.outputs || {};
+        const heads = [];
+
+        for (const output of (outputs || [])) {
+            const saved = _savedOutputForLive(savedOutputs, output);
+            if (!saved) {
+                heads.push(_currentHead(output));
+                continue;
+            }
+
+            const head = {
+                "name": output.name,
+                "enabled": saved.enabled !== false
+            };
+
+            if (head.enabled) {
+                const mode = _modeForSaved(output, saved.mode);
+                if (mode?.id !== undefined)
+                    head.modeId = mode.id;
+                head.position = {
+                    "x": saved.position?.x ?? output.x ?? 0,
+                    "y": saved.position?.y ?? output.y ?? 0
+                };
+                head.scale = saved.scale > 0 ? saved.scale : (output.scale > 0 ? output.scale : 1.0);
+                head.transform = saved.transform ?? output.transform ?? 0;
+                if (output.adaptiveSyncSupported)
+                    head.adaptiveSync = saved.adaptiveSync ?? output.adaptiveSync ?? 0;
+            }
+
+            heads.push(head);
+        }
+
+        return heads;
+    }
+
+    function _headsMatchCurrent(heads) {
+        for (const head of heads) {
+            const output = getOutput(head.name);
+            if (!output)
+                return false;
+            if (!!head.enabled !== (output.enabled !== false))
+                return false;
+            if (!head.enabled)
+                continue;
+
+            if (head.modeId !== undefined && output.currentMode?.id !== head.modeId)
+                return false;
+            if ((head.position?.x ?? output.x ?? 0) !== (output.x ?? 0)
+                || (head.position?.y ?? output.y ?? 0) !== (output.y ?? 0))
+                return false;
+            if (Math.abs((head.scale ?? 1) - (output.scale > 0 ? output.scale : 1)) > 0.005)
+                return false;
+            if ((head.transform ?? 0) !== (output.transform ?? 0))
+                return false;
+            if (output.adaptiveSyncSupported
+                && (head.adaptiveSync ?? 0) !== (output.adaptiveSync ?? 0))
+                return false;
+        }
+        return true;
+    }
+
+    function restoreSavedConfiguration() {
+        if (savedRestoreAttempted)
+            return;
+        savedRestoreAttempted = true;
+
+        const saved = SettingsData.labwcDisplayConfiguration;
+        if (!saved || saved.version !== 1 || !saved.outputs
+            || Object.keys(saved.outputs).length === 0)
+            return;
+
+        const heads = _restoreHeads(saved);
+        if (heads.length === 0 || !heads.some(head => head.enabled)
+            || _headsMatchCurrent(heads))
+            return;
+
+        log.info("Restoring saved Labwc display configuration for", heads.length, "outputs");
+        testConfiguration(heads, (testSuccess, testMessage) => {
+            if (!testSuccess) {
+                log.warn("Saved display configuration no longer validates:", testMessage);
+                return;
+            }
+            applyConfiguration(heads, (success, message) => {
+                if (!success)
+                    log.warn("Failed to restore saved display configuration:", message);
+                else
+                    log.info("Saved display configuration restored");
+            });
+        });
     }
 
     function getOutput(name) {
@@ -105,7 +303,7 @@ Singleton {
     }
 
     function applyConfiguration(heads, callback) {
-        if (!DMSService.isConnected || !wlrOutputAvailable) {
+        if (!CyShellService.isConnected || !wlrOutputAvailable) {
             if (callback) {
                 callback(false, I18n.tr("Not connected"));
             }
@@ -117,7 +315,7 @@ Singleton {
             log.debug("Head", index, "- name:", head.name, "enabled:", head.enabled, "modeId:", head.modeId, "customMode:", JSON.stringify(head.customMode), "position:", JSON.stringify(head.position), "scale:", head.scale, "transform:", head.transform, "adaptiveSync:", head.adaptiveSync);
         });
 
-        DMSService.sendRequest("wlroutput.applyConfiguration", {
+        CyShellService.sendRequest("wlroutput.applyConfiguration", {
             "heads": heads
         }, response => {
             const success = !response.error && response.result?.success === true;
@@ -137,7 +335,7 @@ Singleton {
     }
 
     function testConfiguration(heads, callback) {
-        if (!DMSService.isConnected || !wlrOutputAvailable) {
+        if (!CyShellService.isConnected || !wlrOutputAvailable) {
             if (callback) {
                 callback(false, I18n.tr("Not connected"));
             }
@@ -146,7 +344,7 @@ Singleton {
 
         log.debug("Testing configuration for", heads.length, "outputs");
 
-        DMSService.sendRequest("wlroutput.testConfiguration", {
+        CyShellService.sendRequest("wlroutput.testConfiguration", {
             "heads": heads
         }, response => {
             const success = !response.error && response.result?.success === true;

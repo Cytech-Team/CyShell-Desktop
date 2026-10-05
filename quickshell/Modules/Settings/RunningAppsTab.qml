@@ -17,14 +17,14 @@ Item {
             tags: ["app", "icon", "substitution", "replacement", "pattern", "window", "class", "regex"]
 
             headerActions: [
-                DankActionButton {
+                CyActionButton {
                     iconName: "restart_alt"
                     tooltipText: I18n.tr("Reset to default")
                     visible: JSON.stringify(SettingsData.appIdSubstitutions) !== JSON.stringify(SettingsData.getDefaultAppIdSubstitutions())
                     iconColor: Theme.surfaceVariantText
                     onClicked: SettingsData.resetAppIdSubstitutions()
                 },
-                DankActionButton {
+                CyActionButton {
                     iconName: "add"
                     Accessible.name: I18n.tr("Add")
                     iconColor: Theme.primary
@@ -53,7 +53,7 @@ Item {
                         value: substitutionGroup.modelData.pattern
                         onEditingFinished: value => SettingsData.updateAppIdSubstitution(substitutionGroup.index, value, replacementField.value, substitutionGroup.modelData.type)
 
-                        actions: DankActionButton {
+                        actions: CyActionButton {
                             iconName: "delete"
                             iconColor: Theme.error
                             Accessible.name: I18n.tr("Remove")

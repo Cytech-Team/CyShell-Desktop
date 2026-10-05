@@ -37,32 +37,12 @@ Item {
             return fallback;
         }
     }
-    readonly property string compositorSource: {
-        switch (CompositorService.compositor) {
-        case "niri":
-            return "file://" + Theme.shellDir + "/assets/niri.svg";
-        case "hyprland":
-            return "file://" + Theme.shellDir + "/assets/hyprland.svg";
-        case "mango":
-            return "file://" + Theme.shellDir + "/assets/mango.png";
-        case "sway":
-        case "scroll":
-            return "file://" + Theme.shellDir + "/assets/sway.svg";
-        case "miracle":
-            return "file://" + Theme.shellDir + "/assets/miraclewm.svg";
-        case "labwc":
-            return "file://" + Theme.shellDir + "/assets/labwc.png";
-        case "aqueous":
-            return "file://" + Theme.shellDir + "/assets/aqueous.svg";
-        default:
-            return "";
-        }
-    }
+    readonly property string compositorSource: "file://" + Theme.shellDir + "/assets/labwc.png"
 
     width: size
     height: size
 
-    DankIcon {
+    CyIcon {
         visible: root.resolvedMode === "apps"
         anchors.centerIn: parent
         name: "apps"

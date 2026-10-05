@@ -10,7 +10,7 @@ Singleton {
     id: root
 
     readonly property var log: Log.scoped("GreeterUserTheme")
-    readonly property string greetCfgDir: Quickshell.env("CYSHELL_GREET_CFG_DIR") || Quickshell.env("DMS_GREET_CFG_DIR") || "/var/cache/cyshell-greeter"
+    readonly property string greetCfgDir: Quickshell.env("CYSHELL_GREET_CFG_DIR") || "/var/cache/cyshell-greeter"
 
     property string activeUsername: ""
 

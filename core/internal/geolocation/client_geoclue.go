@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/log"
 	"github.com/AvengeMedia/dankgo/dbusutil"
 	"github.com/AvengeMedia/dankgo/syncmap"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/log"
 	"github.com/godbus/dbus/v5"
 )
 
@@ -111,7 +111,7 @@ func (c *GeoClueClient) setupClient() error {
 	}
 
 	clientObj := c.dbusConn.Object(dbusGeoClueService, c.clientPath)
-	if err := clientObj.SetProperty(dbusGeoClueClientDesktopId, "dms"); err != nil {
+	if err := clientObj.SetProperty(dbusGeoClueClientDesktopId, "com.cytechteam.cyshell"); err != nil {
 		return fmt.Errorf("failed to set desktop ID: %w", err)
 	}
 

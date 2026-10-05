@@ -5,20 +5,27 @@
 //@ pragma Env QT_WAYLAND_DISABLE_WINDOWDECORATION=1
 //@ pragma Env QT_QUICK_CONTROLS_STYLE=Material
 //@ pragma UseQApplication
-//@ pragma AppId com.danklinux.dms
+//@ pragma AppId com.cytechteam.cyshell
 
 import QtQuick
 import Quickshell
 import qs.Common
-import qs.DankCommon.Common as DC
+import qs.Commons as NoctaliaCompatCommons
+import qs.Services.UI as NoctaliaCompatUI
+import qs.Services.System as NoctaliaCompatSystem
+import qs.Modules.DesktopWidgets as NoctaliaCompatDesktopWidgets
+import qs.Modules.Bar.Extras as NoctaliaCompatBarExtras
+import qs.CyCommon.Common as DC
 import qs.Modules
 import qs.Services
 
 ShellRoot {
     id: entrypoint
 
-    readonly property bool runGreeter: Quickshell.env("DMS_RUN_GREETER") === "1" || Quickshell.env("DMS_RUN_GREETER") === "true"
-    readonly property bool disableHotReload: Quickshell.env("DMS_DISABLE_HOT_RELOAD") === "1" || Quickshell.env("DMS_DISABLE_HOT_RELOAD") === "true"
+    readonly property bool runGreeter: Quickshell.env("CYSHELL_RUN_GREETER") === "1" || Quickshell.env("CYSHELL_RUN_GREETER") === "true"
+    readonly property bool disableHotReload: Quickshell.env("CYSHELL_DISABLE_HOT_RELOAD") === "1" || Quickshell.env("CYSHELL_DISABLE_HOT_RELOAD") === "true"
+    readonly property bool externalPanel: Quickshell.env("CYSHELL_EXTERNAL_PANEL") === "1"
+    readonly property bool externalDesktop: Quickshell.env("CYSHELL_EXTERNAL_DESKTOP") === "1"
 
     Binding {
         target: Quickshell
@@ -36,13 +43,13 @@ ShellRoot {
         DC.Host.cache = CacheData;
         if (entrypoint.runGreeter)
             return;
-        // Build the polkit agent here, outside incubation: first-touching it from a Connections target during DMSShell's async load crashed QQmlConnections::connectSignalsToMethods.
+        // Build the polkit agent here, outside incubation: first-touching it from a Connections target during CyShell's async load crashed QQmlConnections::connectSignalsToMethods.
         void PolkitService.agent;
     }
 
     Loader {
         id: wallpaperLoader
-        active: !entrypoint.runGreeter
+        active: !entrypoint.runGreeter && !entrypoint.externalDesktop
         asynchronous: false
 
         sourceComponent: Scope {
@@ -56,34 +63,43 @@ ShellRoot {
         }
     }
 
-    // Desktop icons are isolated from DMSShell so an icon-provider failure
+    // Desktop icons are isolated from CyShell so an icon-provider failure
     // can never take down launcher/settings/popouts or the rest of the shell UI.
     Loader {
         id: desktopIconLayerLoader
-        active: !entrypoint.runGreeter
+        active: !entrypoint.runGreeter && !entrypoint.externalDesktop
         asynchronous: true
         source: "Modules/DesktopIconLayer.qml"
     }
 
     Loader {
         id: shellCoreLoader
-        active: !entrypoint.runGreeter
+        active: !entrypoint.runGreeter && !entrypoint.externalPanel
         asynchronous: true
         source: "ShellCore.qml"
-        onLoaded: dmsShellLoader.setSource("DMSShell.qml", {
-            core: item
-        })
+
+        onLoaded: {
+            if (cyShellLoader.item)
+                cyShellLoader.item.core = item;
+        }
     }
 
     Loader {
-        id: dmsShellLoader
+        id: cyShellLoader
+        active: !entrypoint.runGreeter
         asynchronous: true
+        source: "CyShell.qml"
+
+        onLoaded: {
+            if (shellCoreLoader.item)
+                item.core = shellCoreLoader.item;
+        }
     }
 
     Loader {
         id: dmsGreeterLoader
         active: entrypoint.runGreeter
         asynchronous: false
-        source: "DMSGreeter.qml"
+        source: "CyShellGreeter.qml"
     }
 }

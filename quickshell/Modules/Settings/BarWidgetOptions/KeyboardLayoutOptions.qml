@@ -72,7 +72,7 @@ Column {
                 width: parent.width
                 spacing: Theme.spacingS
 
-                DankTextField {
+                CyTextField {
                     id: rawField
                     outlined: true
                     labelText: I18n.tr("Displayed label", "keyboard layout override, the label currently shown")
@@ -82,7 +82,7 @@ Column {
                     onAccepted: root.addOverride()
                 }
 
-                DankTextField {
+                CyTextField {
                     id: customField
                     outlined: true
                     labelText: I18n.tr("Custom label", "keyboard layout override, the replacement label")
@@ -92,7 +92,7 @@ Column {
                     onAccepted: root.addOverride()
                 }
 
-                DankButton {
+                CyButton {
                     id: addOverrideBtn
                     iconName: "add"
                     text: I18n.tr("Add")
@@ -133,7 +133,7 @@ Column {
                             elide: Text.ElideRight
                         }
 
-                        DankActionButton {
+                        CyActionButton {
                             id: removeOverrideBtn
                             anchors.right: parent.right
                             anchors.rightMargin: Theme.spacingS

@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/log"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/notify"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/log"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/notify"
 	"github.com/godbus/dbus/v5"
 )
 
@@ -76,7 +76,7 @@ func SendNotification(result NotifyResult) uint32 {
 	call := obj.Call(
 		notifyInterface+".Notify",
 		0,
-		"DMS",
+		"CyShell",
 		uint32(0),
 		notify.AppID,
 		summary,

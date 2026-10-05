@@ -8,8 +8,8 @@ import (
 	"strings"
 	"unsafe"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/log"
 	"github.com/AvengeMedia/dankgo/syncmap"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/log"
 	"golang.org/x/sys/unix"
 )
 

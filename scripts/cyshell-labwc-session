@@ -1,0 +1,135 @@
+#!/bin/sh
+set -eu
+
+bridge="${CYSHELL_LABWC_BRIDGE_LIB:-/usr/local/lib/cyshell/libcyshell-labwc-bridge.so}"
+labwc_bin="${CYSHELL_LABWC_BIN:-/usr/bin/labwc}"
+compatibility="${bridge%/*}/compatibility.conf"
+
+# Management invocations should stay plain. Only the long-lived compositor
+# process needs the in-process bridge.
+for arg in "$@"; do
+    case "$arg" in
+        -e|--exit|-r|--reconfigure|-v|--version|-h|--help)
+            exec "$labwc_bin" "$@"
+            ;;
+    esac
+done
+
+plain_labwc() {
+    printf '%s\n' "[CyShell LabWC Bridge] disabled: $1; starting plain LabWC" >&2
+    shift
+    unset CYSHELL_LABWC_BRIDGE CYSHELL_LABWC_VERSION
+    exec "$labwc_bin" "$@"
+}
+
+valid_number() {
+    case "$1" in
+        0) return 0 ;;
+        ''|*[!0-9]*|0*) return 1 ;;
+        *) return 0 ;;
+    esac
+}
+
+valid_version() {
+    case "$1" in
+        *.*.*) ;;
+        *) return 1 ;;
+    esac
+    version_tail=${1#*.}
+    valid_number "${1%%.*}" &&
+        valid_number "${version_tail%%.*}" &&
+        valid_number "${version_tail#*.}"
+}
+
+supported_version=
+wlroots_major=
+wlroots_minor=
+read_compatibility() {
+    [ -r "$compatibility" ] || return 1
+    # Parse data only: installed metadata must never execute shell commands.
+    while IFS= read -r line || [ -n "$line" ]; do
+        case "$line" in
+            ''|'#'*) ;;
+            CYSHELL_LABWC_SUPPORTED_VERSION=*)
+                [ -z "$supported_version" ] || return 1
+                supported_version=${line#*=}
+                valid_version "$supported_version" || return 1
+                ;;
+            CYSHELL_WLROOTS_ABI_MAJOR=*)
+                [ -z "$wlroots_major" ] || return 1
+                wlroots_major=${line#*=}
+                valid_number "$wlroots_major" || return 1
+                ;;
+            CYSHELL_WLROOTS_ABI_MINOR=*)
+                [ -z "$wlroots_minor" ] || return 1
+                wlroots_minor=${line#*=}
+                valid_number "$wlroots_minor" || return 1
+                ;;
+            *) return 1 ;;
+        esac
+    done < "$compatibility" || return 1
+    [ -n "$supported_version" ] && [ -n "$wlroots_major" ] && [ -n "$wlroots_minor" ]
+}
+
+if ! read_compatibility; then
+    plain_labwc "missing or invalid compatibility metadata" "$@"
+fi
+[ -r "$bridge" ] || plain_labwc "bridge library is unavailable" "$@"
+
+# Probe the selected binary without loading the bridge or inherited preloads.
+if ! version_output=$(unset LD_PRELOAD CYSHELL_LABWC_BRIDGE CYSHELL_LABWC_VERSION; "$labwc_bin" --version 2>/dev/null); then
+    plain_labwc "cannot detect LabWC version" "$@"
+fi
+case "$version_output" in
+    *'
+'*) plain_labwc "unrecognized LabWC version output" "$@" ;;
+    'labwc '*)
+        detected_version=${version_output#labwc }
+        detected_version=${detected_version%% *}
+        ;;
+    *) plain_labwc "unrecognized LabWC version output" "$@" ;;
+esac
+if [ "$detected_version" != "$supported_version" ]; then
+    plain_labwc "unsupported or unknown LabWC version" "$@"
+fi
+
+wlroots_matches() (
+    # Split reported tokens without expanding globs or changing session arguments.
+    set -f
+    IFS=' 	'
+    found_wlroots=
+    for token in $version_output; do
+        case "$token" in
+            wlroots-*)
+                [ -z "$found_wlroots" ] || exit 1
+                reported_wlroots=${token#wlroots-}
+                case "$reported_wlroots" in
+                    *.*.*) valid_version "$reported_wlroots" || exit 1 ;;
+                    *.*)
+                        valid_number "${reported_wlroots%%.*}" &&
+                            valid_number "${reported_wlroots#*.}" || exit 1
+                        ;;
+                    *) exit 1 ;;
+                esac
+                reported_tail=${reported_wlroots#*.}
+                [ "${reported_wlroots%%.*}" = "$wlroots_major" ] &&
+                    [ "${reported_tail%%.*}" = "$wlroots_minor" ] || exit 1
+                found_wlroots=1
+                ;;
+            *wlroots*) exit 1 ;;
+        esac
+    done
+    [ -n "$found_wlroots" ]
+)
+if ! wlroots_matches; then
+    plain_labwc "unsupported or unknown wlroots ABI" "$@"
+fi
+
+export CYSHELL_LABWC_VERSION="$detected_version"
+case ":${LD_PRELOAD:-}:" in
+    *:"$bridge":*) ;;
+    *) export LD_PRELOAD="$bridge${LD_PRELOAD:+:$LD_PRELOAD}" ;;
+esac
+
+export CYSHELL_LABWC_BRIDGE=1
+exec "$labwc_bin" "$@"

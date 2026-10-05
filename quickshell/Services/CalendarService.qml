@@ -214,7 +214,7 @@ Singleton {
         let tasks = Object.assign({}, root.localTasks);
         if (!tasks[dateKey])
             tasks[dateKey] = [];
-        let taskId = (new Date().getTime()) + "-dms";
+        let taskId = (new Date().getTime()) + "-cyshell";
         tasks[dateKey].push({
             "id": taskId,
             "text": text,

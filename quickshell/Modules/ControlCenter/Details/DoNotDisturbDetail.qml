@@ -65,7 +65,7 @@ Item {
         return Math.max(1, Math.round((target.getTime() - now.getTime()) / 60000));
     }
 
-    DankFlickable {
+    CyFlickable {
         anchors.fill: parent
         contentHeight: column.height
         clip: true
@@ -101,7 +101,7 @@ Item {
                     Repeater {
                         model: root.presets
 
-                        DankButton {
+                        CyButton {
                             required property var modelData
 
                             buttonHeight: Theme.buttonHeightXS

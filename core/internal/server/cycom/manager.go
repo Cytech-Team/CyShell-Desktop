@@ -11,72 +11,124 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/models"
 	"github.com/AvengeMedia/dankgo/ipc"
 	cycomembed "github.com/Cytech-Team/CyComAgent-MCP/embed"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/server/models"
 )
 
 type Manager struct {
 	runtime   *cycomembed.Runtime
 	assistant *Assistant
 
-	enabled          atomic.Bool
-	controlEnabled   atomic.Bool
-	callID           atomic.Uint64
-	activeMu         sync.Mutex
-	activeCalls      map[uint64]context.CancelFunc
-	controlPath      string
-	permissionsMu    sync.RWMutex
-	permissions      map[string]bool
-	appPoliciesMu    sync.RWMutex
-	appPolicies      map[string]appPolicyConfig
-	approvalID       atomic.Uint64
-	approvalsMu      sync.Mutex
-	pendingApprovals map[string]*pendingApproval
-	activityID       atomic.Uint64
-	activityMu       sync.Mutex
-	recentActivity   []Activity
-	eventsMu         sync.Mutex
-	eventSubscribers map[string]chan Event
-	receiptID        atomic.Uint64
-	receiptsMu       sync.Mutex
-	actionReceipts   map[string]actionReceiptRecord
+	enabled               atomic.Bool
+	controlEnabled        atomic.Bool
+	agentWorkspaceEnabled atomic.Bool
+	useAgentWorkspace     atomic.Bool
+	workspaceMu           sync.RWMutex
+	agentWorkspaceWidth   int
+	agentWorkspaceHeight  int
+	agentWorkspaceRefresh float64
+	agentWorkspaceScale   float64
+	callID                atomic.Uint64
+	activeMu              sync.Mutex
+	activeCalls           map[uint64]context.CancelFunc
+	controlPath           string
+	integrationClientMu   sync.Mutex
+	permissionsMu         sync.RWMutex
+	permissions           map[string]bool
+	appPoliciesMu         sync.RWMutex
+	appPolicies           map[string]appPolicyConfig
+	sessionAppAllows      map[string]map[string]bool
+	approvalModeMu        sync.RWMutex
+	approvalMode          string
+	approvalID            atomic.Uint64
+	approvalsMu           sync.Mutex
+	pendingApprovals      map[string]*pendingApproval
+	activityID            atomic.Uint64
+	activityMu            sync.Mutex
+	recentActivity        []Activity
+	eventsMu              sync.Mutex
+	eventSubscribers      map[string]chan Event
+	receiptID             atomic.Uint64
+	receiptsMu            sync.Mutex
+	actionReceipts        map[string]actionReceiptRecord
 }
 
 type State struct {
-	Embedded             bool              `json:"embedded"`
-	Enabled              bool              `json:"enabled"`
-	ControlEnabled       bool              `json:"controlEnabled"`
-	Version              string            `json:"version"`
-	StateDir             string            `json:"stateDir"`
-	ToolCount            int               `json:"toolCount"`
-	ActiveCalls          int               `json:"activeCalls"`
-	Permissions          []PermissionState `json:"permissions"`
-	AppPolicies          []AppPolicyState  `json:"appPolicies"`
-	PendingApprovalCount int               `json:"pendingApprovalCount"`
-	UndoReceiptCount     int               `json:"undoReceiptCount"`
-	Assistant            AssistantState    `json:"assistant"`
+	Embedded              bool              `json:"embedded"`
+	Enabled               bool              `json:"enabled"`
+	ControlEnabled        bool              `json:"controlEnabled"`
+	Version               string            `json:"version"`
+	StateDir              string            `json:"stateDir"`
+	ToolCount             int               `json:"toolCount"`
+	ActiveCalls           int               `json:"activeCalls"`
+	Permissions           []PermissionState `json:"permissions"`
+	AppPolicies           []AppPolicyState  `json:"appPolicies"`
+	ApprovalMode          string            `json:"approvalMode"`
+	PendingApprovalCount  int               `json:"pendingApprovalCount"`
+	UndoReceiptCount      int               `json:"undoReceiptCount"`
+	AgentWorkspaceEnabled bool              `json:"agentWorkspaceEnabled"`
+	AgentWorkspaceActive  bool              `json:"agentWorkspaceActive"`
+	UseAgentWorkspace     bool              `json:"useAgentWorkspace"`
+	AgentWorkspaceDisplay string            `json:"agentWorkspaceDisplay,omitempty"`
+	AgentWorkspaceWidth   int               `json:"agentWorkspaceWidth"`
+	AgentWorkspaceHeight  int               `json:"agentWorkspaceHeight"`
+	AgentWorkspaceRefresh float64           `json:"agentWorkspaceRefresh"`
+	AgentWorkspaceScale   float64           `json:"agentWorkspaceScale"`
+	Assistant             AssistantState    `json:"assistant"`
 }
 
 type controlConfig struct {
-	Version        int                        `json:"version"`
-	Enabled        bool                       `json:"enabled"`
-	ControlEnabled bool                       `json:"controlEnabled"`
-	Permissions    map[string]bool            `json:"permissions,omitempty"`
-	AppPolicies    map[string]appPolicyConfig `json:"appPolicies,omitempty"`
+	Version               int                        `json:"version"`
+	Enabled               bool                       `json:"enabled"`
+	ControlEnabled        bool                       `json:"controlEnabled"`
+	ApprovalMode          string                     `json:"approvalMode,omitempty"`
+	AgentWorkspaceEnabled bool                       `json:"agentWorkspaceEnabled,omitempty"`
+	UseAgentWorkspace     bool                       `json:"useAgentWorkspace,omitempty"`
+	AgentWorkspaceWidth   int                        `json:"agentWorkspaceWidth,omitempty"`
+	AgentWorkspaceHeight  int                        `json:"agentWorkspaceHeight,omitempty"`
+	AgentWorkspaceRefresh float64                    `json:"agentWorkspaceRefresh,omitempty"`
+	AgentWorkspaceScale   float64                    `json:"agentWorkspaceScale,omitempty"`
+	Permissions           map[string]bool            `json:"permissions,omitempty"`
+	AppPolicies           map[string]appPolicyConfig `json:"appPolicies,omitempty"`
 }
 
 type runtimeGate struct{ manager *Manager }
+
+func requestNumber(req ipc.Request, key string) (float64, bool) {
+	if value, ok := models.Get[float64](req, key); ok {
+		return value, true
+	}
+	if value, ok := models.Get[int](req, key); ok {
+		return float64(value), true
+	}
+	if value, ok := models.Get[int64](req, key); ok {
+		return float64(value), true
+	}
+	return 0, false
+}
 
 func (g runtimeGate) BeforeCall(ctx context.Context, name string, raw json.RawMessage) error {
 	if g.manager == nil || !g.manager.enabled.Load() {
 		return fmt.Errorf("CyShell Agent is disabled")
 	}
+
+	// Full access intentionally mirrors ChatGPT's unrestricted mode: once the
+	// user selects it, normal scope toggles, per-app prompts and the master
+	// computer-control gate are bypassed. Disabling the Agent still stops all
+	// calls and remains the emergency kill switch.
+	if g.manager.ApprovalMode() == approvalModeFull {
+		return nil
+	}
+
 	if err := g.manager.checkPermissions(name, raw); err != nil {
 		return err
 	}
 	if !g.manager.controlEnabled.Load() && !g.manager.toolReadOnly(name) {
 		return fmt.Errorf("CyShell Agent control is disabled by the user")
+	}
+	if err := g.manager.checkGeneralApproval(ctx, name, raw); err != nil {
+		return err
 	}
 	if err := g.manager.checkAppApprovals(ctx, name, raw); err != nil {
 		return err
@@ -113,6 +165,8 @@ func NewManager() (*Manager, error) {
 		controlPath:      filepath.Join(stateDir, "cyshell-agent-control.json"),
 		permissions:      defaultPermissionMap(),
 		appPolicies:      make(map[string]appPolicyConfig),
+		sessionAppAllows: make(map[string]map[string]bool),
+		approvalMode:     approvalModeAsk,
 		pendingApprovals: make(map[string]*pendingApproval),
 		recentActivity:   make([]Activity, 0, agentRecentActivityLimit),
 		eventSubscribers: make(map[string]chan Event),
@@ -121,6 +175,8 @@ func NewManager() (*Manager, error) {
 	if err := m.loadControl(); err != nil {
 		return nil, err
 	}
+	m.applyAgentWorkspaceEnvironment()
+	_ = m.applyAgentWorkspaceDisplayConfig(false)
 	rt.AddInterceptor(runtimeGate{manager: m})
 	if err := registerShellTools(m); err != nil {
 		return nil, fmt.Errorf("register CyShell native agent tools: %w", err)
@@ -138,18 +194,29 @@ func (m *Manager) RuntimeState() State {
 	m.activeMu.Unlock()
 	pending := len(m.PendingApprovals())
 	receipts := len(m.ActionReceipts())
+	workspaceActive, workspaceDisplay := m.AgentWorkspaceStatus()
+	workspaceWidth, workspaceHeight, workspaceRefresh, workspaceScale := m.AgentWorkspaceDisplayConfig()
 	return State{
-		Embedded:             true,
-		Enabled:              m.enabled.Load(),
-		ControlEnabled:       m.controlEnabled.Load(),
-		Version:              m.runtime.Version(),
-		StateDir:             m.runtime.StateDir(),
-		ToolCount:            len(m.runtime.ListTools()),
-		ActiveCalls:          active,
-		Permissions:          m.Permissions(),
-		AppPolicies:          m.AppPolicies(),
-		PendingApprovalCount: pending,
-		UndoReceiptCount:     receipts,
+		Embedded:              true,
+		Enabled:               m.enabled.Load(),
+		ControlEnabled:        m.controlEnabled.Load(),
+		Version:               m.runtime.Version(),
+		StateDir:              m.runtime.StateDir(),
+		ToolCount:             len(m.runtime.ListTools()),
+		ActiveCalls:           active,
+		Permissions:           m.Permissions(),
+		AppPolicies:           m.AppPolicies(),
+		ApprovalMode:          m.ApprovalMode(),
+		PendingApprovalCount:  pending,
+		UndoReceiptCount:      receipts,
+		AgentWorkspaceEnabled: m.agentWorkspaceEnabled.Load(),
+		AgentWorkspaceActive:  workspaceActive,
+		UseAgentWorkspace:     m.useAgentWorkspace.Load(),
+		AgentWorkspaceDisplay: workspaceDisplay,
+		AgentWorkspaceWidth:   workspaceWidth,
+		AgentWorkspaceHeight:  workspaceHeight,
+		AgentWorkspaceRefresh: workspaceRefresh,
+		AgentWorkspaceScale:   workspaceScale,
 	}
 }
 
@@ -167,6 +234,45 @@ func HandleRequest(ctx context.Context, conn *ipc.ConnWriter, req ipc.Request, m
 		models.Respond(conn, req.ID, manager.State())
 	case "cycom.getRuntimeState":
 		models.Respond(conn, req.ID, manager.RuntimeState())
+	case "cycom.integration.get":
+		models.Respond(conn, req.ID, manager.IntegrationState())
+	case "cycom.integration.configure":
+		mode, _ := models.Get[string](req, "mode")
+		externalFallback, _ := models.Get[bool](req, "externalFallback")
+		agentAppEnabled, _ := models.Get[bool](req, "agentAppEnabled")
+		tunnelID, _ := models.Get[string](req, "tunnelId")
+		tunnelAPIKey, _ := models.Get[string](req, "tunnelApiKey")
+		clearTunnelCredentials, _ := models.Get[bool](req, "clearTunnelCredentials")
+		state, err := manager.ConfigureIntegration(
+			mode,
+			externalFallback,
+			agentAppEnabled,
+			tunnelID,
+			tunnelAPIKey,
+			clearTunnelCredentials,
+		)
+		if err != nil {
+			models.RespondError(conn, req.ID, err.Error())
+			return
+		}
+		models.Respond(conn, req.ID, state)
+	case "cycom.integration.client.set":
+		clientID, ok := models.Get[string](req, "clientId")
+		if !ok || strings.TrimSpace(clientID) == "" {
+			models.RespondError(conn, req.ID, "clientId is required")
+			return
+		}
+		connected, ok := models.Get[bool](req, "connected")
+		if !ok {
+			models.RespondError(conn, req.ID, "connected is required")
+			return
+		}
+		state, err := manager.SetAgentClientConnected(clientID, connected)
+		if err != nil {
+			models.RespondError(conn, req.ID, err.Error())
+			return
+		}
+		models.Respond(conn, req.ID, state)
 	case "cycom.activity.list":
 		models.Respond(conn, req.ID, manager.RecentActivity())
 	case "cycom.activity.clear":
@@ -200,6 +306,48 @@ func HandleRequest(ctx context.Context, conn *ipc.ConnWriter, req ipc.Request, m
 			return
 		}
 		models.Respond(conn, req.ID, manager.State())
+	case "cycom.agentWorkspace.setEnabled":
+		enabled, ok := models.Get[bool](req, "enabled")
+		if !ok {
+			models.RespondError(conn, req.ID, "enabled is required")
+			return
+		}
+		if err := manager.SetAgentWorkspaceEnabled(enabled); err != nil {
+			models.RespondError(conn, req.ID, err.Error())
+			return
+		}
+		models.Respond(conn, req.ID, manager.State())
+	case "cycom.agentWorkspace.setUse":
+		enabled, ok := models.Get[bool](req, "enabled")
+		if !ok {
+			models.RespondError(conn, req.ID, "enabled is required")
+			return
+		}
+		if err := manager.SetUseAgentWorkspace(enabled); err != nil {
+			models.RespondError(conn, req.ID, err.Error())
+			return
+		}
+		models.Respond(conn, req.ID, manager.State())
+	case "cycom.agentWorkspace.configure":
+		widthValue, widthOK := requestNumber(req, "width")
+		heightValue, heightOK := requestNumber(req, "height")
+		refresh, refreshOK := requestNumber(req, "refresh")
+		scale, scaleOK := requestNumber(req, "scale")
+		if !widthOK || !heightOK || !refreshOK || !scaleOK {
+			models.RespondError(conn, req.ID, "width, height, refresh, and scale are required")
+			return
+		}
+		width := int(widthValue)
+		height := int(heightValue)
+		if float64(width) != widthValue || float64(height) != heightValue {
+			models.RespondError(conn, req.ID, "width and height must be whole numbers")
+			return
+		}
+		if err := manager.SetAgentWorkspaceDisplayConfig(width, height, refresh, scale); err != nil {
+			models.RespondError(conn, req.ID, err.Error())
+			return
+		}
+		models.Respond(conn, req.ID, manager.State())
 	case "cycom.setPermission":
 		scope, ok := models.Get[string](req, "scope")
 		if !ok || strings.TrimSpace(scope) == "" {
@@ -218,6 +366,17 @@ func HandleRequest(ctx context.Context, conn *ipc.ConnWriter, req ipc.Request, m
 		models.Respond(conn, req.ID, manager.State())
 	case "cycom.approvals.list":
 		models.Respond(conn, req.ID, manager.PendingApprovals())
+	case "cycom.approvalMode.set":
+		mode, ok := models.Get[string](req, "mode")
+		if !ok || strings.TrimSpace(mode) == "" {
+			models.RespondError(conn, req.ID, "mode is required")
+			return
+		}
+		if err := manager.SetApprovalMode(mode); err != nil {
+			models.RespondError(conn, req.ID, err.Error())
+			return
+		}
+		models.Respond(conn, req.ID, manager.State())
 	case "cycom.approval.respond":
 		id, ok := models.Get[string](req, "id")
 		if !ok || strings.TrimSpace(id) == "" {
@@ -379,6 +538,14 @@ func handleToolCall(ctx context.Context, conn *ipc.ConnWriter, req ipc.Request, 
 func (m *Manager) loadControl() error {
 	m.enabled.Store(true)
 	m.controlEnabled.Store(true)
+	m.agentWorkspaceEnabled.Store(true)
+	m.useAgentWorkspace.Store(true)
+	m.workspaceMu.Lock()
+	m.agentWorkspaceWidth = 1280
+	m.agentWorkspaceHeight = 720
+	m.agentWorkspaceRefresh = 60
+	m.agentWorkspaceScale = 1
+	m.workspaceMu.Unlock()
 	if m.permissions == nil {
 		m.permissions = defaultPermissionMap()
 	}
@@ -395,6 +562,25 @@ func (m *Manager) loadControl() error {
 	}
 	m.enabled.Store(cfg.Enabled)
 	m.controlEnabled.Store(cfg.ControlEnabled)
+	if cfg.Version >= 5 {
+		m.agentWorkspaceEnabled.Store(cfg.AgentWorkspaceEnabled)
+		m.useAgentWorkspace.Store(cfg.UseAgentWorkspace)
+	}
+	if cfg.Version >= 6 {
+		if width, height, refresh, scale, ok := normalizeAgentWorkspaceDisplayConfig(cfg.AgentWorkspaceWidth, cfg.AgentWorkspaceHeight, cfg.AgentWorkspaceRefresh, cfg.AgentWorkspaceScale); ok {
+			m.workspaceMu.Lock()
+			m.agentWorkspaceWidth = width
+			m.agentWorkspaceHeight = height
+			m.agentWorkspaceRefresh = refresh
+			m.agentWorkspaceScale = scale
+			m.workspaceMu.Unlock()
+		}
+	}
+	if normalized, ok := normalizeApprovalMode(cfg.ApprovalMode); ok {
+		m.approvalModeMu.Lock()
+		m.approvalMode = normalized
+		m.approvalModeMu.Unlock()
+	}
 	if len(cfg.Permissions) > 0 {
 		m.permissionsMu.Lock()
 		for _, spec := range permissionCatalog {
@@ -442,12 +628,20 @@ func (m *Manager) persistControl() error {
 		appPolicies[key] = appPolicyConfig{Name: cfg.Name, Permissions: perms}
 	}
 	m.appPoliciesMu.RUnlock()
+	workspaceWidth, workspaceHeight, workspaceRefresh, workspaceScale := m.AgentWorkspaceDisplayConfig()
 	data, err := json.MarshalIndent(controlConfig{
-		Version:        3,
-		Enabled:        m.enabled.Load(),
-		ControlEnabled: m.controlEnabled.Load(),
-		Permissions:    permissions,
-		AppPolicies:    appPolicies,
+		Version:               6,
+		Enabled:               m.enabled.Load(),
+		ControlEnabled:        m.controlEnabled.Load(),
+		ApprovalMode:          m.ApprovalMode(),
+		AgentWorkspaceEnabled: m.agentWorkspaceEnabled.Load(),
+		UseAgentWorkspace:     m.useAgentWorkspace.Load(),
+		AgentWorkspaceWidth:   workspaceWidth,
+		AgentWorkspaceHeight:  workspaceHeight,
+		AgentWorkspaceRefresh: workspaceRefresh,
+		AgentWorkspaceScale:   workspaceScale,
+		Permissions:           permissions,
+		AppPolicies:           appPolicies,
 	}, "", "  ")
 	if err != nil {
 		return err

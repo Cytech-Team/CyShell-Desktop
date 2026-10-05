@@ -283,16 +283,16 @@ Item {
         // make sure we don't overwrite an existing override with a default one, in case the user has already customized it
         function buildOverrideContent(existing) {
             if (!existing)
-                return "[Unit]\nAfter=dms.service\n";
-            const lines = existing.split("\n");
-            const hasAfter = lines.some(l => l.trim() === "After=dms.service");
+                return "[Unit]\nAfter=cyshell.service\n";
+            const lines = existing.split("\n").map(l => l.trim() === "After=cyshell.service" ? "After=cyshell.service" : l);
+            const hasAfter = lines.some(l => l.trim() === "After=cyshell.service");
             if (hasAfter)
-                return existing;
+                return lines.join("\n");
             const unitIdx = lines.findIndex(l => l.trim() === "[Unit]");
             if (unitIdx >= 0) {
-                lines.splice(unitIdx + 1, 0, "After=dms.service");
+                lines.splice(unitIdx + 1, 0, "After=cyshell.service");
             } else {
-                lines.push("[Unit]", "After=dms.service");
+                lines.push("[Unit]", "After=cyshell.service");
             }
             return lines.join("\n");
         }
@@ -305,7 +305,7 @@ Item {
         }
 
         onLoadFailed: {
-            setText("[Unit]\nAfter=dms.service\n");
+            setText("[Unit]\nAfter=cyshell.service\n");
             ToastService.showInfo(I18n.tr("Systemd override generated"));
         }
 
@@ -355,7 +355,7 @@ Item {
         desktopApps = [];
     }
 
-    DankFlickable {
+    CyFlickable {
         anchors.fill: parent
         clip: true
         contentHeight: mainColumn.height + Theme.spacingXL
@@ -480,7 +480,7 @@ Item {
                                 }
                             }
 
-                            DankButton {
+                            CyButton {
                                 id: browseButton
                                 text: I18n.tr("Browse")
                                 iconName: "search"
@@ -488,7 +488,7 @@ Item {
                             }
                         }
 
-                        DankTextField {
+                        CyTextField {
                             outlined: true
                             leftIconName: "terminal"
                             labelText: I18n.tr("Command")
@@ -507,7 +507,7 @@ Item {
                         width: parent.width
                         spacing: Theme.spacingM
 
-                        DankTextField {
+                        CyTextField {
                             outlined: true
                             leftIconName: "badge"
                             labelText: I18n.tr("Name")
@@ -517,7 +517,7 @@ Item {
                             onTextChanged: root.newEntryName = text
                         }
 
-                        DankTextField {
+                        CyTextField {
                             outlined: true
                             leftIconName: "terminal"
                             labelText: I18n.tr("Command", "noun, text field label for a shell command")
@@ -540,7 +540,7 @@ Item {
                     }
                 }
 
-                DankButton {
+                CyButton {
                     anchors.horizontalCenter: parent.horizontalCenter
                     text: I18n.tr("Add to autostart")
                     iconName: "add"
@@ -576,7 +576,7 @@ Item {
                             anchors.verticalCenter: parent.verticalCenter
                         }
 
-                        DankActionButton {
+                        CyActionButton {
                             id: clearAllButton
                             iconName: "delete_sweep"
                             tooltipText: I18n.tr("Clear All")
@@ -668,7 +668,7 @@ Item {
                                     }
                                 }
 
-                                DankToggle {
+                                CyToggle {
                                     id: entryToggle
                                     anchors.right: entryRemoveButton.left
                                     anchors.rightMargin: Theme.spacingS
@@ -677,7 +677,7 @@ Item {
                                     onToggled: checked => root.setHidden(modelData, !checked)
                                 }
 
-                                DankActionButton {
+                                CyActionButton {
                                     id: entryRemoveButton
                                     anchors.right: parent.right
                                     anchors.rightMargin: Theme.spacingS
@@ -726,7 +726,7 @@ Item {
                             wrapMode: Text.WordWrap
                         }
 
-                        DankButton {
+                        CyButton {
                             anchors.horizontalCenter: parent.horizontalCenter
                             text: I18n.tr("Generate override")
                             iconName: "build"

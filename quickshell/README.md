@@ -1,6 +1,6 @@
-# DMS Quickshell Interface
+# CyShell Quickshell Interface
 
-QML-based desktop shell interface for DankMaterialShell providing panels, widgets, and overlays.
+QML-based desktop shell interface for CyShell providing panels, widgets, overlays, settings, and desktop services.
 
 **See [root README](../README.md) for project overview and installation.**
 
@@ -36,7 +36,7 @@ make lint-qml  # Run from repo root; requires quickshell/.qmlls.ini (generated b
 
 **Panels & Bars**
 - `Modules/TopBar/` - Multi-monitor status bars with workspace switching
-- `Modules/DankBar/` - Customizable widget bar with plugin support
+- `Modules/CyBar/` - Customizable widget bar with plugin support
 - `Modules/Dock/` - Application dock with window management
 
 **System Controls**
@@ -84,15 +84,15 @@ Singletons providing system integration:
 
 Reusable Material Design 3 components in `Widgets/`:
 
-- `DankIcon` - Icon component with Material font
-- `DankSlider` - Enhanced slider with animations
-- `DankToggle` - Toggle switch component
-- `DankTabBar` - Tab bar implementation
-- `DankGridView` - Grid layout with adaptive columns
-- `DankListView` - Scrollable list view
-- `DankTextField` - Text input with validation
-- `DankDropdown` - Dropdown selection
-- `DankPopout` - Base for overlay components
+- `CyIcon` - Icon component with Material font
+- `CySlider` - Enhanced slider with animations
+- `CyToggle` - Toggle switch component
+- `CyTabBar` - Tab bar implementation
+- `CyGridView` - Grid layout with adaptive columns
+- `CyListView` - Scrollable list view
+- `CyTextField` - Text input with validation
+- `CyDropdown` - Dropdown selection
+- `CyPopout` - Base for overlay components
 - `StateLayer` - Material interaction states
 
 ## Theming
@@ -140,9 +140,9 @@ Workspace switchers adapt to compositor (Niri/Hyprland).
 
 ## Plugin System
 
-External plugins in `~/.config/DankMaterialShell/plugins/`:
+External plugins in `~/.config/CyShell/plugins/`:
 
-**Widget plugins** - UI components in DankBar
+**Widget plugins** - UI components in CyBar
 **Daemon plugins** - Background processes without UI
 
 Plugin manifest (`plugin.json`):
@@ -172,7 +172,7 @@ Backend IPC socket communication:
 import Quickshell.Io
 
 Process {
-    command: ["dms", "ipc", "call", "spotlight", "toggle"]
+    command: ["cyshell", "ipc", "call", "spotlight", "toggle"]
     running: true
 }
 ```
@@ -219,7 +219,7 @@ Singleton {
 **Guidelines:**
 - Use `Theme.propertyName` for consistent styling
 - Bind directly to service properties for reactivity
-- Use `DankIcon` for all icons
+- Use `CyIcon` for all icons
 - Implement feature detection and graceful degradation
 - 4-space indentation, no unnecessary comments
 

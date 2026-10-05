@@ -2,7 +2,7 @@ import QtQuick
 import Quickshell
 import qs.Common
 import qs.Services
-import qs.DankCommon.Common as DC
+import qs.CyCommon.Common as DC
 
 ShellRoot {
     id: root

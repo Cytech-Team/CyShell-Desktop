@@ -2,7 +2,7 @@ import QtQuick
 import Quickshell
 import qs.Common
 import qs.Services
-import qs.DankCommon.Common as DC
+import qs.CyCommon.Common as DC
 
 ShellRoot {
     id: root
@@ -46,7 +46,7 @@ ShellRoot {
         running: true
         onTriggered: {
             try {
-                root.check(!DMSService.isConnected, "fixture runner is offline");
+                root.check(!CyShellService.isConnected, "fixture runner is offline");
                 root.check(RefreshRateService.batteryRefreshRateTarget > 0, "refresh rate service resolves");
                 root.check(!BrightnessService.brightnessAvailable, "no brightness devices offline");
                 root.check(!NightModeService.gammaControlAvailable, "no gamma control offline");

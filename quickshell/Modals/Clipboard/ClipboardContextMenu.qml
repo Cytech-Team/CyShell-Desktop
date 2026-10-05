@@ -3,7 +3,7 @@ import qs.Common
 import qs.Services
 import qs.Widgets
 
-DankContextMenu {
+CyContextMenu {
     id: root
 
     property var entry: null
@@ -15,7 +15,7 @@ DankContextMenu {
     readonly property bool hasTextAlternative: !!entry && (entry.altMimeType ?? "") !== ""
     readonly property bool pinned: entry?.pinned || hasPinnedDuplicate
 
-    layerNamespace: "dms:clipboard-context-menu"
+    layerNamespace: "cyshell:clipboard-context-menu"
 
     menuItems: {
         const items = [

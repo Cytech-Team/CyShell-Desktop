@@ -149,6 +149,13 @@ TAB_INDEX_MAP = {
     "GreeterAuthTab.qml": 62,
     "AutoStartTab.qml": 36,
     "BatteryTab.qml": 42,
+    "BluetoothTab.qml": 65,
+    "PerformanceTab.qml": 66,
+    "CyBarTab.qml": 3,
+    "CyBarAppearanceTab.qml": 6,
+    "CyDashTab.qml": 43,
+    "CyIslandTab.qml": 46,
+    "DesktopTab.qml": 64,
     "MouseTouchpadTab.qml": 44,
     "KeyboardTab.qml": 45,
 }
@@ -342,6 +349,8 @@ def find_settings_components(content, filename, wrappers, tab_meta, hub_meta):
 
     if file_tab_index == -1 and not file_page:
         return results
+    if file_tab_index != -1 and file_tab_index not in tab_meta:
+        return results
 
     for component in SEARCHABLE_COMPONENTS + sorted(wrappers):
         defaults = wrappers.get(component, {})
@@ -431,7 +440,7 @@ def find_settings_components(content, filename, wrappers, tab_meta, hub_meta):
                     condition_key = "cupsAvailable"
                 elif "NetworkService.networkAvailable" in visible_raw:
                     condition_key = "networkAvailable"
-                elif "DMSService.isConnected" in visible_raw:
+                elif "CyShellService.isConnected" in visible_raw:
                     condition_key = "dmsConnected"
                 elif "Theme.matugenAvailable" in visible_raw:
                     condition_key = "matugenAvailable"
@@ -656,7 +665,7 @@ def extract_settings_index(root_dir, tab_meta, hub_meta):
                 seen_keys.add(key)
                 all_entries.append(entry)
 
-    if "windowRules" not in seen_keys:
+    if "windowRules" not in seen_keys and 38 in tab_meta:
         category, parent_label, _ = tab_meta.get(38, TAB_META_DEFAULT)
         all_entries.append(
             {
@@ -678,7 +687,7 @@ def extract_settings_index(root_dir, tab_meta, hub_meta):
             }
         )
 
-    if "islandHomeLayout" not in seen_keys:
+    if "islandHomeLayout" not in seen_keys and 46 in tab_meta:
         category, parent_label, _ = tab_meta.get(46, TAB_META_DEFAULT)
         all_entries.append(
             {

@@ -9,7 +9,7 @@ import "../Common/Format.js" as Format
 PanelWindow {
     id: root
 
-    WlrLayershell.namespace: "dms:toast"
+    WlrLayershell.namespace: "cyshell:toast"
 
     property var modelData
     property bool shouldBeVisible: false
@@ -137,7 +137,7 @@ PanelWindow {
                 width: parent.width
                 height: Math.max(Theme.iconSize + 8, messageText.implicitHeight)
 
-                DankIcon {
+                CyIcon {
                     id: statusIcon
                     name: {
                         switch (ToastService.currentLevel) {
@@ -187,7 +187,7 @@ PanelWindow {
                     wrapMode: Text.NoWrap
                 }
 
-                DankActionButton {
+                CyActionButton {
                     id: expandButton
                     iconName: toast.expanded ? "expand_less" : "expand_more"
                     Accessible.name: toast.expanded ? I18n.tr("Collapse", "verb, button that collapses an expanded item or section") : I18n.tr("Expand", "verb, button that expands a collapsed item or section")
@@ -217,7 +217,7 @@ PanelWindow {
                     }
                 }
 
-                DankActionButton {
+                CyActionButton {
                     id: closeButton
                     iconName: "close"
                     Accessible.name: I18n.tr("Close")
@@ -301,7 +301,7 @@ PanelWindow {
                             }
                         }
 
-                        DankActionButton {
+                        CyActionButton {
                             id: copyDetailsButton
                             iconName: "content_copy"
                             Accessible.name: I18n.tr("Copy")
@@ -322,7 +322,7 @@ PanelWindow {
                             property bool showTooltip: false
 
                             onClicked: {
-                                Quickshell.execDetached(["dms", "cl", "copy", ToastService.currentDetails]);
+                                Quickshell.execDetached(["cyshell", "cl", "copy", ToastService.currentDetails]);
                                 showTooltip = true;
                                 detailsTooltipTimer.start();
                             }
@@ -383,7 +383,7 @@ PanelWindow {
                             wrapMode: Text.Wrap
                         }
 
-                        DankActionButton {
+                        CyActionButton {
                             id: copyButton
                             iconName: "content_copy"
                             Accessible.name: I18n.tr("Copy Full Command")
@@ -406,7 +406,7 @@ PanelWindow {
                             property bool showTooltip: false
 
                             onClicked: {
-                                Quickshell.execDetached(["dms", "cl", "copy", ToastService.currentCommand]);
+                                Quickshell.execDetached(["cyshell", "cl", "copy", ToastService.currentCommand]);
                                 showTooltip = true;
                                 tooltipTimer.start();
                             }

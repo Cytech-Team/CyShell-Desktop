@@ -204,7 +204,7 @@ Item {
                 onAccepted: ignoredPackagesCard.addIgnoredPackage()
                 onValueEdited: ignoredPackageError.visible = false
 
-                actions: DankIconButton {
+                actions: CyIconButton {
                     variant: "filled"
                     iconName: "add"
                     tooltipText: I18n.tr("Ignore package", "tooltip, exclude a package from system updates")
@@ -238,7 +238,7 @@ Item {
                         title: modelData
                         iconName: "visibility_off"
 
-                        DankActionButton {
+                        CyActionButton {
                             anchors.verticalCenter: parent.verticalCenter
                             iconName: "delete"
                             iconColor: Theme.error

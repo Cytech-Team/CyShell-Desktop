@@ -124,8 +124,8 @@ Item {
 
     Process {
         id: embeddedGreeterCheckProcess
-        // archinstall's DMS profile points greetd at this launcher inside the packaged DMS tree
-        command: ["sh", "-c", "grep -q 'Modules/Greetd/assets/dms-greeter' /etc/greetd/config.toml 2>/dev/null"]
+        // Detect the CyShell-owned greetd command.
+        command: ["sh", "-c", "grep -q '/usr/local/bin/cyshell-greeter' /etc/greetd/config.toml 2>/dev/null"]
         running: false
 
         onExited: exitCode => {
@@ -329,7 +329,7 @@ Item {
                     width: parent.width
                     spacing: Theme.spacingS
 
-                    DankButton {
+                    CyButton {
                         visible: root.greeterActionAvailable
                         text: root.greeterActionLabel
                         iconName: root.greeterActionIcon
@@ -338,7 +338,7 @@ Item {
                         enabled: !root.greeterInstallActionRunning && !root.greeterSyncRunning
                     }
 
-                    DankButton {
+                    CyButton {
                         text: I18n.tr("Refresh")
                         iconName: "refresh"
                         horizontalPadding: Theme.spacingL
@@ -346,7 +346,7 @@ Item {
                         enabled: !root.greeterStatusRunning
                     }
 
-                    DankButton {
+                    CyButton {
                         text: I18n.tr("Sync", "verb, button that copies settings to the login greeter")
                         iconName: "sync"
                         horizontalPadding: Theme.spacingL
@@ -373,7 +373,42 @@ Item {
             tags: ["greeter", "login", "sync", "theme", "wallpaper"]
 
             SettingsRow {
-                subtitle: I18n.tr("Uses your wallpaper, fonts and lock screen settings.", "login screen appearance")
+                subtitle: I18n.tr("Uses your wallpaper, fonts and lock screen settings. Layout changes are synced to the login screen with the rest of Greeter settings.", "login screen appearance")
+            }
+
+            SettingsDropdownRow {
+                settingKey: "greeterLayoutHorizontal"
+                text: I18n.tr("Login panel position")
+                description: I18n.tr("Place the authentication panel on the left, center, or right side of the screen.")
+                options: [I18n.tr("Left"), I18n.tr("Center"), I18n.tr("Right")]
+                currentValue: SettingsData.greeterLayoutHorizontal === "left" ? I18n.tr("Left") : SettingsData.greeterLayoutHorizontal === "right" ? I18n.tr("Right") : I18n.tr("Center")
+                onValueChanged: value => {
+                    const layout = value === I18n.tr("Left") ? "left" : value === I18n.tr("Right") ? "right" : "center";
+                    SettingsData.set("greeterLayoutHorizontal", layout);
+                }
+            }
+
+            SettingsSliderRow {
+                settingKey: "greeterPanelWidth"
+                text: I18n.tr("Login panel width")
+                value: SettingsData.greeterPanelWidth
+                unit: " px"
+                minimum: 300
+                maximum: 560
+                step: 10
+                onSliderValueChanged: newValue => SettingsData.set("greeterPanelWidth", Math.round(newValue))
+            }
+
+            SettingsSliderRow {
+                settingKey: "greeterVerticalOffset"
+                text: I18n.tr("Vertical position")
+                description: I18n.tr("Move the login panel above or below the vertical center.")
+                value: SettingsData.greeterVerticalOffset
+                unit: " px"
+                minimum: -280
+                maximum: 280
+                step: 10
+                onSliderValueChanged: newValue => SettingsData.set("greeterVerticalOffset", Math.round(newValue))
             }
 
             SettingsNavRow {
@@ -513,7 +548,7 @@ Item {
             anchors.centerIn: parent
             spacing: Theme.spacingS
 
-            DankIcon {
+            CyIcon {
                 id: syncPillIcon
                 name: "sync"
                 size: Theme.iconSizeMedium
@@ -540,7 +575,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
             }
 
-            DankActionButton {
+            CyActionButton {
                 iconName: "close"
                 Accessible.name: I18n.tr("Dismiss")
                 iconSize: Theme.iconSizeSmall

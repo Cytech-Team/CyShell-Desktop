@@ -4,7 +4,7 @@ import QtQuick
 import qs.Common
 import qs.Widgets
 
-DankOSD {
+CyOSD {
     id: root
 
     property string iconName: ""

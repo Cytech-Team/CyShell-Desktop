@@ -1,5 +1,5 @@
 {
-  description = "Dank Material Shell";
+  description = "CyShell Desktop";
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
@@ -51,12 +51,12 @@
           system: fn system nixpkgs.legacyPackages.${system}
         );
 
-      mkModuleWithDmsPkgs =
+      mkModuleWithCyShellPkgs =
         modulePath:
         args@{ pkgs, ... }:
         {
           imports = [
-            (import modulePath (args // { dmsPkgs = buildDmsPkgs pkgs; }))
+            (import modulePath (args // { cyShellPkgs = buildCyShellPkgs pkgs; }))
           ];
         };
 
@@ -79,7 +79,7 @@
 
       # Allows downstream modules to provide their own 'pkgs' (with overlays)
       # instead of being forced to use the flake's locked nixpkgs.
-      mkDmsShell =
+      mkCyShell =
         pkgs:
         let
           mkDate =
@@ -109,11 +109,11 @@
             in
             {
               inherit version;
-              pname = "dms-shell";
+              pname = "cyshell";
               src = ./core;
               vendorHash = "sha256-eZBP7+9NLdJ88qizCZ+mTmcQO+FHthqQSmNtUErfKv4=";
 
-              subPackages = [ "cmd/dms" ];
+              subPackages = [ "cmd/cyshell" ];
 
               ldflags = [
                 "-s"
@@ -127,104 +127,108 @@
               ];
 
               postInstall = ''
-                mkdir -p $out/share/quickshell/dms
+                mkdir -p $out/share/quickshell/cyshell
                 tar -C ${rootSrc}/quickshell --mode=u+w --exclude-from=${rootSrc}/scripts/shell-test-excludes.txt -cf - . \
-                  | tar -C $out/share/quickshell/dms -xf -
+                  | tar -C $out/share/quickshell/cyshell -xf -
 
-                rm -f $out/share/quickshell/dms/DankCommon
-                tar -C ${dank-qml-common} --mode=u+w --exclude-from=${rootSrc}/scripts/shell-test-excludes.txt -cf - DankCommon \
-                  | tar -C $out/share/quickshell/dms -xf -
+                rm -f $out/share/quickshell/cyshell/CyCommon $out/share/quickshell/cyshell/DankCommon
+                tar -C ${dank-qml-common} --mode=u+w --exclude-from=${rootSrc}/scripts/shell-test-excludes.txt -cf - CyCommon \
+                  | tar -C $out/share/quickshell/cyshell -xf -
+                ln -s CyCommon $out/share/quickshell/cyshell/DankCommon
 
-                echo "${version}" > $out/share/quickshell/dms/VERSION
+                echo "${version}" > $out/share/quickshell/cyshell/VERSION
 
                 # Install desktop file and icon
-                install -D ${rootSrc}/assets/dms-open.desktop \
-                  $out/share/applications/dms-open.desktop
-                install -D ${rootSrc}/assets/com.danklinux.dms.desktop \
-                  $out/share/applications/com.danklinux.dms.desktop
-                install -D ${rootSrc}/assets/com.danklinux.dms.notepad.desktop \
-                  $out/share/applications/com.danklinux.dms.notepad.desktop
-                install -D ${rootSrc}/assets/com.danklinux.dms.svg \
-                  $out/share/icons/hicolor/scalable/apps/com.danklinux.dms.svg
+                install -D ${rootSrc}/assets/cyshell-open.desktop \
+                  $out/share/applications/cyshell-open.desktop
+                install -D ${rootSrc}/assets/com.cytechteam.cyshell.desktop \
+                  $out/share/applications/com.cytechteam.cyshell.desktop
+                install -D ${rootSrc}/assets/com.cytechteam.cyshell.notepad.desktop \
+                  $out/share/applications/com.cytechteam.cyshell.notepad.desktop
+                install -D ${rootSrc}/assets/com.cytechteam.cyshell.png \
+                  $out/share/icons/hicolor/512x512/apps/com.cytechteam.cyshell.png
 
                 # Snapshot pre-wrap Qt paths so launched apps get their own, not DMS's pins.
-                wrapProgram $out/bin/dms \
-                  --add-flags "-c $out/share/quickshell/dms" \
-                  --run 'export DMS_ORIG_NIXPKGS_QT6_QML_IMPORT_PATH="''${NIXPKGS_QT6_QML_IMPORT_PATH:-}"' \
-                  --run 'export DMS_ORIG_QT_PLUGIN_PATH="''${QT_PLUGIN_PATH:-}"' \
+                wrapProgram $out/bin/cyshell \
+                  --add-flags "-c $out/share/quickshell/cyshell" \
+                  --run 'export CYSHELL_ORIG_NIXPKGS_QT6_QML_IMPORT_PATH="''${NIXPKGS_QT6_QML_IMPORT_PATH:-}"' \
+                  --run 'export CYSHELL_ORIG_QT_PLUGIN_PATH="''${QT_PLUGIN_PATH:-}"' \
                   --prefix "NIXPKGS_QT6_QML_IMPORT_PATH" ":" "${mkQmlImportPath pkgs qtPackages}" \
                   --prefix "QT_PLUGIN_PATH" ":" "${mkQtPluginPath pkgs qtPackages}"
 
-                install -Dm644 ${rootSrc}/assets/systemd/dms.service \
-                  $out/lib/systemd/user/dms.service
+                mkdir -p $out/lib/systemd/user
+                for unit in ${rootSrc}/assets/systemd/cyshell*.service; do
+                  name="$(basename "$unit")"
+                  install -Dm644 "$unit" "$out/lib/systemd/user/$name"
+                  substituteInPlace "$out/lib/systemd/user/$name" \
+                    --replace-fail /usr/bin/cyshell $out/bin/cyshell
+                done
 
-                substituteInPlace $out/lib/systemd/user/dms.service \
-                  --replace-fail /usr/bin/dms $out/bin/dms \
-                  --replace-fail /bin/kill ${pkgs.coreutils}/bin/kill
-
-                substituteInPlace $out/share/quickshell/dms/assets/pam/fprint \
+                substituteInPlace $out/share/quickshell/cyshell/assets/pam/fprint \
                   --replace-fail pam_fprintd.so ${pkgs.fprintd}/lib/security/pam_fprintd.so \
                   --replace-fail pam_deny.so ${pkgs.pam}/lib/security/pam_deny.so \
                   --replace-fail pam_permit.so ${pkgs.pam}/lib/security/pam_permit.so
 
-                substituteInPlace $out/share/quickshell/dms/assets/pam/u2f \
+                substituteInPlace $out/share/quickshell/cyshell/assets/pam/u2f \
                   --replace-fail pam_u2f.so ${pkgs.pam_u2f}/lib/security/pam_u2f.so \
                   --replace-fail pam_deny.so ${pkgs.pam}/lib/security/pam_deny.so \
                   --replace-fail pam_permit.so ${pkgs.pam}/lib/security/pam_permit.so
 
-                substituteInPlace $out/share/quickshell/dms/assets/pam/other \
+                substituteInPlace $out/share/quickshell/cyshell/assets/pam/other \
                   --replace-fail pam_deny.so ${pkgs.pam}/lib/security/pam_deny.so
 
-                installShellCompletion --cmd dms \
-                  --bash <($out/bin/dms completion bash) \
-                  --fish <($out/bin/dms completion fish) \
-                  --zsh <($out/bin/dms completion zsh)
+                installShellCompletion --cmd cyshell \
+                  --bash <($out/bin/cyshell completion bash) \
+                  --fish <($out/bin/cyshell completion fish) \
+                  --zsh <($out/bin/cyshell completion zsh)
               '';
 
               meta = {
-                description = "Desktop shell for wayland compositors built with Quickshell & GO";
-                homepage = "https://danklinux.com";
-                changelog = "https://github.com/AvengeMedia/DankMaterialShell/releases/tag/v${version}";
+                description = "CyShell Desktop: Labwc desktop shell built with Quickshell and Go";
+                homepage = "https://github.com/Cytech-Team/CyShell-Desktop";
+                changelog = "https://github.com/Cytech-Team/CyShell-Desktop/releases/tag/v${version}";
                 license = pkgs.lib.licenses.mit;
-                mainProgram = "dms";
+                mainProgram = "cyshell";
                 platforms = pkgs.lib.platforms.linux;
               };
             }
           )
         ) { };
 
-      buildDmsPkgs = pkgs: {
-        dms-shell = mkDmsShell pkgs;
+      buildCyShellPkgs = pkgs: {
+        cyshell = mkCyShell pkgs;
+        dms-shell = builtins.warn "CyShell: package name dms-shell is deprecated; use cyshell" (mkCyShell pkgs);
       };
     in
     {
       packages = forEachSystem (
         system: pkgs: {
-          dms-shell = mkDmsShell pkgs;
-          default = self.packages.${system}.dms-shell;
-          quickshell = builtins.warn "dank-material-shell: the package Quickshell is not included in the DMS flake anymore. We recommend you to use the one from nixos-unstable branch of Nixpkgs or the upstream flake." pkgs.quickshell;
+          cyshell = mkCyShell pkgs;
+          dms-shell = builtins.warn "CyShell: package name dms-shell is deprecated; use cyshell" self.packages.${system}.cyshell;
+          default = self.packages.${system}.cyshell;
+          quickshell = builtins.warn "CyShell does not bundle Quickshell as a separate package; use nixpkgs or the upstream Quickshell flake." pkgs.quickshell;
         }
       );
 
-      lib = { inherit mkDmsShell buildDmsPkgs; };
+      lib = { inherit mkCyShell buildCyShellPkgs; };
 
-      homeModules.dank-material-shell = mkModuleWithDmsPkgs ./distro/nix/home.nix;
+      homeModules.cyshell = mkModuleWithCyShellPkgs ./distro/nix/home.nix;
 
-      homeModules.default = self.homeModules.dank-material-shell;
+      homeModules.default = self.homeModules.cyshell;
 
+      homeModules.dank-material-shell = builtins.warn "CyShell: homeModules.dank-material-shell is deprecated; use homeModules.cyshell" self.homeModules.cyshell;
+      homeModules.dankMaterialShell.default = builtins.warn "CyShell: homeModules.dankMaterialShell.default is deprecated; use homeModules.cyshell" self.homeModules.cyshell;
+
+      # Kept only as a migration surface for old Niri configurations; CyShell itself targets Labwc.
       homeModules.niri = import ./distro/nix/niri.nix;
+      homeModules.dankMaterialShell.niri = builtins.warn "CyShell: the legacy Niri module is compatibility-only" self.homeModules.niri;
 
-      homeModules.dankMaterialShell.default = builtins.warn "dank-material-shell: flake output `homeModules.dankMaterialShell.default` has been renamed to `homeModules.dank-material-shell`" self.homeModules.dank-material-shell;
+      nixosModules.cyshell = mkModuleWithCyShellPkgs ./distro/nix/nixos.nix;
+      nixosModules.default = self.nixosModules.cyshell;
+      nixosModules.dank-material-shell = builtins.warn "CyShell: nixosModules.dank-material-shell is deprecated; use nixosModules.cyshell" self.nixosModules.cyshell;
+      nixosModules.dankMaterialShell = builtins.warn "CyShell: nixosModules.dankMaterialShell is deprecated; use nixosModules.cyshell" self.nixosModules.cyshell;
 
-      homeModules.dankMaterialShell.niri = builtins.warn "dank-material-shell: flake output `homeModules.dankMaterialShell.niri` has been renamed to `homeModules.niri`" self.homeModules.niri;
-
-      nixosModules.dank-material-shell = mkModuleWithDmsPkgs ./distro/nix/nixos.nix;
-
-      nixosModules.default = self.nixosModules.dank-material-shell;
-
-      nixosModules.greeter = builtins.warn "dank-material-shell: the greeter moved to the dank-greeter repo; use `inputs.dank-greeter.nixosModules.default` and `programs.dms-greeter` (https://github.com/AvengeMedia/dank-greeter)" { };
-
-      nixosModules.dankMaterialShell = builtins.warn "dank-material-shell: flake output `nixosModules.dankMaterialShell` has been renamed to `nixosModules.dank-material-shell`" self.nixosModules.dank-material-shell;
+      nixosModules.greeter = builtins.warn "CyShell Greeter is managed separately; the legacy dms-greeter integration remains external compatibility" { };
 
       devShells = forEachSystem (
         system: pkgs:

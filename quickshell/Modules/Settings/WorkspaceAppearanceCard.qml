@@ -55,7 +55,7 @@ SettingsCard {
             width: parent.width
             height: workspaceTabBar.height + Theme.spacingM
 
-            DankTabBar {
+            CyTabBar {
                 id: workspaceTabBar
                 width: parent.width
                 tabHeight: 44
@@ -216,7 +216,7 @@ SettingsCard {
 
             title: modelData
 
-            DankIconPicker {
+            CyIconPicker {
                 id: iconPicker
                 anchors.verticalCenter: parent.verticalCenter
 
@@ -247,7 +247,7 @@ SettingsCard {
                 }
             }
 
-            DankActionButton {
+            CyActionButton {
                 buttonSize: Theme.iconButtonSize
                 iconName: "close"
                 Accessible.name: I18n.tr("Remove")

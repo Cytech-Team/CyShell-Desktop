@@ -86,7 +86,7 @@ Item {
                 visible: status === Image.Ready
             }
 
-            DankIcon {
+            CyIcon {
                 anchors.centerIn: parent
                 visible: parent.iconPath === "" || trashIcon.status !== Image.Ready
                 name: "delete"

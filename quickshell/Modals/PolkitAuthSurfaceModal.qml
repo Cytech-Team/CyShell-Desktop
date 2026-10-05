@@ -4,7 +4,7 @@ import qs.Common
 import qs.Modals.Common
 import qs.Services
 
-DankModal {
+CyModal {
     id: root
 
     property var parentPopout: null
@@ -19,7 +19,7 @@ DankModal {
         flow.cancelAuthenticationRequest();
     }
 
-    layerNamespace: "dms:polkit-auth-surface"
+    layerNamespace: "cyshell:polkit-auth-surface"
     modalWidth: 460
     modalHeight: Math.min(screenHeight - Theme.spacingXL * 2, Math.max(220, contentLoader?.item?.implicitHeight ?? 0))
     closeOnEscapeKey: false

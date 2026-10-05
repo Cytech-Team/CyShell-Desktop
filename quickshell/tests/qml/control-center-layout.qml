@@ -3,7 +3,7 @@ import Quickshell
 import qs.Common
 import qs.Modules.ControlCenter.Components
 import qs.Modules.ControlCenter.Widgets
-import qs.DankCommon.Common as DC
+import qs.CyCommon.Common as DC
 
 ShellRoot {
     id: root

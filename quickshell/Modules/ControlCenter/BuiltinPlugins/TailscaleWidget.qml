@@ -69,7 +69,7 @@ PluginComponent {
                 return base;
             }
 
-            readonly property Item headerActions: DankActionButton {
+            readonly property Item headerActions: CyActionButton {
                 buttonSize: Theme.iconButtonSize
                 iconSize: Theme.iconSize
                 iconName: "sync"
@@ -78,7 +78,7 @@ PluginComponent {
                 onClicked: TailscaleService.refresh(null)
             }
 
-            DankFlickable {
+            CyFlickable {
                 anchors.fill: parent
                 contentHeight: detailColumn.height
                 clip: true
@@ -116,7 +116,7 @@ PluginComponent {
                             iconName: "alt_route"
                             title: I18n.tr("Exit node", "Tailscale exit node selector label")
 
-                            DankDropdown {
+                            CyDropdown {
                                 anchors.verticalCenter: parent.verticalCenter
                                 compactMode: true
                                 dropdownWidth: CcMetrics.rowDropdownWidth
@@ -145,7 +145,7 @@ PluginComponent {
                         }
                     }
 
-                    DankSearchField {
+                    CySearchField {
                         width: parent.width
                         visible: TailscaleService.available
                         placeholderText: I18n.tr("Search devices...", "Tailscale device search placeholder")
@@ -153,7 +153,7 @@ PluginComponent {
                         onTextEdited: detailRoot.searchQuery = text
                     }
 
-                    DankFilterChips {
+                    CyFilterChips {
                         width: parent.width
                         visible: TailscaleService.available
                         currentIndex: detailRoot.filterIndex
@@ -218,14 +218,14 @@ PluginComponent {
                                     color: peerRow.modelData.online ? Theme.success : Theme.surfaceVariantText
                                 }
 
-                                DankActionButton {
+                                CyActionButton {
                                     anchors.verticalCenter: parent.verticalCenter
                                     buttonSize: Theme.buttonHeightXS
                                     iconSize: Theme.iconSizeSmall
                                     iconName: "content_copy"
                                     iconColor: Theme.surfaceText
                                     Accessible.name: I18n.tr("Copy", "Copy to clipboard")
-                                    onClicked: Quickshell.execDetached(["dms", "cl", "copy", peerRow.modelData.tailscaleIp])
+                                    onClicked: Quickshell.execDetached(["cyshell", "cl", "copy", peerRow.modelData.tailscaleIp])
                                 }
 
                                 body: Column {
@@ -247,7 +247,7 @@ PluginComponent {
                                             elide: Text.ElideRight
                                         }
 
-                                        DankActionButton {
+                                        CyActionButton {
                                             id: copyDnsButton
                                             anchors.verticalCenter: parent.verticalCenter
                                             buttonSize: Theme.buttonHeightXS
@@ -255,7 +255,7 @@ PluginComponent {
                                             iconName: "content_copy"
                                             Accessible.name: I18n.tr("Copy")
                                             iconColor: Theme.surfaceText
-                                            onClicked: Quickshell.execDetached(["dms", "cl", "copy", peerRow.modelData.dnsName])
+                                            onClicked: Quickshell.execDetached(["cyshell", "cl", "copy", peerRow.modelData.dnsName])
                                         }
                                     }
 

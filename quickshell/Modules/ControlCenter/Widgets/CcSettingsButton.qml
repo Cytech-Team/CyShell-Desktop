@@ -3,7 +3,7 @@ import qs.Common
 import qs.Services
 import qs.Widgets
 
-DankActionButton {
+CyActionButton {
     property string settingsTab: ""
 
     buttonSize: Theme.iconButtonSize

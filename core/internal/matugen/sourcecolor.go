@@ -22,15 +22,15 @@ import (
 )
 
 // Source color modes. Anything else, including the empty string, means
-// "dominant": let matugen pick, which is what DMS has always done.
+// "dominant": let matugen pick, which is what CyShell does.
 const (
 	SourceModeDominant = "dominant"
 	SourceModeColorful = "colorful"
 )
 
-// matugenPreferValues are the --prefer values DMS forwards to matugen. Kept as
+// matugenPreferValues are the --prefer values CyShell forwards to matugen. Kept as
 // an allowlist so a stale or hand-edited setting can't inject arbitrary args.
-// matugen's closest-to-fallback is left out: DMS never sets --fallback-color,
+// matugen's closest-to-fallback is left out: CyShell does not set --fallback-color,
 // so there is nothing meaningful for it to be close to.
 var matugenPreferValues = map[string]bool{
 	"darkness":        true,
@@ -81,11 +81,11 @@ const (
 // palette. Returns a "#RRGGBB" hex to hand back to matugen as a color source.
 //
 // Formats are whatever image.Decode handles: jpeg, png, gif, bmp, tiff and
-// webp. DMS also accepts jxl, avif, heif and exr wallpapers, which fail here
+// webp. CyShell also accepts jxl, avif, heif and exr wallpapers, which fail here
 // with a decode error; callers are expected to fall back to matugen's own
 // extraction rather than fail the theme build.
 //
-// The same file always yields the same string. DMS compares generated colors
+// The same file always yields the same string. CyShell compares generated colors
 // byte-for-byte to detect "no changes", so a seed that varied between runs
 // would retheme the desktop on every wallpaper event.
 func ExtractSourceColor(imagePath string) (string, error) {

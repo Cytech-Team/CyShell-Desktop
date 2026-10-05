@@ -3,7 +3,7 @@ import Quickshell
 import qs.Common
 import qs.Services
 import qs.Modules.Settings
-import qs.DankCommon.Common as DC
+import qs.CyCommon.Common as DC
 
 ShellRoot {
     id: root
@@ -39,16 +39,16 @@ ShellRoot {
         if (!item.visible)
             return out;
         switch (typeName(item)) {
-        case "DankIcon":
+        case "CyIcon":
             out.icons.push(item.name);
             return out;
         case "StyledText":
             out.texts.push(item.text);
             break;
-        case "DankToggle":
+        case "CyToggle":
             out.toggles.push(item.checked);
             break;
-        case "DankDropdown":
+        case "CyDropdown":
             out.dropdowns.push(item.currentValue);
             break;
         }

@@ -90,9 +90,9 @@ PY
   ls -1t "$BACKUP_DIR"/settings-*.json 2>/dev/null | tail -n +6 | xargs -r rm -f --
 fi
 
-systemctl --user restart dms.service
+systemctl --user restart cyshell.service
 for _ in $(seq 1 50); do
-  if systemctl --user is-active --quiet dms.service; then
+  if systemctl --user is-active --quiet cyshell.service; then
     break
   fi
   sleep 0.1

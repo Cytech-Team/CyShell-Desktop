@@ -3,7 +3,7 @@ import qs.Common
 import qs.Services
 import qs.Widgets
 
-DankListItem {
+CyListItem {
     id: root
 
     required property var entry
@@ -54,7 +54,7 @@ DankListItem {
         spacing: Theme.spacingXS
         visible: root.showAnyAction
 
-        DankActionButton {
+        CyActionButton {
             Keys.forwardTo: [root.modal.modalFocusScope]
             iconName: "preview"
             tooltipText: I18n.tr("Preview", "verb, clipboard entry action button tooltip", true)
@@ -69,7 +69,7 @@ DankListItem {
             height: Theme.iconButtonSize
             visible: root.showPinnedIndicator
 
-            DankIcon {
+            CyIcon {
                 anchors.centerIn: parent
                 name: "push_pin"
                 size: Theme.iconSizeSmall
@@ -77,7 +77,7 @@ DankListItem {
             }
         }
 
-        DankActionButton {
+        CyActionButton {
             Keys.forwardTo: [root.modal.modalFocusScope]
             iconName: "content_copy"
             Accessible.name: I18n.tr("Copy")
@@ -87,7 +87,7 @@ DankListItem {
             onClicked: copyRequested()
         }
 
-        DankActionButton {
+        CyActionButton {
             Keys.forwardTo: [root.modal.modalFocusScope]
             iconName: "content_paste"
             Accessible.name: I18n.tr("Paste")
@@ -97,7 +97,7 @@ DankListItem {
             onClicked: pasteRequested()
         }
 
-        DankActionButton {
+        CyActionButton {
             Keys.forwardTo: [root.modal.modalFocusScope]
             iconName: "push_pin"
             Accessible.name: root.effectivePinned ? I18n.tr("Unpin") : I18n.tr("Pin", "verb, keep an item pinned in place")
@@ -118,7 +118,7 @@ DankListItem {
             }
         }
 
-        DankActionButton {
+        CyActionButton {
             Keys.forwardTo: [root.modal.modalFocusScope]
             iconName: "edit"
             Accessible.name: I18n.tr("Edit")
@@ -135,7 +135,7 @@ DankListItem {
             }
         }
 
-        DankActionButton {
+        CyActionButton {
             Keys.forwardTo: [root.modal.modalFocusScope]
             iconName: "close"
             Accessible.name: I18n.tr("Delete")

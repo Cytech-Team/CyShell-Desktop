@@ -2,8 +2,8 @@ import QtQuick
 import Quickshell
 import qs.Common
 import qs.Services
-import qs.Modals.DankLauncherV2
-import qs.DankCommon.Common as DC
+import qs.Modals.CyLauncherV2
+import qs.CyCommon.Common as DC
 
 ShellRoot {
     id: root
@@ -137,7 +137,7 @@ ShellRoot {
 
     Component {
         id: modalComp
-        DankLauncherV2Modal {}
+        CyLauncherV2Modal {}
     }
 
     Connections {

@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/models"
 	"github.com/AvengeMedia/dankgo/ipc"
 	"github.com/AvengeMedia/dankgo/ipc/params"
 	"github.com/AvengeMedia/dgop/gops"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/server/models"
 )
 
 const metaTimeout = 10 * time.Second

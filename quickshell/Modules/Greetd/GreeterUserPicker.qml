@@ -76,7 +76,7 @@ Item {
                 elide: Text.ElideRight
             }
 
-            DankIcon {
+            CyIcon {
                 Layout.alignment: Qt.AlignVCenter
                 name: "expand_more"
                 size: 20
@@ -99,7 +99,7 @@ Item {
         visible: expanded
         spacing: Theme.spacingXS
 
-        DankListView {
+        CyListView {
             id: userListView
 
             width: parent.width
@@ -132,7 +132,7 @@ Item {
                         Layout.preferredWidth: 36
                         Layout.preferredHeight: 36
 
-                        DankCircularImage {
+                        CyCircularImage {
                             anchors.fill: parent
                             imageSource: root.profileImageSource(userRow.modelData.username)
                             fallbackIcon: "person"
@@ -172,7 +172,7 @@ Item {
                 anchors.rightMargin: Theme.spacingS
                 spacing: Theme.spacingM
 
-                DankIcon {
+                CyIcon {
                     Layout.alignment: Qt.AlignVCenter
                     name: "person_add"
                     size: 20
@@ -211,7 +211,7 @@ Item {
                 anchors.rightMargin: Theme.spacingS
                 spacing: Theme.spacingM
 
-                DankIcon {
+                CyIcon {
                     Layout.alignment: Qt.AlignVCenter
                     name: root.autoLoginChecked ? "check_box" : "check_box_outline_blank"
                     size: 20

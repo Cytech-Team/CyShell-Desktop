@@ -64,7 +64,7 @@ Item {
                     }
                 }
 
-                DankToggle {
+                CyToggle {
                     id: nightModeToggle
 
                     width: parent.width
@@ -130,7 +130,7 @@ Item {
                     }
                 }
 
-                DankToggle {
+                CyToggle {
                     id: automaticToggle
                     width: parent.width
                     text: I18n.tr("Automatic control")
@@ -170,7 +170,7 @@ Item {
                         width: parent.width
                         height: modeTabBarNight.height + Theme.spacingM
 
-                        DankTabBar {
+                        CyTabBar {
                             id: modeTabBarNight
                             width: 200
                             tabHeight: 45
@@ -237,7 +237,7 @@ Item {
                         step: 5
                         unit: "min"
                         value: SessionData.nightModeTransitionMinutes
-                        visible: (SessionData.nightModeAutoMode === "time") && (DMSService.apiVersion >= 32)
+                        visible: (SessionData.nightModeAutoMode === "time") && (CyShellService.apiVersion >= 32)
                         onSliderValueChanged: newValue => SessionData.setNightModeTransitionMinutes(newValue)
                     }
 
@@ -265,7 +265,7 @@ Item {
                             width: parent.width
                             spacing: Theme.spacingS
 
-                            DankIcon {
+                            CyIcon {
                                 name: NightModeService.gammaIsDay ? "light_mode" : "dark_mode"
                                 size: Theme.iconSizeSmall
                                 color: Theme.primary
@@ -298,7 +298,7 @@ Item {
                                     anchors.centerIn: parent
                                     spacing: Theme.spacingXS
 
-                                    DankIcon {
+                                    CyIcon {
                                         name: "device_thermostat"
                                         size: Theme.iconSize
                                         color: Theme.primary
@@ -335,7 +335,7 @@ Item {
                                     anchors.centerIn: parent
                                     spacing: Theme.spacingXS
 
-                                    DankIcon {
+                                    CyIcon {
                                         name: NightModeService.gammaIsDay ? "wb_sunny" : "nightlight"
                                         size: Theme.iconSize
                                         color: NightModeService.gammaIsDay ? "#FFA726" : "#7E57C2"
@@ -379,7 +379,7 @@ Item {
                                     anchors.centerIn: parent
                                     spacing: Theme.spacingXS
 
-                                    DankIcon {
+                                    CyIcon {
                                         name: "wb_twilight"
                                         size: Theme.iconSize
                                         color: "#FF7043"
@@ -417,7 +417,7 @@ Item {
                                     anchors.centerIn: parent
                                     spacing: Theme.spacingXS
 
-                                    DankIcon {
+                                    CyIcon {
                                         name: "wb_twilight"
                                         size: Theme.iconSize
                                         color: "#5C6BC0"
@@ -456,7 +456,7 @@ Item {
                                 anchors.centerIn: parent
                                 spacing: Theme.spacingM
 
-                                DankIcon {
+                                CyIcon {
                                     name: "schedule"
                                     size: Theme.iconSize
                                     color: Theme.primary

@@ -60,7 +60,7 @@ Singleton {
     }
 
     function refreshCount() {
-        Proc.runCommand("trash-count", [Proc.dmsBin, "trash", "count"], (output, exitCode) => {
+        Proc.runCommand("trash-count", [Proc.cyshellBin, "trash", "count"], (output, exitCode) => {
             if (exitCode !== 0) {
                 root.count = homeTrashModel.count;
                 return;
@@ -76,7 +76,7 @@ Singleton {
                 callback(false, "empty path");
             return;
         }
-        Proc.runCommand(null, [Proc.dmsBin, "trash", "put", path], (output, exitCode) => {
+        Proc.runCommand(null, [Proc.cyshellBin, "trash", "put", path], (output, exitCode) => {
             const ok = exitCode === 0;
             if (!ok)
                 ToastService.showError(I18n.tr("Failed to move to trash"), path);
@@ -119,7 +119,7 @@ Singleton {
     }
 
     function emptyTrash() {
-        Proc.runCommand("trash-empty", [Proc.dmsBin, "trash", "empty"], (output, exitCode) => {
+        Proc.runCommand("trash-empty", [Proc.cyshellBin, "trash", "empty"], (output, exitCode) => {
             if (exitCode !== 0)
                 ToastService.showError(I18n.tr("Failed to empty trash"), output || "");
             refreshCount();

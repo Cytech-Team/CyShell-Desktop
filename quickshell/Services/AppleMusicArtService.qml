@@ -14,7 +14,7 @@ Singleton {
     // file:// url of the current album's downloaded animated cover, or empty.
     property string animatedArtUrl: ""
 
-    readonly property var _fetchCmd: [Proc.dmsBin, "dl", "--connect-timeout", "5", "--timeout", "15"]
+    readonly property var _fetchCmd: [Proc.cyshellBin, "dl", "--connect-timeout", "5", "--timeout", "15"]
     readonly property string _artDir: Paths.strip(Paths.cache) + "/applemusic-art"
     property string _token: ""
     // artist\nalbum (lowercased) -> file url or "" for a known miss; never refetched this session.
@@ -125,7 +125,7 @@ Singleton {
     // The anonymous web-player JWT sits in the main JS bundle referenced by any album page.
     function _fetchToken(pageUrl, callback) {
         const script = "p=$(\"$0\" dl \"$1\" | grep -oE '/assets/index~[a-zA-Z0-9]+\\.js' | head -1) && \"$0\" dl \"https://music.apple.com$p\" | grep -oE '\"eyJ[A-Za-z0-9._-]+\"' | head -1 | tr -d '\"'";
-        Proc.runCommand(null, ["sh", "-c", script, Proc.dmsBin, pageUrl], (output, exitCode) => {
+        Proc.runCommand(null, ["sh", "-c", script, Proc.cyshellBin, pageUrl], (output, exitCode) => {
             const token = (output || "").trim();
             if (exitCode !== 0 || token === "") {
                 log.warn("failed to obtain web-player token");
@@ -246,7 +246,7 @@ Singleton {
         // album (rapid track flip-flop) can't interleave writes into one file; the
         // temp is removed on failure rather than stranded as a .part.
         const script = 'mkdir -p "${1%/*}" && { test -s "$1" || { t="$1.$$.part"; "$0" dl --connect-timeout 5 --timeout 60 -o "$t" "$2" >/dev/null && mv -f "$t" "$1" || { rm -f "$t"; exit 1; }; }; }';
-        Proc.runCommand(null, ["sh", "-c", script, Proc.dmsBin, path, url], (output, exitCode) => {
+        Proc.runCommand(null, ["sh", "-c", script, Proc.cyshellBin, path, url], (output, exitCode) => {
             if (serial !== _serial)
                 return;
             if (exitCode !== 0) {

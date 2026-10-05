@@ -107,7 +107,7 @@ Column {
             subtitle: root.presentation[modelData.id].description
             iconName: root.presentation[modelData.id].icon
 
-            DankIcon {
+            CyIcon {
                 anchors.verticalCenter: parent.verticalCenter
                 name: "lock"
                 size: Theme.iconSizeMedium
@@ -115,7 +115,7 @@ Column {
                 visible: groupRow.modelData.id === "clock"
             }
 
-            DankActionButton {
+            CyActionButton {
                 anchors.verticalCenter: parent.verticalCenter
                 visible: groupRow.modelData.id !== "clock"
                 iconName: "visibility"
@@ -134,7 +134,7 @@ Column {
         clickable: true
         onClicked: root.showHidden = !root.showHidden
 
-        DankIcon {
+        CyIcon {
             anchors.verticalCenter: parent.verticalCenter
             name: root.showHidden ? "expand_less" : "expand_more"
             size: Theme.iconSize
@@ -163,7 +163,7 @@ Column {
                 iconName: root.presentation[modelData.id].icon
                 iconColor: Theme.onSurfaceVariant
 
-                DankActionButton {
+                CyActionButton {
                     anchors.verticalCenter: parent.verticalCenter
                     iconName: "visibility_off"
                     tooltipText: I18n.tr("Show", "island settings: show home group")

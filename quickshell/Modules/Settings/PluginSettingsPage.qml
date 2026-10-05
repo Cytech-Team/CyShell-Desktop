@@ -21,15 +21,32 @@ FocusScope {
     readonly property bool isLoaded: PluginService.loadedPlugins[pluginId] !== undefined
     readonly property bool isDesktopPlugin: pluginData?.type === "desktop"
     readonly property bool hasSettings: !!pluginData?.settings && !isDesktopPlugin
-    readonly property bool isSystemPlugin: pluginData?.source === "system"
+    readonly property bool isCyShellUserPlugin: pluginData?.source === "user"
+    readonly property string sourceLabel: PluginService.pluginSourceLabel(pluginData?.source)
+    readonly property string sourceManagerHint: {
+        switch (pluginData?.source) {
+        case "user":
+            return I18n.tr("CyShell manages updates and removal for this user plugin.");
+        case "dms":
+            return I18n.tr("Update or remove this compatibility plugin from DMS.");
+        case "legacy-system":
+            return I18n.tr("This system DMS plugin is managed by your system package manager.");
+        case "noctalia":
+            return I18n.tr("Update or remove this compatibility plugin from Noctalia.");
+        case "system":
+            return I18n.tr("This system plugin is managed by your system package manager.");
+        default:
+            return "";
+        }
+    }
     readonly property string pluginName: pluginData?.name || pluginId
     readonly property string requiresDms: pluginData?.requires_dms || ""
     readonly property bool meetsRequirements: requiresDms ? PluginService.checkPluginCompatibility(requiresDms) : true
     readonly property var permissions: Array.isArray(pluginData?.permissions) ? pluginData.permissions : []
     readonly property bool hasUpdate: {
-        if (DMSService.apiVersion < 8)
+        if (!root.isCyShellUserPlugin || CyShellService.apiVersion < 8)
             return false;
-        const installed = DMSService.installedPlugins || [];
+        const installed = CyShellService.installedPlugins || [];
         return installed.some(plugin => plugin.hasUpdate === true && (plugin.id === root.pluginId || plugin.name === root.pluginName));
     }
     readonly property string settingsStatus: {
@@ -96,7 +113,9 @@ FocusScope {
     }
 
     function requestUpdate() {
-        const plugin = DMSService.installedPlugins.find(entry => entry.id === pluginId);
+        if (!isCyShellUserPlugin || operationPending)
+            return;
+        const plugin = CyShellService.installedPlugins.find(entry => entry.id === pluginId);
         operationConfirm.showWithOptions({
             title: I18n.tr("Update %1?", "plugin update confirmation").arg(pluginName),
             message: I18n.tr("Plugin updates can change the code running in your session. Review the changes before updating.", "plugin update audit reminder"),
@@ -107,7 +126,7 @@ FocusScope {
     }
 
     function update() {
-        if (operationPending)
+        if (!isCyShellUserPlugin || operationPending)
             return;
         const id = pluginId;
         operationPending = true;
@@ -123,6 +142,8 @@ FocusScope {
     }
 
     function requestUninstall() {
+        if (!isCyShellUserPlugin || operationPending)
+            return;
         operationConfirm.showWithOptions({
             title: I18n.tr("Uninstall"),
             message: I18n.tr("Uninstall %1?", "plugin removal confirmation").arg(pluginName),
@@ -133,12 +154,12 @@ FocusScope {
     }
 
     function uninstall() {
-        if (operationPending)
+        if (!isCyShellUserPlugin || operationPending)
             return;
         const id = pluginId;
         operationPending = true;
         actionError = "";
-        DMSService.uninstall(id, response => {
+        CyShellService.uninstall(id, response => {
             operationPending = false;
             if (response.error) {
                 actionError = I18n.tr("Uninstall failed: %1").arg(response.error);
@@ -164,14 +185,21 @@ FocusScope {
             SettingsToggleRow {
                 iconName: root.pluginData?.icon || "extension"
                 text: root.pluginName
+                description: root.sourceManagerHint
                 enabled: !root.operationPending
                 checked: root.isLoaded
                 onToggled: checked => root.setEnabled(checked)
             }
 
             SettingsRow {
+                title: I18n.tr("Plugin source")
+                subtitle: root.sourceLabel
+                visible: root.sourceLabel !== ""
+            }
+
+            SettingsRow {
                 iconName: "error"
-                title: I18n.tr("Requires CyShell API %1", "plugin incompatibility notice, %1 is the required DMS version").arg(root.requiresDms)
+                title: I18n.tr("Requires CyShell API %1", "plugin incompatibility notice, %1 is the required CyShell API version").arg(root.requiresDms)
                 subtitleColor: Theme.error
                 visible: !root.meetsRequirements
             }
@@ -220,12 +248,13 @@ FocusScope {
                 width: parent.width
                 height: implicitHeight
                 active: root.isLoaded && root.hasSettings
+                pluginId: root.pluginId
                 settingsPath: PluginService.pluginComponentUrl(root.pluginId, root.pluginData?.settingsPath)
                 visible: loaded
             }
         }
 
-        DankCollapsibleSection {
+        CyCollapsibleSection {
             id: pluginDetails
             width: parent.width
             title: I18n.tr("Plugin details", "plugin metadata and maintenance")
@@ -277,7 +306,7 @@ FocusScope {
                     iconName: "download"
                     title: I18n.tr("Update plugin")
                     clickable: true
-                    visible: DMSService.dmsAvailable && root.isLoaded && root.hasUpdate && !root.isSystemPlugin
+                    visible: CyShellService.backendAvailable && root.isLoaded && root.hasUpdate && root.isCyShellUserPlugin
                     enabled: !root.operationPending
                     onClicked: root.requestUpdate()
                 }
@@ -295,7 +324,7 @@ FocusScope {
                     iconName: "delete"
                     title: I18n.tr("Uninstall plugin")
                     clickable: true
-                    visible: DMSService.dmsAvailable && !root.isSystemPlugin
+                    visible: CyShellService.backendAvailable && root.isCyShellUserPlugin
                     enabled: !root.operationPending
                     onClicked: root.requestUninstall()
                 }

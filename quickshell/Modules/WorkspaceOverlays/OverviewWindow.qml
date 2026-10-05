@@ -114,7 +114,8 @@ Item {
             id: windowPreview
             anchors.fill: parent
             captureSource: root.overviewOpen ? root.toplevel?.wayland : null
-            live: true
+            live: root.overviewOpen && root.toplevel?.wayland != null
+            visible: live
 
             Rectangle {
                 anchors.fill: parent

@@ -30,7 +30,7 @@ Item {
         return parseFloat((mount.percent || "0").replace("%", "")) || 0;
     }
 
-    DankFlickable {
+    CyFlickable {
         anchors.fill: parent
         contentHeight: column.height
         clip: true

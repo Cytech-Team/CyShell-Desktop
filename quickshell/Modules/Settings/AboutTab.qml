@@ -1,7 +1,7 @@
 import QtQuick
 import QtQuick.Effects
 import qs.Common
-import qs.DankCommon.Common as DankCommon
+import qs.CyCommon.Common as CyCommon
 import qs.Services
 import qs.Widgets
 import qs.Modules.Settings.Widgets
@@ -12,116 +12,91 @@ Item {
     LayoutMirroring.enabled: I18n.isRtl
     LayoutMirroring.childrenInherit: true
 
-    property bool isHyprland: CompositorService.isHyprland
-    property bool isNiri: CompositorService.isNiri
-    property bool isSway: CompositorService.isSway
-    property bool isScroll: CompositorService.isScroll
-    property bool isMiracle: CompositorService.isMiracle
-    property bool isMango: CompositorService.isMango
-    property bool isLabwc: CompositorService.isLabwc
-    property bool isAqueous: CompositorService.isAqueous
+    readonly property bool isLabwc: true
+    readonly property string compositorName: "labwc"
+    readonly property string compositorLogo: "/assets/labwc.png"
+    readonly property string compositorUrl: "https://labwc.github.io/"
+    readonly property string compositorTooltip: I18n.tr("LabWC website")
 
-    property string compositorName: {
-        if (isHyprland)
-            return "hyprland";
-        if (isSway)
-            return "sway";
-        if (isScroll)
-            return "scroll";
-        if (isMiracle)
-            return "miracle";
-        if (isMango)
-            return "mangowc";
-        if (isLabwc)
-            return "labwc";
-        if (isAqueous)
-            return "aqueous";
-        return "niri";
+    readonly property string ircUrl: "https://web.libera.chat/gamja/?channels=#labwc"
+    readonly property string ircTooltip: I18n.tr("LabWC IRC channel")
+    readonly property bool showMatrix: false
+    readonly property bool showCompositorDiscord: false
+    readonly property bool showReddit: false
+    readonly property bool showIrc: true
+    property var deviceInformation: ({})
+    property var deviceInformationRequestId: 0
+    property int deviceInformationGeneration: 0
+    property bool deviceInformationLoading: false
+    property bool deviceInformationFailed: false
+
+    function deviceValue(value) {
+        if (value === undefined || value === null || String(value).trim() === "")
+            return I18n.tr("Unavailable");
+        return String(value);
     }
 
-    property string compositorLogo: {
-        if (isHyprland)
-            return "/assets/hyprland.svg";
-        if (isSway)
-            return "/assets/sway.svg";
-        if (isScroll)
-            return "/assets/sway.svg";
-        if (isMiracle)
-            return "/assets/miraclewm.svg";
-        if (isMango)
-            return "/assets/mango.png";
-        if (isLabwc)
-            return "/assets/labwc.png";
-        if (isAqueous)
-            return "/assets/aqueous.svg";
-        return "/assets/niri.svg";
+    function deviceMemoryValue() {
+        const totalKb = Number(deviceInformation.memory?.total || 0);
+        if (totalKb <= 0)
+            return I18n.tr("Unavailable");
+
+        const gib = totalKb / (1024 * 1024);
+        return `${gib >= 10 ? gib.toFixed(0) : gib.toFixed(1)} GiB`;
     }
 
-    property string compositorUrl: {
-        if (isHyprland)
-            return "https://hypr.land";
-        if (isSway)
-            return "https://swaywm.org";
-        if (isScroll)
-            return "https://github.com/dawsers/scroll";
-        if (isMiracle)
-            return "https://github.com/miracle-wm-org/miracle-wm";
-        if (isMango)
-            return "https://github.com/DreamMaoMao/mangowc";
-        if (isLabwc)
-            return "https://labwc.github.io/";
-        if (isAqueous)
-            return "";
-        return "https://github.com/niri-wm/niri";
+    function deviceGraphicsValue() {
+        const graphicsDevices = deviceInformation.gpu?.gpus || [];
+        const names = graphicsDevices.map(device => device.fullName || device.displayName || device.name).filter(Boolean);
+        return names.length > 0 ? names.join(" · ") : I18n.tr("Unavailable");
     }
 
-    property string compositorTooltip: {
-        if (isHyprland)
-            return I18n.tr("Hyprland website");
-        if (isSway)
-            return I18n.tr("Sway website");
-        if (isScroll)
-            return I18n.tr("Scroll GitHub");
-        if (isMiracle)
-            return I18n.tr("Scroll GitHub");
-        if (isMango)
-            return I18n.tr("mangowc GitHub");
-        if (isLabwc)
-            return I18n.tr("LabWC website");
-        if (isAqueous)
-            return "Aqueous";
-        return I18n.tr("niri GitHub");
+    function loadDeviceInformation() {
+        if (!visible || deviceInformationLoading)
+            return;
+
+        if (!DgopService.dgopAvailable) {
+            deviceInformationFailed = true;
+            return;
+        }
+
+        deviceInformationFailed = false;
+        deviceInformationLoading = true;
+        const generation = ++deviceInformationGeneration;
+        deviceInformationRequestId = CyShellService.sendRequest("dgop.meta", {
+            modules: ["hardware", "memory", "gpu"]
+        }, response => {
+            if (generation !== deviceInformationGeneration)
+                return;
+
+            deviceInformationRequestId = 0;
+            deviceInformationLoading = false;
+            if (!response.result) {
+                deviceInformationFailed = true;
+                return;
+            }
+
+            deviceInformation = response.result;
+        }, 10000) || 0;
     }
 
-    property string dmsDiscordUrl: "https://discord.gg/ppWTpKmPgT"
-    property string dmsDiscordTooltip: I18n.tr("niri/dms Discord")
-
-    property string compositorDiscordUrl: {
-        if (isHyprland)
-            return "https://discord.com/invite/hQ9XvMUjjr";
-        if (isMango)
-            return "https://discord.gg/CPjbDxesh5";
-        return "";
+    function cancelDeviceInformationRequest() {
+        deviceInformationGeneration++;
+        if (deviceInformationRequestId > 0)
+            CyShellService.cancelRequest(deviceInformationRequestId);
+        deviceInformationRequestId = 0;
+        deviceInformationLoading = false;
     }
 
-    property string compositorDiscordTooltip: {
-        if (isHyprland)
-            return I18n.tr("Hyprland Discord server");
-        if (isMango)
-            return I18n.tr("mangowc Discord server");
-        return "";
+    Component.onCompleted: loadDeviceInformation()
+    Component.onDestruction: cancelDeviceInformationRequest()
+    onVisibleChanged: {
+        if (visible)
+            loadDeviceInformation();
+        else
+            cancelDeviceInformationRequest();
     }
 
-    property string redditUrl: "https://reddit.com/r/niri"
-    property string redditTooltip: I18n.tr("r/niri subreddit")
-
-    property string ircUrl: "https://web.libera.chat/gamja/?channels=#labwc"
-    property string ircTooltip: I18n.tr("LabWC IRC channel")
-
-    property bool showMatrix: isNiri && !isHyprland && !isSway && !isScroll && !isMiracle && !isMango && !isLabwc
-    property bool showCompositorDiscord: isHyprland || isMango
-    property bool showReddit: isNiri && !isHyprland && !isSway && !isScroll && !isMiracle && !isMango && !isLabwc
-    property bool showIrc: isLabwc
 
     SettingsPage {
         id: mainColumn
@@ -162,7 +137,7 @@ Item {
                             text: "CyShell Desktop"
                             font.pixelSize: parent.compactLogo ? 32 : 48
                             font.weight: Theme.fontWeightMedium
-                            font.family: DankCommon.Fonts.sans
+                            font.family: CyCommon.Fonts.sans
                             color: Theme.surfaceText
                             antialiasing: true
                         }
@@ -170,11 +145,11 @@ Item {
 
                     StyledText {
                         text: {
-                            if (!ShellVersionService.shellVersion && !DMSService.cliVersion)
+                            if (!ShellVersionService.shellVersion && !CyShellService.cliVersion)
                                 return "cyshell";
 
                             let version = ShellVersionService.shellVersion || "";
-                            let cliVersion = DMSService.cliVersion || "";
+                            let cliVersion = CyShellService.cliVersion || "";
 
                             // Debian/Ubuntu/OpenSUSE git format: 1.0.3+git2264.c5c5ce84
                             let match = version.match(/^([\d.]+)\+git(\d+)\./);
@@ -249,7 +224,7 @@ Item {
 
                         property bool compactMode: parent.width < 450
 
-                        DankButton {
+                        CyButton {
                             id: docsButton
                             tooltipText: resourceButtonsRow.compactMode ? I18n.tr("Docs") + " - CyShell" : "CyShell architecture & docs"
                             text: resourceButtonsRow.compactMode ? "" : I18n.tr("Docs")
@@ -260,7 +235,7 @@ Item {
                             onClicked: Qt.openUrlExternally("https://github.com/Cytech-Team/CyShell-Desktop/blob/cyshell-dev/CYSHELL.md")
                         }
 
-                        DankButton {
+                        CyButton {
                             id: overviewButton
                             tooltipText: resourceButtonsRow.compactMode ? I18n.tr("README") : I18n.tr("Project overview")
                             text: resourceButtonsRow.compactMode ? "" : I18n.tr("README")
@@ -271,7 +246,7 @@ Item {
                             onClicked: Qt.openUrlExternally("https://github.com/Cytech-Team/CyShell-Desktop/blob/cyshell-dev/README.md")
                         }
 
-                        DankButton {
+                        CyButton {
                             id: githubButton
                             tooltipText: resourceButtonsRow.compactMode ? "GitHub - CyShell" : "github.com/Cytech-Team/CyShell-Desktop"
                             text: resourceButtonsRow.compactMode ? "" : "GitHub"
@@ -282,7 +257,7 @@ Item {
                             onClicked: Qt.openUrlExternally("https://github.com/Cytech-Team/CyShell-Desktop")
                         }
 
-                        DankButton {
+                        CyButton {
                             id: kofiButton
                             visible: false
                             tooltipText: resourceButtonsRow.compactMode ? "Ko-fi" + " - ko-fi.com/danklinux" : "ko-fi.com/danklinux"
@@ -300,7 +275,7 @@ Item {
                         anchors.horizontalCenter: parent.horizontalCenter
                         spacing: Theme.spacingXS
 
-                        DankActionButton {
+                        CyActionButton {
                             tooltipText: compositorTooltip
                             tooltipSide: "top"
                             onClicked: {
@@ -320,7 +295,7 @@ Item {
                             }
                         }
 
-                        DankActionButton {
+                        CyActionButton {
                             visible: showMatrix
                             tooltipText: I18n.tr("niri Matrix chat")
                             tooltipSide: "top"
@@ -342,7 +317,7 @@ Item {
                             }
                         }
 
-                        DankActionButton {
+                        CyActionButton {
                             visible: showIrc
                             iconName: "forum"
                             iconSize: Theme.iconSizeMedium
@@ -352,7 +327,7 @@ Item {
                             onClicked: Qt.openUrlExternally(ircUrl)
                         }
 
-                        DankActionButton {
+                        CyActionButton {
                             visible: false
                             tooltipText: dmsDiscordTooltip
                             tooltipSide: "top"
@@ -369,7 +344,7 @@ Item {
                             }
                         }
 
-                        DankActionButton {
+                        CyActionButton {
                             visible: showCompositorDiscord
                             tooltipText: compositorDiscordTooltip
                             tooltipSide: "top"
@@ -386,7 +361,7 @@ Item {
                             }
                         }
 
-                        DankActionButton {
+                        CyActionButton {
                             visible: showReddit
                             tooltipText: redditTooltip
                             tooltipSide: "top"
@@ -431,41 +406,113 @@ Item {
         }
 
         SettingsCard {
-            visible: DMSService.isConnected
+            width: parent.width
+            iconName: "computer"
+            title: I18n.tr("Device information")
+
+            SettingsRow {
+                title: I18n.tr("System details")
+                subtitle: aboutTab.deviceInformationLoading ? I18n.tr("Loading…") : (aboutTab.deviceInformationFailed ? I18n.tr("Could not load device information") : I18n.tr("Provided by CyShell Core"))
+
+                CyActionButton {
+                    iconName: "refresh"
+                    tooltipText: I18n.tr("Refresh device information")
+                    Accessible.name: tooltipText
+                    enabled: !aboutTab.deviceInformationLoading && DgopService.dgopAvailable
+                    onClicked: aboutTab.loadDeviceInformation()
+                }
+            }
+
+            SettingsRow {
+                title: I18n.tr("Computer")
+                subtitle: aboutTab.deviceValue(aboutTab.deviceInformation.hardware?.hostname)
+            }
+
+            SettingsRow {
+                title: I18n.tr("Operating system")
+                subtitle: aboutTab.deviceValue(aboutTab.deviceInformation.hardware?.distro)
+            }
+
+            SettingsRow {
+                title: I18n.tr("Kernel and architecture")
+                subtitle: [aboutTab.deviceInformation.hardware?.kernel, aboutTab.deviceInformation.hardware?.arch].filter(Boolean).join(" · ") || I18n.tr("Unavailable")
+            }
+
+            SettingsRow {
+                title: I18n.tr("Processor")
+                subtitle: {
+                    const cpu = aboutTab.deviceInformation.hardware?.cpu || {};
+                    const model = cpu.model || "";
+                    const count = Number(cpu.count || 0);
+                    const details = [];
+                    if (model)
+                        details.push(model);
+                    if (count > 0)
+                        details.push(I18n.tr("%1 cores", "Processor core count").arg(count));
+                    return details.length > 0 ? details.join(" · ") : I18n.tr("Unavailable");
+                }
+            }
+
+            SettingsRow {
+                title: I18n.tr("Memory")
+                subtitle: aboutTab.deviceMemoryValue()
+            }
+
+            SettingsRow {
+                title: I18n.tr("Graphics")
+                subtitle: aboutTab.deviceGraphicsValue()
+            }
+
+            SettingsRow {
+                title: I18n.tr("Motherboard")
+                subtitle: aboutTab.deviceValue(aboutTab.deviceInformation.hardware?.bios?.motherboard)
+            }
+
+            SettingsRow {
+                title: I18n.tr("Firmware")
+                subtitle: {
+                    const bios = aboutTab.deviceInformation.hardware?.bios || {};
+                    return [bios.vendor, bios.version].filter(Boolean).join(" · ") || I18n.tr("Unavailable");
+                }
+            }
+        }
+
+        SettingsCard {
+            visible: CyShellService.isConnected
             width: parent.width
             iconName: "dns"
             title: I18n.tr("CyShell Core", "noun, settings label for the backend service in use")
 
             SettingsRow {
                 title: I18n.tr("Version")
-                trailingBadge: DMSService.cliVersion || "—"
+                trailingBadge: CyShellService.cliVersion || "—"
             }
 
             SettingsRow {
                 title: I18n.tr("API", "about page card title, application programming interface version")
-                trailingBadge: `v${DMSService.apiVersion}`
+                trailingBadge: `v${CyShellService.apiVersion}`
             }
 
             SettingsRow {
                 title: I18n.tr("Status")
                 trailingBadge: I18n.tr("Connected")
 
-                DankBadge {
+                CyBadge {
                     color: Theme.success
                 }
             }
 
             SettingsRow {
-                visible: DMSService.capabilities.length > 0
+                visible: CyShellService.capabilities.length > 0
                 title: I18n.tr("Capabilities")
                 body: Flow {
                     width: parent.width
                     spacing: Theme.spacingS
 
                     Repeater {
-                        model: DMSService.capabilities
+                        model: CyShellService.capabilities
 
-                        DankBadge {
+                        CyBadge {
                             text: modelData
                             color: Theme.primaryHover
                             textColor: Theme.primary

@@ -317,7 +317,7 @@ def main():
                          "are created)")
     ap.add_argument("--version", default=None, metavar="X.Y.Z",
                     help="release version being cut; if set and -o/--output isn't, "
-                         "writes to ~/Documents/dms-vX.Y.Z-changelog.md instead of "
+                         "writes to ~/Documents/cyshell-vX.Y.Z-changelog.md instead of "
                          "stdout")
     args = ap.parse_args()
 
@@ -325,7 +325,7 @@ def main():
     if not repo:
         url = run(["git", "remote", "get-url", "origin"]).strip()
         m = re.search(r"github\.com[:/]([^/]+/[^/.]+)", url)
-        repo = m.group(1) if m else "AvengeMedia/DankMaterialShell"
+        repo = m.group(1) if m else "Cytech-Team/CyShell-Desktop"
 
     entries = build_entries(repo, args.range, use_api=not args.no_api)
     if not entries:
@@ -348,7 +348,7 @@ def main():
         else:
             text = format_checklist(entries)
 
-    out_target = args.output or (f"~/Documents/dms-v{args.version}-changelog.md" if args.version else None)
+    out_target = args.output or (f"~/Documents/cyshell-v{args.version}-changelog.md" if args.version else None)
     if out_target:
         out_path = Path(out_target).expanduser()
         out_path.parent.mkdir(parents=True, exist_ok=True)

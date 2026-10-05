@@ -24,7 +24,7 @@ Loader {
     Component {
         id: action
 
-        DankActionButton {
+        CyActionButton {
             buttonSize: root.width
             iconName: root.iconName
             iconSize: root.glyphSize
@@ -43,7 +43,7 @@ Loader {
             radius: Theme.fullRadius(width, height)
             color: !root.tonal ? "transparent" : root.available ? root.backgroundColor : Theme.onSurface_12
 
-            DankIcon {
+            CyIcon {
                 anchors.centerIn: parent
                 name: root.iconName
                 size: root.glyphSize

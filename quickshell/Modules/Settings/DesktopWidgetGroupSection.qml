@@ -39,7 +39,7 @@ Column {
         clickable: true
         onClicked: section.collapseToggled(section.sectionKey)
 
-        DankIcon {
+        CyIcon {
             anchors.verticalCenter: parent.verticalCenter
             name: section.collapsed ? "expand_more" : "expand_less"
             size: Theme.iconSize

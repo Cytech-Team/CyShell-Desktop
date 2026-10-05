@@ -6,8 +6,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/pkg/ipp"
 	"github.com/AvengeMedia/dankgo/syncmap"
+	"github.com/Cytech-Team/CyShell-Desktop/core/pkg/ipp"
 )
 
 type CUPSState struct {

@@ -1019,15 +1019,30 @@ Singleton {
         target: SettingsData
 
         function onNotificationPopupsInvalidated() {
+            root.stopTestNotifications();
             root.dismissAllPopups();
         }
     }
 
+    function stopTestNotifications() {
+        testPreviewStartTimer.stop();
+        testNotifTimer1.stop();
+        testNotifTimer2.stop();
+    }
+
     function sendTestNotifications() {
+        // Position changes can happen faster than the popup exit animation.
+        // Debounce the preview so an older 3-notification sequence can never
+        // reappear at the previous position and pile up with the new one.
+        stopTestNotifications();
         dismissAllPopups();
+        testPreviewStartTimer.restart();
+    }
+
+    function _startTestNotifications() {
         sendTestNotification(0);
-        testNotifTimer1.start();
-        testNotifTimer2.start();
+        testNotifTimer1.restart();
+        testNotifTimer2.restart();
     }
 
     function sendTestNotification(index) {
@@ -1038,15 +1053,15 @@ Singleton {
         }
 
         const notif = notifications[index];
-        testNotificationProcess.command = ["notify-send", "-h", "int:transient:1", "-a", "CyShell", "-i", notif[2], notif[0], notif[1]];
-        testNotificationProcess.running = true;
+        Quickshell.execDetached(["notify-send", "-h", "int:transient:1", "-a", "CyShell", "-i", notif[2], notif[0], notif[1]]);
     }
 
-    property Process testNotificationProcess
+    property Timer testPreviewStartTimer
 
-    testNotificationProcess: Process {
-        command: []
-        running: false
+    testPreviewStartTimer: Timer {
+        interval: Math.max(180, Theme.notificationExitDuration + Theme.notificationStackShiftDuration)
+        repeat: false
+        onTriggered: root._startTestNotifications()
     }
 
     property Timer testNotifTimer1

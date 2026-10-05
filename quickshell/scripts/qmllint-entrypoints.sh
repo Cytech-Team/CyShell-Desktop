@@ -74,7 +74,7 @@ print_vfs_recovery() {
     printf '  rm -f %q\n' "${qmlls_config}" >&2
     printf '  touch %q\n' "${qmlls_config}" >&2
     printf '  qs -p %q\n' "${quickshell_dir}" >&2
-    printf '  # or: dms -c %q run\n' "${quickshell_dir}" >&2
+    printf '  # or: cyshell -c %q run\n' "${quickshell_dir}" >&2
     printf 'The shell only has to run long enough to write the config, then:\n' >&2
     printf '  qs kill -p %q\n' "${quickshell_dir}" >&2
     printf 'Linting itself does not need a running shell.\n' >&2
@@ -111,8 +111,8 @@ fi
 
 targets=(
     "${quickshell_dir}/shell.qml"
-    "${quickshell_dir}/DMSShell.qml"
-    "${quickshell_dir}/DMSGreeter.qml"
+    "${quickshell_dir}/CyShell.qml"
+    "${quickshell_dir}/CyShellGreeter.qml"
 )
 
 qmllint_args=(

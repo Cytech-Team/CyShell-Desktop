@@ -2,7 +2,7 @@ import QtQuick
 import qs.Common
 import qs.Modules.ControlCenter
 import qs.Widgets
-import "../../../DankCommon/Common/FocusNavigation.js" as FocusNavigation
+import "../../../CyCommon/Common/FocusNavigation.js" as FocusNavigation
 
 Item {
     id: root
@@ -131,7 +131,7 @@ Item {
                 width: parent.width
                 spacing: Theme.spacingM
 
-                DankIcon {
+                CyIcon {
                     name: root.iconName
                     size: Theme.iconSizeLarge
                     color: Theme.primary
@@ -174,7 +174,7 @@ Item {
                 visible: text !== ""
             }
 
-            DankFlickable {
+            CyFlickable {
                 id: contentFlickable
                 width: parent.width
                 height: Math.min(contentHeight, Math.max(0, root.height - Theme.spacingL * 4 - header.height - column.spacing - (status.visible ? status.height + column.spacing : 0)))

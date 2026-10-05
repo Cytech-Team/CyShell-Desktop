@@ -116,16 +116,7 @@
             "isInOverflow": false
           },
           {
-            "uniqueKey": "separator_ungrouped",
-            "type": "separator",
-            "appId": "__SEPARATOR__",
-            "toplevel": null,
-            "isPinned": false,
-            "isRunning": false,
-            "isInOverflow": false
-          },
-          {
-            "uniqueKey": "window_1",
+            "uniqueKey": "window:1",
             "type": "window",
             "appId": "browser",
             "toplevel": {
@@ -145,7 +136,7 @@
             "isInOverflow": false
           },
           {
-            "uniqueKey": "window_3",
+            "uniqueKey": "window:3",
             "type": "window",
             "appId": "settings",
             "toplevel": {
@@ -271,7 +262,7 @@
             "isRunning": false
           },
           {
-            "uniqueKey": "window_1",
+            "uniqueKey": "window:1",
             "type": "window",
             "appId": "browser",
             "toplevel": {
@@ -291,7 +282,7 @@
             "isInOverflow": false
           },
           {
-            "uniqueKey": "window_3",
+            "uniqueKey": "window:3",
             "type": "window",
             "appId": "settings",
             "toplevel": {
@@ -417,7 +408,7 @@
             "isRunning": false
           },
           {
-            "uniqueKey": "window_1",
+            "uniqueKey": "window:1",
             "type": "window",
             "appId": "browser",
             "toplevel": {
@@ -437,7 +428,7 @@
             "isInOverflow": false
           },
           {
-            "uniqueKey": "window_3",
+            "uniqueKey": "window:3",
             "type": "window",
             "appId": "settings",
             "toplevel": {
@@ -547,16 +538,7 @@
             "isInOverflow": false
           },
           {
-            "uniqueKey": "separator_ungrouped",
-            "type": "separator",
-            "appId": "__SEPARATOR__",
-            "toplevel": null,
-            "isPinned": false,
-            "isRunning": false,
-            "isInOverflow": false
-          },
-          {
-            "uniqueKey": "window_3",
+            "uniqueKey": "window:3",
             "type": "window",
             "appId": "settings",
             "toplevel": {
@@ -682,7 +664,7 @@
             "isRunning": false
           },
           {
-            "uniqueKey": "window_3",
+            "uniqueKey": "window:3",
             "type": "window",
             "appId": "settings",
             "toplevel": {
@@ -808,7 +790,7 @@
             "isRunning": false
           },
           {
-            "uniqueKey": "window_3",
+            "uniqueKey": "window:3",
             "type": "window",
             "appId": "settings",
             "toplevel": {
@@ -909,7 +891,7 @@
             "isInOverflow": false
           },
           {
-            "uniqueKey": "window_0",
+            "uniqueKey": "window:0",
             "type": "window",
             "appId": "browser",
             "toplevel": {
@@ -929,7 +911,7 @@
             "isInOverflow": false
           },
           {
-            "uniqueKey": "window_1",
+            "uniqueKey": "window:1",
             "type": "window",
             "appId": "browser",
             "toplevel": {
@@ -949,7 +931,7 @@
             "isInOverflow": false
           },
           {
-            "uniqueKey": "window_2",
+            "uniqueKey": "window:2",
             "type": "window",
             "appId": "editor",
             "toplevel": {
@@ -969,7 +951,7 @@
             "isInOverflow": false
           },
           {
-            "uniqueKey": "window_3",
+            "uniqueKey": "window:3",
             "type": "window",
             "appId": "settings",
             "toplevel": {
@@ -1077,7 +1059,7 @@
             "isRunning": false
           },
           {
-            "uniqueKey": "window_0",
+            "uniqueKey": "window:0",
             "type": "window",
             "appId": "browser",
             "toplevel": {
@@ -1097,7 +1079,7 @@
             "isInOverflow": false
           },
           {
-            "uniqueKey": "window_1",
+            "uniqueKey": "window:1",
             "type": "window",
             "appId": "browser",
             "toplevel": {
@@ -1117,7 +1099,7 @@
             "isInOverflow": true
           },
           {
-            "uniqueKey": "window_2",
+            "uniqueKey": "window:2",
             "type": "window",
             "appId": "editor",
             "toplevel": {
@@ -1137,7 +1119,7 @@
             "isInOverflow": true
           },
           {
-            "uniqueKey": "window_3",
+            "uniqueKey": "window:3",
             "type": "window",
             "appId": "settings",
             "toplevel": {
@@ -1245,7 +1227,7 @@
             "isRunning": false
           },
           {
-            "uniqueKey": "window_0",
+            "uniqueKey": "window:0",
             "type": "window",
             "appId": "browser",
             "toplevel": {
@@ -1265,7 +1247,7 @@
             "isInOverflow": false
           },
           {
-            "uniqueKey": "window_1",
+            "uniqueKey": "window:1",
             "type": "window",
             "appId": "browser",
             "toplevel": {
@@ -1285,7 +1267,7 @@
             "isInOverflow": false
           },
           {
-            "uniqueKey": "window_2",
+            "uniqueKey": "window:2",
             "type": "window",
             "appId": "editor",
             "toplevel": {
@@ -1305,7 +1287,7 @@
             "isInOverflow": true
           },
           {
-            "uniqueKey": "window_3",
+            "uniqueKey": "window:3",
             "type": "window",
             "appId": "settings",
             "toplevel": {
@@ -1406,7 +1388,7 @@
             "isInOverflow": false
           },
           {
-            "uniqueKey": "window_0",
+            "uniqueKey": "window:0",
             "type": "window",
             "appId": "browser",
             "toplevel": {
@@ -1426,7 +1408,7 @@
             "isInOverflow": false
           },
           {
-            "uniqueKey": "window_2",
+            "uniqueKey": "window:2",
             "type": "window",
             "appId": "editor",
             "toplevel": {
@@ -1446,7 +1428,7 @@
             "isInOverflow": false
           },
           {
-            "uniqueKey": "window_3",
+            "uniqueKey": "window:3",
             "type": "window",
             "appId": "settings",
             "toplevel": {
@@ -1554,7 +1536,7 @@
             "isRunning": false
           },
           {
-            "uniqueKey": "window_0",
+            "uniqueKey": "window:0",
             "type": "window",
             "appId": "browser",
             "toplevel": {
@@ -1574,7 +1556,7 @@
             "isInOverflow": false
           },
           {
-            "uniqueKey": "window_2",
+            "uniqueKey": "window:2",
             "type": "window",
             "appId": "editor",
             "toplevel": {
@@ -1594,7 +1576,7 @@
             "isInOverflow": true
           },
           {
-            "uniqueKey": "window_3",
+            "uniqueKey": "window:3",
             "type": "window",
             "appId": "settings",
             "toplevel": {
@@ -1702,7 +1684,7 @@
             "isRunning": false
           },
           {
-            "uniqueKey": "window_0",
+            "uniqueKey": "window:0",
             "type": "window",
             "appId": "browser",
             "toplevel": {
@@ -1722,7 +1704,7 @@
             "isInOverflow": false
           },
           {
-            "uniqueKey": "window_2",
+            "uniqueKey": "window:2",
             "type": "window",
             "appId": "editor",
             "toplevel": {
@@ -1742,7 +1724,7 @@
             "isInOverflow": false
           },
           {
-            "uniqueKey": "window_3",
+            "uniqueKey": "window:3",
             "type": "window",
             "appId": "settings",
             "toplevel": {
@@ -1896,15 +1878,6 @@
             "allWindows": [],
             "isCoreApp": false,
             "coreAppData": null,
-            "isInOverflow": false
-          },
-          {
-            "uniqueKey": "separator_grouped",
-            "type": "separator",
-            "appId": "__SEPARATOR__",
-            "toplevel": null,
-            "isPinned": false,
-            "isRunning": false,
             "isInOverflow": false
           },
           {
@@ -2443,15 +2416,6 @@
             "allWindows": [],
             "isCoreApp": false,
             "coreAppData": null,
-            "isInOverflow": false
-          },
-          {
-            "uniqueKey": "separator_grouped",
-            "type": "separator",
-            "appId": "__SEPARATOR__",
-            "toplevel": null,
-            "isPinned": false,
-            "isRunning": false,
             "isInOverflow": false
           },
           {

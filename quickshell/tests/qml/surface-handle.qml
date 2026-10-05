@@ -5,7 +5,7 @@ import qs.Common
 import qs.Services
 import qs.Widgets
 import qs.Modals.Common
-import qs.DankCommon.Common as DC
+import qs.CyCommon.Common as DC
 
 ShellRoot {
     id: root
@@ -16,7 +16,7 @@ ShellRoot {
         name: "surface-handle"
     }
 
-    DankModal {
+    CyModal {
         id: modal
         modalWidth: 333
         modalHeight: 222
@@ -25,7 +25,7 @@ ShellRoot {
         }
     }
 
-    DankPopout {
+    CyPopout {
         id: popout
         popupWidth: 250
         popupHeight: 150

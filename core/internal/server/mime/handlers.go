@@ -3,10 +3,10 @@ package mime
 import (
 	"fmt"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/models"
 	"github.com/AvengeMedia/dankgo/desktop"
 	"github.com/AvengeMedia/dankgo/ipc"
 	"github.com/AvengeMedia/dankgo/ipc/params"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/server/models"
 )
 
 type defaultResult struct {

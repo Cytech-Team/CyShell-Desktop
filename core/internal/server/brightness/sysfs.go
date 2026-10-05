@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/log"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/log"
 )
 
 func NewSysfsBackend() (*SysfsBackend, error) {
@@ -105,6 +105,29 @@ func (b *SysfsBackend) Rescan() error {
 	return b.scanDevices()
 }
 
+func internalDisplayConnector() string {
+	patterns := []string{
+		"/sys/class/drm/card*-eDP-*",
+		"/sys/class/drm/card*-LVDS-*",
+		"/sys/class/drm/card*-DSI-*",
+	}
+	for _, pattern := range patterns {
+		paths, _ := filepath.Glob(pattern)
+		for _, connectorPath := range paths {
+			status, err := os.ReadFile(filepath.Join(connectorPath, "status"))
+			if err != nil || strings.TrimSpace(string(status)) != "connected" {
+				continue
+			}
+			connector := filepath.Base(connectorPath)
+			if dash := strings.Index(connector, "-"); dash >= 0 && dash+1 < len(connector) {
+				connector = connector[dash+1:]
+			}
+			return connector
+		}
+	}
+	return ""
+}
+
 func (b *SysfsBackend) GetDevices() ([]Device, error) {
 	devices := make([]Device, 0)
 
@@ -138,6 +161,11 @@ func (b *SysfsBackend) GetDevices() ([]Device, error) {
 
 		percent := b.ValueToPercent(current, dev, false)
 
+		connector := ""
+		if dev.class == ClassBacklight {
+			connector = internalDisplayConnector()
+		}
+
 		devices = append(devices, Device{
 			Class:          dev.class,
 			ID:             dev.id,
@@ -146,6 +174,7 @@ func (b *SysfsBackend) GetDevices() ([]Device, error) {
 			Max:            dev.maxBrightness,
 			CurrentPercent: percent,
 			Backend:        "sysfs",
+			Connector:      connector,
 		})
 		return true
 	})

@@ -129,14 +129,14 @@ func GetDBPath() (string, error) {
 		cacheDir = filepath.Join(homeDir, ".cache")
 	}
 
-	newDir := filepath.Join(cacheDir, "DankMaterialShell", "clipboard")
+	newDir := filepath.Join(cacheDir, "CyShell", "clipboard")
 	newPath := filepath.Join(newDir, "db")
 
 	if _, err := os.Stat(newPath); err == nil {
 		return newPath, nil
 	}
 
-	oldDir := filepath.Join(cacheDir, "dms-clipboard")
+	oldDir := filepath.Join(cacheDir, "dms-clipboard") // legacy migration source
 	oldPath := filepath.Join(oldDir, "db")
 
 	if _, err := os.Stat(oldPath); err == nil {

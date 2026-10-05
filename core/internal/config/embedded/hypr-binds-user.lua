@@ -1,1 +1,1 @@
--- Optional per-user keybind overrides (managed by DMS). Loaded after default binds.
+-- Optional per-user keybind overrides (managed by CyShell). Loaded after default binds.

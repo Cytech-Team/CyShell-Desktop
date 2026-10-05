@@ -12,7 +12,7 @@ import (
 	"time"
 	"unicode/utf16"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/utils"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/utils"
 )
 
 const (

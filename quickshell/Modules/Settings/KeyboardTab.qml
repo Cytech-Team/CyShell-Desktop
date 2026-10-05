@@ -10,6 +10,48 @@ Item {
     LayoutMirroring.enabled: I18n.isRtl
     LayoutMirroring.childrenInherit: true
 
+    readonly property var knownLayouts: [
+        {code: "us", label: I18n.tr("English (US)")},
+        {code: "gb", label: I18n.tr("English (UK)")},
+        {code: "th", label: I18n.tr("Thai")},
+        {code: "de", label: I18n.tr("German")},
+        {code: "fr", label: I18n.tr("French")},
+        {code: "es", label: I18n.tr("Spanish")},
+        {code: "jp", label: I18n.tr("Japanese")},
+        {code: "kr", label: I18n.tr("Korean")},
+        {code: "cn", label: I18n.tr("Chinese")},
+        {code: "ru", label: I18n.tr("Russian")}
+    ]
+
+    readonly property var layoutCodes: {
+        const configured = SettingsData.keyboardLayouts.trim();
+        if (configured)
+            return configured.split(",").map(code => code.trim()).filter(code => code.length > 0);
+        return KeyboardLayoutService.layoutNames.map(name => root.layoutCode(name)).filter(code => code.length > 0);
+    }
+
+    readonly property var availableLayoutChoices: knownLayouts.filter(layout => !layoutCodes.includes(layout.code))
+
+    function layoutCode(name) {
+        const value = String(name ?? "").trim().toLowerCase();
+        const layout = knownLayouts.find(item => item.code === value || item.label.toLowerCase() === value);
+        return layout?.code ?? "";
+    }
+
+    function layoutLabel(code) {
+        return knownLayouts.find(item => item.code === code)?.label ?? code;
+    }
+
+    function addLayout(code) {
+        if (!code || layoutCodes.includes(code))
+            return;
+        SettingsData.set("keyboardLayouts", [...layoutCodes, code].join(","));
+    }
+
+    function removeLayout(code) {
+        SettingsData.set("keyboardLayouts", layoutCodes.filter(item => item !== code).join(","));
+    }
+
     ConfigInclude {
         id: inputInclude
         includeKind: "input"
@@ -32,14 +74,35 @@ Item {
             settingKey: "keyboardLayoutsSettings"
             iconName: "keyboard"
 
-            SettingsTextFieldRow {
-                resetKeys: ["keyboardLayouts"]
-                leftIconName: "keyboard"
-                text: I18n.tr("Layouts", "noun plural, keyboard layouts card title and field label")
-                description: I18n.tr("Comma-separated list of layout names. Leave empty to use the system keyboard settings.")
-                value: SettingsData.keyboardLayouts
-                placeholderText: "us,de"
-                onValueEdited: value => SettingsData.set("keyboardLayouts", value)
+            Repeater {
+                model: root.layoutCodes
+
+                delegate: SettingsRow {
+                    required property string modelData
+                    title: root.layoutLabel(modelData)
+                    subtitle: modelData
+                    iconName: "keyboard"
+
+                    CyActionButton {
+                        iconName: "close"
+                        iconSize: Theme.iconSizeMedium
+                        tooltipText: I18n.tr("Remove language")
+                        onClicked: root.removeLayout(modelData)
+                    }
+                }
+            }
+
+            SettingsDropdownRow {
+                text: I18n.tr("Add language")
+                description: I18n.tr("Add a keyboard layout for another language.")
+                currentValue: I18n.tr("Choose a language")
+                options: root.availableLayoutChoices.map(layout => layout.label)
+                enabled: root.availableLayoutChoices.length > 0
+                onValueChanged: value => {
+                    const layout = root.availableLayoutChoices.find(item => item.label === value);
+                    if (layout)
+                        root.addLayout(layout.code);
+                }
             }
 
             SettingsDropdownRow {
@@ -148,7 +211,8 @@ Item {
             SettingsToggleRow {
                 tags: ["keyboard", "numlock", "startup"]
                 settingKey: "keyboardNumlock"
-                text: I18n.tr("Num Lock at startup")
+                text: I18n.tr("Num Lock")
+                description: I18n.tr("Turn Num Lock on when the session starts.")
                 checked: SettingsData.keyboardNumlock
                 onToggled: checked => SettingsData.set("keyboardNumlock", checked)
             }

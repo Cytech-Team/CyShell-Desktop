@@ -10,9 +10,9 @@ import (
 	"testing"
 	"time"
 
-	mockdbus "github.com/AvengeMedia/DankMaterialShell/core/internal/mocks/github.com/godbus/dbus/v5"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/models"
 	"github.com/AvengeMedia/dankgo/ipc"
+	mockdbus "github.com/Cytech-Team/CyShell-Desktop/core/internal/mocks/github.com/godbus/dbus/v5"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/server/models"
 	"github.com/godbus/dbus/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -203,6 +203,42 @@ func TestHandleSetIconFile(t *testing.T) {
 
 		assert.Equal(t, 123, resp.ID)
 		assert.Contains(t, resp.Error, "accounts service not available")
+	})
+}
+
+func TestHandleSetUserIconFile(t *testing.T) {
+	t.Run("missing username parameter", func(t *testing.T) {
+		manager := &Manager{state: &FreedeskState{}, stateMutex: sync.RWMutex{}}
+		mc := newMockNetConn()
+		conn := ipc.NewConnWriter(mc)
+		req := ipc.Request{
+			ID:     123,
+			Method: "freedesktop.accounts.setUserIconFile",
+			Params: map[string]any{"path": "/tmp/avatar.png"},
+		}
+
+		handleSetUserIconFile(conn, req, manager)
+
+		var resp ipc.Response[any]
+		require.NoError(t, json.NewDecoder(mc.writeBuf).Decode(&resp))
+		assert.Contains(t, resp.Error, "username")
+	})
+
+	t.Run("missing path parameter", func(t *testing.T) {
+		manager := &Manager{state: &FreedeskState{}, stateMutex: sync.RWMutex{}}
+		mc := newMockNetConn()
+		conn := ipc.NewConnWriter(mc)
+		req := ipc.Request{
+			ID:     123,
+			Method: "freedesktop.accounts.setUserIconFile",
+			Params: map[string]any{"username": "alice"},
+		}
+
+		handleSetUserIconFile(conn, req, manager)
+
+		var resp ipc.Response[any]
+		require.NoError(t, json.NewDecoder(mc.writeBuf).Decode(&resp))
+		assert.Contains(t, resp.Error, "path")
 	})
 }
 

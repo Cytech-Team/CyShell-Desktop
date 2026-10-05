@@ -5,6 +5,7 @@ FocusScope {
     id: root
 
     property string settingsPath: ""
+    property string pluginId: ""
     property bool active: true
     property var pluginService: PluginService
 
@@ -31,7 +32,9 @@ FocusScope {
         onLoaded: {
             if (!item)
                 return;
-            item.pluginService = root.pluginService;
+            if ("pluginService" in item)
+                item.pluginService = root.pluginService;
+            PluginService.injectCompatApi(item, root.pluginId);
             if ("popoutService" in item)
                 item.popoutService = PopoutService;
             Qt.callLater(() => {

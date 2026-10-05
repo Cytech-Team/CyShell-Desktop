@@ -113,48 +113,6 @@ Item {
                 value: root.frameInsetPaddingDisplay
                 onSliderDragFinished: v => SettingsData.set("frameBarInsetPadding", v)
             }
-
-            SettingsToggleRow {
-                id: frameBlurToggle
-                settingKey: "frameBlurEnabled"
-                tags: ["frame", "blur", "background", "glass", "transparency", "frosted"]
-                text: I18n.tr("Blur")
-                checked: SettingsData.frameBlurEnabled
-                onToggled: checked => SettingsData.set("frameBlurEnabled", checked)
-                enabled: BlurService.available && SettingsData.blurEnabled
-                visible: BlurService.available
-            }
-
-            SettingsRow {
-                visible: BlurService.available && !SettingsData.blurEnabled
-                body: Item {
-                    width: parent.width
-                    height: blurToggleNote.height + Theme.spacingM * 2
-
-                    Row {
-                        id: blurToggleNote
-                        x: Theme.spacingM
-                        width: parent.width - Theme.spacingM * 2
-                        anchors.verticalCenter: parent.verticalCenter
-                        spacing: Theme.spacingS
-
-                        DankIcon {
-                            name: "blur_on"
-                            size: Theme.fontSizeMedium
-                            color: Theme.primary
-                            anchors.verticalCenter: parent.verticalCenter
-                        }
-
-                        StyledText {
-                            text: I18n.tr("Frame Blur follows Background Blur in Theme & Colors")
-                            font.pixelSize: Theme.fontSizeSmall
-                            color: Theme.surfaceVariantText
-                            wrapMode: Text.WordWrap
-                            width: parent.width - Theme.fontSizeMedium - Theme.spacingS
-                        }
-                    }
-                }
-            }
         }
 
         SettingsCard {

@@ -3,9 +3,9 @@ package registries
 import (
 	"fmt"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/registries"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/models"
 	"github.com/AvengeMedia/dankgo/ipc"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/registries"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/server/models"
 	"github.com/spf13/afero"
 )
 

@@ -1,7 +1,7 @@
 import QtQuick
 import Quickshell
 import qs.Common
-import "DankCommon/Common/Contrast.js" as Contrast
+import "CyCommon/Common/Contrast.js" as Contrast
 
 ShellRoot {
     id: root

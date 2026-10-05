@@ -10,14 +10,14 @@ PluginComponent {
     readonly property int count: pluginData.count ?? 0
     readonly property real textSize: Theme.barTextSize(barThickness, barConfig?.fontScale, barConfig?.maximizeWidgetText)
 
-    pillClickAction: (x, y, width, section, screen) => popoutService?.toggleDankDash("plugin_" + pluginId, x, y, width, section, screen)
+    pillClickAction: (x, y, width, section, screen) => popoutService?.toggleCyDash("plugin_" + pluginId, x, y, width, section, screen)
     pillRightClickAction: () => pluginService?.savePluginData(pluginId, "count", count + 1)
 
     horizontalBarPill: Component {
         Row {
             spacing: Theme.spacingXS
 
-            DankIcon {
+            CyIcon {
                 anchors.verticalCenter: parent.verticalCenter
                 name: "counter_1"
                 size: root.iconSize
@@ -37,7 +37,7 @@ PluginComponent {
         Column {
             spacing: Theme.spacingXXS
 
-            DankIcon {
+            CyIcon {
                 anchors.horizontalCenter: parent.horizontalCenter
                 name: "counter_1"
                 size: root.iconSize

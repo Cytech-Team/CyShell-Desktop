@@ -5,7 +5,7 @@ import (
 	"sort"
 	"strings"
 
-	coreplugins "github.com/AvengeMedia/DankMaterialShell/core/internal/plugins"
+	coreplugins "github.com/Cytech-Team/CyShell-Desktop/core/internal/plugins"
 )
 
 func pluginInfoFromPlugin(plugin coreplugins.Plugin) PluginInfo {

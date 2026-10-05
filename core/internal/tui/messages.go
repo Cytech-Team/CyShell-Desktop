@@ -1,8 +1,8 @@
 package tui
 
 import (
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/deps"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/distros"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/deps"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/distros"
 )
 
 type logMsg struct {

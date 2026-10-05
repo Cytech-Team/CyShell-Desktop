@@ -17,9 +17,9 @@ CcListRow {
     signal toggleExpand
     signal deleteRequested
 
-    readonly property bool isActive: DMSNetworkService.vpnStateForUuid(profile?.uuid) === "activated"
-    readonly property bool isConnecting: DMSNetworkService.isVpnConnectingUuid(profile?.uuid)
-    readonly property bool hasError: !isConnecting && DMSNetworkService.vpnError !== "" && DMSNetworkService.vpnErrorUuid === (profile?.uuid ?? "")
+    readonly property bool isActive: CyNetworkService.vpnStateForUuid(profile?.uuid) === "activated"
+    readonly property bool isConnecting: CyNetworkService.isVpnConnectingUuid(profile?.uuid)
+    readonly property bool hasError: !isConnecting && CyNetworkService.vpnError !== "" && CyNetworkService.vpnErrorUuid === (profile?.uuid ?? "")
     readonly property var configData: (!isTransient && isExpanded) ? VPNService.editConfig : null
     readonly property var configFields: buildConfigFields()
 
@@ -70,11 +70,11 @@ CcListRow {
     iconColor: hasError ? Theme.error : (isActive ? Theme.primary : Theme.surfaceText)
     active: isActive
     title: profile?.name ?? ""
-    subtitle: isConnecting ? I18n.tr("Connecting...") : (hasError ? DMSNetworkService.vpnError : VPNService.getVpnTypeFromProfile(profile))
+    subtitle: isConnecting ? I18n.tr("Connecting...") : (hasError ? CyNetworkService.vpnError : VPNService.getVpnTypeFromProfile(profile))
     subtitleColor: isConnecting ? Theme.warning : (hasError ? Theme.error : Theme.surfaceVariantText)
-    enabled: !(DMSNetworkService.isBusy && !isConnecting)
+    enabled: !(CyNetworkService.isBusy && !isConnecting)
     clickable: true
-    onClicked: DMSNetworkService.toggle(profile.uuid)
+    onClicked: CyNetworkService.toggle(profile.uuid)
 
     Behavior on height {
         enabled: CcMetrics.animationsEnabled
@@ -85,7 +85,7 @@ CcListRow {
         }
     }
 
-    leading: DankSpinner {
+    leading: CySpinner {
         size: Theme.iconSizeMedium
         strokeWidth: CcMetrics.spinnerStroke
         color: Theme.warning
@@ -93,7 +93,7 @@ CcListRow {
         running: visible
     }
 
-    DankActionButton {
+    CyActionButton {
         anchors.verticalCenter: parent.verticalCenter
         visible: root.canExpand
         buttonSize: Theme.buttonHeightXS
@@ -104,7 +104,7 @@ CcListRow {
         onClicked: root.toggleExpand()
     }
 
-    DankActionButton {
+    CyActionButton {
         anchors.verticalCenter: parent.verticalCenter
         visible: root.canDelete
         buttonSize: Theme.buttonHeightXS
@@ -120,7 +120,7 @@ CcListRow {
         spacing: Theme.spacingS
         visible: root.isExpanded
 
-        DankSpinner {
+        CySpinner {
             anchors.horizontalCenter: parent.horizontalCenter
             size: Theme.iconSizeMedium
             strokeWidth: CcMetrics.spinnerStroke
@@ -168,7 +168,7 @@ CcListRow {
             }
         }
 
-        DankToggle {
+        CyToggle {
             width: parent.width
             text: I18n.tr("Autoconnect")
             checked: root.configData ? (root.configData.autoconnect || false) : false
@@ -184,19 +184,19 @@ CcListRow {
             visible: !root.isTransient && !VPNService.configLoading && root.profile?.type !== "wireguard"
 
             StyledText {
-                text: root.hasError ? DMSNetworkService.vpnError : I18n.tr("Credentials", "noun, label above vpn username and password fields")
+                text: root.hasError ? CyNetworkService.vpnError : I18n.tr("Credentials", "noun, label above vpn username and password fields")
                 font.pixelSize: Theme.fontSizeSmall
                 color: root.hasError ? Theme.error : Theme.surfaceVariantText
             }
 
-            DankTextField {
+            CyTextField {
                 id: usernameField
                 width: parent.width
                 placeholderText: I18n.tr("Username")
                 text: (root.configData && (root.configData.username || (root.configData.data && root.configData.data.username))) || ""
             }
 
-            DankTextField {
+            CyTextField {
                 id: passwordField
                 width: parent.width
                 placeholderText: I18n.tr("Password")
@@ -205,7 +205,7 @@ CcListRow {
                 normalBorderColor: root.hasError ? Theme.error : Theme.outlineMedium
             }
 
-            DankButton {
+            CyButton {
                 text: I18n.tr("Save credentials")
                 buttonHeight: Theme.buttonHeightXS
                 enabled: passwordField.text.length > 0

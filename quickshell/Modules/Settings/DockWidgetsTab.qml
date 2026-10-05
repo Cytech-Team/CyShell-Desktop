@@ -15,27 +15,27 @@ Item {
 
     readonly property bool dockHosted: true
     readonly property var appsEntry: dock.config?.widgets.find(item => item.widgetId === "appsDock") ?? null
+    readonly property var _dockBehaviorDefaults: ({
+            "groupByApp": true,
+            "separatePinnedAndRunningApps": false,
+            "currentWorkspace": false,
+            "restoreSpecialWorkspaceOnClick": false
+        })
     readonly property var appStore: ({
-            "get": key => dock.config?.[key],
-            "set": (key, value) => dock.setOption(key, value),
-            "isDefault": keys => dock.isDefault(keys),
-            "resetToDefault": keys => dock.resetToDefault(keys)
+            "get": key => root.value(key),
+            "set": (key, value) => root.set(key, value),
+            "isDefault": keys => root.isDefault(keys),
+            "resetToDefault": keys => root.resetToDefault(keys)
         })
-    readonly property var _dockAppsDefaults: ({
-            "appsDockHideIndicators": false,
-            "appsDockIconSizePercentage": 100,
-            "runningAppsCurrentWorkspace": false
-        })
-
     function defaultOption(key) {
-        if (key in _dockAppsDefaults)
-            return _dockAppsDefaults[key];
+        if (key in _dockBehaviorDefaults)
+            return _dockBehaviorDefaults[key];
         return SettingsData.widgetDefaults("appsDock")[key];
     }
 
     function value(key) {
-        if (key in _dockAppsDefaults)
-            return appsEntry?.[key] ?? _dockAppsDefaults[key];
+        if (key in _dockBehaviorDefaults)
+            return appsEntry?.options?.[key] ?? defaultOption(key);
         return SettingsData.widgetOption("appsDock", appsEntry, key);
     }
 
@@ -54,6 +54,15 @@ Item {
     function set(key, value) {
         if (!appsEntry)
             return;
+        if (key in _dockBehaviorDefaults) {
+            const options = Object.assign({}, appsEntry.options || {}, {
+                [key]: value
+            });
+            SettingsData.updateDockWidget(dock.selectedDockId, appsEntry.id, {
+                options
+            });
+            return;
+        }
         SettingsData.updateDockWidget(dock.selectedDockId, appsEntry.id, {
             [key]: value
         });
@@ -198,14 +207,14 @@ Item {
                     Row {
                         spacing: Theme.spacingXS
 
-                        DankActionButton {
+                        CyActionButton {
                             iconName: "settings"
                             visible: widgetRow.modelData.widgetId !== "appsDock" && !!BarWidgetCatalog.optionsFile(widgetRow.modelData.widgetId)
                             Accessible.name: I18n.tr("Settings")
                             onClicked: root.configureWidget(widgetRow.modelData)
                         }
 
-                        DankActionButton {
+                        CyActionButton {
                             iconName: widgetRow.shown ? "visibility" : "visibility_off"
                             Accessible.name: widgetRow.shown ? I18n.tr("Hide") : I18n.tr("Show")
                             onClicked: {
@@ -219,7 +228,7 @@ Item {
                             }
                         }
 
-                        DankActionButton {
+                        CyActionButton {
                             visible: !widgetRow.slotOption
                             iconName: widgetRow.confirmingRemove ? "warning" : "delete"
                             iconColor: widgetRow.confirmingRemove ? Theme.error : Theme.surfaceVariantText
@@ -253,6 +262,11 @@ Item {
             sourceComponent: AppsDockOptions {
                 page: root
             }
+        }
+
+        DockHostComponentsOptions {
+            width: parent.width
+            page: root
         }
     }
 

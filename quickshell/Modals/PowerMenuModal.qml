@@ -3,12 +3,12 @@ import qs.Common
 import qs.Modals.Common
 import qs.Services
 import qs.Modules.PowerMenu
-import qs.DankCommon.Session
+import qs.CyCommon.Session
 
-DankModal {
+CyModal {
     id: root
 
-    layerNamespace: "dms:power-menu"
+    layerNamespace: "cyshell:power-menu"
     keepPopoutsOpen: true
     useOverlayLayer: true
     animationType: "fade"

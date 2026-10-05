@@ -12,13 +12,8 @@ CcSliderRow {
     property string targetDeviceName: {
         if (!BrightnessService.brightnessAvailable || !BrightnessService.devices || BrightnessService.devices.length === 0)
             return "";
-        if (screenName) {
-            const screen = Quickshell.screens.find(s => s.name === screenName);
-            const pinKey = screen ? SettingsData.getScreenDisplayName(screen) : screenName;
-            const pinnedDevice = (CacheData.brightnessDevicePins || {})[pinKey];
-            if (pinnedDevice && BrightnessService.devices.find(dev => dev.name === pinnedDevice))
-                return pinnedDevice;
-        }
+        if (screenName)
+            return BrightnessService.getDeviceForScreen(screenName);
         if (deviceName && BrightnessService.devices.find(dev => dev.name === deviceName))
             return deviceName;
         const currentDeviceName = BrightnessService.currentDevice;

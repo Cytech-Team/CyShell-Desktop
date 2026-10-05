@@ -6,22 +6,22 @@ import _ "embed"
 var HyprlandLuaConfig string
 
 //go:embed embedded/hypr-colors.lua
-var DMSColorsLuaConfig string
+var CyShellColorsLuaConfig string
 
 //go:embed embedded/hypr-layout.lua
-var DMSLayoutLuaConfig string
+var CyShellLayoutLuaConfig string
 
 //go:embed embedded/hypr-binds.lua
-var DMSBindsLuaConfig string
+var CyShellBindsLuaConfig string
 
 //go:embed embedded/hypr-outputs.lua
-var DMSOutputsLuaConfig string
+var CyShellOutputsLuaConfig string
 
 //go:embed embedded/hypr-cursor.lua
-var DMSCursorLuaConfig string
+var CyShellCursorLuaConfig string
 
 //go:embed embedded/hypr-windowrules.lua
-var DMSWindowRulesLuaConfig string
+var CyShellWindowRulesLuaConfig string
 
 //go:embed embedded/hypr-binds-user.lua
-var DMSBindsUserLuaConfig string
+var CyShellBindsUserLuaConfig string

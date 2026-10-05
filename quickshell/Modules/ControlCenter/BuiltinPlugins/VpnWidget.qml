@@ -9,11 +9,11 @@ PluginComponent {
     id: root
 
     Ref {
-        service: DMSNetworkService
+        service: CyNetworkService
     }
 
-    readonly property bool vpnActivating: DMSNetworkService.vpnIsBusy || DMSNetworkService.activeState === "activating"
-    readonly property bool vpnActivated: DMSNetworkService.connected && DMSNetworkService.activeState === "activated"
+    readonly property bool vpnActivating: CyNetworkService.vpnIsBusy || CyNetworkService.activeState === "activating"
+    readonly property bool vpnActivated: CyNetworkService.connected && CyNetworkService.activeState === "activated"
 
     ccWidgetIcon: "vpn_key"
     ccWidgetPrimaryText: I18n.tr("VPN", "virtual private network, widget and page title")
@@ -22,27 +22,27 @@ PluginComponent {
             return I18n.tr("Connecting...");
         if (!vpnActivated)
             return I18n.tr("Disconnected");
-        const names = DMSNetworkService.activeNames || [];
+        const names = CyNetworkService.activeNames || [];
         if (names.length <= 1)
             return names[0] || I18n.tr("Connected");
         return names[0] + " +" + (names.length - 1);
     }
     ccWidgetIsActive: vpnActivated
 
-    onCcWidgetToggled: DMSNetworkService.toggleVpn()
+    onCcWidgetToggled: CyNetworkService.toggleVpn()
 
     ccDetailContent: Component {
         VpnDetailContent {}
     }
     ccExpandedContent: Component {
         CcTileActions {
-            actions: DMSNetworkService.profiles.map(profile => ({
+            actions: CyNetworkService.profiles.map(profile => ({
                         text: profile.name,
                         icon: "vpn_key",
                         toggle: true,
-                        active: DMSNetworkService.vpnStateForUuid(profile.uuid) === "activated",
-                        enabled: !DMSNetworkService.isVpnConnectingUuid(profile.uuid),
-                        trigger: () => DMSNetworkService.toggle(profile.uuid)
+                        active: CyNetworkService.vpnStateForUuid(profile.uuid) === "activated",
+                        enabled: !CyNetworkService.isVpnConnectingUuid(profile.uuid),
+                        trigger: () => CyNetworkService.toggle(profile.uuid)
                     }))
         }
     }

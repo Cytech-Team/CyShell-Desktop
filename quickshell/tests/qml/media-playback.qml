@@ -4,9 +4,9 @@ import Quickshell
 import qs.Common
 import qs.Services
 import qs.Modules.OSD
-import qs.Modules.DankDash
-import qs.DankCommon.Common as DC
-import "DankCommon/Common/Contrast.js" as Contrast
+import qs.Modules.CyDash
+import qs.CyCommon.Common as DC
+import "CyCommon/Common/Contrast.js" as Contrast
 
 ShellRoot {
     id: root
@@ -35,7 +35,7 @@ ShellRoot {
         modelData: Quickshell.screens[0]
         autoHideInterval: 10000
     }
-    DankDashPopout {
+    CyDashPopout {
         id: dash
         triggerScreen: Quickshell.screens[0]
     }

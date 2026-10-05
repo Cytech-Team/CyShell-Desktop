@@ -3,9 +3,9 @@ package freedesktop
 import (
 	"fmt"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/models"
 	"github.com/AvengeMedia/dankgo/ipc"
 	"github.com/AvengeMedia/dankgo/ipc/params"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/server/models"
 )
 
 func HandleRequest(conn *ipc.ConnWriter, req ipc.Request, manager *Manager) {
@@ -14,6 +14,8 @@ func HandleRequest(conn *ipc.ConnWriter, req ipc.Request, manager *Manager) {
 		handleGetState(conn, req, manager)
 	case "freedesktop.accounts.setIconFile":
 		handleSetIconFile(conn, req, manager)
+	case "freedesktop.accounts.setUserIconFile":
+		handleSetUserIconFile(conn, req, manager)
 	case "freedesktop.accounts.setRealName":
 		handleSetRealName(conn, req, manager)
 	case "freedesktop.accounts.setEmail":
@@ -50,6 +52,25 @@ func handleSetIconFile(conn *ipc.ConnWriter, req ipc.Request, manager *Manager) 
 	}
 
 	models.Respond(conn, req.ID, models.SuccessResult{Success: true, Message: "icon file set"})
+}
+
+func handleSetUserIconFile(conn *ipc.ConnWriter, req ipc.Request, manager *Manager) {
+	username, err := params.String(req.Params, "username")
+	if err != nil {
+		models.RespondError(conn, req.ID, err.Error())
+		return
+	}
+	iconPath, err := params.String(req.Params, "path")
+	if err != nil {
+		models.RespondError(conn, req.ID, err.Error())
+		return
+	}
+
+	if err := manager.SetUserIconFile(username, iconPath); err != nil {
+		models.RespondError(conn, req.ID, err.Error())
+		return
+	}
+	models.Respond(conn, req.ID, models.SuccessResult{Success: true, Message: "user icon file set"})
 }
 
 func handleSetRealName(conn *ipc.ConnWriter, req ipc.Request, manager *Manager) {

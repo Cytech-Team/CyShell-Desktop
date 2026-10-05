@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/deps"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/privesc"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/deps"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/privesc"
 )
 
 const (
@@ -62,12 +62,12 @@ func (v *VoidDistribution) DetectDependencies(ctx context.Context, wm deps.Windo
 func (v *VoidDistribution) DetectDependenciesWithTerminal(ctx context.Context, wm deps.WindowManager, terminal deps.Terminal) ([]deps.Dependency, error) {
 	var dependencies []deps.Dependency
 
-	dependencies = append(dependencies, v.detectDMS())
+	dependencies = append(dependencies, v.detectCyShell())
 	dependencies = append(dependencies, v.detectSpecificTerminal(terminal))
 	dependencies = append(dependencies, v.detectGit())
 	dependencies = append(dependencies, v.detectWindowManager(wm))
 	dependencies = append(dependencies, v.detectQuickshell())
-	dependencies = append(dependencies, v.detectDMSGreeter())
+	dependencies = append(dependencies, v.detectLegacyDMSGreeter())
 	dependencies = append(dependencies, v.detectXDGPortal())
 	dependencies = append(dependencies, v.detectAccountsService())
 	dependencies = append(dependencies, v.detectDBus())
@@ -89,31 +89,16 @@ func (v *VoidDistribution) DetectDependenciesWithTerminal(ctx context.Context, w
 	return dependencies, nil
 }
 
-func (v *VoidDistribution) detectDMS() deps.Dependency {
+func (v *VoidDistribution) detectCyShell() deps.Dependency {
 	status := deps.StatusMissing
 	version := ""
-	variant := deps.VariantStable
-
-	if v.packageInstalled("dms-git") {
+	if v.commandExists("cyshell") {
 		status = deps.StatusInstalled
-		version = v.packageVersion("dms-git")
-		variant = deps.VariantGit
-	} else if v.packageInstalled("dms") {
-		status = deps.StatusInstalled
-		version = v.packageVersion("dms")
-	} else if v.commandExists("dms") {
-		status = deps.StatusInstalled
+		if out, err := exec.Command("cyshell", "version").Output(); err == nil {
+			version = strings.TrimSpace(string(out))
+		}
 	}
-
-	return deps.Dependency{
-		Name:        "dms (DankMaterialShell)",
-		Status:      status,
-		Version:     version,
-		Description: "Desktop Management System package",
-		Required:    true,
-		Variant:     variant,
-		CanToggle:   true,
-	}
+	return deps.Dependency{Name: "CyShell", Status: status, Version: version, Variant: deps.VariantGit, Description: "CyShell desktop shell and configuration", Required: true, CanToggle: false}
 }
 
 func (v *VoidDistribution) detectQuickshell() deps.Dependency {
@@ -126,8 +111,8 @@ func (v *VoidDistribution) detectXDGPortal() deps.Dependency {
 	return v.detectPackage("xdg-desktop-portal-gtk", "Desktop integration portal for GTK", v.packageInstalled("xdg-desktop-portal-gtk"))
 }
 
-func (v *VoidDistribution) detectDMSGreeter() deps.Dependency {
-	return v.detectOptionalPackage("dms-greeter", "DankMaterialShell greetd greeter", v.packageInstalled("dms-greeter"))
+func (v *VoidDistribution) detectLegacyDMSGreeter() deps.Dependency {
+	return v.detectOptionalPackage("dms-greeter", "Legacy DMS greetd greeter (compatibility)", v.packageInstalled("dms-greeter"))
 }
 
 func (v *VoidDistribution) detectAccountsService() deps.Dependency {
@@ -178,12 +163,12 @@ func (v *VoidDistribution) GetPackageMappingWithVariants(wm deps.WindowManager, 
 		"elogind":                {Name: "elogind", Repository: RepoTypeSystem},
 		"mesa-dri":               {Name: "mesa-dri", Repository: RepoTypeSystem},
 
-		"quickshell":              {Name: "quickshell", Repository: RepoTypeSystem},
-		"matugen":                 {Name: "matugen", Repository: RepoTypeSystem},
-		"dms (DankMaterialShell)": v.getDmsMapping(variants["dms (DankMaterialShell)"]),
-		"dms-greeter":             {Name: "dms-greeter", Repository: RepoTypeXBPS, RepoURL: VoidDMSRepo},
-		"danksearch":              {Name: "danksearch", Repository: RepoTypeXBPS, RepoURL: VoidDankLinuxRepo},
-		"dankcalendar":            {Name: "dankcalendar", Repository: RepoTypeXBPS, RepoURL: VoidDankLinuxRepo},
+		"quickshell":   {Name: "quickshell", Repository: RepoTypeSystem},
+		"matugen":      {Name: "matugen", Repository: RepoTypeSystem},
+		"CyShell":      v.getCyShellMapping(variants["CyShell"]),
+		"dms-greeter":  {Name: "dms-greeter", Repository: RepoTypeXBPS, RepoURL: VoidDMSRepo},
+		"danksearch":   {Name: "danksearch", Repository: RepoTypeXBPS, RepoURL: VoidDankLinuxRepo},
+		"dankcalendar": {Name: "dankcalendar", Repository: RepoTypeXBPS, RepoURL: VoidDankLinuxRepo},
 	}
 
 	switch wm {
@@ -202,11 +187,8 @@ func (v *VoidDistribution) GetPackageMappingWithVariants(wm deps.WindowManager, 
 	return packages
 }
 
-func (v *VoidDistribution) getDmsMapping(variant deps.PackageVariant) PackageMapping {
-	if variant == deps.VariantStable {
-		return PackageMapping{Name: "dms", Repository: RepoTypeXBPS, RepoURL: VoidDMSRepo}
-	}
-	return PackageMapping{Name: "dms-git", Repository: RepoTypeXBPS, RepoURL: VoidDMSRepo}
+func (v *VoidDistribution) getCyShellMapping(variant deps.PackageVariant) PackageMapping {
+	return PackageMapping{Name: "cyshell", Repository: RepoTypeManual, BuildFunc: "cyshell"}
 }
 
 func (v *VoidDistribution) InstallPrerequisites(ctx context.Context, sudoPassword string, progressChan chan<- InstallProgressMsg) error {
@@ -254,10 +236,10 @@ func (v *VoidDistribution) InstallPackages(ctx context.Context, dependencies []d
 		progressChan <- InstallProgressMsg{
 			Phase:      PhaseSystemPackages,
 			Progress:   0.15,
-			Step:       "Enabling DMS XBPS repositories...",
+			Step:       "Enabling legacy DMS compatibility XBPS repositories...",
 			IsComplete: false,
 			NeedsSudo:  true,
-			LogOutput:  "Setting up custom XBPS repositories for DMS packages",
+			LogOutput:  "Setting up legacy XBPS repositories for compatibility packages",
 		}
 		if err := v.enableXBPSRepos(ctx, xbpsPkgs, sudoPassword, progressChan); err != nil {
 			return fmt.Errorf("failed to enable XBPS repositories: %w", err)
@@ -287,7 +269,7 @@ func (v *VoidDistribution) InstallPackages(ctx context.Context, dependencies []d
 		LogOutput:  "Starting post-installation configuration...",
 	}
 
-	v.log("Void Linux detected; DMS environment and autostart will be configured in the compositor config instead of systemd")
+	v.log("Void Linux detected; CyShell environment and autostart will be configured in the compositor config instead of systemd")
 	if err := v.ensureSessionServices(ctx, sudoPassword, progressChan); err != nil {
 		return fmt.Errorf("failed to enable Void session services: %w", err)
 	}

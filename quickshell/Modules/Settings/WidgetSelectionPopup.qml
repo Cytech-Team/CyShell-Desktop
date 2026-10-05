@@ -62,7 +62,7 @@ WidgetPickerWindow {
                 anchors.margins: Theme.spacingM
                 spacing: Theme.spacingM
 
-                DankIcon {
+                CyIcon {
                     name: modelData.icon
                     size: Theme.iconSize
                     color: Theme.primary
@@ -95,7 +95,7 @@ WidgetPickerWindow {
                     }
                 }
 
-                DankIcon {
+                CyIcon {
                     name: "add"
                     size: Theme.iconSizeMedium
                     color: Theme.primary

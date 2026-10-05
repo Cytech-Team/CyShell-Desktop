@@ -5,10 +5,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/geolocation"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/loginctl"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/wayland"
 	"github.com/AvengeMedia/dankgo/syncmap"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/geolocation"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/server/loginctl"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/server/wayland"
 )
 
 const (

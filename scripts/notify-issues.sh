@@ -48,7 +48,7 @@ for n in $refs; do
   gh issue comment "$n" --repo "$REPO" --body "$(cat <<EOF
 :package: A fix referencing this issue shipped in [**${TAG}**](${RELEASE_URL}).
 
-A New Release has been deployed! Please retest when you get a chance. If it's resolved, this issue can be closed. ~ Cheers, the DMS Team!
+A New Release has been deployed! Please retest when you get a chance. If it's resolved, this issue can be closed. ~ Cheers, the CyShell Team!
 EOF
 )"
   echo "notified #${n} — ${title}"

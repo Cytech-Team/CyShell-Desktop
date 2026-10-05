@@ -43,7 +43,7 @@ Variants {
         screen: dock.targetScreen
         color: "transparent"
 
-        WlrLayershell.namespace: "dms:dock"
+        WlrLayershell.namespace: "cyshell:dock"
         WlrLayershell.layer: body.editMode || body.usesOverlayLayer ? WlrLayer.Overlay : WlrLayer.Top
 
         // Edit mode grows the window over the whole screen so the scrim captures every click.
@@ -96,7 +96,7 @@ Variants {
             screen: dock.targetScreen
             edge: body.connectedBarSide
             exclusionSize: (dock.manualPlacement || body.frameDockExclusionActive) && body.shouldReserveDockSpace ? body.dockReserveZone : 0
-            layerNamespace: "dms:dock-exclusion"
+            layerNamespace: "cyshell:dock-exclusion"
         }
     }
 }

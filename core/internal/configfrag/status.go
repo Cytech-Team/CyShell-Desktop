@@ -8,27 +8,27 @@ type Messages struct {
 }
 
 type Status struct {
-	Exists          bool
-	Included        bool
-	IncludePosition int
-	TotalIncludes   int
-	EntriesAfterDMS int
-	Effective       bool
-	OverriddenBy    int
-	StatusMessage   string
-	ConfigFormat    string
-	ReadOnly        bool
+	Exists              bool
+	Included            bool
+	IncludePosition     int
+	TotalIncludes       int
+	EntriesAfterCyShell int
+	Effective           bool
+	OverriddenBy        int
+	StatusMessage       string
+	ConfigFormat        string
+	ReadOnly            bool
 }
 
 func BuildStatus(scan IncludeScan, exists bool, entriesAfter int, format string, readOnly bool, msgs Messages) Status {
 	status := Status{
-		Exists:          exists,
-		Included:        scan.DMSSeen,
-		IncludePosition: scan.DMSPosition,
-		TotalIncludes:   scan.Count,
-		EntriesAfterDMS: entriesAfter,
-		ConfigFormat:    format,
-		ReadOnly:        readOnly,
+		Exists:              exists,
+		Included:            scan.DMSSeen,
+		IncludePosition:     scan.DMSPosition,
+		TotalIncludes:       scan.Count,
+		EntriesAfterCyShell: entriesAfter,
+		ConfigFormat:        format,
+		ReadOnly:            readOnly,
 	}
 
 	if !exists {

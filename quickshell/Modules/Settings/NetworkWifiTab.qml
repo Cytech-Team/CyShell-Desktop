@@ -74,7 +74,7 @@ Item {
 
             function mergedSavedWifiNetworks() {
                 const saved = NetworkService.savedWifiNetworks || [];
-                const supportsSavedWifiState = DMSService.apiVersion >= NetworkService.savedWifiStateApiVersion;
+                const supportsSavedWifiState = CyShellService.apiVersion >= NetworkService.savedWifiStateApiVersion;
                 const result = [];
                 const seen = new Set();
 
@@ -152,7 +152,7 @@ Item {
                 }
                 titleColor: NetworkService.wifiConnected ? Theme.primary : Theme.surfaceVariantText
 
-                DankActionButton {
+                CyActionButton {
                     iconName: "wifi_find"
                     tooltipText: I18n.tr("Connect to Hidden Network")
                     buttonSize: 32
@@ -161,7 +161,7 @@ Item {
                     onClicked: PopoutService.showHiddenNetworkModal()
                 }
 
-                DankRefreshButton {
+                CyRefreshButton {
                     Accessible.name: I18n.tr("Scan")
                     buttonSize: 32
                     anchors.verticalCenter: parent.verticalCenter
@@ -170,7 +170,7 @@ Item {
                     onClicked: NetworkService.scanWifi()
                 }
 
-                DankToggle {
+                CyToggle {
                     anchors.verticalCenter: parent.verticalCenter
                     checked: NetworkService.wifiEnabled
                     enabled: !NetworkService.wifiToggling
@@ -213,7 +213,7 @@ Item {
                 title: I18n.tr("Signal", "noun, wifi signal strength label") + ":"
                 trailingBadge: NetworkService.wifiSignalStrength + "%"
 
-                DankIcon {
+                CyIcon {
                     name: {
                         const s = NetworkService.wifiSignalStrength;
                         if (s >= 50)
@@ -240,7 +240,7 @@ Item {
                     width: parent.width
                     spacing: Theme.spacingS
 
-                    DankIcon {
+                    CyIcon {
                         id: scanningIcon
                         name: "wifi_find"
                         size: Theme.iconSizeLarge
@@ -338,7 +338,7 @@ Item {
                         }
 
                         leading: [
-                            DankSpinner {
+                            CySpinner {
                                 size: Theme.iconSizeMedium
                                 strokeWidth: 2
                                 color: Theme.warning
@@ -346,7 +346,7 @@ Item {
                                 visible: wifiNetworkDelegate.isConnecting
                                 anchors.verticalCenter: parent.verticalCenter
                             },
-                            DankIcon {
+                            CyIcon {
                                 visible: !wifiNetworkDelegate.isConnecting
                                 name: {
                                     const s = wifiNetworkDelegate.modelData.signal || 0;
@@ -362,7 +362,7 @@ Item {
                             }
                         ]
 
-                        DankActionButton {
+                        CyActionButton {
                             iconName: wifiNetworkDelegate.isExpanded ? "expand_less" : "expand_more"
                             Accessible.name: wifiNetworkDelegate.isExpanded ? I18n.tr("Collapse") : I18n.tr("Expand")
                             iconSize: Theme.iconSizeSmall
@@ -378,7 +378,7 @@ Item {
                             }
                         }
 
-                        DankActionButton {
+                        CyActionButton {
                             iconName: "qr_code"
                             tooltipText: I18n.tr("Show QR Code")
                             buttonSize: 28
@@ -388,7 +388,7 @@ Item {
                             }
                         }
 
-                        DankActionButton {
+                        CyActionButton {
                             iconName: "push_pin"
                             Accessible.name: wifiNetworkDelegate.isPinned ? I18n.tr("Unpin") : I18n.tr("Pin", "verb, keep an item pinned in place")
                             buttonSize: 28
@@ -398,7 +398,7 @@ Item {
                             }
                         }
 
-                        DankActionButton {
+                        CyActionButton {
                             iconName: "delete"
                             tooltipText: I18n.tr("Forget")
                             buttonSize: 28
@@ -421,7 +421,7 @@ Item {
                                 height: NetworkService.networkInfoLoading ? 40 : 0
                                 visible: NetworkService.networkInfoLoading
 
-                                DankSpinner {
+                                CySpinner {
                                     anchors.centerIn: parent
                                     size: Theme.iconSizeMedium
                                 }
@@ -514,7 +514,7 @@ Item {
                     }
 
                     SettingsToggleRow {
-                        visible: wifiNetworkDelegate.isExpanded && (wifiNetworkDelegate.modelData.saved || wifiNetworkDelegate.isConnected) && DMSService.apiVersion > 13
+                        visible: wifiNetworkDelegate.isExpanded && (wifiNetworkDelegate.modelData.saved || wifiNetworkDelegate.isConnected) && CyShellService.apiVersion > 13
                         text: I18n.tr("Autoconnect", "toggle, connect to this wifi or vpn automatically")
                         checked: wifiNetworkDelegate.modelData.autoconnect || false
                         onToggled: checked => {
@@ -590,7 +590,7 @@ Item {
                         }
 
                         leading: [
-                            DankSpinner {
+                            CySpinner {
                                 size: Theme.iconSizeMedium
                                 strokeWidth: 2
                                 color: Theme.warning
@@ -598,7 +598,7 @@ Item {
                                 visible: savedWifiDelegate.isConnecting
                                 anchors.verticalCenter: parent.verticalCenter
                             },
-                            DankIcon {
+                            CyIcon {
                                 visible: !savedWifiDelegate.isConnecting
                                 name: {
                                     if (savedWifiDelegate.isOutOfRange)
@@ -616,7 +616,7 @@ Item {
                             }
                         ]
 
-                        DankActionButton {
+                        CyActionButton {
                             iconName: savedWifiDelegate.isExpanded ? "expand_less" : "expand_more"
                             Accessible.name: savedWifiDelegate.isExpanded ? I18n.tr("Collapse") : I18n.tr("Expand")
                             iconSize: Theme.iconSizeSmall
@@ -631,7 +631,7 @@ Item {
                             }
                         }
 
-                        DankActionButton {
+                        CyActionButton {
                             iconName: "qr_code"
                             tooltipText: I18n.tr("Show QR Code")
                             buttonSize: 28
@@ -641,7 +641,7 @@ Item {
                             }
                         }
 
-                        DankActionButton {
+                        CyActionButton {
                             iconName: "push_pin"
                             Accessible.name: savedWifiDelegate.isPinned ? I18n.tr("Unpin") : I18n.tr("Pin", "verb, keep an item pinned in place")
                             buttonSize: 28
@@ -651,7 +651,7 @@ Item {
                             }
                         }
 
-                        DankActionButton {
+                        CyActionButton {
                             id: savedWifiMoreButton
                             iconName: "more_horiz"
                             Accessible.name: I18n.tr("Options")
@@ -792,8 +792,8 @@ Item {
 
                         MenuItem {
                             text: modelData.autoconnect ? I18n.tr("Disable autoconnect") : I18n.tr("Enable autoconnect")
-                            height: DMSService.apiVersion > 13 ? 32 : 0
-                            visible: DMSService.apiVersion > 13
+                            height: CyShellService.apiVersion > 13 ? 32 : 0
+                            visible: CyShellService.apiVersion > 13
 
                             contentItem: StyledText {
                                 text: parent.text
@@ -1046,7 +1046,7 @@ Item {
 
             SettingsRow {
                 visible: hotspotCard.showForm
-                body: DankTextField {
+                body: CyTextField {
                     outlined: true
                     width: parent.width
                     labelText: I18n.tr("Hotspot name", "hotspot SSID field label")
@@ -1061,7 +1061,7 @@ Item {
 
             SettingsRow {
                 visible: hotspotCard.showForm
-                body: DankTextField {
+                body: CyTextField {
                     outlined: true
                     width: parent.width
                     labelText: I18n.tr("Password", "hotspot password field label")
@@ -1111,7 +1111,7 @@ Item {
             }
 
             SettingsRow {
-                DankButton {
+                CyButton {
                     visible: hotspotCard.editing
                     text: I18n.tr("Cancel", "cancel hotspot editing action")
                     buttonHeight: 36
@@ -1120,7 +1120,7 @@ Item {
                     onClicked: hotspotCard.stopEditing()
                 }
 
-                DankButton {
+                CyButton {
                     visible: !hotspotCard.showForm
                     text: I18n.tr("Edit", "edit hotspot action")
                     iconName: "edit"
@@ -1131,7 +1131,7 @@ Item {
                     onClicked: hotspotCard.beginEditing()
                 }
 
-                DankButton {
+                CyButton {
                     visible: hotspotCard.showForm
                     text: hotspotCard.passwordLoading ? I18n.tr("Loading...", "hotspot password loading status") : (NetworkService.hotspotBusy ? I18n.tr("Saving...", "hotspot configuration saving status") : I18n.tr("Save", "save hotspot configuration action"))
                     iconName: "save"
@@ -1142,7 +1142,7 @@ Item {
                     onClicked: hotspotCard.saveOnly()
                 }
 
-                DankButton {
+                CyButton {
                     text: {
                         if (NetworkService.hotspotEnabled)
                             return I18n.tr("Stop", "stop hotspot action");

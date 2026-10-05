@@ -3,7 +3,7 @@ import qs.Common
 import qs.Modals.Common
 import qs.Widgets
 
-DankModal {
+CyModal {
     id: root
 
     property string outputName: ""
@@ -195,7 +195,7 @@ DankModal {
                 }
             }
 
-            DankActionButton {
+            CyActionButton {
                 anchors.top: parent.top
                 anchors.right: parent.right
                 anchors.topMargin: Theme.spacingM

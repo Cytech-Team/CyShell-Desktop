@@ -1,0 +1,88 @@
+#!/usr/bin/make -f
+
+export DH_VERBOSE = 1
+
+# Extract version from debian/changelog
+DEB_VERSION := $(shell dpkg-parsechangelog -S Version)
+# Get upstream version (strip -1ppa1 suffix)
+UPSTREAM_VERSION := $(shell echo $(DEB_VERSION) | sed 's/-[^-]*$$//')
+# Strip ppa suffix and handle git versions
+# Examples: 0.5.2ppa9 -> 0.5.2, 0.5.2+git20251116 -> 0.5.2
+BASE_VERSION := $(shell echo $(UPSTREAM_VERSION) | sed 's/ppa[0-9]*$$//' | sed 's/+git.*//')
+
+%:
+	dh $@
+
+override_dh_installsystemd:
+	dh_installsystemd --name=cyshell
+
+override_dh_auto_build:
+	# All files are included in source package (downloaded by build-source.sh)
+	# Launchpad build environment has no internet access
+	$(eval DEB_HOST_ARCH := $(shell dpkg-architecture -qDEB_HOST_ARCH))
+	@echo "Building for architecture: $(DEB_HOST_ARCH)"
+
+	test -f cyshell-distropkg-$(DEB_HOST_ARCH).gz || (echo "ERROR: cyshell-distropkg-$(DEB_HOST_ARCH).gz not found!" && exit 1)
+	test -f cyshell-source.tar.gz || (echo "ERROR: cyshell-source.tar.gz not found!" && exit 1)
+
+	# Extract pre-built binary
+	gunzip -c cyshell-distropkg-$(DEB_HOST_ARCH).gz > cyshell
+	chmod +x cyshell
+
+	# Extract source tarball for QML files
+	tar -xzf cyshell-source.tar.gz
+	# Find the extracted directory (it might have various names)
+	# and rename it to the expected BASE_VERSION name for consistent install
+	SOURCE_DIR=$$(find . -maxdepth 1 -type d -name "CyShell-*" ! -name "CyShell-Desktop-$(BASE_VERSION)" | head -n1); \
+	if [ -n "$$SOURCE_DIR" ] && [ "$$SOURCE_DIR" != "./CyShell-Desktop-$(BASE_VERSION)" ]; then \
+		echo "Renaming $$SOURCE_DIR to CyShell-Desktop-$(BASE_VERSION)"; \
+		mv "$$SOURCE_DIR" CyShell-Desktop-$(BASE_VERSION); \
+	elif [ ! -d "CyShell-Desktop-$(BASE_VERSION)" ]; then \
+		echo "ERROR: No CyShell directory found after extraction!"; \
+		ls -la; \
+		exit 1; \
+	fi
+
+override_dh_auto_install:
+	# Install binary
+	install -Dm755 cyshell debian/cyshell/usr/bin/cyshell
+
+	# Install distributed CyShell user services (before copying everything else)
+	for unit in CyShell-Desktop-$(BASE_VERSION)/assets/systemd/cyshell*.service; do install -Dm644 "$$unit" "debian/cyshell/usr/lib/systemd/user/$$(basename "$$unit")"; done
+
+	# Install desktop file and icon
+	install -Dm644 CyShell-Desktop-$(BASE_VERSION)/assets/cyshell-open.desktop \
+		debian/cyshell/usr/share/applications/cyshell-open.desktop
+	install -Dm644 CyShell-Desktop-$(BASE_VERSION)/assets/com.cytechteam.cyshell.desktop \
+		debian/cyshell/usr/share/applications/com.cytechteam.cyshell.desktop
+	install -Dm644 CyShell-Desktop-$(BASE_VERSION)/assets/com.cytechteam.cyshell.notepad.desktop \
+		debian/cyshell/usr/share/applications/com.cytechteam.cyshell.notepad.desktop
+	install -Dm644 CyShell-Desktop-$(BASE_VERSION)/assets/com.cytechteam.cyshell.png \
+		debian/cyshell/usr/share/icons/hicolor/512x512/apps/com.cytechteam.cyshell.png
+
+	# Install QML files from source tarball
+	mkdir -p debian/cyshell/usr/share/quickshell/cyshell
+	cp -rL CyShell-Desktop-$(BASE_VERSION)/* debian/cyshell/usr/share/quickshell/cyshell/
+
+	# Remove unnecessary directories
+	rm -rf debian/cyshell/usr/share/quickshell/cyshell/core
+	rm -rf debian/cyshell/usr/share/quickshell/cyshell/distro
+	rm -rf debian/cyshell/usr/share/quickshell/cyshell/assets
+	rm -rf debian/cyshell/usr/share/quickshell/cyshell/tests
+
+	# Create VERSION file for Quickshell (stable release format)
+	echo "$(BASE_VERSION)" > debian/cyshell/usr/share/quickshell/cyshell/VERSION
+
+	# Generate and install shell completions (if applicable)
+	# Uncomment if cyshell supports completion generation
+	# ./cyshell completion bash > cyshell.bash
+	# ./cyshell completion zsh > cyshell.zsh
+	# install -Dm644 cyshell.bash debian/cyshell/usr/share/bash-completion/completions/cyshell
+	# install -Dm644 cyshell.zsh debian/cyshell/usr/share/zsh/vendor-completions/_dms
+
+override_dh_auto_clean:
+	rm -f cyshell
+	rm -rf CyShell-*
+	# Don't remove cyshell-distropkg-amd64.gz and cyshell-source.tar.gz
+	# They need to be included in the source package for Launchpad builds
+	dh_auto_clean

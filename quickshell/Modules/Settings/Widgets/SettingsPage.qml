@@ -2,7 +2,7 @@ import QtQuick
 import qs.Common
 import qs.Widgets
 
-DankFlickable {
+CyFlickable {
     id: root
 
     default property alias content: column.data

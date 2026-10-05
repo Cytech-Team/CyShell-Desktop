@@ -4,8 +4,8 @@ import Quickshell
 import qs.Common
 import qs.Services
 import qs.Modules.OSD
-import qs.Modules.DankDash
-import qs.DankCommon.Common as DC
+import qs.Modules.CyDash
+import qs.CyCommon.Common as DC
 
 ShellRoot {
     id: root

@@ -78,14 +78,14 @@ Column {
             anchors.verticalCenter: parent.verticalCenter
             spacing: Theme.spacingM
 
-            DankButton {
+            CyButton {
                 text: I18n.tr("Reset Position")
                 backgroundColor: Theme.chipSurface
                 textColor: Theme.surfaceText
                 onClicked: SessionData.resetDesktopWidgetInstanceGeometry(root.instanceId, ["x", "y"])
             }
 
-            DankButton {
+            CyButton {
                 text: I18n.tr("Reset Size")
                 backgroundColor: Theme.chipSurface
                 textColor: Theme.surfaceText

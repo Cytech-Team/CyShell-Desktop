@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/models"
 	"github.com/AvengeMedia/dankgo/ipc"
 	"github.com/AvengeMedia/dankgo/ipc/params"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/server/models"
 )
 
 type PoweredResult struct {

@@ -5,7 +5,7 @@ import qs.Common
 import qs.Widgets
 import qs.Modules.ControlCenter
 import qs.Modules.ControlCenter.Widgets
-import qs.DankCommon.Common as DC
+import qs.CyCommon.Common as DC
 
 ShellRoot {
     Component.onCompleted: {
@@ -23,7 +23,7 @@ ShellRoot {
             id: scene
             anchors.fill: parent
 
-            DankFlickable {
+            CyFlickable {
                 id: flick
                 x: 20
                 y: 20
@@ -36,7 +36,7 @@ ShellRoot {
                     id: column
                     width: parent.width
 
-                    DankSlider {
+                    CySlider {
                         id: slider
                         width: parent.width
                         value: 50

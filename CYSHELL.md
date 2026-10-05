@@ -91,7 +91,7 @@ The shell semantic tree now includes network, Wi-Fi, Bluetooth, audio, microphon
 
 CyShell Settings can read and edit Labwc keyboard shortcuts directly from `~/.config/labwc/rc.xml`. The editor preserves user-owned XML and writes only a delimited **CyShell managed keybinds** block at the end of `<keyboard>`, so later Labwc bindings can safely override an existing shortcut without rewriting the original entry. Removing/resetting an override reveals the underlying user binding again. Moving an existing shortcut uses an atomic provider operation and a Labwc `None` suppression for the old key when necessary, preventing both old and new keys from firing.
 
-Labwc edits are written atomically, XML-escaped, preserve file permissions, and trigger `labwc --reconfigure` from the running session. The editor exposes Labwc-specific `onRelease`, `allowWhenLocked`, and shortcut-inhibition controls. Agent commands (`dms agent open`, `dms agent review`, and `dms agent stop`) are first-class shortcut actions, and Settings → Agent shows the currently bound keys with direct links into the shortcut editor.
+Labwc edits are written atomically, XML-escaped, preserve file permissions, and trigger `labwc --reconfigure` from the running session. The editor exposes Labwc-specific `onRelease`, `allowWhenLocked`, and shortcut-inhibition controls. Agent commands (`cyshell agent open`, `cyshell agent review`, and `cyshell agent stop`) are first-class shortcut actions, and Settings → Agent shows the currently bound keys with direct links into the shortcut editor.
 
 ## Labwc semantic workspace backend
 
@@ -144,7 +144,7 @@ Third-party application perception/control and screenshots add a second consent 
 
 The bar includes a native Agent status indicator for armed, active, and waiting-for-permission states. Left-click opens the Assistant or pending approval; right-click performs an emergency stop. Agent state is pushed over the core subscription socket rather than polled: active-call transitions, permission changes, approval queue changes, and recent tool activity arrive as live events. Settings → Agent exposes the recent activity timeline with tool name, status, duration, reason, caller attribution, and sanitized error text without storing raw tool arguments. The built-in Assistant is identified directly; MCP transports forward the MCP `clientInfo` name/version for diagnostics (it is descriptive attribution, not a security identity).
 
-The CLI exposes `dms agent open`, `dms agent review`, `dms agent status`, `dms agent stop`, `dms agent activity`, `dms agent receipts`, and `dms agent undo [receipt-id]` so compositors and debugging workflows can bind, inspect, and roll back semantic Agent controls without a sidecar. Omitting the receipt id rolls back the newest still-valid receipt.
+The CLI exposes `cyshell agent open`, `cyshell agent review`, `cyshell agent status`, `cyshell agent stop`, `cyshell agent activity`, `cyshell agent receipts`, and `cyshell agent undo [receipt-id]` so compositors and debugging workflows can bind, inspect, and roll back semantic Agent controls without a sidecar. Omitting the receipt id rolls back the newest still-valid receipt.
 
 **Stop control** immediately disables computer control and cancels active CyShell Agent calls. Disabling an individual permission scope also cancels active calls so an already-running operation cannot continue under a newly revoked capability. Permission state survives shell restarts.
 

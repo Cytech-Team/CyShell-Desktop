@@ -1,9 +1,9 @@
 package models
 
 import (
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/log"
 	"github.com/AvengeMedia/dankgo/ipc"
 	"github.com/AvengeMedia/dankgo/ipc/params"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/log"
 )
 
 func Get[T any](r ipc.Request, key string) (T, bool) {
@@ -16,7 +16,7 @@ func GetOr[T any](r ipc.Request, key string, def T) T {
 }
 
 func RespondError(conn *ipc.ConnWriter, id int, errMsg string) {
-	log.Errorf("DMS API Error: id=%d error=%s", id, errMsg)
+	log.Errorf("CyShell API Error: id=%d error=%s", id, errMsg)
 	_ = conn.WriteResponse(ipc.Response[any]{ID: id, Error: errMsg})
 }
 

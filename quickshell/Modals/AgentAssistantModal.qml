@@ -6,7 +6,7 @@ import qs.Common
 import qs.Services
 import qs.Widgets
 
-DankFloatingWindow {
+CyFloatingWindow {
     id: root
     readonly property var log: Log.scoped("AgentAssistantModal")
     property alias shouldBeVisible: root.visible
@@ -88,8 +88,10 @@ DankFloatingWindow {
         anchors.fill: parent
         spacing: 0
 
-        DankWindowHeader {
+        CyWindowHeader {
+            visible: !root.useServerSideTitlebar
             Layout.fillWidth: true
+            Layout.preferredHeight: visible ? implicitHeight : 0
             controls: windowControls
             title: root.assistantTitle
             onCloseRequested: root.hide()
@@ -133,14 +135,14 @@ DankFloatingWindow {
                     font.pixelSize: Theme.fontSizeSmall
                 }
 
-                DankIconButton {
+                CyIconButton {
                     iconName: "delete_sweep"
                     tooltipText: I18n.tr("Clear conversation")
                     enabled: !AgentAssistantService.busy && AgentAssistantService.messages.length > 0
                     onClicked: AgentAssistantService.clear()
                 }
 
-                DankIconButton {
+                CyIconButton {
                     iconName: "front_hand"
                     tooltipText: I18n.tr("Stop Agent control")
                     iconColor: Theme.error
@@ -246,15 +248,15 @@ DankFloatingWindow {
                 anchors.margins: Theme.spacingM
                 spacing: Theme.spacingS
 
-                DankTextField {
+                CyTextField {
                     id: composer
                     Layout.fillWidth: true
                     placeholderText: AgentControlService.enabled ? I18n.tr("Ask CyShell…") : I18n.tr("Agent runtime is disabled")
-                    enabled: AgentAssistantService.available && AgentControlService.enabled && !AgentAssistantService.busy
+                    enabled: AgentAssistantService.available && AgentAssistantService.configured && AgentControlService.enabled && !AgentAssistantService.busy
                     onAccepted: root.submit()
                 }
 
-                DankButton {
+                CyButton {
                     text: I18n.tr("Send")
                     iconName: "send"
                     enabled: composer.enabled && composer.text.trim().length > 0

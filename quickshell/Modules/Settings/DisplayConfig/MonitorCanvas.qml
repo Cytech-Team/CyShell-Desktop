@@ -1,116 +1,103 @@
 import QtQuick
 import qs.Common
-import qs.Services
 import qs.Widgets
 
 Rectangle {
     id: root
 
     property string draggingOutput: ""
-    readonly property bool identifyActive: draggingOutput !== "" || identifyButton.pressed
 
-    property var filteredOutputs: {
-        void (DisplayConfigState.pendingHyprlandChanges);
-        void (DisplayConfigState.pendingNiriChanges);
-        const all = DisplayConfigState.allOutputs || {};
-        const keys = Object.keys(all);
-        return keys.filter(k => {
-            const od = all[k];
-            const isConnected = od?.connected ?? false;
-            if (!isConnected)
-                return SettingsData.displayShowDisconnected;
-            if (CompositorService.isHyprland && DisplayConfigState.getHyprlandSetting(od, k, "disabled", false))
-                return false;
-            if (CompositorService.isNiri && DisplayConfigState.getNiriSetting(od, k, "disabled", false))
-                return false;
-            return true;
-        });
-    }
+    readonly property var filteredOutputs: Object.keys(DisplayConfigState.allOutputs || {})
+        .filter(name => {
+            const output = DisplayConfigState.allOutputs[name];
+            return output?.connected && !DisplayConfigState.isVirtualOutput(output);
+        })
 
-    property var filteredBounds: {
+    readonly property var filteredBounds: {
         const all = DisplayConfigState.allOutputs || {};
-        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+        let minX = Infinity;
+        let minY = Infinity;
+        let maxX = -Infinity;
+        let maxY = -Infinity;
+
         for (const name of filteredOutputs) {
             const output = all[name];
-            if (!output?.logical)
+            if (!output?.logical || !output.enabled)
                 continue;
-            const x = output.logical.x;
-            const y = output.logical.y;
             const size = DisplayConfigState.getLogicalSize(output);
-            const w = size.w || 1920;
-            const h = size.h || 1080;
+            const x = output.logical.x ?? 0;
+            const y = output.logical.y ?? 0;
             minX = Math.min(minX, x);
             minY = Math.min(minY, y);
-            maxX = Math.max(maxX, x + w);
-            maxY = Math.max(maxY, y + h);
+            maxX = Math.max(maxX, x + size.w);
+            maxY = Math.max(maxY, y + size.h);
         }
+
         if (minX === Infinity)
-            return {
-                minX: 0,
-                minY: 0,
-                width: 1920,
-                height: 1080
-            };
+            return { minX: 0, minY: 0, width: 1920, height: 1080 };
+
         return {
-            minX: minX,
-            minY: minY,
-            width: maxX - minX,
-            height: maxY - minY
+            minX,
+            minY,
+            width: Math.max(1, maxX - minX),
+            height: Math.max(1, maxY - minY)
         };
     }
 
-    width: parent.width
-    height: 280
+    width: parent?.width ?? 0
+    height: 300
     radius: Theme.cornerRadius
     color: Theme.floatingWindowNestedSurface
     border.color: Theme.outlineMedium
     border.width: Theme.layerOutlineWidth
+    clip: true
 
     Item {
         id: canvas
+
         anchors.fill: parent
         anchors.margins: Theme.spacingL
 
-        property var bounds: root.filteredBounds
-        property real scaleFactor: {
-            if (bounds.width === 0 || bounds.height === 0)
-                return 0.1;
-            const padding = Theme.spacingL * 2;
-            const scaleX = (width - padding) / bounds.width;
-            const scaleY = (height - padding) / bounds.height;
+        readonly property var bounds: root.filteredBounds
+        readonly property real scaleFactor: {
+            const padding = Theme.spacingM * 2;
+            const scaleX = Math.max(0.02, (width - padding) / Math.max(1, bounds.width));
+            const scaleY = Math.max(0.02, (height - padding) / Math.max(1, bounds.height));
             return Math.min(scaleX, scaleY);
         }
-        property point offset: Qt.point((width - bounds.width * scaleFactor) / 2 - bounds.minX * scaleFactor, (height - bounds.height * scaleFactor) / 2 - bounds.minY * scaleFactor)
+        readonly property point offset: Qt.point(
+            (width - bounds.width * scaleFactor) / 2 - bounds.minX * scaleFactor,
+            (height - bounds.height * scaleFactor) / 2 - bounds.minY * scaleFactor
+        )
 
         Repeater {
             model: root.filteredOutputs
 
             delegate: MonitorRect {
                 required property string modelData
+
                 outputName: modelData
                 outputData: DisplayConfigState.allOutputs[modelData]
                 canvasScaleFactor: canvas.scaleFactor
                 canvasOffset: canvas.offset
+
                 onIsDraggingChanged: {
                     if (isDragging) {
                         root.draggingOutput = outputName;
-                        return;
-                    }
-                    if (root.draggingOutput === outputName)
+                    } else if (root.draggingOutput === outputName) {
                         root.draggingOutput = "";
+                    }
                 }
             }
         }
     }
 
-    DankActionButton {
-        id: identifyButton
-        anchors.top: parent.top
-        anchors.right: parent.right
+    StyledText {
+        anchors.left: parent.left
+        anchors.bottom: parent.bottom
         anchors.margins: Theme.spacingS
-        iconName: "badge"
-        iconColor: pressed ? Theme.primary : Theme.surfaceVariantText
-        tooltipText: I18n.tr("Identify", "button for identifying monitor positions")
-        z: 200
+        text: I18n.tr("Drag displays to rearrange them")
+        font.pixelSize: Theme.fontSizeSmall
+        color: Theme.surfaceVariantText
     }
 }

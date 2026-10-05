@@ -2,10 +2,10 @@ import QtQuick
 import qs.Common
 import qs.Widgets
 
-DankPopout {
+CyPopout {
     id: root
 
-    layerNamespace: "dms:plugins:" + layerNamespacePlugin
+    layerNamespace: "cyshell:plugins:" + layerNamespacePlugin
 
     property var triggerScreen: null
     property Component pluginContent: null

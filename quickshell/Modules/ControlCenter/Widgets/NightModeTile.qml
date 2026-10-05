@@ -24,7 +24,7 @@ CcTile {
                 elide: Text.ElideRight
             }
 
-            DankSlider {
+            CySlider {
                 width: parent.width
                 minimum: 1000
                 maximum: 6000

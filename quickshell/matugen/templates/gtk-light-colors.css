@@ -1,4 +1,4 @@
-/* BEGIN DMS OVERRIDE */
+/* BEGIN CYSHELL OVERRIDE */
 
 /*
 * GTK Colors
@@ -25,4 +25,4 @@
 @define-color sidebar_border_color @window_bg_color;
 @define-color sidebar_backdrop_color @window_bg_color;
 
-/* END DMS OVERRIDE */
+/* END CYSHELL OVERRIDE */

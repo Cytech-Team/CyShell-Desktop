@@ -7,7 +7,7 @@ DockContextMenuBase {
 
     property var dockApps: null
 
-    layerNamespace: "dms:dock-trash-context-menu"
+    layerNamespace: "cyshell:dock-trash-context-menu"
 
     function showForButton(button, dockHeight, dockScreen, parentDockApps) {
         dockApps = parentDockApps || null;

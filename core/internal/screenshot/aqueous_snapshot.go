@@ -10,7 +10,7 @@ import (
 	"os"
 	"regexp"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/utils"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/utils"
 )
 
 func aqueousSnapshot(ctx context.Context) (aqueousSnapshotModel, error) {

@@ -20,7 +20,7 @@ PanelWindow {
     visible: win._frameVisible
     updatesEnabled: win._frameVisible
 
-    WlrLayershell.namespace: "dms:frame"
+    WlrLayershell.namespace: "cyshell:frame"
     readonly property bool _dockEditActive: frameDockHostLoader.item?.editActive ?? false
     WlrLayershell.layer: win._usesOverlayLayer || win._dockEditActive ? WlrLayer.Overlay : WlrLayer.Top
     WlrLayershell.keyboardFocus: win._dockEditActive ? WlrKeyboardFocus.Exclusive : frameDockHostLoader.item?.interactionActive ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
@@ -1078,25 +1078,9 @@ PanelWindow {
         return (arcCorner === "topLeft" || arcCorner === "topRight") ? connectorY - r : connectorY + connectorHeight - r;
     }
 
-    function _buildBlur(forceRepublish) {
-        try {
-            if (!BlurService.enabled || !SettingsData.frameBlurEnabled || !win._frameActive || !win.visible) {
-                win.BackgroundEffect.blurRegion = null;
-                return;
-            }
-            if (forceRepublish)
-                win.BackgroundEffect.blurRegion = null;
-            win.BackgroundEffect.blurRegion = _staticBlurRegion;
-        } catch (e) {
-            win.log.warn("Failed to set blur region:", e);
-        }
-    }
+    function _buildBlur(forceRepublish) {}
 
-    function _teardownBlur() {
-        try {
-            win.BackgroundEffect.blurRegion = null;
-        } catch (e) {}
-    }
+    function _teardownBlur() {}
 
     DeferredAction {
         id: blurRebuildAction

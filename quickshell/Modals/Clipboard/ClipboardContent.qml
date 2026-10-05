@@ -126,7 +126,7 @@ Item {
                 modal: clipboardContent.modal
             }
 
-            DankSearchField {
+            CySearchField {
                 id: searchField
 
                 anchors.left: parent.left
@@ -160,7 +160,7 @@ Item {
                 }
             }
 
-            DankActionButton {
+            CyActionButton {
                 id: filterButton
 
                 anchors.right: searchField.right
@@ -183,7 +183,7 @@ Item {
             Component {
                 id: filterMenuComponent
 
-                DankDropdown {
+                CyDropdown {
                     showTrigger: false
                     popupAnchorItem: filterButton
                     popupWidth: 180
@@ -217,7 +217,7 @@ Item {
         anchors.bottomMargin: (modal.showKeyboardHints ? (ClipboardConstants.keyboardHintsHeight + PopoutMetrics.contentPadding * 2) : 0) + Theme.spacingXS
         clip: true
 
-        DankListView {
+        CyListView {
             id: clipboardListView
             reuseItems: true
             highlightSelection: clipboardContent.modal.keyboardNavigationActive && clipboardContent.modal.selectedIndex >= 0

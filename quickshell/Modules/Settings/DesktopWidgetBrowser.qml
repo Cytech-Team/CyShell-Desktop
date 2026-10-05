@@ -57,7 +57,7 @@ WidgetPickerWindow {
                     color: Theme.primarySelected
                     anchors.verticalCenter: parent.verticalCenter
 
-                    DankIcon {
+                    CyIcon {
                         anchors.centerIn: parent
                         name: delegateRoot.modelData.icon || "widgets"
                         size: Theme.iconSize
@@ -95,7 +95,7 @@ WidgetPickerWindow {
                                 anchors.centerIn: parent
                                 spacing: Theme.spacingXXS
 
-                                DankIcon {
+                                CyIcon {
                                     name: "star"
                                     size: 10
                                     color: Theme.secondary
@@ -142,7 +142,7 @@ WidgetPickerWindow {
                     }
                 }
 
-                DankIcon {
+                CyIcon {
                     name: "add"
                     size: Theme.iconSizeMedium
                     color: Theme.primary

@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/configfrag"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/configfrag"
 )
 
 func marshalKeys(t *testing.T, v any) map[string]json.RawMessage {
@@ -84,7 +84,7 @@ func TestDMSRulesStatusFromCarriesEveryField(t *testing.T) {
 		Included:        true,
 		IncludePosition: 2,
 		TotalIncludes:   3,
-		EntriesAfterDMS: 7,
+		EntriesAfterCyShell: 7,
 		Effective:       true,
 		OverriddenBy:    7,
 		StatusMessage:   "DMS window rules are active",

@@ -114,7 +114,7 @@ DesktopWidgetInstanceSettings {
                             anchors.margins: Theme.spacingS
                             spacing: Theme.spacingS
 
-                            DankIcon {
+                            CyIcon {
                                 name: "videocam"
                                 size: Theme.iconSizeSmall
                                 color: isSelected ? Theme.primary : Theme.surfaceVariantText

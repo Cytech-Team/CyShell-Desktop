@@ -18,10 +18,10 @@ Column {
 
     property string searchQuery: ""
     property string filterOverride: ""
-    readonly property var filterKeys: ["all", "enabled", "disabled", "updates"]
+    readonly property var filterKeys: ["all", "enabled", "disabled", "updates", "cyshell", "dms", "noctalia"]
     readonly property int filterIndex: filterKeys.indexOf(filterOverride || CacheData.pluginViewFilter)
     property string actionError: ""
-    readonly property bool checkingUpdates: DMSService.checkingPluginUpdates
+    readonly property bool checkingUpdates: CyShellService.checkingPluginUpdates
     readonly property var sortKeys: ["name", "author", "modified"]
     readonly property int sortIndex: sortKeys.indexOf(CacheData.pluginViewSort.by)
     readonly property bool descending: CacheData.pluginViewSort.descending
@@ -31,7 +31,7 @@ Column {
     property string updatingPluginId: ""
     readonly property string pendingRevealPluginId: PluginService.pendingSettingsRevealPluginId
     readonly property var sortOptions: [I18n.tr("Name"), I18n.tr("Author", "installed plugins sort option, plugin author"), I18n.tr("Last modified", "plugin directory modification time")]
-    readonly property var filterOptions: [I18n.tr("All"), I18n.tr("Enabled"), I18n.tr("Disabled"), I18n.tr("Update available", "plugin row badge")]
+    readonly property var filterOptions: [I18n.tr("All"), I18n.tr("Enabled"), I18n.tr("Disabled"), I18n.tr("Update available", "plugin row badge"), I18n.tr("CyShell"), I18n.tr("DMS"), I18n.tr("Noctalia")]
 
     FontMetrics {
         id: pluginTitleMetrics
@@ -55,7 +55,10 @@ Column {
         if (filterIndex === 3 && !hasUpdate(row))
             return false;
         const plugin = PluginService.availablePlugins[row.pluginId];
-        return [row.text, row.hint, plugin?.author, row.pluginId].join(" ").toLowerCase().includes(searchQuery.trim().toLowerCase());
+        const sourceGroup = PluginService.pluginSourceGroup(plugin?.source);
+        if (filterIndex >= 4 && sourceGroup !== filterKeys[filterIndex])
+            return false;
+        return [row.text, row.hint, plugin?.author, PluginService.pluginSourceLabel(plugin?.source), row.pluginId].join(" ").toLowerCase().includes(searchQuery.trim().toLowerCase());
     }).sort((a, b) => {
         let comparison = 0;
         switch (sortIndex) {
@@ -74,11 +77,13 @@ Column {
     })
 
     readonly property var plugins: SettingsTabs.pluginHubRows
-    readonly property var updateCheckErrors: (DMSService.installedPlugins || []).filter(plugin => plugin.updateError).reduce((errors, plugin) => {
+    readonly property var updateCheckErrors: (CyShellService.installedPlugins || []).filter(plugin => plugin.updateError).reduce((errors, plugin) => {
         errors[plugin.id] = plugin.updateError;
         return errors;
     }, {})
-    readonly property var pluginsWithUpdates: (DMSService.installedPlugins || []).filter(plugin => plugin.hasUpdate === true)
+    readonly property var pluginsWithUpdates: (CyShellService.installedPlugins || []).filter(plugin => {
+        return plugin.hasUpdate === true && PluginService.availablePlugins[plugin.id]?.source === "user";
+    })
     readonly property var incompatiblePlugins: {
         PluginService.loadedPlugins;
         ShellVersionService.semverVersion;
@@ -98,8 +103,8 @@ Column {
 
     Component.onCompleted: {
         revealTimer.restart();
-        if (DMSService.dmsAvailable && DMSService.apiVersion >= 8)
-            DMSService.listInstalled();
+        if (CyShellService.backendAvailable && CyShellService.apiVersion >= 8)
+            CyShellService.listInstalled();
         if (PopoutService.pendingPluginInstall)
             Qt.callLater(showPluginBrowser);
     }
@@ -139,7 +144,7 @@ Column {
     function requestUpdate(row) {
         if (updatingPluginId || pluginUpdatesDialogItem.isUpdating || uninstalling[row.pluginId])
             return;
-        const plugin = DMSService.installedPlugins.find(plugin => plugin.id === row.pluginId || plugin.name === row.text);
+        const plugin = CyShellService.installedPlugins.find(plugin => plugin.id === row.pluginId || plugin.name === row.text);
         confirmUpdates([plugin || {
                 id: row.pluginId,
                 name: row.text
@@ -210,10 +215,10 @@ Column {
     }
 
     function checkUpdates() {
-        if (!DMSService.dmsAvailable || DMSService.apiVersion < 8)
+        if (!CyShellService.backendAvailable || CyShellService.apiVersion < 8)
             return;
         actionError = "";
-        DMSService.listInstalled(undefined, true);
+        CyShellService.listInstalled(undefined, true);
     }
 
     function requestUninstall(row) {
@@ -236,7 +241,7 @@ Column {
         uninstallErrors = Object.assign({}, uninstallErrors, {
             [id]: ""
         });
-        DMSService.uninstall(id, response => {
+        CyShellService.uninstall(id, response => {
             const pending = Object.assign({}, uninstalling);
             delete pending[id];
             uninstalling = pending;
@@ -347,12 +352,12 @@ Column {
 
     SettingsCard {
         settingKey: "pluginManagerUnavailable"
-        visible: !DMSService.dmsAvailable
+        visible: !CyShellService.backendAvailable
 
         SettingsRow {
             iconName: "warning"
             title: I18n.tr("Plugin manager unavailable")
-            subtitle: I18n.tr("The DMS_SOCKET environment variable is not set or the socket is unavailable. Automated plugin management requires the DMS_SOCKET.")
+            subtitle: I18n.tr("The CYSHELL_SOCKET environment variable is not set or the socket is unavailable. Automated plugin management requires the CYSHELL_SOCKET.")
         }
     }
 
@@ -378,17 +383,17 @@ Column {
             Layout.preferredHeight: implicitHeight
             spacing: Theme.spacingS
 
-            DankButton {
+            CyButton {
                 text: I18n.tr("Browse")
                 iconName: "store"
                 backgroundColor: Theme.primary
                 textColor: Theme.onPrimary
                 maximumWidth: parent.width
                 wrapText: true
-                enabled: DMSService.dmsAvailable
+                enabled: CyShellService.backendAvailable
                 onClicked: root.showPluginBrowser()
             }
-            DankButton {
+            CyButton {
                 text: root.pluginsWithUpdates.length ? I18n.tr("Update All") + " (" + root.pluginsWithUpdates.length + ")" : I18n.tr("Check for updates")
                 iconName: root.pluginsWithUpdates.length ? "download" : "refresh"
                 busy: root.checkingUpdates || pluginUpdatesDialogItem.isUpdating
@@ -396,7 +401,7 @@ Column {
                 textColor: Theme.onSecondaryContainer
                 maximumWidth: parent.width
                 wrapText: true
-                enabled: DMSService.dmsAvailable && !pluginUpdatesDialogItem.isUpdating && !root.updatingPluginId && Object.keys(root.uninstalling).length === 0
+                enabled: CyShellService.backendAvailable && !pluginUpdatesDialogItem.isUpdating && !root.updatingPluginId && Object.keys(root.uninstalling).length === 0
                 Accessible.description: root.checkingUpdates ? I18n.tr("Checking for updates...") : ""
                 onClicked: {
                     if (root.checkingUpdates)
@@ -408,17 +413,17 @@ Column {
                     root.checkUpdates();
                 }
             }
-            DankIconButton {
+            CyIconButton {
                 iconName: "refresh"
                 widthMode: "narrow"
                 tooltipText: I18n.tr("Check for updates")
                 visible: root.pluginsWithUpdates.length > 0
-                enabled: DMSService.dmsAvailable && !root.checkingUpdates && !pluginUpdatesDialogItem.isUpdating && !root.updatingPluginId
+                enabled: CyShellService.backendAvailable && !root.checkingUpdates && !pluginUpdatesDialogItem.isUpdating && !root.updatingPluginId
                 onClicked: root.checkUpdates()
             }
         }
 
-        DankButton {
+        CyButton {
             text: I18n.tr("Manage Registries", "plugin registry management")
             buttonHeight: Theme.buttonHeightXS
             horizontalPadding: Theme.spacingS
@@ -435,12 +440,12 @@ Column {
     StyledText {
         width: parent.width
         visible: text !== ""
-        text: [root.actionError, DMSService.pluginUpdateCheckError].filter(Boolean).join("\n")
+        text: [root.actionError, CyShellService.pluginUpdateCheckError].filter(Boolean).join("\n")
         color: Theme.error
         wrapMode: Text.Wrap
     }
 
-    DankCard {
+    CyCard {
         id: storeCard
         width: parent.width
         implicitHeight: storeContent.implicitHeight + pad * 2
@@ -452,7 +457,7 @@ Column {
             width: parent.width
             spacing: Theme.spacingM
 
-            DankIcon {
+            CyIcon {
                 name: "store"
                 size: Theme.iconSizeLarge
                 color: storeCard.accentColor
@@ -476,17 +481,17 @@ Column {
                 Layout.preferredHeight: implicitHeight
                 spacing: Theme.spacingS
 
-                DankButton {
+                CyButton {
                     text: I18n.tr("Browse")
                     iconName: "store"
                     backgroundColor: Theme.primary
                     textColor: Theme.onPrimary
                     maximumWidth: parent.width
                     wrapText: true
-                    enabled: DMSService.dmsAvailable
+                    enabled: CyShellService.backendAvailable
                     onClicked: root.showPluginBrowser()
                 }
-                DankButton {
+                CyButton {
                     text: I18n.tr("Manage Registries", "plugin registry management")
                     backgroundColor: "transparent"
                     textColor: storeCard.accentColor
@@ -503,7 +508,7 @@ Column {
         spacing: Theme.spacingS
         visible: root.plugins.length > 0
 
-        DankSearchField {
+        CySearchField {
             width: parent.width
             text: root.searchQuery
             placeholderText: I18n.tr("Search plugins...", "plugin search placeholder")
@@ -513,7 +518,7 @@ Column {
             width: parent.width
             spacing: Theme.spacingS
 
-            DankSplitButton {
+            CySplitButton {
                 id: filterButton
                 text: I18n.tr("Filter") + ": " + root.filterOptions[root.filterIndex]
                 iconName: "filter_list"
@@ -529,7 +534,7 @@ Column {
                     filterMenu.openDropdownMenu();
                 }
 
-                DankDropdown {
+                CyDropdown {
                     id: filterMenu
                     showTrigger: false
                     popupAnchorItem: filterButton.trailingButton
@@ -540,7 +545,7 @@ Column {
                     onValueChanged: value => root.setFilter(options.indexOf(value))
                 }
             }
-            DankSplitButton {
+            CySplitButton {
                 id: sortButton
                 text: I18n.tr("Sort by") + ": " + root.sortOptions[root.sortIndex]
                 iconName: root.descending ? "arrow_downward" : "arrow_upward"
@@ -557,7 +562,7 @@ Column {
                     sortMenu.openDropdownMenu();
                 }
 
-                DankDropdown {
+                CyDropdown {
                     id: sortMenu
                     showTrigger: false
                     popupAnchorItem: sortButton.trailingButton
@@ -602,7 +607,7 @@ Column {
         Repeater {
             model: root.filteredPlugins
 
-            DankCard {
+            CyCard {
                 id: installedCard
                 required property var modelData
                 readonly property bool loaded: PluginService.loadedPlugins[modelData.pluginId] !== undefined
@@ -647,7 +652,7 @@ Column {
                         Layout.minimumHeight: Math.ceil(pluginTitleMetrics.height) * 2 + Theme.spacingXXS + pluginMetadata.implicitHeight
                         Layout.maximumHeight: Layout.minimumHeight
                         spacing: Theme.spacingS
-                        DankIcon {
+                        CyIcon {
                             id: pluginIcon
                             Layout.alignment: Qt.AlignTop
                             Layout.topMargin: Math.max(0, (pluginTitle.implicitHeight - height) / 2)
@@ -677,9 +682,9 @@ Column {
                                 id: pluginMetadata
                                 Layout.fillWidth: true
                                 Layout.minimumWidth: 0
-                                implicitHeight: Math.max(Theme.spacingL, Math.ceil(pluginDescriptionMetrics.height), versionBadge.implicitHeight)
+                                implicitHeight: Math.max(Theme.spacingL, Math.ceil(pluginDescriptionMetrics.height), versionBadge.implicitHeight, sourceBadge.implicitHeight)
 
-                                DankBadge {
+                                CyBadge {
                                     id: versionBadge
                                     anchors.left: parent.left
                                     anchors.top: parent.top
@@ -691,11 +696,24 @@ Column {
                                     Accessible.name: I18n.tr("Version %1", "accessible name of plugin version badge, %1 is the version number").arg(text)
                                 }
 
-                                StyledText {
+                                CyBadge {
+                                    id: sourceBadge
                                     anchors.left: versionBadge.visible ? versionBadge.right : parent.left
                                     anchors.leftMargin: versionBadge.visible ? Theme.spacingXS : 0
                                     anchors.baseline: versionBadge.visible ? versionBadge.baseline : undefined
-                                    width: Math.max(0, parent.width - (versionBadge.visible ? versionBadge.width + Theme.spacingXS : 0))
+                                    text: PluginService.pluginSourceLabel(installedCard.plugin.source)
+                                    visible: text !== ""
+                                    maximumWidth: parent.width
+                                    color: Theme.chipSurface
+                                    textColor: Theme.onSurfaceVariant
+                                    Accessible.name: I18n.tr("Plugin source: %1", "plugin source badge, %1 is the source name").arg(text)
+                                }
+
+                                StyledText {
+                                    anchors.left: sourceBadge.visible ? sourceBadge.right : versionBadge.visible ? versionBadge.right : parent.left
+                                    anchors.leftMargin: sourceBadge.visible || versionBadge.visible ? Theme.spacingXS : 0
+                                    anchors.baseline: sourceBadge.visible ? sourceBadge.baseline : versionBadge.visible ? versionBadge.baseline : undefined
+                                    width: Math.max(0, parent.width - (sourceBadge.visible ? sourceBadge.x + sourceBadge.width + Theme.spacingXS : versionBadge.visible ? versionBadge.width + Theme.spacingXS : 0))
                                     visible: root.sortKeys[root.sortIndex] === "author"
                                     text: I18n.tr("by %1", "author attribution").arg(installedCard.plugin.author || I18n.tr("Unknown", "unknown author"))
                                     font.pixelSize: Theme.fontSizeSmall
@@ -705,7 +723,7 @@ Column {
                                 }
                             }
                         }
-                        DankToggle {
+                        CyToggle {
                             Layout.alignment: Qt.AlignTop
                             enabled: !root.updatingPluginId && !pluginUpdatesDialogItem.isUpdating && !root.uninstalling[installedCard.modelData.pluginId]
                             checked: installedCard.loaded
@@ -730,7 +748,7 @@ Column {
                         Layout.fillHeight: false
                         visible: installedCard.problem !== "" || !!root.uninstalling[installedCard.modelData.pluginId]
                         spacing: Theme.spacingS
-                        DankActionButton {
+                        CyActionButton {
                             visible: installedCard.problem !== ""
                             buttonSize: Theme.buttonHeightXS
                             iconName: "error"
@@ -753,7 +771,7 @@ Column {
                         Layout.fillWidth: true
                         implicitHeight: Math.max(settingsButton.implicitHeight, cardActions.implicitHeight)
 
-                        DankIconButton {
+                        CyIconButton {
                             id: settingsButton
                             anchors.left: parent.left
                             anchors.verticalCenter: parent.verticalCenter
@@ -768,19 +786,19 @@ Column {
                             anchors.verticalCenter: parent.verticalCenter
                             spacing: Theme.spacingXS
 
-                            DankIconButton {
+                            CyIconButton {
                                 iconName: "download"
                                 variant: "tonal"
                                 tooltipText: root.updatingPluginId === installedCard.modelData.pluginId ? I18n.tr("Updating...", "plugin update button tooltip while the update runs") : I18n.tr("Update available", "plugin row badge")
-                                visible: root.hasUpdate(installedCard.modelData) || root.updatingPluginId === installedCard.modelData.pluginId
-                                enabled: DMSService.dmsAvailable && !root.checkingUpdates && !pluginUpdatesDialogItem.isUpdating && !root.updatingPluginId && !root.uninstalling[installedCard.modelData.pluginId]
+                                visible: (installedCard.plugin.source === "user" && root.hasUpdate(installedCard.modelData)) || root.updatingPluginId === installedCard.modelData.pluginId
+                                enabled: CyShellService.backendAvailable && !root.checkingUpdates && !pluginUpdatesDialogItem.isUpdating && !root.updatingPluginId && !root.uninstalling[installedCard.modelData.pluginId]
                                 onClicked: root.requestUpdate(installedCard.modelData)
                             }
-                            DankIconButton {
+                            CyIconButton {
                                 iconName: "delete"
                                 Accessible.name: I18n.tr("Uninstall")
-                                visible: installedCard.plugin.source !== "system"
-                                enabled: DMSService.dmsAvailable && !pluginUpdatesDialogItem.isUpdating && !root.updatingPluginId && !root.uninstalling[installedCard.modelData.pluginId]
+                                visible: installedCard.plugin.source === "user"
+                                enabled: CyShellService.backendAvailable && !pluginUpdatesDialogItem.isUpdating && !root.updatingPluginId && !root.uninstalling[installedCard.modelData.pluginId]
                                 onClicked: root.requestUninstall(installedCard.modelData)
                             }
                         }

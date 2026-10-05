@@ -5,10 +5,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/log"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/proto/ext_workspace"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/wlcontext"
 	wlclient "github.com/AvengeMedia/dankgo/wayland/client"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/log"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/proto/ext_workspace"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/server/wlcontext"
 )
 
 func NewManager(shared wlcontext.WaylandContext) (*Manager, error) {

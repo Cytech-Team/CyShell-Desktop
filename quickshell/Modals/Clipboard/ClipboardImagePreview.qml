@@ -36,7 +36,7 @@ ClippingRectangle {
         cachedMimeType = "";
         const entryId = entry.id;
         requestedEntryId = entryId;
-        DMSService.sendRequest("clipboard.getEntry", {
+        CyShellService.sendRequest("clipboard.getEntry", {
             "id": entryId
         }, function (response) {
             if (root.requestedEntryId !== entryId)
@@ -93,7 +93,7 @@ ClippingRectangle {
             onWheel: wheel => wheel.accepted = true
         }
 
-        DankWindowHeader {
+        CyWindowHeader {
             id: header
 
             anchors.top: parent.top
@@ -131,7 +131,7 @@ ClippingRectangle {
                 visible: status === Image.Ready && source != ""
             }
 
-            DankIcon {
+            CyIcon {
                 anchors.centerIn: parent
                 name: "image"
                 size: Theme.iconSizeLarge

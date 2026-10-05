@@ -105,19 +105,19 @@ Singleton {
         target: SettingsData
         function onBluetoothMprisEnabledChanged() {
             if (SettingsData.bluetoothMprisEnabled)
-                DMSService.addSubscription("mpris.command");
+                CyShellService.addSubscription("mpris.command");
             root._scheduleMPRISPublish();
         }
     }
 
     Connections {
-        target: DMSService
+        target: CyShellService
         function onConnectionStateChanged() {
             root._invalidateMPRISPublishRequests();
             root._scheduleMPRISPublish();
         }
         function onCapabilitiesReceived() {
-            if (!DMSService.capabilities.includes("bluetooth"))
+            if (!CyShellService.capabilities.includes("bluetooth"))
                 root._invalidateMPRISPublishRequests();
             root._scheduleMPRISPublish();
         }
@@ -200,7 +200,7 @@ Singleton {
     Component.onCompleted: {
         _resolveActivePlayer();
         if (SettingsData.bluetoothMprisEnabled)
-            DMSService.addSubscription("mpris.command");
+            CyShellService.addSubscription("mpris.command");
         _scheduleMPRISPublish();
     }
 
@@ -413,11 +413,11 @@ Singleton {
     }
 
     function _hasMPRISSubscription(): bool {
-        return DMSService.activeSubscriptions.includes("mpris.command");
+        return CyShellService.activeSubscriptions.includes("mpris.command");
     }
 
     function _canPublishMPRIS(): bool {
-        return DMSService.isConnected && DMSService.subscribeConnected && DMSService.mprisCommandLease && DMSService.capabilities.includes("bluetooth");
+        return CyShellService.isConnected && CyShellService.subscribeConnected && CyShellService.mprisCommandLease && CyShellService.capabilities.includes("bluetooth");
     }
 
     function _scheduleMPRISPublish(): void {
@@ -428,15 +428,15 @@ Singleton {
             _mprisPublishDirty = false;
             return;
         }
-        if (!enabled && subscribed && !DMSService.mprisCommandLease && !_mprisRequestInFlight) {
+        if (!enabled && subscribed && !CyShellService.mprisCommandLease && !_mprisRequestInFlight) {
             _mprisPublishDirty = false;
-            DMSService.removeSubscription("mpris.command");
+            CyShellService.removeSubscription("mpris.command");
             return;
         }
 
         _mprisPublishDirty = true;
         if (enabled && !subscribed) {
-            DMSService.addSubscription("mpris.command");
+            CyShellService.addSubscription("mpris.command");
             return;
         }
         if (_mprisRequestInFlight || !_canPublishMPRIS())
@@ -467,16 +467,16 @@ Singleton {
             return;
 
         const enabled = SettingsData.bluetoothMprisEnabled;
-        const requestLease = DMSService.mprisCommandLease;
+        const requestLease = CyShellService.mprisCommandLease;
         const requestEpoch = _mprisConnectionEpoch;
         const snapshot = _mprisSnapshot(enabled, requestLease);
         _mprisPublishDirty = false;
         _mprisRequestInFlight = true;
         _mprisRetryTimer.stop();
 
-        DMSService.sendRequest("bluetooth.mpris.publish", snapshot, response => {
+        CyShellService.sendRequest("bluetooth.mpris.publish", snapshot, response => {
             const changedWhileInFlight = root._mprisPublishDirty;
-            const currentConnection = requestEpoch === root._mprisConnectionEpoch && requestLease === DMSService.mprisCommandLease && DMSService.isConnected && DMSService.subscribeConnected;
+            const currentConnection = requestEpoch === root._mprisConnectionEpoch && requestLease === CyShellService.mprisCommandLease && CyShellService.isConnected && CyShellService.subscribeConnected;
             root._mprisRequestInFlight = false;
 
             if (!currentConnection) {
@@ -494,7 +494,7 @@ Singleton {
 
             if (!enabled && !SettingsData.bluetoothMprisEnabled) {
                 root._mprisPublishDirty = false;
-                DMSService.removeSubscription("mpris.command");
+                CyShellService.removeSubscription("mpris.command");
                 return;
             }
             if (changedWhileInFlight || enabled !== SettingsData.bluetoothMprisEnabled)
@@ -539,7 +539,7 @@ Singleton {
     }
 
     function _dispatchMPRISCommand(command: string): void {
-        if (!SettingsData.bluetoothMprisEnabled || !DMSService.mprisCommandLease)
+        if (!SettingsData.bluetoothMprisEnabled || !CyShellService.mprisCommandLease)
             return;
         switch (command) {
         case "play":

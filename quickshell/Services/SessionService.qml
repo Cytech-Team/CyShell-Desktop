@@ -5,6 +5,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import Quickshell.I3
+import Quickshell.Wayland
 import qs.Common
 import qs.Services
 import "../Common/SessionLaunch.js" as SessionLaunch
@@ -27,6 +28,89 @@ Singleton {
     property bool idleInhibited: false
     property string inhibitReason: "Keep system awake"
     property string nvidiaCommand: ""
+    property var _recentDesktopLaunches: ({})
+    property var _pendingDesktopActivations: []
+
+    function allowDesktopLaunch(key) {
+        const normalized = String(key || "").trim();
+        if (!normalized)
+            return true;
+        const now = Date.now();
+        const previous = Number(_recentDesktopLaunches[normalized] || 0);
+        if (now - previous < 350)
+            return false;
+        _recentDesktopLaunches[normalized] = now;
+        return true;
+    }
+
+    function normalizedDesktopLaunchIdentifier(value) {
+        return String(value || "").trim().replace(/\.desktop$/i, "").toLowerCase();
+    }
+
+    function desktopLaunchMatches(request, toplevel) {
+        const appId = normalizedDesktopLaunchIdentifier(toplevel?.appId);
+        if (!appId)
+            return false;
+        return request.identifiers.some(identifier => appId === identifier || appId.endsWith("." + identifier) || identifier.endsWith("." + appId));
+    }
+
+    function trackDesktopLaunch(desktopEntry) {
+        const identifiers = [desktopEntry?.startupClass, desktopEntry?.id]
+            .map(value => normalizedDesktopLaunchIdentifier(value))
+            .filter(value => value.length > 0);
+        if (identifiers.length === 0)
+            return;
+
+        const windows = Array.from(ToplevelManager.toplevels.values || []);
+        _pendingDesktopActivations = _pendingDesktopActivations.concat([{
+            identifiers: Array.from(new Set(identifiers)),
+            existing: windows,
+            previousActive: ToplevelManager.activeToplevel,
+            deadline: Date.now() + 3000
+        }]);
+        desktopLaunchActivationTimer.start();
+    }
+
+    function resolvePendingDesktopActivations() {
+        if (_pendingDesktopActivations.length === 0) {
+            desktopLaunchActivationTimer.stop();
+            return;
+        }
+
+        const windows = Array.from(ToplevelManager.toplevels.values || []);
+        const active = ToplevelManager.activeToplevel;
+        const now = Date.now();
+        const pending = [];
+
+        for (const request of _pendingDesktopActivations) {
+            const newWindow = windows.find(window => !request.existing.includes(window) && desktopLaunchMatches(request, window));
+            const activeMatches = active && desktopLaunchMatches(request, active);
+            const target = newWindow || (activeMatches && !request.existing.includes(active) ? active : null);
+            if (target) {
+                CompositorService.activateToplevel(target);
+                continue;
+            }
+
+            if (activeMatches && active !== request.previousActive)
+                continue;
+
+            if (active && active !== request.previousActive)
+                continue;
+
+            if (now >= request.deadline) {
+                const existingWindow = windows.find(window => request.existing.includes(window) && desktopLaunchMatches(request, window));
+                if (existingWindow)
+                    CompositorService.activateToplevel(existingWindow);
+                continue;
+            }
+
+            pending.push(request);
+        }
+
+        _pendingDesktopActivations = pending;
+        if (pending.length === 0)
+            desktopLaunchActivationTimer.stop();
+    }
 
     property bool loginctlAvailable: false
     property string sessionId: ""
@@ -46,12 +130,27 @@ Singleton {
     signal sessionResumed
     signal loginctlStateChanged
 
+    Timer {
+        id: desktopLaunchActivationTimer
+        interval: 100
+        repeat: true
+        onTriggered: root.resolvePendingDesktopActivations()
+    }
+
+    Connections {
+        target: ToplevelManager.toplevels
+        function onValuesChanged() {
+            if (root._pendingDesktopActivations.length > 0)
+                root.resolvePendingDesktopActivations();
+        }
+    }
+
     property bool stateInitialized: false
     property string prepareForSleepSubscriptionId: ""
     property bool prepareForSleepSubscriptionPending: false
     property double lastResumeSignalTimestamp: 0
 
-    readonly property string socketPath: Quickshell.env("DMS_SOCKET")
+    readonly property string socketPath: Quickshell.env("CYSHELL_SOCKET")
 
     Timer {
         id: sessionInitTimer
@@ -73,7 +172,7 @@ Singleton {
             if (socketPath && socketPath.length > 0) {
                 checkDMSCapabilities();
             } else {
-                log.debug("DMS_SOCKET not set");
+                log.debug("CYSHELL_SOCKET not set");
             }
         }
     }
@@ -301,12 +400,25 @@ Singleton {
                 return;
             env[target] = orig.length > 0 ? orig : null;
         };
-        restore("NIXPKGS_QT6_QML_IMPORT_PATH", "DMS_ORIG_NIXPKGS_QT6_QML_IMPORT_PATH");
-        restore("QT_PLUGIN_PATH", "DMS_ORIG_QT_PLUGIN_PATH");
+        restore("NIXPKGS_QT6_QML_IMPORT_PATH", Quickshell.env("CYSHELL_ORIG_NIXPKGS_QT6_QML_IMPORT_PATH") !== "" ? "CYSHELL_ORIG_NIXPKGS_QT6_QML_IMPORT_PATH" : "DMS_ORIG_NIXPKGS_QT6_QML_IMPORT_PATH");
+        restore("QT_PLUGIN_PATH", Quickshell.env("CYSHELL_ORIG_QT_PLUGIN_PATH") !== "" ? "CYSHELL_ORIG_QT_PLUGIN_PATH" : "DMS_ORIG_QT_PLUGIN_PATH");
         return env;
     }
 
-    // GUI apps must not remain in dms.service's cgroup. A shell restart
+    function desktopAppEnvironment(override, includeCustomEnvVars) {
+        const cursorEnv = typeof SettingsData.getCursorEnvironment === "function" ? SettingsData.getCursorEnvironment() : {};
+        const customEnv = includeCustomEnvVars && override?.envVars ? parseEnvVars(override.envVars) : {};
+        const env = Object.assign({}, cursorEnv, customEnv);
+        const locale = String(override?.locale || "").trim();
+        if (/^(?:[A-Za-z]{2,3}(?:[_-][A-Za-z0-9]{2,8})*|C|POSIX)(?:\.[A-Za-z0-9_-]+)?(?:@[A-Za-z0-9_-]+)?$/.test(locale)) {
+            env.LANG = locale;
+            env.LANGUAGE = locale.split(/[.@]/)[0];
+            env.LC_MESSAGES = locale;
+        }
+        return restoreWrapperEnv(env);
+    }
+
+    // GUI apps must not remain in cyshell.service's cgroup. A shell restart
     // stops that whole control group, which would otherwise terminate apps that
     // were launched with Quickshell.execDetached(). Move every desktop launch
     // into its own transient user scope under app.slice first.
@@ -340,6 +452,9 @@ Singleton {
         let cmd = desktopEntry.command;
 
         const appId = desktopEntry.id || desktopEntry.execString || desktopEntry.exec || "";
+        if (!allowDesktopLaunch("app:" + appId))
+            return;
+        trackDesktopLaunch(desktopEntry);
         const override = SessionData.getAppOverride(appId);
 
         const dgpu = useNvidia || (override?.launchOnDgpu && nvidiaCommand);
@@ -351,13 +466,11 @@ Singleton {
         }
 
         const userPrefix = SettingsData.launchPrefix?.trim() || "";
-        const defaultPrefix = Quickshell.env("DMS_DEFAULT_LAUNCH_PREFIX") || "";
+        const envPrefix = (Quickshell.env("CYSHELL_DEFAULT_LAUNCH_PREFIX") || "").trim();
+        const defaultPrefix = envPrefix.startsWith("systemd-run ") ? "" : envPrefix;
         const prefix = userPrefix.length > 0 ? userPrefix : defaultPrefix;
         const workDir = desktopEntry.workingDirectory || Quickshell.env("HOME");
-        const cursorEnv = typeof SettingsData.getCursorEnvironment === "function" ? SettingsData.getCursorEnvironment() : {};
-
-        const overrideEnv = override?.envVars ? parseEnvVars(override.envVars) : {};
-        const finalEnv = restoreWrapperEnv(Object.assign({}, cursorEnv, overrideEnv));
+        const finalEnv = desktopAppEnvironment(override, true);
 
         if (desktopEntry.runInTerminal) {
             const terminal = SessionData.resolveTerminal() || "xterm";
@@ -386,17 +499,20 @@ Singleton {
         let cmd = action.command;
 
         const appId = desktopEntry.id || desktopEntry.execString || desktopEntry.exec || "";
+        if (!allowDesktopLaunch("app:" + appId))
+            return;
+        trackDesktopLaunch(desktopEntry);
         const override = SessionData.getAppOverride(appId);
         const dgpu = useNvidia || (override?.launchOnDgpu && nvidiaCommand);
         if (dgpu && nvidiaCommand)
             cmd = [nvidiaCommand].concat(cmd);
 
         const userPrefix = SettingsData.launchPrefix?.trim() || "";
-        const defaultPrefix = Quickshell.env("DMS_DEFAULT_LAUNCH_PREFIX") || "";
+        const envPrefix = (Quickshell.env("CYSHELL_DEFAULT_LAUNCH_PREFIX") || "").trim();
+        const defaultPrefix = envPrefix.startsWith("systemd-run ") ? "" : envPrefix;
         const prefix = userPrefix.length > 0 ? userPrefix : defaultPrefix;
         const workDir = desktopEntry.workingDirectory || Quickshell.env("HOME");
-        const cursorEnv = typeof SettingsData.getCursorEnvironment === "function" ? SettingsData.getCursorEnvironment() : {};
-        const finalEnv = restoreWrapperEnv(Object.assign({}, cursorEnv));
+        const finalEnv = desktopAppEnvironment(override, false);
 
         if (prefix.length > 0 && needsShellExecution(prefix)) {
             const escapedCmd = cmd.map(arg => escapeShellArg(arg)).join(" ");
@@ -575,7 +691,7 @@ Singleton {
             poweroff();
             return true;
         case "restart":
-            Quickshell.execDetached(["dms", "restart"]);
+            Quickshell.execDetached(["cyshell", "restart"]);
             return true;
         default:
             return false;
@@ -735,10 +851,10 @@ Singleton {
     }
 
     Connections {
-        target: DMSService
+        target: CyShellService
 
         function onConnectionStateChanged() {
-            if (DMSService.isConnected) {
+            if (CyShellService.isConnected) {
                 checkDMSCapabilities();
             } else {
                 clearPrepareForSleepSubscriptionState();
@@ -751,8 +867,8 @@ Singleton {
     }
 
     Connections {
-        target: DMSService
-        enabled: DMSService.isConnected
+        target: CyShellService
+        enabled: CyShellService.isConnected
 
         function onCapabilitiesChanged() {
             checkDMSCapabilities();
@@ -793,7 +909,7 @@ Singleton {
     }
 
     Connections {
-        target: DMSService
+        target: CyShellService
         enabled: SettingsData.loginctlLockIntegration
 
         function onLoginctlStateUpdate(data) {
@@ -802,15 +918,15 @@ Singleton {
     }
 
     function checkDMSCapabilities() {
-        if (!DMSService.isConnected) {
+        if (!CyShellService.isConnected) {
             return;
         }
 
-        if (DMSService.capabilities.length === 0) {
+        if (CyShellService.capabilities.length === 0) {
             return;
         }
 
-        if (DMSService.capabilities.includes("loginctl")) {
+        if (CyShellService.capabilities.includes("loginctl")) {
             loginctlAvailable = true;
             if (SettingsData.loginctlLockIntegration && !stateInitialized) {
                 stateInitialized = true;
@@ -822,7 +938,7 @@ Singleton {
             log.debug("loginctl capability not available in CyShell");
         }
 
-        if (DMSService.capabilities.includes("dbus")) {
+        if (CyShellService.capabilities.includes("dbus")) {
             ensurePrepareForSleepSubscription();
         } else {
             clearPrepareForSleepSubscriptionState();
@@ -835,7 +951,7 @@ Singleton {
     }
 
     function ensurePrepareForSleepSubscription() {
-        if (!DMSService.isConnected || !DMSService.capabilities.includes("dbus")) {
+        if (!CyShellService.isConnected || !CyShellService.capabilities.includes("dbus")) {
             return;
         }
 
@@ -844,7 +960,7 @@ Singleton {
         }
 
         prepareForSleepSubscriptionPending = true;
-        DMSService.dbusSubscribe("system", "org.freedesktop.login1", "/org/freedesktop/login1", "org.freedesktop.login1.Manager", "PrepareForSleep", response => {
+        CyShellService.dbusSubscribe("system", "org.freedesktop.login1", "/org/freedesktop/login1", "org.freedesktop.login1.Manager", "PrepareForSleep", response => {
             prepareForSleepSubscriptionPending = false;
 
             if (response.error) {
@@ -881,7 +997,7 @@ Singleton {
     function getLoginctlState() {
         if (!loginctlAvailable)
             return;
-        DMSService.sendRequest("loginctl.getState", null, response => {
+        CyShellService.sendRequest("loginctl.getState", null, response => {
             if (response.result) {
                 updateLoginctlState(response.result);
             }
@@ -891,7 +1007,7 @@ Singleton {
     function syncLockBeforeSuspend() {
         if (!loginctlAvailable)
             return;
-        DMSService.sendRequest("loginctl.setLockBeforeSuspend", {
+        CyShellService.sendRequest("loginctl.setLockBeforeSuspend", {
             enabled: SettingsData.lockBeforeSuspend
         }, response => {
             if (response.error) {
@@ -905,9 +1021,9 @@ Singleton {
     function syncSleepInhibitor() {
         if (!loginctlAvailable)
             return;
-        if (!DMSService.apiVersion || DMSService.apiVersion < 4)
+        if (!CyShellService.apiVersion || CyShellService.apiVersion < 4)
             return;
-        DMSService.sendRequest("loginctl.setSleepInhibitorEnabled", {
+        CyShellService.sendRequest("loginctl.setSleepInhibitorEnabled", {
             enabled: SettingsData.loginctlLockIntegration && SettingsData.lockBeforeSuspend
         }, response => {
             if (response.error) {

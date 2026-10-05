@@ -10,8 +10,8 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/deps"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/privesc"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/deps"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/privesc"
 )
 
 func init() {
@@ -88,8 +88,8 @@ func (a *ArchDistribution) DetectDependencies(ctx context.Context, wm deps.Windo
 func (a *ArchDistribution) DetectDependenciesWithTerminal(ctx context.Context, wm deps.WindowManager, terminal deps.Terminal) ([]deps.Dependency, error) {
 	var dependencies []deps.Dependency
 
-	// DMS at the top (shell is prominent)
-	dependencies = append(dependencies, a.detectDMS())
+	// CyShell at the top (shell is prominent)
+	dependencies = append(dependencies, a.detectCyShell())
 
 	// Terminal with choice support
 	dependencies = append(dependencies, a.detectSpecificTerminal(terminal))
@@ -98,7 +98,7 @@ func (a *ArchDistribution) DetectDependenciesWithTerminal(ctx context.Context, w
 	dependencies = append(dependencies, a.detectGit())
 	dependencies = append(dependencies, a.detectWindowManager(wm))
 	dependencies = append(dependencies, a.detectQuickshell())
-	dependencies = append(dependencies, a.detectDMSGreeter())
+	dependencies = append(dependencies, a.detectLegacyDMSGreeter())
 	dependencies = append(dependencies, a.detectXDGPortal())
 	dependencies = append(dependencies, a.detectAccountsService())
 
@@ -150,9 +150,9 @@ func (a *ArchDistribution) detectAccountsService() deps.Dependency {
 	return a.detectPackage("accountsservice", "D-Bus interface for user account query and manipulation", a.packageInstalled("accountsservice"))
 }
 
-func (a *ArchDistribution) detectDMSGreeter() deps.Dependency {
+func (a *ArchDistribution) detectLegacyDMSGreeter() deps.Dependency {
 	installed := a.packageInstalled("greetd-dms-greeter-git") || a.packageInstalled("greetd-dms-greeter-bin")
-	dep := a.detectOptionalPackage("dms-greeter", "DankMaterialShell greetd greeter", installed)
+	dep := a.detectOptionalPackage("dms-greeter", "Legacy DMS greetd greeter (compatibility)", installed)
 	dep.CanToggle = true
 	if a.packageInstalled("greetd-dms-greeter-git") {
 		dep.Variant = deps.VariantGit
@@ -213,18 +213,18 @@ func (a *ArchDistribution) GetPackageMapping(wm deps.WindowManager) map[string]P
 
 func (a *ArchDistribution) GetPackageMappingWithVariants(wm deps.WindowManager, variants map[string]deps.PackageVariant) map[string]PackageMapping {
 	packages := map[string]PackageMapping{
-		"dms (DankMaterialShell)": a.getDMSMapping(variants["dms (DankMaterialShell)"]),
-		"git":                     {Name: "git", Repository: RepoTypeSystem},
-		"quickshell":              a.getQuickshellMapping(variants["quickshell"]),
-		"dms-greeter":             a.getDMSGreeterMapping(variants["dms-greeter"]),
-		"matugen":                 a.getMatugenMapping(variants["matugen"]),
-		"ghostty":                 {Name: "ghostty", Repository: RepoTypeSystem},
-		"kitty":                   {Name: "kitty", Repository: RepoTypeSystem},
-		"alacritty":               {Name: "alacritty", Repository: RepoTypeSystem},
-		"xdg-desktop-portal-gtk":  {Name: "xdg-desktop-portal-gtk", Repository: RepoTypeSystem},
-		"accountsservice":         {Name: "accountsservice", Repository: RepoTypeSystem},
-		"danksearch":              a.getDanksearchMapping(variants["danksearch"]),
-		"dankcalendar":            a.getDankCalendarMapping(variants["dankcalendar"]),
+		"CyShell":                a.getCyShellMapping(variants["CyShell"]),
+		"git":                    {Name: "git", Repository: RepoTypeSystem},
+		"quickshell":             a.getQuickshellMapping(variants["quickshell"]),
+		"dms-greeter":            a.getDMSGreeterMapping(variants["dms-greeter"]),
+		"matugen":                a.getMatugenMapping(variants["matugen"]),
+		"ghostty":                {Name: "ghostty", Repository: RepoTypeSystem},
+		"kitty":                  {Name: "kitty", Repository: RepoTypeSystem},
+		"alacritty":              {Name: "alacritty", Repository: RepoTypeSystem},
+		"xdg-desktop-portal-gtk": {Name: "xdg-desktop-portal-gtk", Repository: RepoTypeSystem},
+		"accountsservice":        {Name: "accountsservice", Repository: RepoTypeSystem},
+		"danksearch":             a.getDanksearchMapping(variants["danksearch"]),
+		"dankcalendar":           a.getDankCalendarMapping(variants["dankcalendar"]),
 	}
 
 	switch wm {
@@ -300,16 +300,8 @@ func (a *ArchDistribution) getDMSGreeterMapping(variant deps.PackageVariant) Pac
 	return PackageMapping{Name: "greetd-dms-greeter-bin", Repository: RepoTypeAUR}
 }
 
-func (a *ArchDistribution) getDMSMapping(variant deps.PackageVariant) PackageMapping {
-	if forceDMSGit || variant == deps.VariantGit {
-		return PackageMapping{Name: "dms-shell-git", Repository: RepoTypeAUR}
-	}
-
-	if a.packageInstalled("dms-shell-git") {
-		return PackageMapping{Name: "dms-shell-git", Repository: RepoTypeAUR}
-	}
-
-	return PackageMapping{Name: "dms-shell", Repository: RepoTypeSystem}
+func (a *ArchDistribution) getCyShellMapping(variant deps.PackageVariant) PackageMapping {
+	return PackageMapping{Name: "cyshell", Repository: RepoTypeManual, BuildFunc: "cyshell"}
 }
 
 func (a *ArchDistribution) detectXwaylandSatellite() deps.Dependency {
@@ -465,8 +457,8 @@ func (a *ArchDistribution) InstallPackages(ctx context.Context, dependencies []d
 		a.log(fmt.Sprintf("Warning: failed to write window manager config: %v", err))
 	}
 
-	if err := a.EnableDMSService(ctx, wm); err != nil {
-		a.log(fmt.Sprintf("Warning: failed to enable dms service: %v", err))
+	if err := a.EnableCyShellService(ctx, wm); err != nil {
+		a.log(fmt.Sprintf("Warning: failed to enable cyshell service: %v", err))
 	}
 
 	// Phase 7: Complete
@@ -699,7 +691,7 @@ func (a *ArchDistribution) installSingleAURPackageInternal(ctx context.Context, 
 		return fmt.Errorf("failed to get user home directory: %w", err)
 	}
 
-	buildDir := filepath.Join(homeDir, ".cache", "dankinstall", "aur-builds", pkg)
+	buildDir := filepath.Join(homeDir, ".cache", "cyshell-install", "aur-builds", pkg)
 
 	// Clean up any existing cache first
 	if err := os.RemoveAll(buildDir); err != nil {

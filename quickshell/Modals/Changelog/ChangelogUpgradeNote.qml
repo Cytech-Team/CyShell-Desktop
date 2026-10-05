@@ -9,7 +9,7 @@ Row {
 
     spacing: Theme.spacingS
 
-    DankIcon {
+    CyIcon {
         name: "arrow_right"
         size: Theme.iconSizeSmall - 2
         color: Theme.surfaceVariantText

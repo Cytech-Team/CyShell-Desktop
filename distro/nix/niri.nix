@@ -3,16 +3,16 @@
   lib,
   ...
 }: let
-  cfg = config.programs.dank-material-shell;
+  cfg = config.programs.cyshell;
 in {
   imports = [
-    ./dms-rename.nix
+    ./legacy-options.nix
   ];
 
-  options.programs.dank-material-shell = {
+  options.programs.cyshell = {
     niri = {
-      enableKeybinds = lib.mkEnableOption "DankMaterialShell niri keybinds";
-      enableSpawn = lib.mkEnableOption "DankMaterialShell niri spawn-at-startup";
+      enableKeybinds = lib.mkEnableOption "CyShell niri keybinds";
+      enableSpawn = lib.mkEnableOption "CyShell niri spawn-at-startup";
       includes = {
         enable =
           (lib.mkEnableOption "includes for niri-flake")
@@ -22,7 +22,7 @@ in {
         override = lib.mkOption {
           type = lib.types.bool;
           description = ''
-            Whether DMS settings will be prioritized over settings defined in niri-flake or not
+            Whether CyShell settings will be prioritized over settings defined in niri-flake or not
           '';
           default = true;
           example = false;
@@ -38,7 +38,7 @@ in {
         filesToInclude = lib.mkOption {
           type = lib.types.listOf lib.types.str;
           description = ''
-            A list of dms-generated files to include
+            A list of CyShell-generated files to include
           '';
           default = [
             "alttab"
@@ -88,10 +88,10 @@ in {
         );
       in {
         niri-config.target = lib.mkForce "niri/${cfg'.originalFileName}.kdl";
-        niri-config-dms = {
+        niri-config-cyshell = {
           target = "niri/config.kdl";
           text = lib.pipe cfg'.filesToInclude [
-            (map (filename: "dms/${filename}"))
+            (map (filename: "cyshell/${filename}"))
             withOriginalConfig
             (map (filename: "include optional=true \"${filename}.kdl\""))
             (files: files ++ fixes)
@@ -104,70 +104,70 @@ in {
     programs.niri.settings = lib.mkMerge [
       (lib.mkIf cfg.niri.enableKeybinds {
         binds = with config.lib.niri.actions; let
-          dms-ipc = spawn "dms" "ipc";
+          cyshell-ipc = spawn "cyshell" "ipc";
         in
           {
             "Mod+Space" = {
-              action = dms-ipc "spotlight" "toggle";
+              action = cyshell-ipc "spotlight" "toggle";
               hotkey-overlay.title = "Toggle Application Launcher";
             };
             "Mod+N" = {
-              action = dms-ipc "notifications" "toggle";
+              action = cyshell-ipc "notifications" "toggle";
               hotkey-overlay.title = "Toggle Notification Center";
             };
             "Mod+Comma" = {
-              action = dms-ipc "settings" "toggle";
+              action = cyshell-ipc "settings" "toggle";
               hotkey-overlay.title = "Toggle Settings";
             };
             "Mod+P" = {
-              action = dms-ipc "notepad" "toggle";
+              action = cyshell-ipc "notepad" "toggle";
               hotkey-overlay.title = "Toggle Notepad";
             };
             "Super+Alt+L" = {
-              action = dms-ipc "lock" "lock";
+              action = cyshell-ipc "lock" "lock";
               hotkey-overlay.title = "Toggle Lock Screen";
             };
             "Mod+X" = {
-              action = dms-ipc "powermenu" "toggle";
+              action = cyshell-ipc "powermenu" "toggle";
               hotkey-overlay.title = "Toggle Power Menu";
             };
             "XF86AudioRaiseVolume" = {
               allow-when-locked = true;
-              action = dms-ipc "audio" "increment" "3";
+              action = cyshell-ipc "audio" "increment" "3";
             };
             "XF86AudioLowerVolume" = {
               allow-when-locked = true;
-              action = dms-ipc "audio" "decrement" "3";
+              action = cyshell-ipc "audio" "decrement" "3";
             };
             "XF86AudioMute" = {
               allow-when-locked = true;
-              action = dms-ipc "audio" "mute";
+              action = cyshell-ipc "audio" "mute";
             };
             "XF86AudioMicMute" = {
               allow-when-locked = true;
-              action = dms-ipc "audio" "micmute";
+              action = cyshell-ipc "audio" "micmute";
             };
             "XF86MonBrightnessUp" = {
               allow-when-locked = true;
-              action = dms-ipc "brightness" "increment" "5" "";
+              action = cyshell-ipc "brightness" "increment" "5" "";
             };
             "XF86MonBrightnessDown" = {
               allow-when-locked = true;
-              action = dms-ipc "brightness" "decrement" "5" "";
+              action = cyshell-ipc "brightness" "decrement" "5" "";
             };
             "Mod+Alt+N" = {
               allow-when-locked = true;
-              action = dms-ipc "night" "toggle";
+              action = cyshell-ipc "night" "toggle";
               hotkey-overlay.title = "Toggle Night Mode";
             };
             "Mod+V" = {
-              action = dms-ipc "clipboard" "toggle";
+              action = cyshell-ipc "clipboard" "toggle";
               hotkey-overlay.title = "Toggle Clipboard Manager";
             };
           }
           // lib.attrsets.optionalAttrs cfg.enableSystemMonitoring {
             "Mod+M" = {
-              action = dms-ipc "processlist" "toggle";
+              action = cyshell-ipc "processlist" "toggle";
               hotkey-overlay.title = "Toggle Process List";
             };
           };
@@ -177,7 +177,7 @@ in {
         spawn-at-startup = [
           {
             command = [
-              "dms"
+              "cyshell"
               "run"
             ];
           }

@@ -4,17 +4,17 @@
   ...
 }:
 let
-  fakeDms = pkgs.writeShellScriptBin "dms" ''
-    printf '%s\n' "$@" > /tmp/dms-service-args
+  fakeCyShell = pkgs.writeShellScriptBin "cyshell" ''
+    printf '%s\n' "$@" > /tmp/cyshell-service-args
     exec ${pkgs.coreutils}/bin/sleep 300
   '';
 in
 pkgs.testers.runNixOSTest {
-  name = "dms-nixos-service-start-module";
+  name = "cyshell-nixos-service-start-module";
 
   nodes.machine = {
     imports = [
-      self.nixosModules.dank-material-shell
+      self.nixosModules.cyshell
     ];
 
     users.users.danklinux = {
@@ -23,9 +23,9 @@ pkgs.testers.runNixOSTest {
       extraGroups = [ "wheel" ];
     };
 
-    programs.dank-material-shell = {
+    programs.cyshell = {
       enable = true;
-      package = fakeDms;
+      package = fakeCyShell;
       systemd = {
         enable = true;
         target = "default.target";
@@ -39,10 +39,9 @@ pkgs.testers.runNixOSTest {
     machine.wait_for_unit("multi-user.target")
     machine.wait_for_unit("user@1000.service")
 
-    machine.succeed("systemctl --machine=danklinux@ --user start dms.service")
-    machine.wait_until_succeeds("systemctl --machine=danklinux@ --user is-active dms.service")
-    machine.wait_until_succeeds("test -f /tmp/dms-service-args")
-    machine.succeed("grep -Fx run /tmp/dms-service-args")
-    machine.succeed("grep -Fx -- --session /tmp/dms-service-args")
+    machine.succeed("systemctl --machine=danklinux@ --user start cyshell.service")
+    machine.wait_until_succeeds("systemctl --machine=danklinux@ --user is-active cyshell.service")
+    machine.wait_until_succeeds("test -f /tmp/cyshell-service-args")
+    machine.succeed("grep -Fx core /tmp/cyshell-service-args")
   '';
 }

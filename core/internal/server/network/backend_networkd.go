@@ -7,7 +7,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/log"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/log"
 	"github.com/godbus/dbus/v5"
 )
 

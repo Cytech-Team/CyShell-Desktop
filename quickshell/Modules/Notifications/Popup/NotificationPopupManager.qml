@@ -14,7 +14,7 @@ QtObject {
     readonly property bool closeGapNotifications: notificationConnectedMode && SettingsData.frameCloseGaps
     readonly property string notifBarSide: {
         const pos = SettingsData.notificationPopupPosition;
-        if (pos === -1)
+        if (pos === SettingsData.Position.TopCenter || pos === -1)
             return "top";
         switch (pos) {
         case SettingsData.Position.Top:
@@ -39,6 +39,7 @@ QtObject {
     property int destroyDelayMs: 100
     property bool _chromeSyncPending: false
     property bool _syncingVisibleNotifications: false
+    property bool _repositioning: false
     property var _enterQueue: []
     property var _exitQueue: []
     property real _lastEnterMs: 0
@@ -178,6 +179,20 @@ QtObject {
         return p.layoutHeight + popupSpacing;
     }
 
+    function _applyStackHeightLimits() {
+        const windows = popupWindows.filter(p => _isValidWindow(p) && !p.exiting);
+        if (windows.length === 0)
+            return;
+
+        const viewportHeight = Math.max(0, windows[0].getStackViewportHeight());
+        const gaps = popupSpacing * Math.max(0, windows.length - 1);
+        const maxHeight = Math.max(0, (viewportHeight - gaps) / windows.length);
+        for (const win of windows) {
+            if (Math.abs(win.stackHeightLimit - maxHeight) >= 0.5)
+                win.stackHeightLimit = maxHeight;
+        }
+    }
+
     function _insertAtTop(wrapper) {
         if (!wrapper)
             return;
@@ -268,6 +283,10 @@ QtObject {
     }
 
     function _repositionAll() {
+        if (_repositioning)
+            return;
+        _repositioning = true;
+        _applyStackHeightLimits();
         let currentY = topMargin;
         for (const win of _layoutWindows()) {
             const gap = win.layoutPinned ? Math.max(0, win.screenY - currentY) : 0;
@@ -275,6 +294,7 @@ QtObject {
             win.setStackPosition(position);
             currentY = position + _popupHeight(win);
         }
+        _repositioning = false;
         _scheduleNotificationChromeSync();
     }
 
@@ -355,7 +375,7 @@ QtObject {
 
     function _stackAnchorsTop() {
         const pos = SettingsData.notificationPopupPosition;
-        return pos === -1 || pos === SettingsData.Position.Top || pos === SettingsData.Position.Left;
+        return pos === SettingsData.Position.TopCenter || pos === -1 || pos === SettingsData.Position.Top || pos === SettingsData.Position.Left;
     }
 
     function _frameEdgeInset(side) {
@@ -554,6 +574,22 @@ QtObject {
         destroyingWindows.clear();
         _chromeSyncPending = false;
         _syncNotificationChromeState();
+    }
+
+    property Connections settingsConnections
+
+    settingsConnections: Connections {
+        target: SettingsData
+
+        function onNotificationPopupPositionChanged() {
+            // Layer-shell margins depend on the position setting. Re-run stack
+            // placement after those bindings settle so existing/exiting popup
+            // surfaces cannot remain stranded at the previous edge.
+            Qt.callLater(() => {
+                manager._repositionAll();
+                manager._scheduleNotificationChromeSync();
+            });
+        }
     }
 
     Component.onCompleted: _sync(NotificationService.visibleNotifications)

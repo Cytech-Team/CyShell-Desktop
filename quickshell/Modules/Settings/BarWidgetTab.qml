@@ -46,14 +46,27 @@ Item {
             "showOverflowBadge": "barShowOverflowBadge"
         })
 
+    readonly property var _sharedAppKeys: ({
+            "groupByApp": true,
+            "separatePinnedAndRunningApps": true,
+            "currentWorkspace": true,
+            "restoreSpecialWorkspaceOnClick": true
+        })
+
     readonly property var appStore: ({
             "get": key => {
+                if (root._sharedAppKeys[key])
+                    return SettingsData.appsDockSharedOption(key, root.appDefault(key));
                 if (!root.dockHosted)
                     return root.value(root._barAppKeys[key] ?? key);
                 const config = SettingsData.getDockConfig(root.dockId);
                 return config ? config[key] : DockConfig.create("", "")[key];
             },
             "set": (key, value) => {
+                if (root._sharedAppKeys[key]) {
+                    SettingsData.setAppsDockSharedOption(key, value);
+                    return;
+                }
                 if (!root.dockHosted) {
                     root.set(root._barAppKeys[key] ?? key, value);
                     return;
@@ -66,26 +79,26 @@ Item {
             "resetToDefault": keys => keys.forEach(key => root.appStore.set(key, root.appDefault(key)))
         })
 
+    readonly property var _sharedAppDefaults: ({
+            "groupByApp": true,
+            "separatePinnedAndRunningApps": false,
+            "currentWorkspace": false,
+            "restoreSpecialWorkspaceOnClick": false
+        })
+
     function appDefault(key) {
+        if (_sharedAppKeys[key])
+            return _sharedAppDefaults[key];
         if (dockHosted)
             return DockConfig.create("", "")[key];
         return defaultOption(_barAppKeys[key] ?? key);
     }
 
-    readonly property var _dockAppsDefaults: ({
-            "appsDockHideIndicators": false,
-            "appsDockIconSizePercentage": 100
-        })
-
     function defaultOption(key) {
-        if (dockHosted && widgetType === "appsDock" && key in _dockAppsDefaults)
-            return _dockAppsDefaults[key];
         return SettingsData.widgetDefaults(widgetType)[key];
     }
 
     function value(key) {
-        if (dockHosted && widgetType === "appsDock" && key in _dockAppsDefaults)
-            return entry?.[key] ?? _dockAppsDefaults[key];
         return SettingsData.widgetOption(widgetType, entry, key);
     }
 
@@ -169,7 +182,7 @@ Item {
             height: optionsLoader.status === Loader.Loading ? Theme.iconButtonSize * 2 : 0
             visible: optionsLoader.status === Loader.Loading
 
-            DankSpinner {
+            CySpinner {
                 anchors.centerIn: parent
             }
         }

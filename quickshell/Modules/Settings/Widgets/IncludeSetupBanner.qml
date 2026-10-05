@@ -25,7 +25,7 @@ StyledRect {
         anchors.margins: Theme.spacingL
         spacing: Theme.spacingM
 
-        DankIcon {
+        CyIcon {
             name: "warning"
             size: Theme.iconSize
             color: Theme.primary
@@ -47,7 +47,7 @@ StyledRect {
             }
 
             StyledText {
-                text: root.showLegacy ? I18n.tr("This install is still using hyprland.conf. Run dms setup to migrate before changing these settings.") : I18n.tr("Click 'Setup' to create %1 and add include to your compositor config.").arg(root.include.fragmentLabel)
+                text: root.showLegacy ? I18n.tr("This install is still using hyprland.conf. Run cyshell setup to migrate before changing these settings.") : I18n.tr("Click 'Setup' to create %1 and add include to your compositor config.").arg(root.include.fragmentLabel)
                 font.pixelSize: Theme.fontSizeSmall
                 color: Theme.surfaceVariantText
                 wrapMode: Text.WordWrap
@@ -56,7 +56,7 @@ StyledRect {
             }
         }
 
-        DankButton {
+        CyButton {
             id: fixButton
             visible: root.showSetup
             text: root.include.fixing ? I18n.tr("Setting up...") : I18n.tr("Setup")

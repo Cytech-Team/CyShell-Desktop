@@ -3,7 +3,7 @@ import qs.Common
 import qs.Services
 import qs.Widgets
 
-DankFloatingWindow {
+CyFloatingWindow {
     id: root
 
     readonly property int modalWidth: 680
@@ -43,8 +43,10 @@ DankFloatingWindow {
             }
         }
 
-        DankWindowHeader {
+        CyWindowHeader {
             id: headerRow
+            visible: !root.useServerSideTitlebar
+            height: visible ? implicitHeight : 0
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: parent.top
@@ -52,7 +54,7 @@ DankFloatingWindow {
             onCloseRequested: root.dismiss()
         }
 
-        DankFlickable {
+        CyFlickable {
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: headerRow.bottom
@@ -89,7 +91,7 @@ DankFloatingWindow {
                 anchors.centerIn: parent
                 spacing: Theme.spacingM
 
-                DankButton {
+                CyButton {
                     text: I18n.tr("Open in Browser")
                     iconName: "open_in_new"
                     backgroundColor: Theme.chipSurface
@@ -97,7 +99,7 @@ DankFloatingWindow {
                     onClicked: Qt.openUrlExternally("https://danklinux.com/blog/v1-6-release")
                 }
 
-                DankButton {
+                CyButton {
                     text: I18n.tr("OK")
                     iconName: "check"
                     backgroundColor: Theme.primary

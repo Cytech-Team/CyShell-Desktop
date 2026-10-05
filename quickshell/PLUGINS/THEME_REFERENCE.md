@@ -92,7 +92,7 @@ Theme.foregroundColor(Theme.surfaceContainerHigh, Theme.isFloatingWindow(root))
 
 ### Icon with Text
 ```qml
-DankIcon {
+CyIcon {
     name: "icon_name"
     color: Theme.onSurface
     font.pixelSize: Theme.iconSize

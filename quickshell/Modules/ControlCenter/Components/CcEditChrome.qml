@@ -3,7 +3,7 @@ import qs.Common
 import qs.Widgets
 import qs.Modules.ControlCenter
 
-DankGridEditChrome {
+CyGridEditChrome {
     id: root
 
     property var widgetData: ({})

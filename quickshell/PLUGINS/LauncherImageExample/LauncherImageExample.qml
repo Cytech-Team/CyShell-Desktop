@@ -12,7 +12,7 @@ QtObject {
 
     readonly property var images: [
         {
-            name: "DankDash",
+            name: "CyDash",
             imageUrl: "https://danklinux.com/img/dankdash.png",
             comment: "CyShell Dashboard"
         },
@@ -101,7 +101,7 @@ QtObject {
                 action: () => {
                     const url = item.imageUrl || "";
                     if (url) {
-                        Quickshell.execDetached(["dms", "cl", "copy", url]);
+                        Quickshell.execDetached(["cyshell", "cl", "copy", url]);
                         if (typeof ToastService !== "undefined") {
                             ToastService.showInfo("Copied", url);
                         }

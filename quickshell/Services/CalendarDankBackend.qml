@@ -132,7 +132,7 @@ Item {
         Qt.callLater(() => requestSocket.connected = true);
     }
 
-    DankSocket {
+    CySocket {
         id: requestSocket
         path: root.socketPath
         connected: false
@@ -173,7 +173,7 @@ Item {
         }
     }
 
-    DankSocket {
+    CySocket {
         id: subscribeSocket
         path: root.socketPath
         connected: false

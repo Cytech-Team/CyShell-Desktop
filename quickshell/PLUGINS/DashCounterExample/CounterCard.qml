@@ -26,7 +26,7 @@ DashCardComponent {
         anchors.centerIn: parent
         spacing: Theme.spacingM
 
-        DankIcon {
+        CyIcon {
             anchors.verticalCenter: parent.verticalCenter
             name: "counter_1"
             size: Theme.iconSizeLarge

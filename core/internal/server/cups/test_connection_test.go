@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/pkg/ipp"
 	"github.com/AvengeMedia/dankgo/ipc"
+	"github.com/Cytech-Team/CyShell-Desktop/core/pkg/ipp"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -66,7 +66,7 @@ Scope {
         IdleService.lockPowerOffRequested = false;
     }
 
-    // Avoid startup lock when using dms-greeter (#2952)
+    // Avoid startup lock during a fresh CyShell Greeter login
     function freshGreeterLogin() {
         const authTime = Number(Quickshell.env("DMS_GREETER_AUTH_TIME") || 0);
         if (!authTime)
@@ -81,24 +81,24 @@ Scope {
     }
 
     function notifyLockedHint(locked: bool) {
-        if (!SettingsData.loginctlLockIntegration || !DMSService.isConnected)
+        if (!SettingsData.loginctlLockIntegration || !CyShellService.isConnected)
             return;
-        DMSService.setLockedHint(locked, () => {});
+        CyShellService.setLockedHint(locked, () => {});
     }
 
     function notifyLoginctl(lockAction: bool) {
-        if (!SettingsData.loginctlLockIntegration || !DMSService.isConnected)
+        if (!SettingsData.loginctlLockIntegration || !CyShellService.isConnected)
             return;
         if (lockAction)
-            DMSService.lockSession(() => {});
+            CyShellService.lockSession(() => {});
         else
-            DMSService.unlockSession(() => {});
+            CyShellService.unlockSession(() => {});
     }
 
     function spawnCustomLocker() {
         IdleService.lockPowerOffRequested = false;
         Quickshell.execDetached(["sh", "-c", SettingsData.customPowerActionLock]);
-        // The custom locker manages its own surface; DMS never engages
+        // The custom locker manages its own surface; CyShell never engages
         // WlSessionLock here, so isShellLocked stays false and the fade
         // overlay would never be dismissed. Hand off by dismissing it now.
         IdleService.dismissFadeToLock();

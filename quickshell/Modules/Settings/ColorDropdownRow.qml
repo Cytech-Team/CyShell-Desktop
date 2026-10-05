@@ -146,7 +146,7 @@ Column {
                     border.width: Theme.outlineWidth
                     anchors.verticalCenter: parent.verticalCenter
 
-                    DankIcon {
+                    CyIcon {
                         anchors.centerIn: parent
                         name: "colorize"
                         size: Theme.iconSizeSmall
@@ -178,7 +178,7 @@ Column {
                     }
                 }
 
-                DankIcon {
+                CyIcon {
                     id: editIcon
                     name: "edit"
                     size: Theme.iconSizeSmall

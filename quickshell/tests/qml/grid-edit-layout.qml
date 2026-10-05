@@ -4,7 +4,7 @@ import Quickshell
 import qs.Common
 import qs.Widgets
 import "Common/GridLayout.js" as GridUtils
-import qs.DankCommon.Common as DC
+import qs.CyCommon.Common as DC
 
 ShellRoot {
     Component.onCompleted: {
@@ -19,7 +19,7 @@ ShellRoot {
         implicitWidth: 600
         implicitHeight: 400
 
-        DankEditableGrid {
+        CyEditableGrid {
             id: editGrid
             property bool mirrored: false
             width: 568
@@ -30,7 +30,7 @@ ShellRoot {
             Repeater {
                 id: slots
                 model: editGrid.tileModel
-                DankEditableGridSlot {
+                CyEditableGridSlot {
                     grid: editGrid
                 }
             }

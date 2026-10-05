@@ -27,13 +27,160 @@ Singleton {
     property var colorPickerPopoutLoader: null
     property var systemUpdatePopout: null
     property var systemUpdateLoader: null
-    property var layoutPopout: null
-    property var layoutPopoutLoader: null
     property var clipboardHistoryPopout: null
     property var clipboardHistoryPopoutLoader: null
 
     property var settingsModal: null
     property var settingsModalLoader: null
+    readonly property string uiRole: Quickshell.env("CYSHELL_UI_ROLE") || ""
+    readonly property bool transientUiOwner: uiRole === "" || uiRole === "shell"
+    readonly property bool externalSettingsProcess: uiRole !== "settings" && (uiRole.length > 0 || Quickshell.env("CYSHELL_EXTERNAL_SETTINGS") === "1")
+
+    function _externalSettingsCall(method, args) {
+        if (!externalSettingsProcess)
+            return false;
+        const command = ["cyshell", "settings", method];
+        for (const arg of (args || []))
+            command.push(String(arg));
+        Quickshell.execDetached(command);
+        return true;
+    }
+
+    function _externalShellCall(target, method, args) {
+        if (transientUiOwner)
+            return false;
+        const command = ["cyshell", "ipc", "call", target, method];
+        for (const arg of (args || []))
+            command.push(String(arg));
+        Quickshell.execDetached(command);
+        return true;
+    }
+
+    function transientUiPayload(x, y, width, section, screen, triggerSource, tab, mode, islandActivity, barPosition, barThickness, barSpacing, barConfig) {
+        const anchorX = Number(x);
+        const anchorY = Number(y);
+        const anchorWidth = Number(width);
+        const edge = Number(barPosition);
+        const thickness = Number(barThickness);
+        const spacing = Number(barSpacing);
+        const hasAnchor = screen?.name
+            && Number.isFinite(anchorX)
+            && Number.isFinite(anchorY)
+            && Number.isFinite(anchorWidth)
+            && anchorWidth > 0;
+        return JSON.stringify({
+            kind: "cyshell-transient-ui-anchor",
+            x: hasAnchor ? anchorX : null,
+            y: hasAnchor ? anchorY : null,
+            width: hasAnchor ? anchorWidth : null,
+            section: String(section || "center"),
+            screen: String(screen?.name || ""),
+            triggerSource: String(triggerSource || ""),
+            tab: String(tab || ""),
+            mode: mode === "hover" ? "hover" : "click",
+            islandActivity: String(islandActivity || ""),
+            barPosition: Number.isFinite(edge) ? edge : null,
+            barThickness: Number.isFinite(thickness) ? thickness : null,
+            barSpacing: Number.isFinite(spacing) ? spacing : null,
+            barConfig: barConfig || null
+        });
+    }
+
+    function _resolveDirectCallerAnchor(x, y, width, section, screen) {
+        const expectedX = Number(x);
+        const expectedY = Number(y);
+        const expectedWidth = Number(width);
+        const targetScreenName = String(screen?.name || "");
+        const targetSection = String(section || "center");
+        if (!targetScreenName || !Number.isFinite(expectedX) || !Number.isFinite(expectedY) || !Number.isFinite(expectedWidth) || expectedWidth <= 0)
+            return { anchor: null, matchCount: 0 };
+
+        const matches = [];
+        for (const registration of Object.values(BarWidgetService.widgetRegistry || {})) {
+            if (registration?.screenName !== targetScreenName || !BarWidgetService.registrationActive(registration))
+                continue;
+            const item = registration.item;
+            if (typeof item?.pillAnchor !== "function")
+                continue;
+
+            let anchor = null;
+            try {
+                anchor = item.pillAnchor();
+            } catch (error) {
+                continue;
+            }
+            const trigger = anchor?.trigger;
+            if (anchor?.screen?.name !== targetScreenName || String(anchor.section || item.section || "center") !== targetSection)
+                continue;
+            if (!Number.isFinite(anchor.position) || !Number.isFinite(anchor.thickness) || !Number.isFinite(anchor.spacing) || !anchor.config || typeof anchor.config !== "object")
+                continue;
+            if (!Number.isFinite(Number(trigger?.x)) || !Number.isFinite(Number(trigger?.y)) || !Number.isFinite(Number(trigger?.width)))
+                continue;
+            if (Math.abs(Number(trigger?.x) - expectedX) > 0.5 || Math.abs(Number(trigger?.y) - expectedY) > 0.5 || Math.abs(Number(trigger?.width) - expectedWidth) > 0.5)
+                continue;
+            matches.push(anchor);
+        }
+
+        return { anchor: matches.length === 1 ? matches[0] : null, matchCount: matches.length };
+    }
+
+    function _directCallerBarConfig(config) {
+        if (!config || typeof config !== "object")
+            return null;
+        const anchoredConfig = Object.assign({}, config);
+        // The caller already supplied the final trigger geometry. Prevent
+        // CyPopout from replacing it with a natural/expanded anchor after IPC
+        // or after this direct helper has selected the exact caller bar.
+        anchoredConfig.widgetExpansion = "none";
+        return anchoredConfig;
+    }
+
+    function _setDirectCallerPosition(popout, x, y, width, section, screen) {
+        const expectedX = Number(x);
+        const expectedY = Number(y);
+        const expectedWidth = Number(width);
+        const hasCallerGeometry = !!screen?.name && Number.isFinite(expectedX) && Number.isFinite(expectedY) && Number.isFinite(expectedWidth) && expectedWidth > 0;
+        const resolved = _resolveDirectCallerAnchor(x, y, width, section, screen);
+        if (hasCallerGeometry && !resolved.anchor)
+            return false;
+        if (resolved.anchor) {
+            setPosition(popout, x, y, width, section, screen, resolved.anchor.position, resolved.anchor.thickness, resolved.anchor.spacing, _directCallerBarConfig(resolved.anchor.config));
+            return true;
+        }
+        const fallback = screen ? BarWidgetService.naturalPopoutAnchor(screen, null, section || "center") : null;
+        if (!fallback?.trigger)
+            return false;
+        setPosition(popout, fallback.trigger.x, fallback.trigger.y, fallback.trigger.width, fallback.section || section || "center", screen, fallback.position, fallback.thickness, fallback.spacing, _directCallerBarConfig(fallback.config));
+        return true;
+    }
+
+    function _externalAnchoredTransientUiCall(surface, action, x, y, width, section, screen, triggerSource, tab, mode, islandActivity) {
+        const expectedX = Number(x);
+        const expectedY = Number(y);
+        const expectedWidth = Number(width);
+        const hasCallerGeometry = !!screen?.name && Number.isFinite(expectedX) && Number.isFinite(expectedY) && Number.isFinite(expectedWidth) && expectedWidth > 0;
+        const resolved = _resolveDirectCallerAnchor(x, y, width, section, screen);
+        if (hasCallerGeometry && !resolved.anchor)
+            return false;
+        const callerBar = resolved.anchor;
+        const remoteBarConfig = _directCallerBarConfig(callerBar?.config);
+        const payload = transientUiPayload(
+            hasCallerGeometry ? x : null,
+            hasCallerGeometry ? y : null,
+            hasCallerGeometry ? width : null,
+            section,
+            screen,
+            triggerSource,
+            tab,
+            mode,
+            islandActivity,
+            callerBar?.position,
+            callerBar?.thickness,
+            callerBar?.spacing,
+            remoteBarConfig
+        );
+        return _externalShellCall("transient-ui", "invoke", [surface, action, payload]);
+    }
     property var clipboardHistoryModal: null
     property var dankLauncherV2Modal: null
     property var dankLauncherV2ModalLoader: null
@@ -65,7 +212,6 @@ Singleton {
     property var bluetoothPairingModal: null
     property var bluetoothPairingModalLoader: null
     property var networkInfoModal: null
-    property var windowRuleModalLoader: null
     property var powerProfileModal: null
     property var powerProfileModalLoader: null
 
@@ -132,15 +278,117 @@ Singleton {
             "powerMenuPopout": () => _unloadPopoutNow("powerMenuPopout", "powerMenuPopoutLoader"),
             "duration": () => _unloadPopoutNow("durationPopout", "durationPopoutLoader"),
             "systemUpdate": () => _unloadPopoutNow("systemUpdatePopout", "systemUpdateLoader"),
-            "layout": () => _unloadPopoutNow("layoutPopout", "layoutPopoutLoader"),
             "clipboardHistory": () => _unloadPopoutNow("clipboardHistoryPopout", "clipboardHistoryPopoutLoader"),
             "settings": () => unloadSettingsNow()
         })
 
-    function setPosition(popout, x, y, width, section, screen) {
+    function setPosition(popout, x, y, width, section, screen, barPosition, barThickness, barSpacing, barConfig) {
         if (popout && popout.setTriggerPosition && arguments.length >= 6) {
-            popout.setTriggerPosition(x, y, width, section, screen);
+            if (screen && "triggerScreen" in popout)
+                popout.triggerScreen = screen;
+            if (arguments.length >= 7)
+                popout.setTriggerPosition(x, y, width, section, screen, barPosition, barThickness, barSpacing, barConfig);
+            else
+                popout.setTriggerPosition(x, y, width, section, screen);
         }
+    }
+
+    function _withLazyPopout(popoutName, loaderName, action) {
+        const current = root[popoutName];
+        if (current) {
+            action(current);
+            return true;
+        }
+        const loader = root[loaderName];
+        if (!loader)
+            return false;
+        loader.active = true;
+        Qt.callLater(() => {
+            const loaded = root[popoutName] ?? loader.item;
+            if (loaded)
+                action(loaded);
+        });
+        return true;
+    }
+
+    function invokeRemoteWidgetPopout(surface, action, triggerSource, x, y, width, section, screen, mode, tab, islandActivity, barPosition, barThickness, barSpacing, barConfig) {
+        let popoutName;
+        let loaderName;
+        if (surface === "controlCenter") {
+            popoutName = "controlCenterPopout";
+            loaderName = "controlCenterLoader";
+            triggerSource = triggerSource || "controlCenter";
+            islandActivity = "controlcenter";
+        } else if (surface === "notificationCenter") {
+            popoutName = "notificationCenterPopout";
+            loaderName = "notificationCenterLoader";
+            triggerSource = triggerSource || "notifications";
+            islandActivity = "notificationcenter";
+        } else if (surface === "battery") {
+            popoutName = "batteryPopout";
+            loaderName = "batteryPopoutLoader";
+            triggerSource = triggerSource || "battery";
+        } else if (surface === "vpn") {
+            popoutName = "vpnPopout";
+            loaderName = "vpnPopoutLoader";
+            triggerSource = triggerSource || "vpn";
+        } else if (surface === "systemUpdate") {
+            popoutName = "systemUpdatePopout";
+            loaderName = "systemUpdateLoader";
+            triggerSource = triggerSource || "systemUpdate";
+        } else if (surface === "duration") {
+            if (triggerSource !== "dndDuration" && triggerSource !== "idleInhibit")
+                return false;
+            popoutName = "durationPopout";
+            loaderName = "durationPopoutLoader";
+        } else if (surface === "colorPicker") {
+            popoutName = "colorPickerPopout";
+            loaderName = "colorPickerPopoutLoader";
+            triggerSource = "colorPicker";
+        } else if (surface === "dash") {
+            popoutName = "dankDashPopout";
+            loaderName = "dankDashPopoutLoader";
+            triggerSource = triggerSource || `dash-${tab || "home"}`;
+        } else {
+            return false;
+        }
+
+        const routedIslandActivity = surface === "dash" ? "" : islandActivity;
+        if (action === "close") {
+            if (routedIslandActivity && closeIslandActivity(routedIslandActivity))
+                return true;
+            if (surface === "dash") {
+                closeCyDash();
+                return true;
+            }
+            root[popoutName]?.close();
+            return true;
+        }
+        if ((action !== "open" && action !== "toggle") || !screen)
+            return false;
+
+        if (routedIslandActivity && routeToIsland(routedIslandActivity, screen, action === "toggle", section, barConfig?.id))
+            return true;
+
+        return _withLazyPopout(popoutName, loaderName, popout => {
+            setPosition(popout, x, y, width, section, screen, barPosition, barThickness, barSpacing, barConfig);
+            if (surface === "dash") {
+                popout.requestTab(tab || "home");
+                if (action === "toggle" && popout.dashVisible) {
+                    popout.dashVisible = false;
+                    return;
+                }
+                popout.dashVisible = true;
+            }
+            if (typeof popout.prepareForTrigger === "function")
+                popout.prepareForTrigger(triggerSource, mode);
+            if (action === "open" && mode === "hover")
+                PopoutManager.requestHoverPopout(popout, undefined, triggerSource);
+            else if (action === "open")
+                popout.open();
+            else
+                PopoutManager.requestPopout(popout, undefined, triggerSource);
+        });
     }
 
     function _islandOwnsSharedTrigger(screen) {
@@ -167,15 +415,21 @@ Singleton {
     }
 
     function openControlCenter(x, y, width, section, screen) {
-        if (routeToIsland("controlcenter", screen, false, section))
+        if (_externalAnchoredTransientUiCall("controlCenter", "open", x, y, width, section, screen, "controlCenter", "", "click", "controlcenter"))
             return;
-        if (controlCenterPopout) {
-            setPosition(controlCenterPopout, x, y, width, section, screen);
-            controlCenterPopout.open();
-        }
+        const callerBarId = _resolveDirectCallerAnchor(x, y, width, section, screen).anchor?.config?.id;
+        if (routeToIsland("controlcenter", screen, false, section, callerBarId))
+            return;
+        _withLazyPopout("controlCenterPopout", "controlCenterLoader", popout => {
+            if (!_setDirectCallerPosition(popout, x, y, width, section, screen))
+                return;
+            popout.open();
+        });
     }
 
     function closeControlCenter() {
+        if (_externalShellCall("transient-ui", "invoke", ["controlCenter", "close", ""]))
+            return;
         if (closeIslandActivity("controlcenter"))
             return;
         controlCenterPopout?.close();
@@ -186,24 +440,34 @@ Singleton {
     }
 
     function toggleControlCenter(x, y, width, section, screen) {
-        if (routeToIsland("controlcenter", screen, true, section))
+        if (_externalAnchoredTransientUiCall("controlCenter", "toggle", x, y, width, section, screen, "controlCenter", "", "click", "controlcenter"))
             return;
-        if (controlCenterPopout) {
-            setPosition(controlCenterPopout, x, y, width, section, screen);
-            controlCenterPopout.toggle();
-        }
+        const callerBarId = _resolveDirectCallerAnchor(x, y, width, section, screen).anchor?.config?.id;
+        if (routeToIsland("controlcenter", screen, true, section, callerBarId))
+            return;
+        _withLazyPopout("controlCenterPopout", "controlCenterLoader", popout => {
+            if (!_setDirectCallerPosition(popout, x, y, width, section, screen))
+                return;
+            popout.toggle();
+        });
     }
 
     function openNotificationCenter(x, y, width, section, screen) {
-        if (routeToIsland("notificationcenter", screen, false))
+        if (_externalAnchoredTransientUiCall("notificationCenter", "open", x, y, width, section, screen, "notifications", "", "click", "notificationcenter"))
             return;
-        if (notificationCenterPopout) {
-            setPosition(notificationCenterPopout, x, y, width, section, screen);
-            notificationCenterPopout.open();
-        }
+        const callerBarId = _resolveDirectCallerAnchor(x, y, width, section, screen).anchor?.config?.id;
+        if (routeToIsland("notificationcenter", screen, false, section, callerBarId))
+            return;
+        _withLazyPopout("notificationCenterPopout", "notificationCenterLoader", popout => {
+            if (!_setDirectCallerPosition(popout, x, y, width, section, screen))
+                return;
+            popout.open();
+        });
     }
 
     function closeNotificationCenter() {
+        if (_externalShellCall("transient-ui", "invoke", ["notificationCenter", "close", ""]))
+            return;
         if (closeIslandActivity("notificationcenter"))
             return;
         notificationCenterPopout?.close();
@@ -214,12 +478,16 @@ Singleton {
     }
 
     function toggleNotificationCenter(x, y, width, section, screen) {
-        if (routeToIsland("notificationcenter", screen, true))
+        if (_externalAnchoredTransientUiCall("notificationCenter", "toggle", x, y, width, section, screen, "notifications", "", "click", "notificationcenter"))
             return;
-        if (notificationCenterPopout) {
-            setPosition(notificationCenterPopout, x, y, width, section, screen);
-            notificationCenterPopout.toggle();
-        }
+        const callerBarId = _resolveDirectCallerAnchor(x, y, width, section, screen).anchor?.config?.id;
+        if (routeToIsland("notificationcenter", screen, true, section, callerBarId))
+            return;
+        _withLazyPopout("notificationCenterPopout", "notificationCenterLoader", popout => {
+            if (!_setDirectCallerPosition(popout, x, y, width, section, screen))
+                return;
+            popout.toggle();
+        });
     }
 
     function openAppDrawer(x, y, width, section, screen) {
@@ -277,7 +545,7 @@ Singleton {
     property var _dankDashPendingScreen: null
     property bool _dankDashHasPosition: false
 
-    function _storeDankDashPosition(x, y, width, section, screen, hasPos) {
+    function _storeCyDashPosition(x, y, width, section, screen, hasPos) {
         _dankDashPendingX = x;
         _dankDashPendingY = y;
         _dankDashPendingWidth = width;
@@ -286,7 +554,9 @@ Singleton {
         _dankDashHasPosition = hasPos;
     }
 
-    function openDankDash(tab, x, y, width, section, screen) {
+    function openCyDash(tab, x, y, width, section, screen) {
+        if (_externalShellCall("dash", "open", [tab || "home"]))
+            return;
         _dankDashWantsEdit = false;
         _dankDashPendingTab = tab || 0;
         if (dankDashPopout) {
@@ -298,19 +568,23 @@ Singleton {
         }
         if (!dankDashPopoutLoader)
             return;
-        _storeDankDashPosition(x, y, width, section, screen, arguments.length >= 6);
+        _storeCyDashPosition(x, y, width, section, screen, arguments.length >= 6);
         _dankDashWantsOpen = true;
         _dankDashWantsToggle = false;
         dankDashPopoutLoader.active = true;
     }
 
-    function closeDankDash() {
+    function closeCyDash() {
+        if (_externalShellCall("dash", "close", []))
+            return;
         _dankDashWantsEdit = false;
         if (dankDashPopout)
             dankDashPopout.dashVisible = false;
     }
 
-    function toggleDankDash(tab, x, y, width, section, screen) {
+    function toggleCyDash(tab, x, y, width, section, screen) {
+        if (_externalShellCall("dash", "toggle", [tab || "home"]))
+            return;
         _dankDashWantsEdit = false;
         _dankDashPendingTab = tab || 0;
         if (dankDashPopout) {
@@ -326,18 +600,18 @@ Singleton {
         }
         if (!dankDashPopoutLoader)
             return;
-        _storeDankDashPosition(x, y, width, section, screen, arguments.length >= 6);
+        _storeCyDashPosition(x, y, width, section, screen, arguments.length >= 6);
         _dankDashWantsToggle = true;
         _dankDashWantsOpen = false;
         dankDashPopoutLoader.active = true;
     }
 
-    function _onDankDashPopoutLoaded() {
+    function _onCyDashPopoutLoaded() {
         if (!dankDashPopout)
             return;
 
         if (_dankDashWantsEdit) {
-            _showDankDashEditor();
+            _showCyDashEditor();
             return;
         }
 
@@ -361,7 +635,7 @@ Singleton {
         }
     }
 
-    function openDankDashEditor(tab, screen) {
+    function openCyDashEditor(tab, screen) {
         const target = screen ?? Quickshell.screens.find(candidate => candidate.name === CompositorService.getFocusedScreenName()) ?? Quickshell.screens[0];
         if (!target || (!dankDashPopout && !dankDashPopoutLoader))
             return;
@@ -373,13 +647,13 @@ Singleton {
         _dankDashWantsToggle = false;
         _dankDashWantsEdit = true;
         if (dankDashPopout) {
-            _showDankDashEditor();
+            _showCyDashEditor();
             return;
         }
         dankDashPopoutLoader.active = true;
     }
 
-    function _showDankDashEditor() {
+    function _showCyDashEditor() {
         _dankDashWantsEdit = false;
         const target = _dankDashPendingScreen;
         const anchor = BarWidgetService.naturalPopoutAnchor(target, null, "center");
@@ -390,13 +664,18 @@ Singleton {
     }
 
     function openBattery(x, y, width, section, screen) {
-        if (batteryPopout) {
-            setPosition(batteryPopout, x, y, width, section, screen);
-            batteryPopout.open();
-        }
+        if (_externalAnchoredTransientUiCall("battery", "open", x, y, width, section, screen, "battery", "", "click"))
+            return;
+        _withLazyPopout("batteryPopout", "batteryPopoutLoader", popout => {
+            if (!_setDirectCallerPosition(popout, x, y, width, section, screen))
+                return;
+            popout.open();
+        });
     }
 
     function closeBattery() {
+        if (_externalShellCall("transient-ui", "invoke", ["battery", "close", ""]))
+            return;
         batteryPopout?.close();
     }
 
@@ -405,20 +684,28 @@ Singleton {
     }
 
     function toggleBattery(x, y, width, section, screen) {
-        if (batteryPopout) {
-            setPosition(batteryPopout, x, y, width, section, screen);
-            batteryPopout.toggle();
-        }
+        if (_externalAnchoredTransientUiCall("battery", "toggle", x, y, width, section, screen, "battery", "", "click"))
+            return;
+        _withLazyPopout("batteryPopout", "batteryPopoutLoader", popout => {
+            if (!_setDirectCallerPosition(popout, x, y, width, section, screen))
+                return;
+            popout.toggle();
+        });
     }
 
     function openVpn(x, y, width, section, screen) {
-        if (vpnPopout) {
-            setPosition(vpnPopout, x, y, width, section, screen);
-            vpnPopout.open();
-        }
+        if (_externalAnchoredTransientUiCall("vpn", "open", x, y, width, section, screen, "vpn", "", "click"))
+            return;
+        _withLazyPopout("vpnPopout", "vpnPopoutLoader", popout => {
+            if (!_setDirectCallerPosition(popout, x, y, width, section, screen))
+                return;
+            popout.open();
+        });
     }
 
     function closeVpn() {
+        if (_externalShellCall("transient-ui", "invoke", ["vpn", "close", ""]))
+            return;
         vpnPopout?.close();
     }
 
@@ -427,21 +714,28 @@ Singleton {
     }
 
     function toggleVpn(x, y, width, section, screen) {
-        if (vpnPopout) {
-            setPosition(vpnPopout, x, y, width, section, screen);
-            vpnPopout.toggle();
-        }
+        if (_externalAnchoredTransientUiCall("vpn", "toggle", x, y, width, section, screen, "vpn", "", "click"))
+            return;
+        _withLazyPopout("vpnPopout", "vpnPopoutLoader", popout => {
+            if (!_setDirectCallerPosition(popout, x, y, width, section, screen))
+                return;
+            popout.toggle();
+        });
     }
 
     function openSystemUpdate(x, y, width, section, screen) {
-        if (systemUpdatePopout) {
-            if (arguments.length >= 5)
-                setPosition(systemUpdatePopout, x, y, width, section, screen);
-            systemUpdatePopout.open();
-        }
+        if (_externalAnchoredTransientUiCall("systemUpdate", "open", x, y, width, section, screen, "systemUpdate", "", "click"))
+            return;
+        _withLazyPopout("systemUpdatePopout", "systemUpdateLoader", popout => {
+            if (!_setDirectCallerPosition(popout, x, y, width, section, screen))
+                return;
+            popout.open();
+        });
     }
 
     function closeSystemUpdate() {
+        if (_externalShellCall("transient-ui", "invoke", ["systemUpdate", "close", ""]))
+            return;
         systemUpdatePopout?.close();
     }
 
@@ -450,11 +744,13 @@ Singleton {
     }
 
     function toggleSystemUpdate(x, y, width, section, screen) {
-        if (systemUpdatePopout) {
-            if (arguments.length >= 5)
-                setPosition(systemUpdatePopout, x, y, width, section, screen);
-            systemUpdatePopout.toggle();
-        }
+        if (_externalAnchoredTransientUiCall("systemUpdate", "toggle", x, y, width, section, screen, "systemUpdate", "", "click"))
+            return;
+        _withLazyPopout("systemUpdatePopout", "systemUpdateLoader", popout => {
+            if (!_setDirectCallerPosition(popout, x, y, width, section, screen))
+                return;
+            popout.toggle();
+        });
     }
 
     property bool _settingsWantsOpen: false
@@ -492,6 +788,8 @@ Singleton {
     }
 
     function openSettings() {
+        if (_externalSettingsCall("open"))
+            return;
         if (settingsModal) {
             if (_settingsWindowDead()) {
                 _rebuildDeadSettings();
@@ -530,6 +828,8 @@ Singleton {
     }
 
     function openSettingsWithTab(tabName: string, returnOrigin, reopen) {
+        if (!returnOrigin && !reopen && _externalSettingsCall("openWithTab", [tabName]))
+            return;
         _settingsReturnOrigin = returnOrigin ?? null;
         _settingsReturnReopen = reopen ?? null;
         if (settingsModal) {
@@ -550,6 +850,8 @@ Singleton {
     }
 
     function openSettingsWithTabIndex(tabIndex: int) {
+        if (_externalSettingsCall("openWithTabIndex", [tabIndex]))
+            return;
         if (settingsModal) {
             if (_settingsWindowDead()) {
                 _settingsPendingTabIndex = tabIndex;
@@ -568,10 +870,14 @@ Singleton {
     }
 
     function closeSettings() {
+        if (_externalSettingsCall("close"))
+            return;
         settingsModal?.hide();
     }
 
     function toggleSettings() {
+        if (_externalSettingsCall("toggle"))
+            return;
         if (settingsModal) {
             settingsModal.toggle();
         } else if (settingsModalLoader) {
@@ -582,6 +888,8 @@ Singleton {
     }
 
     function toggleSettingsWithTab(tabName: string) {
+        if (_externalSettingsCall("toggleWithTab", [tabName]))
+            return;
         if (settingsModal) {
             settingsModal.setPageName(tabName);
             settingsModal.toggle();
@@ -596,6 +904,8 @@ Singleton {
     }
 
     function focusOrToggleSettings() {
+        if (_externalSettingsCall("focusOrToggle"))
+            return;
         if (settingsModal?.visible) {
             const settingsTitle = I18n.tr("Settings", "settings window title");
             for (const toplevel of ToplevelManager.toplevels.values) {
@@ -613,6 +923,8 @@ Singleton {
     }
 
     function focusOrToggleSettingsWithTab(tabName: string) {
+        if (_externalSettingsCall("focusOrToggleWithTab", [tabName]))
+            return;
         if (settingsModal?.visible) {
             const settingsTitle = I18n.tr("Settings", "settings window title");
             for (const toplevel of ToplevelManager.toplevels.values) {
@@ -690,24 +1002,24 @@ Singleton {
     property bool _dankLauncherV2TriggerUsesOverlayLayer: false
     property bool _dankLauncherV2EdgeHoverManaged: false
 
-    function _setDankLauncherV2TriggerUsesOverlayLayer(value) {
+    function _setCyLauncherV2TriggerUsesOverlayLayer(value) {
         _dankLauncherV2TriggerUsesOverlayLayer = value === true;
         // Disable edge-hover by default on every open/toggle path unless explicitly enabled.
-        _setDankLauncherV2EdgeHoverManaged(false);
+        _setCyLauncherV2EdgeHoverManaged(false);
         if (dankLauncherV2Modal)
             dankLauncherV2Modal.triggerUsesOverlayLayer = _dankLauncherV2TriggerUsesOverlayLayer;
     }
 
     // Set edgeHoverManaged to enable hover retraction for edge-hover triggered launcher sessions.
-    function _setDankLauncherV2EdgeHoverManaged(value) {
+    function _setCyLauncherV2EdgeHoverManaged(value) {
         _dankLauncherV2EdgeHoverManaged = value === true;
         if (dankLauncherV2Modal)
             dankLauncherV2Modal.edgeHoverManaged = _dankLauncherV2EdgeHoverManaged;
     }
 
-    function openDankLauncherV2(triggerUsesOverlayLayer, edgeHoverManaged) {
-        _setDankLauncherV2TriggerUsesOverlayLayer(triggerUsesOverlayLayer);
-        _setDankLauncherV2EdgeHoverManaged(edgeHoverManaged);
+    function openCyLauncherV2(triggerUsesOverlayLayer, edgeHoverManaged) {
+        _setCyLauncherV2TriggerUsesOverlayLayer(triggerUsesOverlayLayer);
+        _setCyLauncherV2EdgeHoverManaged(edgeHoverManaged);
         if (dankLauncherV2Modal) {
             dankLauncherV2Modal.show();
         } else if (dankLauncherV2ModalLoader) {
@@ -717,8 +1029,8 @@ Singleton {
         }
     }
 
-    function openDankLauncherV2WithQuery(query: string, triggerUsesOverlayLayer) {
-        _setDankLauncherV2TriggerUsesOverlayLayer(triggerUsesOverlayLayer);
+    function openCyLauncherV2WithQuery(query: string, triggerUsesOverlayLayer) {
+        _setCyLauncherV2TriggerUsesOverlayLayer(triggerUsesOverlayLayer);
         if (dankLauncherV2Modal) {
             dankLauncherV2Modal.showWithQuery(query);
         } else if (dankLauncherV2ModalLoader) {
@@ -729,8 +1041,8 @@ Singleton {
         }
     }
 
-    function openDankLauncherV2WithMode(mode: string, triggerUsesOverlayLayer) {
-        _setDankLauncherV2TriggerUsesOverlayLayer(triggerUsesOverlayLayer);
+    function openCyLauncherV2WithMode(mode: string, triggerUsesOverlayLayer) {
+        _setCyLauncherV2TriggerUsesOverlayLayer(triggerUsesOverlayLayer);
         if (dankLauncherV2Modal) {
             dankLauncherV2Modal.showWithMode(mode);
         } else if (dankLauncherV2ModalLoader) {
@@ -741,19 +1053,19 @@ Singleton {
         }
     }
 
-    function closeDankLauncherV2() {
+    function closeCyLauncherV2() {
         dankLauncherV2Modal?.hide();
     }
 
-    function unloadDankLauncherV2() {
+    function unloadCyLauncherV2() {
         if (dankLauncherV2ModalLoader) {
             dankLauncherV2Modal = null;
             dankLauncherV2ModalLoader.active = false;
         }
     }
 
-    function toggleDankLauncherV2(triggerUsesOverlayLayer) {
-        _setDankLauncherV2TriggerUsesOverlayLayer(triggerUsesOverlayLayer);
+    function toggleCyLauncherV2(triggerUsesOverlayLayer) {
+        _setCyLauncherV2TriggerUsesOverlayLayer(triggerUsesOverlayLayer);
         if (dankLauncherV2Modal) {
             dankLauncherV2Modal.toggle();
         } else if (dankLauncherV2ModalLoader) {
@@ -763,8 +1075,8 @@ Singleton {
         }
     }
 
-    function toggleDankLauncherV2WithMode(mode: string, triggerUsesOverlayLayer) {
-        _setDankLauncherV2TriggerUsesOverlayLayer(triggerUsesOverlayLayer);
+    function toggleCyLauncherV2WithMode(mode: string, triggerUsesOverlayLayer) {
+        _setCyLauncherV2TriggerUsesOverlayLayer(triggerUsesOverlayLayer);
         if (dankLauncherV2Modal) {
             dankLauncherV2Modal.toggleWithMode(mode);
         } else if (dankLauncherV2ModalLoader) {
@@ -775,8 +1087,8 @@ Singleton {
         }
     }
 
-    function toggleDankLauncherV2WithQuery(query: string, triggerUsesOverlayLayer) {
-        _setDankLauncherV2TriggerUsesOverlayLayer(triggerUsesOverlayLayer);
+    function toggleCyLauncherV2WithQuery(query: string, triggerUsesOverlayLayer) {
+        _setCyLauncherV2TriggerUsesOverlayLayer(triggerUsesOverlayLayer);
         if (dankLauncherV2Modal) {
             dankLauncherV2Modal.toggleWithQuery(query);
         } else if (dankLauncherV2ModalLoader) {
@@ -787,7 +1099,7 @@ Singleton {
         }
     }
 
-    function _onDankLauncherV2ModalLoaded() {
+    function _onCyLauncherV2ModalLoaded() {
         if (dankLauncherV2Modal) {
             dankLauncherV2Modal.triggerUsesOverlayLayer = _dankLauncherV2TriggerUsesOverlayLayer;
             dankLauncherV2Modal.edgeHoverManaged = _dankLauncherV2EdgeHoverManaged;
@@ -968,6 +1280,8 @@ Singleton {
 
 
     function showAgentApproval() {
+        if (_externalShellCall("agent-control", "reviewPermissions"))
+            return;
         if (agentApprovalModal) {
             agentApprovalModal.show();
         } else if (agentApprovalModalLoader) {
@@ -988,6 +1302,8 @@ Singleton {
     }
 
     function showAgentAssistant() {
+        if (_externalShellCall("assistant", "open"))
+            return;
         if (agentAssistantModal) {
             agentAssistantModal.show();
         } else if (agentAssistantModalLoader) {
@@ -1001,6 +1317,8 @@ Singleton {
     }
 
     function toggleAgentAssistant() {
+        if (_externalShellCall("assistant", "toggle"))
+            return;
         if (agentAssistantModal) {
             agentAssistantModal.toggle();
         } else if (agentAssistantModalLoader) {
@@ -1191,6 +1509,8 @@ Singleton {
     }
 
     function openNotepad() {
+        if (_externalShellCall("notepad", "open"))
+            return;
         if (notepadResolvedMode === "popout") {
             openNotepadPopout();
             return;
@@ -1199,6 +1519,8 @@ Singleton {
     }
 
     function closeNotepad() {
+        if (_externalShellCall("notepad", "close"))
+            return;
         if (notepadResolvedMode === "popout") {
             notepadPopout?.hide();
             return;
@@ -1209,6 +1531,8 @@ Singleton {
     }
 
     function toggleNotepad() {
+        if (_externalShellCall("notepad", "toggle"))
+            return;
         if (notepadResolvedMode === "popout") {
             toggleNotepadPopout();
             return;
@@ -1224,6 +1548,8 @@ Singleton {
     property string _notepadPendingOpenFilePath: ""
 
     function openNotepadPopout() {
+        if (_externalShellCall("notepad", "open"))
+            return;
         SessionData.setNotepadLastMode("popout");
         closeNotepadSlideouts();
         if (notepadPopout) {
@@ -1235,6 +1561,8 @@ Singleton {
     }
 
     function openNotepadPopoutWithFile(path) {
+        if (_externalShellCall("notepad", "openFile", [path]))
+            return;
         closeNotepadSlideouts();
         if (notepadPopout) {
             notepadPopout.show();
@@ -1259,6 +1587,8 @@ Singleton {
     }
 
     function toggleNotepadPopout() {
+        if (_externalShellCall("notepad", "toggle"))
+            return;
         if (notepadPopout) {
             if (!notepadPopout.visible)
                 closeNotepadSlideouts();

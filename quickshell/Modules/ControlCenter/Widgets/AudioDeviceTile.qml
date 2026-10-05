@@ -34,7 +34,7 @@ CcTile {
     enabled: widgetDef?.enabled ?? true
     tallContent: Component {
         Item {
-            DankRingGauge {
+            CyRingGauge {
                 anchors.left: parent.left
                 anchors.verticalCenter: parent.verticalCenter
                 width: Math.min(parent.width, parent.height)

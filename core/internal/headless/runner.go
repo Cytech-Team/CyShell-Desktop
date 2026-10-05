@@ -6,11 +6,11 @@ import (
 	"os"
 	"strings"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/config"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/deps"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/distros"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/privesc"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/utils"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/config"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/deps"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/distros"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/privesc"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/utils"
 )
 
 // ErrConfirmationRequired is returned when --yes is not set and the user
@@ -237,7 +237,7 @@ func (r *Runner) Run() error {
 
 	// 9. Greeter setup (if dms-greeter was included)
 	if !disabledItems["dms-greeter"] && r.depExists(dependencies, "dms-greeter") {
-		fmt.Fprintln(os.Stdout, "Configuring DMS greeter...")
+		fmt.Fprintln(os.Stdout, "Configuring legacy DMS greeter...")
 		logFunc := func(line string) {
 			r.log(line)
 			fmt.Fprintf(os.Stdout, "  greeter: %s\n", line)
@@ -365,8 +365,8 @@ func (r *Runner) applyGitVariants(dependencies []deps.Dependency, hasGitVariant 
 }
 
 func findDepFold(dependencies []deps.Dependency, lowerName string) *deps.Dependency {
-	if lowerName == "dms" {
-		lowerName = "dms (dankmaterialshell)"
+	if lowerName == "dms" || lowerName == "cyshell" || lowerName == "cyshell desktop" {
+		lowerName = "cyshell"
 	}
 	for i := range dependencies {
 		if strings.ToLower(dependencies[i].Name) == lowerName {
@@ -431,8 +431,8 @@ func (r *Runner) buildDisabledItems(dependencies []deps.Dependency) (map[string]
 		if !r.depExists(dependencies, name) {
 			return nil, fmt.Errorf("--exclude-deps: unknown dependency %q", name)
 		}
-		// Don't allow excluding DMS itself
-		if name == "dms (DankMaterialShell)" {
+		// Do not allow excluding CyShell itself
+		if strings.EqualFold(name, "CyShell") || strings.EqualFold(name, "cyshell desktop") || strings.EqualFold(name, "dms") {
 			return nil, fmt.Errorf("--exclude-deps: cannot exclude required package %q", name)
 		}
 		disabledItems[name] = true
@@ -531,14 +531,14 @@ func (r *Runner) resolveSudoPassword() (string, error) {
 		return "", fmt.Errorf(
 			"sudo authentication required but no cached credentials found\n" +
 				"Options:\n" +
-				"  1. Run 'sudo -v' before dankinstall to cache credentials\n" +
+				"  1. Run 'sudo -v' before cyshell-install to cache credentials\n" +
 				"  2. Configure passwordless sudo for your user",
 		)
 	case privesc.ToolDoas:
 		return "", fmt.Errorf(
 			"doas authentication required but no cached credentials found\n" +
 				"Options:\n" +
-				"  1. Run 'doas true' before dankinstall to cache credentials (requires 'persist' in /etc/doas.conf)\n" +
+				"  1. Run 'doas true' before cyshell-install to cache credentials (requires 'persist' in /etc/doas.conf)\n" +
 				"  2. Configure a 'nopass' rule in /etc/doas.conf for your user",
 		)
 	case privesc.ToolRun0:

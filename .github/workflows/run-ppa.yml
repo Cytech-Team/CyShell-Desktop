@@ -8,10 +8,10 @@ on:
         required: true
         type: choice
         options:
-          - dms
-          - dms-git
+          - cyshell
+          - cyshell-git
           - all
-        default: "dms"
+        default: "cyshell"
       rebuild_release:
         description: "Release number for rebuilds (e.g., 2, 3, 4 for ppa2, ppa3, ppa4)"
         required: false
@@ -23,7 +23,7 @@ jobs:
   check-updates:
     name: Check package/series updates
     runs-on: ubuntu-latest
-    if: github.repository == 'AvengeMedia/DankMaterialShell'
+    if: github.repository == 'Cytech-Team/CyShell-Desktop' && vars.CYSHELL_DISTRO_PUBLISH == 'true'
 
     outputs:
       has_updates: ${{ steps.check.outputs.has_updates }}
@@ -48,7 +48,7 @@ jobs:
           chmod +x distro/scripts/ppa-sync-plan.sh
 
           if [[ "${{ github.event_name }}" == "schedule" ]]; then
-            PACKAGE="dms-git"
+            PACKAGE="cyshell-git"
           else
             PACKAGE="${{ github.event.inputs.package }}"
           fi
@@ -86,7 +86,7 @@ jobs:
       matrix:
         target: ${{ fromJson(needs.check-updates.outputs.targets_json) }}
     concurrency:
-      group: ppa-dms-${{ matrix.target }}
+      group: ppa-cyshell-${{ matrix.target }}
       cancel-in-progress: false
 
     steps:
@@ -132,8 +132,8 @@ jobs:
           IFS=':' read -r PACKAGE UBUNTU_SERIES PPA_NUM <<< "$TARGET"
 
           case "$PACKAGE" in
-            dms) PPA_NAME="dms" ;;
-            dms-git) PPA_NAME="dms-git" ;;
+            cyshell) PPA_NAME="cyshell" ;;
+            cyshell-git) PPA_NAME="cyshell-git" ;;
             *) echo "::error::Unknown package $PACKAGE"; exit 1 ;;
           esac
 
@@ -146,5 +146,5 @@ jobs:
           echo "### PPA Package Upload" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "- **Target:** ${{ matrix.target }}" >> "$GITHUB_STEP_SUMMARY"
-          echo "- **DMS PPA:** https://launchpad.net/~avengemedia/+archive/ubuntu/dms/+packages" >> "$GITHUB_STEP_SUMMARY"
-          echo "- **DMS-Git PPA:** https://launchpad.net/~avengemedia/+archive/ubuntu/dms-git/+packages" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **CyShell PPA:** https://launchpad.net/~avengemedia/+archive/ubuntu/dms/+packages" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **CyShell-Git PPA:** https://launchpad.net/~avengemedia/+archive/ubuntu/dms-git/+packages" >> "$GITHUB_STEP_SUMMARY"

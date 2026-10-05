@@ -1,10 +1,10 @@
 {
     "$schema": "https://zed.dev/schema/themes/v0.2.0.json",
-    "name": "Dynamic Base16 DankShell",
+    "name": "Dynamic Base16 CyShell",
     "author": "Adarsh219",
     "themes": [
         {
-            "name": "DankShell Dark",
+            "name": "CyShell Dark",
             "appearance": "dark",
             "style": {
                 "accents": [
@@ -383,7 +383,7 @@
             }
         },
         {
-            "name": "DankShell Light",
+            "name": "CyShell Light",
             "appearance": "light",
             "style": {
                 "accents": [
@@ -762,7 +762,7 @@
             }
         },
         {
-            "name": "DankShell Dark Transparent",
+            "name": "CyShell Dark Transparent",
             "appearance": "dark",
             "style": {
                 "accents": [
@@ -1141,7 +1141,7 @@
             }
         },
         {
-            "name": "DankShell Light Transparent",
+            "name": "CyShell Light Transparent",
             "appearance": "light",
             "style": {
                 "accents": [

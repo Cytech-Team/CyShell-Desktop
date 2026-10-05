@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/log"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/proto/wlr_output_management"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/models"
 	"github.com/AvengeMedia/dankgo/ipc"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/log"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/proto/wlr_output_management"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/server/models"
 )
 
 type HeadConfig struct {

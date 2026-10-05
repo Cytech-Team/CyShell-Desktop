@@ -18,7 +18,7 @@ let
   };
 in
 pkgs.testers.runNixOSTest {
-  name = "dms-niri-home-module";
+  name = "cyshell-niri-home-module";
 
   nodes.machine = {
     ...
@@ -46,7 +46,7 @@ pkgs.testers.runNixOSTest {
       ...
     }: {
       imports = [
-        self.homeModules.dank-material-shell
+        self.homeModules.cyshell
         niriFlake.homeModules.niri
         self.homeModules.niri
       ];
@@ -60,7 +60,7 @@ pkgs.testers.runNixOSTest {
         package = fakeNiri; # avoids niri from being compiled in the CI
       };
 
-      programs.dank-material-shell = {
+      programs.cyshell = {
         enable = true;
         niri = {
           enableKeybinds = false;

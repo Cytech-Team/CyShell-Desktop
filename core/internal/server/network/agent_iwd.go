@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/errdefs"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/errdefs"
 	"github.com/godbus/dbus/v5"
 )
 
@@ -14,7 +14,7 @@ const (
 	iwdAgentManagerPath  = "/net/connman/iwd"
 	iwdAgentManagerIface = "net.connman.iwd.AgentManager"
 	iwdAgentInterface    = "net.connman.iwd.Agent"
-	iwdAgentObjectPath   = "/com/danklinux/iwdagent"
+	iwdAgentObjectPath   = "/com/cytechteam/cyshell/iwdagent"
 )
 
 type ConnectionStateChecker interface {

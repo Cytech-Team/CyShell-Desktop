@@ -3,11 +3,11 @@ import Quickshell
 import Quickshell.Io
 import qs.Common
 import qs.Services
-import qs.Modules.DankBar
-import qs.Modules.DankIsland
+import qs.Modules.CyBar
+import qs.Modules.CyIsland
 import qs.Modules.Frame
 import qs.Modules.Dock
-import qs.DankCommon.Common as DC
+import qs.CyCommon.Common as DC
 
 ShellRoot {
     id: root
@@ -79,13 +79,13 @@ ShellRoot {
                 values: SettingsData.barConfigs
                 objectProp: "id"
             }
-            delegate: DankBar {
+            delegate: CyBar {
                 required property var modelData
                 barConfig: modelData
             }
         }
     }
-    DankIsland {
+    CyIsland {
         id: islands
     }
     Frame {}

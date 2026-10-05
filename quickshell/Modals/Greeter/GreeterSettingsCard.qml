@@ -38,7 +38,7 @@ Rectangle {
             color: Theme.primary
             anchors.verticalCenter: parent.verticalCenter
 
-            DankIcon {
+            CyIcon {
                 anchors.centerIn: parent
                 name: root.iconName
                 size: Theme.iconSize - 4

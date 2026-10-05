@@ -140,7 +140,7 @@ Singleton {
         const filtered = (mimeTypes || []).filter(m => m && m.length > 0);
         if (filtered.length === 0)
             return;
-        DMSService.sendRequest("mime.setDefaults", {
+        CyShellService.sendRequest("mime.setDefaults", {
             "mimeTypes": filtered,
             "desktopId": desktopFileId
         }, response => {
@@ -151,7 +151,7 @@ Singleton {
     }
 
     function getDefaultApp(mimeType, callbackId = "") {
-        DMSService.sendRequest("mime.getDefault", {
+        CyShellService.sendRequest("mime.getDefault", {
             "mimeType": mimeType
         }, response => {
             if (response.error) {
@@ -164,7 +164,7 @@ Singleton {
     }
 
     function getHandlersForMimeType(mimeType, callbackId = "") {
-        DMSService.sendRequest("mime.handlersForMime", {
+        CyShellService.sendRequest("mime.handlersForMime", {
             "mimeType": mimeType
         }, response => {
             if (response.error) {
@@ -177,7 +177,7 @@ Singleton {
     }
 
     function getAppsForMimeType(mimeType, callbackId = "") {
-        DMSService.sendRequest("mime.appsForMime", {
+        CyShellService.sendRequest("mime.appsForMime", {
             "mimeType": mimeType
         }, response => {
             if (response.error) {

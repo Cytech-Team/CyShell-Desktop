@@ -23,6 +23,7 @@ type Device struct {
 	Max            int         `json:"max"`
 	CurrentPercent int         `json:"currentPercent"`
 	Backend        string      `json:"backend"`
+	Connector      string      `json:"connector,omitempty"`
 }
 
 type State struct {

@@ -10,10 +10,10 @@ import qs.Modals.Common
 import qs.Services
 import qs.Widgets
 
-DankModal {
+CyModal {
     id: muxModal
 
-    layerNamespace: "dms:mux"
+    layerNamespace: "cyshell:mux"
 
     property int selectedIndex: -1
     property string searchText: ""
@@ -306,7 +306,7 @@ DankModal {
             }
 
             // Search field
-            DankSearchField {
+            CySearchField {
                 id: searchField
 
                 width: parent.width
@@ -340,7 +340,7 @@ DankModal {
                         radius: Theme.fullRadius(width, height)
                         color: Theme.primaryContainer
 
-                        DankIcon {
+                        CyIcon {
                             anchors.centerIn: parent
                             name: "add"
                             size: Theme.iconSize
@@ -471,7 +471,7 @@ DankModal {
                                         visible: MuxService.supportsRename
                                         color: renameMouse.containsMouse ? Theme.chipSurface : Theme.withAlpha(Theme.chipSurface, 0)
 
-                                        DankIcon {
+                                        CyIcon {
                                             anchors.centerIn: parent
                                             name: "edit"
                                             size: Theme.iconSizeSmall
@@ -496,7 +496,7 @@ DankModal {
                                         radius: Theme.fullRadius(width, height)
                                         color: deleteMouse.containsMouse ? Theme.errorContainer : Theme.withAlpha(Theme.errorContainer, 0)
 
-                                        DankIcon {
+                                        CyIcon {
                                             anchors.centerIn: parent
                                             name: "delete"
                                             size: Theme.iconSizeSmall
@@ -527,7 +527,7 @@ DankModal {
                                 anchors.centerIn: parent
                                 spacing: Theme.spacingM
 
-                                DankIcon {
+                                CyIcon {
                                     name: muxModal.searchText.length > 0 ? "search_off" : "terminal"
                                     size: 48
                                     color: Theme.surfaceVariantText

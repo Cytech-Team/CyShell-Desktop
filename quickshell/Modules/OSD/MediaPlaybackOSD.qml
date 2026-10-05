@@ -6,7 +6,7 @@ import qs.Widgets
 import Quickshell.Services.Mpris
 import Quickshell.Widgets
 
-DankOSD {
+CyOSD {
     id: root
 
     readonly property bool useVertical: isVerticalLayout
@@ -272,7 +272,7 @@ DankOSD {
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: Theme.spacingXXS
 
-                DankActionButton {
+                CyActionButton {
                     buttonSize: Theme.buttonHeightXS
                     anchors.verticalCenter: parent.verticalCenter
                     iconName: "skip_previous"
@@ -286,7 +286,7 @@ DankOSD {
                     }
                 }
 
-                DankIconButton {
+                CyIconButton {
                     width: Theme.buttonHeightS
                     buttonSize: Theme.buttonHeightS
                     variant: "filled"
@@ -304,7 +304,7 @@ DankOSD {
                     }
                 }
 
-                DankActionButton {
+                CyActionButton {
                     buttonSize: Theme.buttonHeightXS
                     anchors.verticalCenter: parent.verticalCenter
                     iconName: "skip_next"
@@ -353,7 +353,7 @@ DankOSD {
     Component {
         id: verticalContent
 
-        DankIconButton {
+        CyIconButton {
             anchors.fill: parent
             size: "m"
             round: false

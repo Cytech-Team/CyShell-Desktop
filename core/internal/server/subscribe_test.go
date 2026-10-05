@@ -8,9 +8,9 @@ import (
 	"testing"
 	"testing/synctest"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/apppicker"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/wlroutput"
 	"github.com/AvengeMedia/dankgo/ipc"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/server/apppicker"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/server/wlroutput"
 	"github.com/stretchr/testify/require"
 )
 

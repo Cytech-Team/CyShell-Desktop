@@ -5,15 +5,15 @@ import (
 	"math"
 	"sync"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/log"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/proto/keyboard_shortcuts_inhibit"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/proto/wlr_layer_shell"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/proto/wlr_screencopy"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/proto/wp_cursor_shape"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/proto/wp_viewporter"
-	wlhelpers "github.com/AvengeMedia/DankMaterialShell/core/internal/wayland/client"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/wayland/keymap"
 	"github.com/AvengeMedia/dankgo/wayland/client"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/log"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/proto/keyboard_shortcuts_inhibit"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/proto/wlr_layer_shell"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/proto/wlr_screencopy"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/proto/wp_cursor_shape"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/proto/wp_viewporter"
+	wlhelpers "github.com/Cytech-Team/CyShell-Desktop/core/internal/wayland/client"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/wayland/keymap"
 )
 
 type resizeHandle int
@@ -757,7 +757,7 @@ func (r *RegionSelector) createOutputSurface(output *WaylandOutput) (*OutputSurf
 		surface,
 		output.wlOutput,
 		uint32(wlr_layer_shell.ZwlrLayerShellV1LayerOverlay),
-		"dms-screenshot",
+		"cyshell-screenshot",
 	)
 	if err != nil {
 		return nil, fmt.Errorf("get layer surface: %w", err)

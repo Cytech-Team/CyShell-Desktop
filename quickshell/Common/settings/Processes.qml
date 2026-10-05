@@ -20,7 +20,7 @@ Singleton {
             consumeGreeterAutoLoginPendingSync();
     }
 
-    readonly property string greeterAutoLoginPendingSyncPath: (Quickshell.env("CYSHELL_GREET_CFG_DIR") || Quickshell.env("DMS_GREET_CFG_DIR") || "/var/cache/cyshell-greeter") + "/.local/state/auto-login-sync-pending"
+    readonly property string greeterAutoLoginPendingSyncPath: (Quickshell.env("CYSHELL_GREET_CFG_DIR") || "/var/cache/cyshell-greeter") + "/.local/state/auto-login-sync-pending"
 
     function consumeGreeterAutoLoginPendingSync() {
         if (!settingsRoot || settingsRoot.isGreeterMode)
@@ -52,7 +52,8 @@ Singleton {
     property string systemLocalLoginPamText: ""
     property string commonAuthPcPamText: ""
     property string loginPamText: ""
-    property string dankshellU2fPamText: ""
+    property string cyShellU2fPamText: ""
+    property string legacyDankshellU2fPamText: ""
     property string u2fKeysText: ""
 
     property string fingerprintProbeOutput: ""
@@ -65,7 +66,7 @@ Singleton {
     readonly property string homeDir: Quickshell.env("HOME") || ""
     readonly property string u2fKeysPath: homeDir ? homeDir + "/.config/Yubico/u2f_keys" : ""
     readonly property bool homeU2fKeysDetected: u2fKeysPath !== "" && u2fKeysWatcher.loaded && u2fKeysText.trim() !== ""
-    readonly property bool lockU2fCustomConfigDetected: PamStack.moduleEnabled(dankshellU2fPamText, "pam_u2f")
+    readonly property bool lockU2fCustomConfigDetected: PamStack.moduleEnabled(cyShellU2fPamText, "pam_u2f") || PamStack.moduleEnabled(legacyDankshellU2fPamText, "pam_u2f")
     readonly property bool lockU2fCustomSourceDetected: (settingsRoot?.lockU2fPamPath || "") !== "" && customU2fPamWatcher.loaded
     readonly property bool greeterPamHasFprint: greeterPamStackHasModule("pam_fprintd")
     readonly property bool greeterPamHasU2f: greeterPamStackHasModule("pam_u2f")
@@ -163,13 +164,13 @@ Singleton {
 
     readonly property string greeterFingerprintSource: {
         if (forcedFprintAvailable !== null)
-            return forcedFprintAvailable ? "dms" : "none";
+            return forcedFprintAvailable ? "cyshell" : "none";
         if (greeterPamHasFprint)
             return "pam";
         switch (fingerprintProbeState) {
         case "ready":
         case "missing_enrollment":
-            return "dms";
+            return "cyshell";
         default:
             return "none";
         }
@@ -231,11 +232,11 @@ Singleton {
 
     readonly property string greeterU2fSource: {
         if (forcedU2fAvailable !== null)
-            return forcedU2fAvailable ? "dms" : "none";
+            return forcedU2fAvailable ? "cyshell" : "none";
         if (greeterPamHasU2f)
             return "pam";
         if (greeterU2fCanEnable)
-            return "dms";
+            return "cyshell";
         return "none";
     }
 
@@ -251,7 +252,8 @@ Singleton {
 
     function detectAuthCapabilities() {
         // FileView cannot watch paths that do not exist yet, so reload the U2F PAM
-        dankshellU2fPamWatcher.reload();
+        cyShellU2fPamWatcher.reload();
+        legacyDankshellU2fPamWatcher.reload();
         u2fKeysWatcher.reload();
 
         if (forcedFprintAvailable === null) {
@@ -466,7 +468,7 @@ Singleton {
     }
 
     property var authApplyProcess: Process {
-        command: ["dms", "auth", "sync", "--yes"]
+        command: ["cyshell", "auth", "sync", "--yes"]
         running: false
 
         stdout: StdioCollector {
@@ -522,7 +524,7 @@ Singleton {
     }
 
     property var authApplyTerminalFallbackProcess: Process {
-        command: ["dms", "auth", "sync", "--terminal", "--yes"]
+        command: ["cyshell", "auth", "sync", "--terminal", "--yes"]
         running: false
 
         stderr: StdioCollector {
@@ -535,7 +537,7 @@ Singleton {
                 root.toastRequested(0, message, "", "", "auth-sync");
             } else {
                 let details = (root.authApplyTerminalFallbackStderr || "").trim();
-                root.toastRequested(2, I18n.tr("Terminal fallback failed. Install a supported terminal emulator or run 'dms auth sync' manually.") + " (exit " + exitCode + ")", details, "", "auth-sync");
+                root.toastRequested(2, I18n.tr("Terminal fallback failed. Install a supported terminal emulator or run 'cyshell auth sync' manually.") + " (exit " + exitCode + ")", details, "", "auth-sync");
             }
             root.finishAuthApply();
         }
@@ -606,12 +608,21 @@ Singleton {
     }
 
     FileView {
-        id: dankshellU2fPamWatcher
+        id: cyShellU2fPamWatcher
+        path: "/etc/pam.d/cyshell-u2f"
+        watchChanges: true
+        printErrors: false
+        onLoaded: root.cyShellU2fPamText = text()
+        onLoadFailed: root.cyShellU2fPamText = ""
+    }
+
+    FileView {
+        id: legacyDankshellU2fPamWatcher
         path: "/etc/pam.d/dankshell-u2f"
         watchChanges: true
         printErrors: false
-        onLoaded: root.dankshellU2fPamText = text()
-        onLoadFailed: root.dankshellU2fPamText = ""
+        onLoaded: root.legacyDankshellU2fPamText = text()
+        onLoadFailed: root.legacyDankshellU2fPamText = ""
     }
 
     FileView {

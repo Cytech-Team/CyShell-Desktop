@@ -9,10 +9,10 @@ import qs.Common
 import qs.Services
 import qs.Widgets
 
-DankModal {
+CyModal {
     id: root
     visible: false
-    layerNamespace: "dms:qr-generator"
+    layerNamespace: "cyshell:qr-generator"
 
     property bool disablePopupTransparency: true
     property bool generating: false
@@ -63,11 +63,11 @@ DankModal {
 
     function deleteQrCodeFiles(themed, normal) {
         if (themed.length > 0)
-            DMSService.sendRequest("network.delete-qrcode", {
+            CyShellService.sendRequest("network.delete-qrcode", {
                 path: themed
             });
         if (normal.length > 0)
-            DMSService.sendRequest("network.delete-qrcode", {
+            CyShellService.sendRequest("network.delete-qrcode", {
                 path: normal
             });
     }
@@ -87,7 +87,7 @@ DankModal {
         _generatingPayload = trimmed;
         generating = true;
 
-        DMSService.sendRequest("network.generate-qrcode", {
+        CyShellService.sendRequest("network.generate-qrcode", {
             text: trimmed
         }, response => {
             root.generating = false;
@@ -179,7 +179,7 @@ DankModal {
                         Layout.fillWidth: true
                     }
 
-                    DankActionButton {
+                    CyActionButton {
                         iconName: "close"
                         Accessible.name: I18n.tr("Close")
                         iconSize: Theme.iconSize - 4
@@ -189,7 +189,7 @@ DankModal {
                     }
                 }
 
-                DankTextField {
+                CyTextField {
                     id: textInput
                     width: parent.width
                     placeholderText: I18n.tr("Enter text to encode")
@@ -249,7 +249,7 @@ DankModal {
                         Layout.fillWidth: true
                     }
 
-                    DankButton {
+                    CyButton {
                         text: I18n.tr("Save")
                         iconName: "save"
                         backgroundColor: Theme.chipSurface
@@ -262,14 +262,14 @@ DankModal {
                         }
                     }
 
-                    DankButton {
+                    CyButton {
                         text: I18n.tr("Copy")
                         iconName: "content_copy"
                         backgroundColor: Theme.primary
                         textColor: Theme.onPrimary
                         onClicked: {
                             if (root.normalQrCodePath.length > 0)
-                                DMSService.sendRequest("clipboard.copyFile", {
+                                CyShellService.sendRequest("clipboard.copyFile", {
                                     filePath: root.normalQrCodePath
                                 });
                         }

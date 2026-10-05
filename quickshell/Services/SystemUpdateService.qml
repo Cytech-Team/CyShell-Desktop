@@ -47,12 +47,12 @@ Singleton {
     }
 
     Connections {
-        target: DMSService
+        target: CyShellService
         function onCapabilitiesReceived() {
             root.checkCapabilities();
         }
         function onConnectionStateChanged() {
-            if (DMSService.isConnected) {
+            if (CyShellService.isConnected) {
                 root.checkCapabilities();
             } else {
                 root.sysupdateAvailable = false;
@@ -82,19 +82,19 @@ Singleton {
     }
 
     Component.onCompleted: {
-        if (DMSService.dmsAvailable) {
+        if (CyShellService.backendAvailable) {
             checkCapabilities();
         }
         Qt.callLater(() => root._maybeStartupCheck());
     }
 
     function checkCapabilities() {
-        if (!DMSService.capabilities || !Array.isArray(DMSService.capabilities)) {
+        if (!CyShellService.capabilities || !Array.isArray(CyShellService.capabilities)) {
             sysupdateAvailable = false;
             Qt.callLater(() => root._maybeStartupCheck());
             return;
         }
-        const has = DMSService.capabilities.includes("sysupdate");
+        const has = CyShellService.capabilities.includes("sysupdate");
         if (has && !sysupdateAvailable) {
             sysupdateAvailable = true;
             requestState();
@@ -109,10 +109,10 @@ Singleton {
     }
 
     function requestState() {
-        if (!DMSService.isConnected || !sysupdateAvailable) {
+        if (!CyShellService.isConnected || !sysupdateAvailable) {
             return;
         }
-        DMSService.sysupdateGetState(resp => {
+        CyShellService.sysupdateGetState(resp => {
             if (resp && resp.result) {
                 _applyState(resp.result);
             }
@@ -200,7 +200,7 @@ Singleton {
     }
 
     function checkForUpdates() {
-        DMSService.sysupdateRefresh(false, null);
+        CyShellService.sysupdateRefresh(false, null);
     }
 
     function runUpdates(opts) {
@@ -213,15 +213,15 @@ Singleton {
                 params.terminalArgs = termArgs.split(/\s+/);
             }
         }
-        DMSService.sysupdateUpgrade(params, null);
+        CyShellService.sysupdateUpgrade(params, null);
     }
 
     function cancelUpdates() {
-        DMSService.sysupdateCancel(null);
+        CyShellService.sysupdateCancel(null);
     }
 
     function setInterval(seconds) {
-        DMSService.sysupdateSetInterval(seconds, null);
+        CyShellService.sysupdateSetInterval(seconds, null);
     }
 
     property bool _startupCheckDone: false
@@ -235,7 +235,7 @@ Singleton {
             return;
         if (_startupCheckDone)
             return;
-        if (!DMSService.isConnected || !sysupdateAvailable)
+        if (!CyShellService.isConnected || !sysupdateAvailable)
             return;
         _startupCheckDone = true;
         Qt.callLater(() => root.checkForUpdates());
@@ -258,9 +258,9 @@ Singleton {
         }
         _acquired = want;
         if (want) {
-            DMSService.sysupdateAcquire(null);
+            CyShellService.sysupdateAcquire(null);
             return;
         }
-        DMSService.sysupdateRelease(null);
+        CyShellService.sysupdateRelease(null);
     }
 }

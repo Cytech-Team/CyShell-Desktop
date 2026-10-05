@@ -8,8 +8,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/log"
 	"github.com/AvengeMedia/dankgo/syncmap"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/log"
 	"github.com/fsnotify/fsnotify"
 	evdev "github.com/holoplot/go-evdev"
 )
@@ -18,7 +18,13 @@ const (
 	evKeyType      = 0x01
 	evLedType      = 0x11
 	keyCapslockKey = 58
+	keyLeftShift   = 42
+	keyRightShift  = 54
+	keyLeftAlt     = 56
+	keyRightAlt    = 100
+	keyTab         = 15
 	ledCapslockKey = 1
+	keyStateOff    = 0
 	keyStateOn     = 1
 )
 
@@ -28,6 +34,11 @@ type EvdevDevice interface {
 	Close() error
 	ReadOne() (*evdev.InputEvent, error)
 	State(t evdev.EvType) (evdev.StateMap, error)
+}
+
+type modifierDeviceState struct {
+	altDown   bool
+	shiftDown bool
 }
 
 type Manager struct {
@@ -40,6 +51,10 @@ type Manager struct {
 	closeChan      chan struct{}
 	closeOnce      sync.Once
 	watcher        *fsnotify.Watcher
+
+	modifierMutex      sync.Mutex
+	modifierByPath     map[string]modifierDeviceState
+	layoutComboLatched bool
 }
 
 func NewManager() (*Manager, error) {
@@ -70,8 +85,9 @@ func NewManager() (*Manager, error) {
 		monitoredPaths: monitoredPaths,
 		state:          State{Available: true, CapsLock: initialCapsLock},
 
-		closeChan: make(chan struct{}),
-		watcher:   watcher,
+		closeChan:      make(chan struct{}),
+		watcher:        watcher,
+		modifierByPath: make(map[string]modifierDeviceState),
 	}
 
 	for i, device := range devices {
@@ -246,6 +262,7 @@ func (m *Manager) watchForNewKeyboards() {
 					}
 				}
 				m.devicesMutex.Unlock()
+				m.clearModifierDevice(event.Name)
 			}
 
 		case err, ok := <-m.watcher.Errors:
@@ -285,14 +302,81 @@ func (m *Manager) monitorDevice(device EvdevDevice, deviceIndex int) {
 			continue
 		}
 
-		if event.Type == evKeyType && event.Code == keyCapslockKey && event.Value == keyStateOn {
-			time.Sleep(50 * time.Millisecond)
-			m.readAndUpdateCapsLockState(deviceIndex)
+		if event.Type == evKeyType {
+			m.trackLayoutCombo(device.Path(), event)
+
+			if event.Code == keyCapslockKey && event.Value == keyStateOn {
+				time.Sleep(50 * time.Millisecond)
+				m.readAndUpdateCapsLockState(deviceIndex)
+			}
 		} else if event.Type == evLedType && event.Code == ledCapslockKey {
 			capsLockState := event.Value == keyStateOn
 			m.updateCapsLockStateDirect(capsLockState)
 		}
 	}
+}
+
+func (m *Manager) trackLayoutCombo(devicePath string, event *evdev.InputEvent) {
+	if event == nil || event.Type != evKeyType {
+		return
+	}
+	if event.Code != keyLeftAlt && event.Code != keyRightAlt && event.Code != keyLeftShift && event.Code != keyRightShift && event.Code != keyTab {
+		return
+	}
+
+	m.modifierMutex.Lock()
+	if m.modifierByPath == nil {
+		m.modifierByPath = make(map[string]modifierDeviceState)
+	}
+	state := m.modifierByPath[devicePath]
+	down := event.Value != keyStateOff
+	switch event.Code {
+	case keyLeftAlt, keyRightAlt:
+		state.altDown = down
+		m.modifierByPath[devicePath] = state
+	case keyLeftShift, keyRightShift:
+		state.shiftDown = down
+		m.modifierByPath[devicePath] = state
+	}
+
+	altDown := false
+	shiftDown := false
+	for _, deviceState := range m.modifierByPath {
+		altDown = altDown || deviceState.altDown
+		shiftDown = shiftDown || deviceState.shiftDown
+	}
+	bothDown := altDown && shiftDown
+	shouldToggle := bothDown && !m.layoutComboLatched
+	shouldAltTab := event.Code == keyTab && event.Value == keyStateOn && altDown
+	altTabReverse := shouldAltTab && shiftDown
+	if bothDown {
+		m.layoutComboLatched = true
+	} else {
+		m.layoutComboLatched = false
+	}
+	m.modifierMutex.Unlock()
+
+	if shouldToggle {
+		m.bumpLayoutToggleSerial()
+	}
+	if shouldAltTab {
+		m.bumpAltTabSerial(altTabReverse)
+	}
+}
+
+func (m *Manager) clearModifierDevice(devicePath string) {
+	m.modifierMutex.Lock()
+	delete(m.modifierByPath, devicePath)
+	altDown := false
+	shiftDown := false
+	for _, deviceState := range m.modifierByPath {
+		altDown = altDown || deviceState.altDown
+		shiftDown = shiftDown || deviceState.shiftDown
+	}
+	if !altDown || !shiftDown {
+		m.layoutComboLatched = false
+	}
+	m.modifierMutex.Unlock()
 }
 
 func isClosedError(err error) bool {
@@ -334,6 +418,27 @@ func (m *Manager) readAndUpdateCapsLockState(deviceIndex int) {
 	}
 
 	m.updateCapsLockStateDirect(capsLockState)
+}
+
+func (m *Manager) bumpLayoutToggleSerial() {
+	m.stateMutex.Lock()
+	m.state.LayoutToggleSerial++
+	newState := m.state
+	m.stateMutex.Unlock()
+
+	log.Infof("Keyboard layout toggle serial: %d", newState.LayoutToggleSerial)
+	m.notifySubscribers(newState)
+}
+
+func (m *Manager) bumpAltTabSerial(reverse bool) {
+	m.stateMutex.Lock()
+	m.state.AltTabSerial++
+	m.state.AltTabReverse = reverse
+	newState := m.state
+	m.stateMutex.Unlock()
+
+	log.Debugf("Alt+Tab serial: %d reverse=%v", newState.AltTabSerial, newState.AltTabReverse)
+	m.notifySubscribers(newState)
 }
 
 func (m *Manager) updateCapsLockStateDirect(capsLockState bool) {
@@ -408,7 +513,7 @@ func (m *Manager) Close() {
 
 func InitializeManager() (*Manager, error) {
 	if os.Getuid() != 0 && !hasInputGroupAccess() {
-		return nil, fmt.Errorf("insufficient permissions to access input devices. Add your user to the 'input' group: `sudo usermod -a -G input $USER` or run `dms setup`")
+		return nil, fmt.Errorf("insufficient permissions to access input devices. Add your user to the 'input' group: `sudo usermod -a -G input $USER` or run `cyshell setup`")
 	}
 
 	return NewManager()

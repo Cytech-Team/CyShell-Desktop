@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/distros"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/distros"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
@@ -17,7 +17,7 @@ func (m Model) viewWelcome() string {
 	b.WriteString(m.styles.Accent.Render(strings.Repeat("━", 58)))
 	b.WriteByte('\n')
 	b.WriteString(m.styles.TitleBox.Render(
-		m.styles.Highlight.Render("dankinstall") + m.styles.AccentItalic.Render(" // Dank Linux Installer")))
+		m.styles.Highlight.Render("cyshell-install") + m.styles.AccentItalic.Render(" // CyShell Installer")))
 	b.WriteByte('\n')
 	b.WriteString(m.styles.SubtleItalic.Render("Quickstart for a Dank Desktop"))
 	b.WriteString("\n\n")

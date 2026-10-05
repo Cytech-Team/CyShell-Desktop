@@ -136,14 +136,14 @@ Popup {
 
     function copyPid() {
         if (processData)
-            Quickshell.execDetached(["dms", "cl", "copy", processData.pid.toString()]);
+            Quickshell.execDetached(["cyshell", "cl", "copy", processData.pid.toString()]);
         close();
     }
 
     function copyName() {
         if (processData) {
             const name = processData.command || "";
-            Quickshell.execDetached(["dms", "cl", "copy", name]);
+            Quickshell.execDetached(["cyshell", "cl", "copy", name]);
         }
         close();
     }
@@ -151,7 +151,7 @@ Popup {
     function copyFullCommand() {
         if (processData) {
             const fullCmd = processData.fullCommand || processData.command || "";
-            Quickshell.execDetached(["dms", "cl", "copy", fullCmd]);
+            Quickshell.execDetached(["cyshell", "cl", "copy", fullCmd]);
         }
         close();
     }
@@ -372,7 +372,7 @@ Popup {
                             anchors.verticalCenter: parent.verticalCenter
                             spacing: Theme.spacingS
 
-                            DankIcon {
+                            CyIcon {
                                 name: modelData.icon || ""
                                 size: Theme.iconSizeSmall
                                 color: {
@@ -404,7 +404,7 @@ Popup {
                             }
                         }
 
-                        DankRipple {
+                        CyRipple {
                             id: menuItemRipple
                             rippleColor: modelData.dangerous ? Theme.error : Theme.surfaceText
                             cornerRadius: menuItem.radius

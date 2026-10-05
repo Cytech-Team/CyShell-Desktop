@@ -73,7 +73,7 @@ type Buffer struct {
 func CreateBuffer(width, height, stride int) (*Buffer, error) {
 	size := stride * height
 
-	fd, err := CreateAnonFd("dms-shm")
+	fd, err := CreateAnonFd("cyshell-shm")
 	if err != nil {
 		return nil, fmt.Errorf("create shm fd: %w", err)
 	}

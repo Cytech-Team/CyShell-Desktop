@@ -54,7 +54,7 @@ Singleton {
 
     property var dankBarItems: ({})
 
-    function registerDankBarItem(barId, item) {
+    function registerCyBarItem(barId, item) {
         if (!barId || !item)
             return;
         const next = Object.assign({}, dankBarItems);
@@ -62,7 +62,7 @@ Singleton {
         dankBarItems = next;
     }
 
-    function unregisterDankBarItem(barId, item) {
+    function unregisterCyBarItem(barId, item) {
         if (!barId || dankBarItems[barId] !== item)
             return;
         const next = Object.assign({}, dankBarItems);

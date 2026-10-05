@@ -10,16 +10,6 @@ Item {
     SettingsPage {
         id: mainColumn
 
-        Loader {
-            width: parent.width
-            active: CompositorService.isAqueous
-            sourceComponent: AqueousAppearanceSettings {
-                settingKey: "aqueousTypography"
-                title: I18n.tr("Aqueous typography", "Aqueous compositor font synchronization settings")
-                visible: CompositorService.isAqueous
-            }
-        }
-
         SettingsCard {
             tab: "typography"
             tags: ["font", "family", "text", "typography", "monospace"]
@@ -193,7 +183,7 @@ Item {
                             radius: Theme.fullRadius(width, height)
                             color: Theme.primary
 
-                            DankIcon {
+                            CyIcon {
                                 anchors.centerIn: parent
                                 name: motionPreview.atEnd ? "arrow_back" : "arrow_forward"
                                 size: Theme.iconSizeMedium

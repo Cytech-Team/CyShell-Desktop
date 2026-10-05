@@ -78,7 +78,7 @@ Item {
                             border.width: Theme.outlineWidth
                             anchors.horizontalCenter: parent.horizontalCenter
 
-                            DankIcon {
+                            CyIcon {
                                 visible: modelData.id === "custom"
                                 anchors.centerIn: parent
                                 name: "colorize"

@@ -14,21 +14,21 @@ Singleton {
     onRefCountChanged: {
         if (refCount > 0) {
             ensureSubscription();
-        } else if (refCount === 0 && DMSService.activeSubscriptions.includes("tailscale")) {
-            DMSService.removeSubscription("tailscale");
+        } else if (refCount === 0 && CyShellService.activeSubscriptions.includes("tailscale")) {
+            CyShellService.removeSubscription("tailscale");
         }
     }
 
     function ensureSubscription() {
         if (refCount <= 0)
             return;
-        if (!DMSService.isConnected)
+        if (!CyShellService.isConnected)
             return;
-        if (DMSService.activeSubscriptions.includes("tailscale"))
+        if (CyShellService.activeSubscriptions.includes("tailscale"))
             return;
-        if (DMSService.activeSubscriptions.includes("all"))
+        if (CyShellService.activeSubscriptions.includes("all"))
             return;
-        DMSService.addSubscription("tailscale");
+        CyShellService.addSubscription("tailscale");
         if (available) {
             getStatus();
         }
@@ -84,7 +84,7 @@ Singleton {
 
     readonly property int onlinePeerCount: onlinePeers.length
 
-    readonly property string socketPath: Quickshell.env("DMS_SOCKET")
+    readonly property string socketPath: Quickshell.env("CYSHELL_SOCKET")
 
     Component.onCompleted: {
         if (socketPath && socketPath.length > 0) {
@@ -93,10 +93,10 @@ Singleton {
     }
 
     Connections {
-        target: DMSService
+        target: CyShellService
 
         function onConnectionStateChanged() {
-            if (DMSService.isConnected) {
+            if (CyShellService.isConnected) {
                 checkDMSCapabilities();
                 ensureSubscription();
             }
@@ -104,8 +104,8 @@ Singleton {
     }
 
     Connections {
-        target: DMSService
-        enabled: DMSService.isConnected
+        target: CyShellService
+        enabled: CyShellService.isConnected
 
         function onTailscaleStateUpdate(data) {
             root.log.debug("Subscription update received");
@@ -118,12 +118,12 @@ Singleton {
     }
 
     function checkDMSCapabilities() {
-        if (!DMSService.isConnected)
+        if (!CyShellService.isConnected)
             return;
-        if (DMSService.capabilities.length === 0)
+        if (CyShellService.capabilities.length === 0)
             return;
         const wasAvailable = available;
-        available = DMSService.capabilities.includes("tailscale");
+        available = CyShellService.capabilities.includes("tailscale");
 
         if (!available)
             return;
@@ -138,7 +138,7 @@ Singleton {
     function getStatus() {
         if (!available)
             return;
-        DMSService.sendRequest("tailscale.getStatus", null, response => {
+        CyShellService.sendRequest("tailscale.getStatus", null, response => {
             if (response.result) {
                 updateState(response.result);
             }
@@ -161,7 +161,7 @@ Singleton {
     function refresh(callback) {
         if (!available)
             return;
-        DMSService.sendRequest("tailscale.refresh", null, response => {
+        CyShellService.sendRequest("tailscale.refresh", null, response => {
             if (callback)
                 callback(response);
         });
@@ -172,7 +172,7 @@ Singleton {
     function sendAction(method, params, callback) {
         if (!available)
             return;
-        DMSService.sendRequest(method, params, response => {
+        CyShellService.sendRequest(method, params, response => {
             if (response.error) {
                 root.log.warn(method + " failed: " + response.error);
                 ToastService.showError(I18n.tr("Tailscale action failed", "Toast shown when a Tailscale write action is rejected"), response.error);

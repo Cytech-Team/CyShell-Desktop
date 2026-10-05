@@ -10,15 +10,17 @@ function create(id, name) {
     return {
         id: id, name: name, enabled: false, screenPreferences: ["all"],
         showOnLastDisplay: true, position: 1, mode: "compact", taskbarAlign: "center", widgetExpansion: "popout",
-        iconSize: 42, spacing: 8, itemSpacing: 8, margin: 8, bottomGap: 0,
+        iconSize: 40, spacing: 4, itemSpacing: 4, margin: 0, bottomGap: 0,
         transparency: 1, followInterfaceStyle: true,
-        autoHide: false, smartAutoHide: false, useOverlayLayer: false, editOnRightClick: false,
+        autoHide: false, smartAutoHide: false, useOverlayLayer: true, editOnRightClick: false,
         showOnFullscreen: false, openOnOverview: false,
-        groupByApp: false, separatePinnedAndRunningApps: false,
-        restoreSpecialWorkspaceOnClick: false, isolateDisplays: false,
-        indicatorStyle: "circle", borderEnabled: false, borderColor: "surfaceText",
+        isolateDisplays: false,
+        appsDockHideIndicators: false, indicatorStyle: "circle",
+        appsDockColorizeActive: false, appsDockActiveColorMode: "primary",
+        appsDockEnlargeOnHover: false, appsDockEnlargePercentage: 125,
+        borderEnabled: false, borderColor: "surfaceText",
         borderOpacity: 1, borderThickness: 1,
-        launcherEnabled: true, launcherLogoMode: "os", launcherLogoCustomPath: "",
+        launcherEnabled: true, launcherLogoMode: "apps", launcherLogoCustomPath: "",
         launcherLogoColorOverride: "", launcherLogoSizeOffset: 0,
         launcherLogoBrightness: 0.5, launcherLogoContrast: 1,
         maxVisibleApps: 0, maxVisibleRunningApps: 0, showOverflowBadge: true,
@@ -58,6 +60,9 @@ function normalize(configs) {
         result.bottomGap = bounded(result.bottomGap, defaults.bottomGap, -128, 128);
         for (const key of ["transparency", "borderOpacity", "launcherLogoBrightness"]) result[key] = bounded(result[key], 1, 0, 1);
         for (const key of ["maxVisibleApps", "maxVisibleRunningApps"]) result[key] = Math.floor(bounded(result[key], 0, 0, 100));
+        result.appsDockEnlargePercentage = bounded(result.appsDockEnlargePercentage, defaults.appsDockEnlargePercentage, 100, 200);
+        if (!["circle", "line", "taskbar"].includes(result.indicatorStyle)) result.indicatorStyle = defaults.indicatorStyle;
+        if (!["primary", "secondary", "primaryContainer", "error", "success"].includes(result.appsDockActiveColorMode)) result.appsDockActiveColorMode = defaults.appsDockActiveColorMode;
         for (const key of Object.keys(defaults)) {
             if (typeof defaults[key] === "boolean") result[key] = result[key] === true;
         }
@@ -74,7 +79,28 @@ function normalize(configs) {
             return item;
         });
         result.widgets = withAppSlots(result.widgets, config.id);
+        const legacyAppsWidget = result.widgets.find(widget => widget.widgetId === "appsDock");
+        if (legacyAppsWidget) {
+            const legacyMap = {
+                appsDockHideIndicators: "appsDockHideIndicators",
+                appsDockColorizeActive: "appsDockColorizeActive",
+                appsDockActiveColorMode: "appsDockActiveColorMode",
+                appsDockEnlargeOnHover: "appsDockEnlargeOnHover",
+                appsDockEnlargePercentage: "appsDockEnlargePercentage",
+                appsDockIndicatorStyle: "indicatorStyle"
+            };
+            for (const oldKey of Object.keys(legacyMap)) {
+                const newKey = legacyMap[oldKey];
+                if (config[newKey] === undefined && legacyAppsWidget[oldKey] !== undefined)
+                    result[newKey] = clone(legacyAppsWidget[oldKey]);
+            }
+        }
         result.order = Array.isArray(config.order) ? [...new Set(config.order.filter(id => typeof id === "string"))] : [];
+        // Functional app behavior is owned by SettingsData.appsDockSharedConfig.
+        // Strip old per-dock copies so there is only one source of truth.
+        delete result.groupByApp;
+        delete result.separatePinnedAndRunningApps;
+        delete result.restoreSpecialWorkspaceOnClick;
         delete result.launcherPosition;
         delete result.thickness;
         return result;

@@ -5,7 +5,7 @@
 }:
 rec {
   all = pkgs.symlinkJoin {
-    name = "dms-nixos-tests";
+    name = "cyshell-nixos-tests";
     paths = [
       nixos-module
       nixos-service-start-module

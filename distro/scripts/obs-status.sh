@@ -1,17 +1,17 @@
 #!/usr/bin/env bash
-# Unified OBS status checker for dms packages
+# Unified OBS status checker for cyshell packages
 # Checks all platforms (Debian, OpenSUSE) and architectures (x86_64, aarch64)
 # Only pulls logs if build failed
 # Usage: ./distro/scripts/obs-status.sh [package-name]
 #
 # Examples:
 #   ./distro/scripts/obs-status.sh              # Check all packages
-#   ./distro/scripts/obs-status.sh dms          # Check specific package
+#   ./distro/scripts/obs-status.sh cyshell          # Check specific package
 
 OBS_BASE_PROJECT="home:AvengeMedia"
 OBS_BASE="$HOME/.cache/osc-checkouts"
 
-ALL_PACKAGES=(dms dms-git)
+ALL_PACKAGES=(cyshell cyshell-git)
 
 REPOS=("Debian_13" "openSUSE_Tumbleweed" "16.0")
 ARCHES=("x86_64" "aarch64")
@@ -35,11 +35,11 @@ cd "$OBS_BASE" || {
 
 for pkg in "${PACKAGES[@]}"; do
     case "$pkg" in
-    dms)
-        PROJECT="$OBS_BASE_PROJECT:dms"
+    cyshell)
+        PROJECT="$OBS_BASE_PROJECT:cyshell"
         ;;
-    dms-git)
-        PROJECT="$OBS_BASE_PROJECT:dms-git"
+    cyshell-git)
+        PROJECT="$OBS_BASE_PROJECT:cyshell-git"
         ;;
     *)
         echo "Error: Unknown package '$pkg'"

@@ -55,9 +55,9 @@ Item {
     readonly property bool wifiListVisible: wifiMode && NetworkService.wifiEnabled && !NetworkService.wifiToggling && !wifiScanningEmpty
 
     readonly property int currentPreferenceIndex: {
-        if (DMSService.apiVersion < 5)
+        if (CyShellService.apiVersion < 5)
             return 1;
-        if (!networkManager || DMSService.apiVersion <= 10)
+        if (!networkManager || CyShellService.apiVersion <= 10)
             return 1;
         const pref = NetworkService.userPreference;
         if (connectionTypes.indexOf(pref) !== -1)
@@ -71,7 +71,7 @@ Item {
     readonly property Item headerActions: Row {
         spacing: Theme.spacingS
 
-        DankDropdown {
+        CyDropdown {
             anchors.verticalCenter: parent.verticalCenter
             visible: root.wifiMode && (NetworkService.wifiDevices?.length ?? 0) > 1
             compactMode: true
@@ -83,7 +83,7 @@ Item {
             onValueChanged: value => NetworkService.setWifiDeviceOverride(value === I18n.tr("Auto") ? "" : value)
         }
 
-        DankRefreshButton {
+        CyRefreshButton {
             Accessible.name: I18n.tr("Scan")
             anchors.verticalCenter: parent.verticalCenter
             buttonSize: Theme.iconButtonSize
@@ -166,7 +166,7 @@ Item {
             {
                 "label": network.autoconnect ? I18n.tr("Disable autoconnect") : I18n.tr("Enable autoconnect"),
                 "iconName": "autorenew",
-                "visible": showSavedOptions && DMSService.apiVersion > 13,
+                "visible": showSavedOptions && CyShellService.apiVersion > 13,
                 "action": () => NetworkService.setWifiAutoconnect(ssid, !network.autoconnect)
             },
             {
@@ -283,7 +283,7 @@ Item {
         }
     }
 
-    DankFlickable {
+    CyFlickable {
         anchors.fill: parent
         contentHeight: column.height
         clip: true
@@ -293,7 +293,7 @@ Item {
             width: parent.width
             spacing: CcMetrics.detailContentGap
 
-            DankButtonGroup {
+            CyButtonGroup {
                 readonly property var labelsByType: ({
                         "ethernet": I18n.tr("Ethernet"),
                         "wifi": I18n.tr("WiFi", "wireless network, control center section title"),
@@ -302,7 +302,7 @@ Item {
 
                 anchors.horizontalCenter: parent.horizontalCenter
                 size: "small"
-                visible: root.connectionTypes.length > 1 && root.networkManager && DMSService.apiVersion > 10
+                visible: root.connectionTypes.length > 1 && root.networkManager && CyShellService.apiVersion > 10
                 model: root.connectionTypes.map(t => labelsByType[t] || t)
                 currentIndex: Math.max(0, root.connectionTypes.indexOf(root.currentConnectionType))
                 selectionMode: "single"
@@ -360,7 +360,7 @@ Item {
                     showChevron: !NetworkService.hotspotConfigured
                     onClicked: root.openHotspotSettings()
 
-                    DankSpinner {
+                    CySpinner {
                         anchors.verticalCenter: parent.verticalCenter
                         size: Theme.iconSizeMedium
                         strokeWidth: CcMetrics.spinnerStroke
@@ -369,7 +369,7 @@ Item {
                         running: visible
                     }
 
-                    DankToggle {
+                    CyToggle {
                         anchors.verticalCenter: parent.verticalCenter
                         hideText: true
                         visible: NetworkService.hotspotConfigured && !root.hotspotWorking
@@ -459,7 +459,7 @@ Item {
                             });
                         }
 
-                        leading: DankSpinner {
+                        leading: CySpinner {
                             size: Theme.iconSizeMedium
                             strokeWidth: CcMetrics.spinnerStroke
                             color: Theme.warning
@@ -467,7 +467,7 @@ Item {
                             running: visible
                         }
 
-                        DankActionButton {
+                        CyActionButton {
                             anchors.verticalCenter: parent.verticalCenter
                             visible: wifiRow.modelData.secured && wifiRow.modelData.saved && !(wifiRow.modelData.enterprise || false)
                             buttonSize: Theme.buttonHeightXS
@@ -484,7 +484,7 @@ Item {
                             onToggled: root.togglePin(wifiRow.modelData.ssid)
                         }
 
-                        DankActionButton {
+                        CyActionButton {
                             id: wifiOptionsButton
                             anchors.verticalCenter: parent.verticalCenter
                             buttonSize: Theme.buttonHeightXS
@@ -499,7 +499,7 @@ Item {
             }
 
             CcGroup {
-                visible: root.ethernetMode && root.networkManager && DMSService.apiVersion > 10
+                visible: root.ethernetMode && root.networkManager && CyShellService.apiVersion > 10
 
                 Repeater {
                     model: wiredConnectionsModel
@@ -521,7 +521,7 @@ Item {
                             NetworkService.connectToSpecificWiredConfig(modelData.uuid);
                         }
 
-                        DankActionButton {
+                        CyActionButton {
                             id: wiredOptionsButton
                             anchors.verticalCenter: parent.verticalCenter
                             buttonSize: Theme.buttonHeightXS
@@ -581,7 +581,7 @@ Item {
                         clickable: true
                         onClicked: NetworkService.toggleNetworkConnection("cellular")
 
-                        DankActionButton {
+                        CyActionButton {
                             anchors.verticalCenter: parent.verticalCenter
                             buttonSize: Theme.buttonHeightXS
                             iconSize: Theme.iconSizeMedium
@@ -609,7 +609,7 @@ Item {
                         clickable: !active
                         onClicked: NetworkService.connectToSpecificCellularConfig(modelData.uuid)
 
-                        DankActionButton {
+                        CyActionButton {
                             anchors.verticalCenter: parent.verticalCenter
                             buttonSize: Theme.buttonHeightXS
                             iconSize: Theme.iconSizeMedium

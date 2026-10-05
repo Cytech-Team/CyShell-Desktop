@@ -10,19 +10,19 @@ function dirname(path) {
 function sectionHeaderFor(includeLine) {
     const line = String(includeLine ?? "").trim();
     if (line.startsWith("require"))
-        return "-- DMS Include Configs";
+        return "-- CyShell Include Configs";
     if (line.startsWith("source"))
-        return "# DMS Include Configs";
-    return "// DMS Include Configs";
+        return "# CyShell Include Configs";
+    return "// CyShell Include Configs";
 }
 
 function managedIncludePatternFor(includeLine) {
     const line = String(includeLine ?? "").trim();
     if (line.startsWith("require"))
-        return "require.*dms[.]";
+        return "require.*cyshell[.]";
     if (line.startsWith("source"))
-        return "source.*dms/";
-    return "include.*dms/";
+        return "source.*cyshell/";
+    return "include.*cyshell/";
 }
 
 function buildRepairScript(options) {
@@ -78,18 +78,18 @@ const fragmentExtensions = {
 };
 
 const kdlInclude = name => ({
-            grepPattern: `include.*"dms/${name}.kdl"`,
-            includeLine: `include "dms/${name}.kdl"`
+            grepPattern: `include.*"cyshell/${name}.kdl"`,
+            includeLine: `include "cyshell/${name}.kdl"`
         });
 
 const luaInclude = name => ({
-            grepPattern: `dms.${name}`,
-            includeLine: `require("dms.${name}")`
+            grepPattern: `cyshell.${name}`,
+            includeLine: `require("cyshell.${name}")`
         });
 
 const confInclude = (name, grepPattern, includeLine) => ({
-            grepPattern: grepPattern ?? `source.*dms/${name}.conf`,
-            includeLine: includeLine ?? `source=./dms/${name}.conf`
+            grepPattern: grepPattern ?? `source.*cyshell/${name}.conf`,
+            includeLine: includeLine ?? `source=./cyshell/${name}.conf`
         });
 
 const includeTable = {
@@ -109,7 +109,7 @@ const includeTable = {
     windowrules: {
         niri: [kdlInclude("windowrules")],
         hyprland: [luaInclude("windowrules")],
-        mango: [confInclude("windowrules", "dms/windowrules.conf")]
+        mango: [confInclude("windowrules", "cyshell/windowrules.conf")]
     },
     cursor: {
         niri: [kdlInclude("cursor")],
@@ -119,7 +119,7 @@ const includeTable = {
     binds: {
         niri: [kdlInclude("binds")],
         hyprland: [luaInclude("binds"), luaInclude("binds-user")],
-        mango: [confInclude("binds", undefined, "source = ./dms/binds.conf")]
+        mango: [confInclude("binds", undefined, "source = ./cyshell/binds.conf")]
     }
 };
 
@@ -149,7 +149,7 @@ function includePaths(kind, compositor, configDir) {
     const dir = configDir + "/" + compositorDirs[compositor];
     return {
         configFile: dir + "/" + spec.configName,
-        fragmentFiles: spec.fragmentNames.map(name => dir + "/dms/" + name),
+        fragmentFiles: spec.fragmentNames.map(name => dir + "/cyshell/" + name),
         includes: spec.includes
     };
 }

@@ -1,12 +1,12 @@
 #!/bin/bash
-# Unified PPA status checker for DMS packages
+# Unified PPA status checker for CyShell packages
 # Checks build status for packages across multiple PPAs via Launchpad API
 # Usage: ./distro/scripts/ppa-status.sh [package-name] [ppa-name]
 #
 # Examples:
 #   ./distro/scripts/ppa-status.sh              # Check all packages in all PPAs
-#   ./distro/scripts/ppa-status.sh dms          # Check dms package
-#   ./distro/scripts/ppa-status.sh all dms-git  # Check all packages in dms-git PPA
+#   ./distro/scripts/ppa-status.sh cyshell          # Check cyshell package
+#   ./distro/scripts/ppa-status.sh all cyshell-git  # Check all packages in cyshell-git PPA
 
 PPA_OWNER="avengemedia"
 LAUNCHPAD_API="https://api.launchpad.net/1.0"
@@ -14,14 +14,14 @@ LAUNCHPAD_API="https://api.launchpad.net/1.0"
 DISTRO_SERIES_LIST=(resolute stonking)
 
 # Define packages (sync with ppa-upload.sh)
-ALL_PACKAGES=(dms dms-git)
+ALL_PACKAGES=(cyshell cyshell-git)
 
 # Function to get PPA name for a package
 get_ppa_name() {
     local pkg="$1"
     case "$pkg" in
-        dms) echo "dms" ;;
-        dms-git) echo "dms-git" ;;
+        cyshell) echo "cyshell" ;;
+        cyshell-git) echo "cyshell-git" ;;
         *) echo "" ;;
     esac
 }
@@ -71,7 +71,7 @@ elif [[ -n "$PPA_INPUT" ]]; then
 else
     # Check all packages in all PPAs
     PACKAGES=("${ALL_PACKAGES[@]}")
-    PPAS=("dms" "dms-git")
+    PPAS=("cyshell" "cyshell-git")
 fi
 
 # Function to get build status color and symbol

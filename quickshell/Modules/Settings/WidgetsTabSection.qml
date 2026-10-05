@@ -33,7 +33,7 @@ Column {
     SettingsSectionLabel {
         text: root.title
         actions: [
-            DankActionButton {
+            CyActionButton {
                 buttonSize: Theme.buttonHeightXXS
                 iconName: "format_list_numbered"
                 tooltipText: I18n.tr("Index centering")
@@ -42,7 +42,7 @@ Column {
                 visible: root.sectionId === "center"
                 onClicked: SettingsData.set("centeringMode", "index")
             },
-            DankActionButton {
+            CyActionButton {
                 buttonSize: Theme.buttonHeightXXS
                 iconName: "center_focus_weak"
                 tooltipText: I18n.tr("Geometric centering")
@@ -96,7 +96,7 @@ Column {
                 visible: !!widgetRow.modelData.warning
                 anchors.verticalCenter: parent.verticalCenter
 
-                DankIcon {
+                CyIcon {
                     name: "warning"
                     size: Theme.iconSizeMedium
                     color: Theme.error
@@ -109,14 +109,14 @@ Column {
                     hoverEnabled: true
                 }
 
-                DankTooltipHost {
+                CyTooltipHost {
                     text: widgetRow.modelData.warning
                     target: parent
                     hoverArea: warningArea
                 }
             }
 
-            DankIcon {
+            CyIcon {
                 name: "chevron_right"
                 size: Theme.iconSize
                 color: Theme.onSurfaceVariant
@@ -133,7 +133,7 @@ Column {
                 anchors.verticalCenter: parent.verticalCenter
             }
 
-            DankNumberStepper {
+            CyNumberStepper {
                 visible: widgetRow.modelData.id === "spacer"
                 anchors.verticalCenter: parent.verticalCenter
                 text: (widgetRow.modelData.size || 20).toString()
@@ -143,7 +143,7 @@ Column {
                 onIncrement: () => root.spacerSizeChanged(root.sectionId, widgetRow.index, Math.min(5000, (widgetRow.modelData.size || 20) + 5))
             }
 
-            DankToggle {
+            CyToggle {
                 hideText: true
                 visible: widgetRow.modelData.id !== "spacer"
                 checked: widgetRow.modelData.enabled
@@ -151,7 +151,7 @@ Column {
                 onToggled: value => root.itemEnabledChanged(root.sectionId, widgetRow.modelData.id, value)
             }
 
-            DankActionButton {
+            CyActionButton {
                 iconName: "close"
                 iconColor: Theme.error
                 Accessible.name: I18n.tr("Remove")
@@ -175,7 +175,7 @@ Column {
         }
     }
 
-    DankButton {
+    CyButton {
         anchors.horizontalCenter: parent.horizontalCenter
         text: I18n.tr("Add widget")
         iconName: "add"

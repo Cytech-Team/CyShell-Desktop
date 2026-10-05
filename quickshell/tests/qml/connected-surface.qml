@@ -7,7 +7,7 @@ import qs.Modules.Frame
 import qs.Modules.Dock
 import qs.Modules.Notifications.Popup
 import qs.Modals.Common
-import qs.DankCommon.Common as DC
+import qs.CyCommon.Common as DC
 
 ShellRoot {
     id: root
@@ -56,7 +56,7 @@ ShellRoot {
     }
     Component {
         id: popoutComponent
-        DankPopoutHost {}
+        CyPopoutHost {}
     }
     Component {
         id: notificationComponent
@@ -64,7 +64,7 @@ ShellRoot {
     }
     Component {
         id: modalComponent
-        DankModalHost {}
+        CyModalHost {}
     }
 
     Component.onCompleted: {

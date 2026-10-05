@@ -49,7 +49,7 @@ SettingsReorderRow {
     onClicked: expandedToggled(!isExpanded)
 
     trailing: [
-        DankToggle {
+        CyToggle {
             anchors.verticalCenter: parent.verticalCenter
             hideText: true
             checked: instanceData?.enabled ?? true
@@ -59,7 +59,7 @@ SettingsReorderRow {
                 });
             }
         },
-        DankActionButton {
+        CyActionButton {
             id: menuButton
             anchors.verticalCenter: parent.verticalCenter
             iconName: "more_vert"
@@ -106,7 +106,7 @@ SettingsReorderRow {
                             anchors.verticalCenter: parent.verticalCenter
                             spacing: Theme.spacingS
 
-                            DankIcon {
+                            CyIcon {
                                 name: "content_copy"
                                 size: Theme.iconSizeSmall
                                 color: Theme.surfaceText
@@ -143,7 +143,7 @@ SettingsReorderRow {
                             anchors.verticalCenter: parent.verticalCenter
                             spacing: Theme.spacingS
 
-                            DankIcon {
+                            CyIcon {
                                 name: root.confirmingDelete ? "warning" : "delete"
                                 size: Theme.iconSizeSmall
                                 color: Theme.error
@@ -174,7 +174,7 @@ SettingsReorderRow {
                 }
             }
         },
-        DankIcon {
+        CyIcon {
             anchors.verticalCenter: parent.verticalCenter
             name: root.isExpanded ? "expand_less" : "expand_more"
             size: Theme.iconSize
@@ -330,7 +330,7 @@ SettingsReorderRow {
 
                         StyledText {
                             id: ipcText
-                            text: "dms ipc call desktopWidget toggleOverlay " + root.instanceId
+                            text: "cyshell ipc call desktopWidget toggleOverlay " + root.instanceId
                             font.pixelSize: Theme.fontSizeSmall
                             font.family: Theme.monoFontFamily
                             color: Theme.surfaceVariantText
@@ -339,7 +339,7 @@ SettingsReorderRow {
                             anchors.verticalCenter: parent.verticalCenter
                         }
 
-                        DankButton {
+                        CyButton {
                             id: copyBtn
                             iconName: "content_copy"
                             Accessible.name: I18n.tr("Copy")
@@ -349,7 +349,7 @@ SettingsReorderRow {
                             horizontalPadding: 4
                             anchors.verticalCenter: parent.verticalCenter
                             onClicked: {
-                                Quickshell.execDetached(["dms", "cl", "copy", "dms ipc call desktopWidget toggleOverlay " + root.instanceId]);
+                                Quickshell.execDetached(["cyshell", "cl", "copy", "cyshell ipc call desktopWidget toggleOverlay " + root.instanceId]);
                                 ToastService.showInfo(I18n.tr("Copied to clipboard"));
                             }
                         }

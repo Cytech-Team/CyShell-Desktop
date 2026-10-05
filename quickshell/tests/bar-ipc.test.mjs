@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import vm from "node:vm";
 import test from "node:test";
 
-const source = readFileSync(new URL("../DMSShellIPC.qml", import.meta.url), "utf8");
+const source = readFileSync(new URL("../CyShellIPC.qml", import.meta.url), "utf8");
 const barBlock = source.slice(source.indexOf("    function getBarConfig("), source.indexOf('        target: "bar"'));
 const functions = [...barBlock.matchAll(/^ {4,8}function (\w+)\(([^)]*)\)(?:: \w+)? \{\n[\s\S]*?^\s{4,8}\}$/gm)];
 const untyped = functions.map(match => match[0].replace(/\((.*?)\)(?:: \w+)? \{/, (_, params) => "(" + params.replace(/: \w+/g, "") + ") {"));

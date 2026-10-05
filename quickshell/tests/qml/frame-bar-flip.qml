@@ -1,8 +1,8 @@
 import QtQuick
 import Quickshell
 import qs.Common
-import qs.Modules.DankBar
-import qs.DankCommon.Common as DC
+import qs.Modules.CyBar
+import qs.CyCommon.Common as DC
 
 ShellRoot {
     id: root
@@ -31,7 +31,7 @@ ShellRoot {
             height: root.vertical ? 600 : Theme.px(body.effectiveBarThickness + body.effectiveSpacing, body._dpr)
 
             // FrameBarHost retains the body while its slot changes orientation.
-            DankBarBody {
+            CyBarBody {
                 id: body
                 anchors.fill: parent
                 rootWindow: root

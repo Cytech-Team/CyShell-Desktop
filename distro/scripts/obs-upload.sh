@@ -1,14 +1,14 @@
 #!/bin/bash
-# Unified OBS upload script for dms packages
+# Unified OBS upload script for cyshell packages
 # Handles Debian and OpenSUSE builds for both x86_64 and aarch64
 # Usage: ./distro/scripts/obs-upload.sh [distro] <package-name> [commit-message|rebuild-number]
 #
 # Examples:
-#   ./distro/scripts/obs-upload.sh dms "Update to v1.0.2"
-#   ./distro/scripts/obs-upload.sh debian dms
-#   ./distro/scripts/obs-upload.sh opensuse dms-git
-#   ./distro/scripts/obs-upload.sh debian dms-git 2    # Rebuild with db2 suffix
-#   ./distro/scripts/obs-upload.sh dms-git --rebuild=2 # Rebuild with db2 suffix (flag syntax)
+#   ./distro/scripts/obs-upload.sh cyshell "Update to v1.0.2"
+#   ./distro/scripts/obs-upload.sh debian cyshell
+#   ./distro/scripts/obs-upload.sh opensuse cyshell-git
+#   ./distro/scripts/obs-upload.sh debian cyshell-git 2    # Rebuild with db2 suffix
+#   ./distro/scripts/obs-upload.sh cyshell-git --rebuild=2 # Rebuild with db2 suffix (flag syntax)
 
 set -e
 
@@ -68,13 +68,13 @@ fi
 
 OBS_BASE_PROJECT="home:AvengeMedia"
 OBS_BASE="$HOME/.cache/osc-checkouts"
-AVAILABLE_PACKAGES=(dms dms-git)
+AVAILABLE_PACKAGES=(cyshell cyshell-git)
 
 if [[ -z "$PACKAGE" ]]; then
     echo "Available packages:"
     echo ""
-    echo "  1. dms         - Stable DMS"
-    echo "  2. dms-git     - Nightly DMS"
+    echo "  1. cyshell         - Stable CyShell"
+    echo "  2. cyshell-git     - Nightly CyShell"
     echo "  a. all"
     echo ""
     read -r -p "Select package (1-${#AVAILABLE_PACKAGES[@]}, a): " selection
@@ -114,17 +114,17 @@ osc_retry() {
     done
 }
 
-# Bundled Go for dms-git OBS builds (offline VM); filenames must match distro/opensuse/dms-git.spec Source1/2.
-GO_TOOLCHAIN_CACHE="${GO_TOOLCHAIN_CACHE:-$HOME/.cache/dms-obs-go-toolchain}"
+# Bundled Go for cyshell-git OBS builds (offline VM); filenames must match distro/opensuse/cyshell-git.spec Source1/2.
+GO_TOOLCHAIN_CACHE="${GO_TOOLCHAIN_CACHE:-$HOME/.cache/cyshell-obs-go-toolchain}"
 
-dms_git_go_toolchain_version() {
+cyshell_git_go_toolchain_version() {
     grep -m1 '^go ' "$REPO_ROOT/core/go.mod" 2>/dev/null | awk '{print $2}'
 }
 
-ensure_dms_git_go_tarballs() {
+ensure_cyshell_git_go_tarballs() {
     local dest="$1"
     local ver arch url cached
-    ver="$(dms_git_go_toolchain_version)"
+    ver="$(cyshell_git_go_toolchain_version)"
     if [[ -z "$ver" ]]; then
         echo "ERROR: Could not read Go version from core/go.mod"
         exit 1
@@ -199,7 +199,7 @@ check_obs_version_exists() {
     return 1
 }
 
-update_debian_dms_service() {
+update_debian_cyshell_service() {
     local service_path="$1"
     if [[ -z "$service_path" || ! -f "$service_path" ]]; then
         return 0
@@ -215,9 +215,9 @@ update_debian_dms_service() {
         return 0
     fi
 
-    sed -i "s|/releases/download/v[0-9][^\"]*/dms-source\.tar\.gz|/releases/download/v${base_version}/dms-source.tar.gz|" "$service_path"
-    sed -i "s|/releases/download/v[0-9][^\"]*/dms-distropkg-amd64\.gz|/releases/download/v${base_version}/dms-distropkg-amd64.gz|" "$service_path"
-    sed -i "s|/releases/download/v[0-9][^\"]*/dms-distropkg-arm64\.gz|/releases/download/v${base_version}/dms-distropkg-arm64.gz|" "$service_path"
+    sed -i "s|/releases/download/v[0-9][^\"]*/cyshell-source\.tar\.gz|/releases/download/v${base_version}/cyshell-source.tar.gz|" "$service_path"
+    sed -i "s|/releases/download/v[0-9][^\"]*/cyshell-distropkg-amd64\.gz|/releases/download/v${base_version}/cyshell-distropkg-amd64.gz|" "$service_path"
+    sed -i "s|/releases/download/v[0-9][^\"]*/cyshell-distropkg-arm64\.gz|/releases/download/v${base_version}/cyshell-distropkg-arm64.gz|" "$service_path"
 }
 
 update_opensuse_git_spec() {
@@ -226,7 +226,7 @@ update_opensuse_git_spec() {
     if [[ -z "$spec_path" || ! -f "$spec_path" ]]; then
         return 0
     fi
-    go_ver="$(dms_git_go_toolchain_version)"
+    go_ver="$(cyshell_git_go_toolchain_version)"
     if [[ -n "$go_ver" ]] && grep -q '^%global go_toolchain_version' "$spec_path"; then
         sed -i "s/^%global go_toolchain_version .*/%global go_toolchain_version ${go_ver}/" "$spec_path"
         echo "    Synced %global go_toolchain_version to ${go_ver} (core/go.mod)"
@@ -300,11 +300,11 @@ if [[ ! -d "distro/debian/$PACKAGE" ]]; then
 fi
 
 case "$PACKAGE" in
-dms)
-    PROJECT="dms"
+cyshell)
+    PROJECT="cyshell"
     ;;
-dms-git)
-    PROJECT="dms-git"
+cyshell-git)
+    PROJECT="cyshell-git"
     ;;
 *)
     echo "Error: Unknown package '$PACKAGE'"
@@ -380,7 +380,7 @@ if [[ -d "distro/debian/$PACKAGE/debian" ]]; then
         COMMIT_COUNT=$(git rev-list --count HEAD)
         BASE_VERSION=$(git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//' || true)
         if [[ -z "$BASE_VERSION" ]]; then
-            BASE_VERSION=$(grep -oP '^Version:\s+\K[0-9.]+' distro/opensuse/dms.spec | head -1 || echo "1.0.2")
+            BASE_VERSION=$(grep -oP '^Version:\s+\K[0-9.]+' distro/opensuse/cyshell.spec | head -1 || echo "1.0.2")
         fi
         CHANGELOG_VERSION="${BASE_VERSION}+git${COMMIT_COUNT}.${COMMIT_HASH}"
         echo "  - Generated git snapshot version: $CHANGELOG_VERSION"
@@ -403,8 +403,8 @@ if [[ -d "distro/debian/$PACKAGE/debian" ]]; then
     fi
 
     # Keep Debian _service in sync with changelog version
-    if [[ "$PACKAGE" == "dms" ]] && [[ -f "distro/debian/$PACKAGE/_service" ]]; then
-        update_debian_dms_service "distro/debian/$PACKAGE/_service"
+    if [[ "$PACKAGE" == "cyshell" ]] && [[ -f "distro/debian/$PACKAGE/_service" ]]; then
+        update_debian_cyshell_service "distro/debian/$PACKAGE/_service"
     fi
 
     # Check if this version already exists in OBS
@@ -509,7 +509,7 @@ if [[ "$UPLOAD_OPENSUSE" == true ]] && [[ "$UPLOAD_DEBIAN" == false ]] && [[ -f 
 
         if [[ -n "$GIT_URL" ]]; then
             echo "    Cloning git source from: $GIT_URL (revision: ${GIT_REVISION:-master})"
-            SOURCE_DIR="$TEMP_DIR/dms-git-source"
+            SOURCE_DIR="$TEMP_DIR/cyshell-git-source"
             if git clone --depth 1 --recurse-submodules --shallow-submodules --branch "${GIT_REVISION:-master}" "$GIT_URL" "$SOURCE_DIR" 2>/dev/null ||
                 git clone --depth 1 --recurse-submodules --shallow-submodules "$GIT_URL" "$SOURCE_DIR" 2>/dev/null; then
                 cd "$SOURCE_DIR"
@@ -531,12 +531,12 @@ if [[ "$UPLOAD_OPENSUSE" == true ]] && [[ "$UPLOAD_DEBIAN" == false ]] && [[ -f 
             cd "$OBS_TARBALL_DIR"
 
             case "$PACKAGE" in
-            dms)
-                DMS_VERSION=$(grep "^Version:" "$REPO_ROOT/distro/opensuse/$PACKAGE.spec" | sed 's/^Version:[[:space:]]*//' | head -1)
-                EXPECTED_DIR="DankMaterialShell-${DMS_VERSION}"
+            cyshell)
+                CYSHELL_VERSION=$(grep "^Version:" "$REPO_ROOT/distro/opensuse/$PACKAGE.spec" | sed 's/^Version:[[:space:]]*//' | head -1)
+                EXPECTED_DIR="CyShell-${CYSHELL_VERSION}"
                 ;;
-            dms-git)
-                EXPECTED_DIR="dms-git-source"
+            cyshell-git)
+                EXPECTED_DIR="cyshell-git-source"
                 ;;
             *)
                 EXPECTED_DIR=$(basename "$SOURCE_DIR")
@@ -552,9 +552,9 @@ if [[ "$UPLOAD_OPENSUSE" == true ]] && [[ "$UPLOAD_DEBIAN" == false ]] && [[ -f 
             cd "$REPO_ROOT"
             rm -rf "$OBS_TARBALL_DIR"
 
-            if [[ "$PACKAGE" == "dms-git" ]]; then
+            if [[ "$PACKAGE" == "cyshell-git" ]]; then
                 echo "  - Staging bundled Go toolchains for RPM (Source1/Source2)"
-                ensure_dms_git_go_tarballs "$WORK_DIR"
+                ensure_cyshell_git_go_tarballs "$WORK_DIR"
             fi
         fi
     else
@@ -596,7 +596,7 @@ if [[ "$UPLOAD_DEBIAN" == true ]] && [[ -d "distro/debian/$PACKAGE/debian" ]]; t
 
                 if [[ -n "$GIT_URL" ]]; then
                     echo "    Cloning git source from: $GIT_URL (revision: ${GIT_REVISION:-master})"
-                    SOURCE_DIR="$TEMP_DIR/dms-git-source"
+                    SOURCE_DIR="$TEMP_DIR/cyshell-git-source"
                     if git clone --depth 1 --recurse-submodules --shallow-submodules --branch "${GIT_REVISION:-master}" "$GIT_URL" "$SOURCE_DIR" 2>/dev/null ||
                         git clone --depth 1 --recurse-submodules --shallow-submodules "$GIT_URL" "$SOURCE_DIR" 2>/dev/null; then
                         cd "$SOURCE_DIR"
@@ -611,7 +611,7 @@ if [[ "$UPLOAD_DEBIAN" == true ]] && [[ -d "distro/debian/$PACKAGE/debian" ]]; t
                         exit 1
                     fi
                 fi
-            elif grep -q "download_url" "distro/debian/$PACKAGE/_service" && [[ "$PACKAGE" != "dms-git" ]]; then
+            elif grep -q "download_url" "distro/debian/$PACKAGE/_service" && [[ "$PACKAGE" != "cyshell-git" ]]; then
                 ALL_PATHS=$(grep -A 5 '<service name="download_url">' "distro/debian/$PACKAGE/_service" |
                     grep '<param name="path">' |
                     sed 's/.*<param name="path">\(.*\)<\/param>.*/\1/')
@@ -664,7 +664,7 @@ if [[ "$UPLOAD_DEBIAN" == true ]] && [[ -d "distro/debian/$PACKAGE/debian" ]]; t
                         elif [[ "$SOURCE_URL" == *.tar.gz ]] || [[ "$SOURCE_URL" == *.tgz ]]; then
                             tar -xzf source-archive
                         fi
-                        SOURCE_DIR=$(find . -maxdepth 1 -type d -name "DankMaterialShell-*" | head -1)
+                        SOURCE_DIR=$(find . -maxdepth 1 -type d -name "CyShell-*" | head -1)
                         if [[ -z "$SOURCE_DIR" ]]; then
                             SOURCE_DIR=$(find . -maxdepth 1 -type d ! -name "." | head -1)
                         fi
@@ -706,8 +706,8 @@ if [[ "$UPLOAD_DEBIAN" == true ]] && [[ -d "distro/debian/$PACKAGE/debian" ]]; t
 
         echo "==> Found source directory: $SOURCE_DIR"
 
-        # Vendor Go dependencies for dms-git
-        if [[ "$PACKAGE" == "dms-git" ]] && [[ -d "$SOURCE_DIR/core" ]]; then
+        # Vendor Go dependencies for cyshell-git
+        if [[ "$PACKAGE" == "cyshell-git" ]] && [[ -d "$SOURCE_DIR/core" ]]; then
             echo "  - Vendoring Go dependencies for offline OBS build..."
             cd "$SOURCE_DIR/core"
 
@@ -735,8 +735,8 @@ if [[ "$UPLOAD_DEBIAN" == true ]] && [[ -d "distro/debian/$PACKAGE/debian" ]]; t
             echo "  - Creating OpenSUSE-compatible source tarballs"
 
             SOURCE0=$(grep "^Source0:" "distro/opensuse/$PACKAGE.spec" | awk '{print $2}' | head -1)
-            if [[ -z "$SOURCE0" && "$PACKAGE" == "dms-git" ]]; then
-                SOURCE0="dms-git-source.tar.gz"
+            if [[ -z "$SOURCE0" && "$PACKAGE" == "cyshell-git" ]]; then
+                SOURCE0="cyshell-git-source.tar.gz"
             fi
 
             if [[ -n "$SOURCE0" ]]; then
@@ -744,9 +744,9 @@ if [[ "$UPLOAD_DEBIAN" == true ]] && [[ -d "distro/debian/$PACKAGE/debian" ]]; t
                 cd "$OBS_TARBALL_DIR"
 
                 case "$PACKAGE" in
-                dms)
-                    DMS_VERSION=$(grep "^Version:" "$REPO_ROOT/distro/opensuse/$PACKAGE.spec" | sed 's/^Version:[[:space:]]*//' | head -1)
-                    EXPECTED_DIR="DankMaterialShell-${DMS_VERSION}"
+                cyshell)
+                    CYSHELL_VERSION=$(grep "^Version:" "$REPO_ROOT/distro/opensuse/$PACKAGE.spec" | sed 's/^Version:[[:space:]]*//' | head -1)
+                    EXPECTED_DIR="CyShell-${CYSHELL_VERSION}"
                     echo "    Creating $SOURCE0 (directory: $EXPECTED_DIR)"
                     cp -r "$SOURCE_DIR" "$EXPECTED_DIR"
                     if [[ "$SOURCE0" == *.tar.xz ]]; then
@@ -759,8 +759,8 @@ if [[ "$UPLOAD_DEBIAN" == true ]] && [[ -d "distro/debian/$PACKAGE/debian" ]]; t
                     rm -rf "$EXPECTED_DIR"
                     echo "    Created $SOURCE0 ($(stat -c%s "$WORK_DIR/$SOURCE0" 2>/dev/null || echo 0) bytes)"
                     ;;
-                dms-git)
-                    EXPECTED_DIR="dms-git-source"
+                cyshell-git)
+                    EXPECTED_DIR="cyshell-git-source"
                     echo "    Creating $SOURCE0 (directory: $EXPECTED_DIR)"
                     cp -r "$SOURCE_DIR" "$EXPECTED_DIR"
                     if [[ "$SOURCE0" == *.tar.xz ]]; then
@@ -791,9 +791,9 @@ if [[ "$UPLOAD_DEBIAN" == true ]] && [[ -d "distro/debian/$PACKAGE/debian" ]]; t
                 cd "$REPO_ROOT"
                 rm -rf "$OBS_TARBALL_DIR"
 
-                if [[ "$PACKAGE" == "dms-git" ]]; then
+                if [[ "$PACKAGE" == "cyshell-git" ]]; then
                     echo "  - Staging bundled Go toolchains for RPM (Source1/Source2)"
-                    ensure_dms_git_go_tarballs "$WORK_DIR"
+                    ensure_cyshell_git_go_tarballs "$WORK_DIR"
                 fi
 
                 echo "  - OpenSUSE source tarballs created"
@@ -829,14 +829,14 @@ if [[ "$UPLOAD_DEBIAN" == true ]] && [[ -d "distro/debian/$PACKAGE/debian" ]]; t
                 rm -f "$TEMP_CHANGELOG"
             fi
 
-            # For dms, rename directory to match what debian/rules expects
+            # For cyshell, rename directory to match what debian/rules expects
             # debian/rules uses UPSTREAM_VERSION which is the full version from changelog
-            if [[ "$PACKAGE" == "dms" ]]; then
+            if [[ "$PACKAGE" == "cyshell" ]]; then
                 CHANGELOG_IN_SOURCE="$SOURCE_DIR/debian/changelog"
                 if [[ -f "$CHANGELOG_IN_SOURCE" ]]; then
                     ACTUAL_VERSION=$(grep -m1 "^$PACKAGE" "$CHANGELOG_IN_SOURCE" 2>/dev/null | sed 's/.*(\([^)]*\)).*/\1/' || echo "$VERSION")
                     CURRENT_DIR=$(basename "$SOURCE_DIR")
-                    EXPECTED_DIR="DankMaterialShell-${ACTUAL_VERSION}"
+                    EXPECTED_DIR="CyShell-${ACTUAL_VERSION}"
                     if [[ "$CURRENT_DIR" != "$EXPECTED_DIR" ]]; then
                         echo "    Renaming directory from $CURRENT_DIR to $EXPECTED_DIR to match debian/rules"
                         cd "$(dirname "$SOURCE_DIR")"
@@ -847,9 +847,9 @@ if [[ "$UPLOAD_DEBIAN" == true ]] && [[ -d "distro/debian/$PACKAGE/debian" ]]; t
                 fi
             fi
 
-            if [[ "$PACKAGE" == "dms-git" ]]; then
+            if [[ "$PACKAGE" == "cyshell-git" ]]; then
                 echo "    Bundling Go toolchains into Debian source tree (offline build)"
-                ensure_dms_git_go_tarballs "$SOURCE_DIR"
+                ensure_cyshell_git_go_tarballs "$SOURCE_DIR"
             fi
 
             rm -f "$WORK_DIR/$COMBINED_TARBALL"
@@ -864,9 +864,9 @@ if [[ "$UPLOAD_DEBIAN" == true ]] && [[ -d "distro/debian/$PACKAGE/debian" ]]; t
                 exit 1
             fi
 
-            if [[ "$PACKAGE" == "dms" ]]; then
+            if [[ "$PACKAGE" == "cyshell" ]]; then
                 TARBALL_DIR=$(tar -tzf "$WORK_DIR/$COMBINED_TARBALL" 2>/dev/null | head -1 | cut -d'/' -f1)
-                EXPECTED_TARBALL_DIR="DankMaterialShell-${VERSION}"
+                EXPECTED_TARBALL_DIR="CyShell-${VERSION}"
                 if [[ "$TARBALL_DIR" != "$EXPECTED_TARBALL_DIR" ]]; then
                     echo "    Warning: Tarball directory name mismatch: $TARBALL_DIR != $EXPECTED_TARBALL_DIR"
                     echo "    This may cause build failures. Recreating tarball..."
@@ -979,7 +979,7 @@ if [[ -n "$OBS_FILES" ]]; then
             continue
         fi
 
-        # Keep pinned Go toolchain archives (bundled for dms-git offline builds)
+        # Keep pinned Go toolchain archives (bundled for cyshell-git offline builds)
         if [[ "$old_file" =~ ^go[0-9].+\.linux-(amd64|arm64)\.tar\.gz$ ]]; then
             echo "  - Keeping Go toolchain tarball: $old_file"
             continue

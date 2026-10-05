@@ -71,25 +71,25 @@ Item {
                         color: Theme.surfaceVariantText
                         width: parent.width
                         horizontalAlignment: Text.AlignLeft
-                        visible: !DMSNetworkService.vpnAvailable
+                        visible: !CyNetworkService.vpnAvailable
                     }
 
                     Row {
                         width: parent.width
                         spacing: Theme.spacingM
-                        visible: DMSNetworkService.vpnAvailable
+                        visible: CyNetworkService.vpnAvailable
 
                         StyledText {
                             text: {
-                                if (!DMSNetworkService.connected)
+                                if (!CyNetworkService.connected)
                                     return I18n.tr("Disconnected");
-                                const names = DMSNetworkService.activeNames || [];
+                                const names = CyNetworkService.activeNames || [];
                                 if (names.length <= 1)
                                     return names[0] || I18n.tr("Connected");
                                 return names[0] + " +" + (names.length - 1);
                             }
                             font.pixelSize: Theme.fontSizeSmall
-                            color: DMSNetworkService.connected ? Theme.primary : Theme.surfaceVariantText
+                            color: CyNetworkService.connected ? Theme.primary : Theme.surfaceVariantText
                             width: parent.width - vpnHeaderControls.width - Theme.spacingM
                             horizontalAlignment: Text.AlignLeft
                             anchors.verticalCenter: parent.verticalCenter
@@ -112,7 +112,7 @@ Item {
                                     anchors.centerIn: parent
                                     spacing: Theme.spacingXS
 
-                                    DankIcon {
+                                    CyIcon {
                                         name: VPNService.importing ? "sync" : "add"
                                         size: Theme.fontSizeSmall
                                         color: Theme.primary
@@ -141,15 +141,15 @@ Item {
                                 radius: Theme.cornerRadiusL
                                 width: disconnectAllRow.width + Theme.spacingM * 2
                                 color: disconnectAllArea.containsMouse ? Theme.errorHover : Theme.chipSurface
-                                visible: DMSNetworkService.connected
-                                opacity: DMSNetworkService.isBusy ? 0.5 : 1.0
+                                visible: CyNetworkService.connected
+                                opacity: CyNetworkService.isBusy ? 0.5 : 1.0
 
                                 Row {
                                     id: disconnectAllRow
                                     anchors.centerIn: parent
                                     spacing: Theme.spacingXS
 
-                                    DankIcon {
+                                    CyIcon {
                                         name: "link_off"
                                         size: Theme.fontSizeSmall
                                         color: Theme.surfaceText
@@ -167,9 +167,9 @@ Item {
                                     id: disconnectAllArea
                                     anchors.fill: parent
                                     hoverEnabled: true
-                                    cursorShape: DMSNetworkService.isBusy ? Qt.BusyCursor : Qt.PointingHandCursor
-                                    enabled: !DMSNetworkService.isBusy
-                                    onClicked: DMSNetworkService.disconnectAllActive()
+                                    cursorShape: CyNetworkService.isBusy ? Qt.BusyCursor : Qt.PointingHandCursor
+                                    enabled: !CyNetworkService.isBusy
+                                    onClicked: CyNetworkService.disconnectAllActive()
                                 }
                             }
                         }
@@ -178,13 +178,13 @@ Item {
                     Item {
                         width: parent.width
                         height: 100
-                        visible: DMSNetworkService.vpnAvailable && DMSNetworkService.profiles.length === 0
+                        visible: CyNetworkService.vpnAvailable && CyNetworkService.profiles.length === 0
 
                         Column {
                             anchors.centerIn: parent
                             spacing: Theme.spacingS
 
-                            DankIcon {
+                            CyIcon {
                                 name: "vpn_key_off"
                                 size: 36
                                 color: Theme.surfaceVariantText
@@ -210,17 +210,17 @@ Item {
                     Column {
                         width: parent.width
                         spacing: Theme.spacingXS
-                        visible: DMSNetworkService.vpnAvailable && DMSNetworkService.profiles.length > 0
+                        visible: CyNetworkService.vpnAvailable && CyNetworkService.profiles.length > 0
 
                         Repeater {
-                            model: DMSNetworkService.profiles
+                            model: CyNetworkService.profiles
 
                             delegate: Rectangle {
                                 id: vpnProfileRow
                                 required property var modelData
                                 required property int index
 
-                                readonly property bool isActive: DMSNetworkService.isActiveVpnUuid(modelData.uuid)
+                                readonly property bool isActive: CyNetworkService.isActiveVpnUuid(modelData.uuid)
                                 readonly property bool isTransient: !!modelData.transient
                                 readonly property bool canExpand: modelData.canExpand !== false
                                 readonly property bool canDelete: modelData.canDelete !== false
@@ -233,7 +233,7 @@ Item {
                                 color: vpnRowArea.containsMouse ? Theme.primaryHoverLight : (isActive ? Theme.primaryPressed : Theme.floatingWindowNestedSurface)
                                 border.width: isActive ? Theme.outlineWidthFocused : 0
                                 border.color: Theme.primary
-                                opacity: DMSNetworkService.isBusy ? 0.6 : 1.0
+                                opacity: CyNetworkService.isBusy ? 0.6 : 1.0
                                 clip: true
 
                                 Behavior on height {
@@ -247,9 +247,9 @@ Item {
                                     id: vpnRowArea
                                     anchors.fill: parent
                                     hoverEnabled: true
-                                    cursorShape: DMSNetworkService.isBusy ? Qt.BusyCursor : Qt.PointingHandCursor
-                                    enabled: !DMSNetworkService.isBusy
-                                    onClicked: DMSNetworkService.toggle(modelData.uuid)
+                                    cursorShape: CyNetworkService.isBusy ? Qt.BusyCursor : Qt.PointingHandCursor
+                                    enabled: !CyNetworkService.isBusy
+                                    onClicked: CyNetworkService.toggle(modelData.uuid)
                                 }
 
                                 Column {
@@ -262,7 +262,7 @@ Item {
                                         height: 56 - Theme.spacingS * 2
                                         spacing: Theme.spacingS
 
-                                        DankIcon {
+                                        CyIcon {
                                             name: isActive ? "vpn_lock" : "vpn_key_off"
                                             size: 20
                                             color: isActive ? Theme.primary : Theme.surfaceText
@@ -307,7 +307,7 @@ Item {
                                             anchors.verticalCenter: parent.verticalCenter
                                             visible: canExpand
 
-                                            DankIcon {
+                                            CyIcon {
                                                 anchors.centerIn: parent
                                                 name: isExpanded ? "expand_less" : "expand_more"
                                                 size: 18
@@ -340,7 +340,7 @@ Item {
                                             anchors.verticalCenter: parent.verticalCenter
                                             visible: canDelete
 
-                                            DankIcon {
+                                            CyIcon {
                                                 anchors.centerIn: parent
                                                 name: "delete"
                                                 size: 18
@@ -376,7 +376,7 @@ Item {
                                             height: VPNService.configLoading ? 40 : 0
                                             visible: VPNService.configLoading
 
-                                            DankSpinner {
+                                            CySpinner {
                                                 anchors.centerIn: parent
                                                 size: 20
                                             }
@@ -467,7 +467,7 @@ Item {
                                             }
                                         }
 
-                                        DankToggle {
+                                        CyToggle {
                                             width: parent.width
                                             text: I18n.tr("Autoconnect")
                                             checked: configData ? (configData.autoconnect || false) : false

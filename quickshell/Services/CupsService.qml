@@ -15,21 +15,21 @@ Singleton {
     onRefCountChanged: {
         if (refCount > 0) {
             ensureSubscription();
-        } else if (refCount === 0 && DMSService.activeSubscriptions.includes("cups")) {
-            DMSService.removeSubscription("cups");
+        } else if (refCount === 0 && CyShellService.activeSubscriptions.includes("cups")) {
+            CyShellService.removeSubscription("cups");
         }
     }
 
     function ensureSubscription() {
         if (refCount <= 0)
             return;
-        if (!DMSService.isConnected)
+        if (!CyShellService.isConnected)
             return;
-        if (DMSService.activeSubscriptions.includes("cups"))
+        if (CyShellService.activeSubscriptions.includes("cups"))
             return;
-        if (DMSService.activeSubscriptions.includes("all"))
+        if (CyShellService.activeSubscriptions.includes("all"))
             return;
-        DMSService.addSubscription("cups");
+        CyShellService.addSubscription("cups");
         if (cupsAvailable) {
             getState();
         }
@@ -183,7 +183,7 @@ Singleton {
 
     signal cupsStateUpdate
 
-    readonly property string socketPath: Quickshell.env("DMS_SOCKET")
+    readonly property string socketPath: Quickshell.env("CYSHELL_SOCKET")
 
     Component.onCompleted: {
         if (socketPath && socketPath.length > 0) {
@@ -192,10 +192,10 @@ Singleton {
     }
 
     Connections {
-        target: DMSService
+        target: CyShellService
 
         function onConnectionStateChanged() {
-            if (DMSService.isConnected) {
+            if (CyShellService.isConnected) {
                 checkDMSCapabilities();
                 ensureSubscription();
             }
@@ -203,8 +203,8 @@ Singleton {
     }
 
     Connections {
-        target: DMSService
-        enabled: DMSService.isConnected
+        target: CyShellService
+        enabled: CyShellService.isConnected
 
         function onCupsStateUpdate(data) {
             log.debug("Subscription update received");
@@ -217,11 +217,11 @@ Singleton {
     }
 
     function checkDMSCapabilities() {
-        if (!DMSService.isConnected)
+        if (!CyShellService.isConnected)
             return;
-        if (DMSService.capabilities.length === 0)
+        if (CyShellService.capabilities.length === 0)
             return;
-        cupsAvailable = DMSService.capabilities.includes("cups");
+        cupsAvailable = CyShellService.capabilities.includes("cups");
 
         if (cupsAvailable && !stateInitialized) {
             stateInitialized = true;
@@ -232,7 +232,7 @@ Singleton {
     function getState() {
         if (!cupsAvailable)
             return;
-        DMSService.sendRequest("cups.getPrinters", null, response => {
+        CyShellService.sendRequest("cups.getPrinters", null, response => {
             if (response.result) {
                 updatePrinters(response.result);
                 fetchAllJobs();
@@ -282,7 +282,7 @@ Singleton {
             "printerName": printerName
         };
 
-        DMSService.sendRequest("cups.getJobs", params, response => {
+        CyShellService.sendRequest("cups.getJobs", params, response => {
             if (response.result && printers[printerName]) {
                 let updatedPrinters = Object.assign({}, printers);
                 updatedPrinters[printerName].jobs = response.result;
@@ -371,7 +371,7 @@ Singleton {
             "printerName": printerName
         };
 
-        DMSService.sendRequest("cups.pausePrinter", params, response => {
+        CyShellService.sendRequest("cups.pausePrinter", params, response => {
             if (response.error) {
                 ToastService.showError(I18n.tr("Failed to pause printer"), response.error);
             } else {
@@ -387,7 +387,7 @@ Singleton {
             "printerName": printerName
         };
 
-        DMSService.sendRequest("cups.resumePrinter", params, response => {
+        CyShellService.sendRequest("cups.resumePrinter", params, response => {
             if (response.error) {
                 ToastService.showError(I18n.tr("Failed to resume printer"), response.error);
             } else {
@@ -404,7 +404,7 @@ Singleton {
             "jobID": jobID
         };
 
-        DMSService.sendRequest("cups.cancelJob", params, response => {
+        CyShellService.sendRequest("cups.cancelJob", params, response => {
             if (response.error) {
                 ToastService.showError(I18n.tr("Failed to cancel selected job"), response.error);
             } else {
@@ -420,7 +420,7 @@ Singleton {
             "printerName": printerName
         };
 
-        DMSService.sendRequest("cups.purgeJobs", params, response => {
+        CyShellService.sendRequest("cups.purgeJobs", params, response => {
             if (response.error) {
                 ToastService.showError(I18n.tr("Failed to cancel all jobs"), response.error);
             } else {
@@ -433,7 +433,7 @@ Singleton {
         if (!cupsAvailable)
             return;
         loadingDevices = true;
-        DMSService.sendRequest("cups.getDevices", null, response => {
+        CyShellService.sendRequest("cups.getDevices", null, response => {
             loadingDevices = false;
             if (response.result) {
                 devices = response.result;
@@ -445,7 +445,7 @@ Singleton {
         if (!cupsAvailable)
             return;
         loadingPPDs = true;
-        DMSService.sendRequest("cups.getPPDs", null, response => {
+        CyShellService.sendRequest("cups.getPPDs", null, response => {
             loadingPPDs = false;
             if (response.result) {
                 ppds = response.result;
@@ -457,7 +457,7 @@ Singleton {
         if (!cupsAvailable)
             return;
         loadingClasses = true;
-        DMSService.sendRequest("cups.getClasses", null, response => {
+        CyShellService.sendRequest("cups.getClasses", null, response => {
             loadingClasses = false;
             if (response.result) {
                 printerClasses = response.result;
@@ -474,7 +474,7 @@ Singleton {
             "protocol": protocol
         };
 
-        DMSService.sendRequest("cups.testConnection", params, response => {
+        CyShellService.sendRequest("cups.testConnection", params, response => {
             if (callback)
                 callback(response);
         });
@@ -500,7 +500,7 @@ Singleton {
                 params.errorPolicy = options.errorPolicy;
         }
 
-        DMSService.sendRequest("cups.createPrinter", params, response => {
+        CyShellService.sendRequest("cups.createPrinter", params, response => {
             creatingPrinter = false;
             if (response.error) {
                 ToastService.showError(I18n.tr("Failed to create printer"), response.error);
@@ -518,7 +518,7 @@ Singleton {
             "printerName": printerName
         };
 
-        DMSService.sendRequest("cups.deletePrinter", params, response => {
+        CyShellService.sendRequest("cups.deletePrinter", params, response => {
             if (response.error) {
                 ToastService.showError(I18n.tr("Failed to delete printer"), response.error);
             } else {
@@ -538,7 +538,7 @@ Singleton {
             "printerName": printerName
         };
 
-        DMSService.sendRequest("cups.acceptJobs", params, response => {
+        CyShellService.sendRequest("cups.acceptJobs", params, response => {
             if (response.error) {
                 ToastService.showError(I18n.tr("Failed to enable job acceptance"), response.error);
             } else {
@@ -554,7 +554,7 @@ Singleton {
             "printerName": printerName
         };
 
-        DMSService.sendRequest("cups.rejectJobs", params, response => {
+        CyShellService.sendRequest("cups.rejectJobs", params, response => {
             if (response.error) {
                 ToastService.showError(I18n.tr("Failed to disable job acceptance"), response.error);
             } else {
@@ -570,7 +570,7 @@ Singleton {
             "printerName": printerName
         };
 
-        DMSService.sendRequest("cups.printTestPage", params, response => {
+        CyShellService.sendRequest("cups.printTestPage", params, response => {
             if (response.error) {
                 ToastService.showError(I18n.tr("Failed to print test page"), response.error);
             } else {
@@ -587,7 +587,7 @@ Singleton {
             "jobID": jobID
         };
 
-        DMSService.sendRequest("cups.restartJob", params, response => {
+        CyShellService.sendRequest("cups.restartJob", params, response => {
             if (response.error) {
                 ToastService.showError(I18n.tr("Failed to restart job"), response.error);
             } else {
@@ -606,7 +606,7 @@ Singleton {
             params.holdUntil = holdUntil;
         }
 
-        DMSService.sendRequest("cups.holdJob", params, response => {
+        CyShellService.sendRequest("cups.holdJob", params, response => {
             if (response.error) {
                 ToastService.showError(I18n.tr("Failed to hold job"), response.error);
             } else {
@@ -622,7 +622,7 @@ Singleton {
             "className": className
         };
 
-        DMSService.sendRequest("cups.deleteClass", params, response => {
+        CyShellService.sendRequest("cups.deleteClass", params, response => {
             if (response.error) {
                 ToastService.showError(I18n.tr("Failed to delete class"), response.error);
             } else {

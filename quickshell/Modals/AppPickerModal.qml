@@ -2,11 +2,11 @@ import QtQuick
 import Quickshell
 import qs.Common
 import qs.Modals.Common
-import qs.Modals.DankLauncherV2.Components
+import qs.Modals.CyLauncherV2.Components
 import qs.Widgets
 import qs.Services
 
-DankModal {
+CyModal {
     id: root
     readonly property var log: Log.scoped("AppPickerModal")
 
@@ -72,7 +72,7 @@ DankModal {
         const queriedMime = mimeType;
         if (queriedMime.length === 0)
             return;
-        DMSService.sendRequest("mime.appsForMime", {
+        CyShellService.sendRequest("mime.appsForMime", {
             "mimeType": queriedMime
         }, response => {
             if (queriedMime !== root.mimeType)
@@ -150,7 +150,7 @@ DankModal {
         // remain valid mime handlers; resolve them by id so they stay pickable
         for (const rawId of mimeMatchedRawIds) {
             const normId = _normAppId(rawId);
-            if (normId === "dms-open" || listedIds.has(normId))
+            if (normId === "cyshell-open" || normId === "dms-open" || listedIds.has(normId))
                 continue;
             const entry = DesktopEntries.byId(rawId) || DesktopEntries.heuristicLookup(rawId);
             if (!entry)
@@ -198,7 +198,7 @@ DankModal {
     onSearchQueryChanged: updateApplicationList()
 
     function copyEditableTarget() {
-        Quickshell.execDetached(["dms", "cl", "copy", editableTargetData]);
+        Quickshell.execDetached(["cyshell", "cl", "copy", editableTargetData]);
         ToastService.showInfo(I18n.tr("Copied to clipboard"));
         targetCopied = true;
         targetCopyConfirmationTimer.restart();
@@ -313,7 +313,7 @@ DankModal {
                         anchors.rightMargin: Theme.spacingS
                         anchors.verticalCenter: parent.verticalCenter
 
-                        DankActionButton {
+                        CyActionButton {
                             buttonSize: 36
                             circular: false
                             iconName: "view_list"
@@ -326,7 +326,7 @@ DankModal {
                             }
                         }
 
-                        DankActionButton {
+                        CyActionButton {
                             buttonSize: 36
                             circular: false
                             iconName: "grid_view"
@@ -341,7 +341,7 @@ DankModal {
                     }
                 }
 
-                DankSearchField {
+                CySearchField {
                     id: searchField
 
                     width: parent.width - Theme.spacingS * 2
@@ -413,7 +413,7 @@ DankModal {
                     radius: Theme.cornerRadius
                     color: "transparent"
 
-                    DankListView {
+                    CyListView {
                         id: appList
 
                         property int itemHeight: 60
@@ -471,7 +471,7 @@ DankModal {
                         }
                     }
 
-                    DankGridView {
+                    CyGridView {
                         id: appGrid
 
                         function ensureVisible(index) {
@@ -546,7 +546,7 @@ DankModal {
                         visible: text.length > 0
                     }
 
-                    DankTextField {
+                    CyTextField {
                         id: targetDataField
                         anchors.left: targetDataLabelText.visible ? targetDataLabelText.right : parent.left
                         anchors.leftMargin: Theme.spacingS
@@ -568,7 +568,7 @@ DankModal {
                         }
                     }
 
-                    DankActionButton {
+                    CyActionButton {
                         id: copyTargetButton
                         anchors.right: parent.right
                         anchors.rightMargin: Theme.spacingXS
@@ -587,7 +587,7 @@ DankModal {
                     height: 36
                     visible: root.mimeType.length > 0
 
-                    DankToggle {
+                    CyToggle {
                         anchors.left: parent.left
                         anchors.leftMargin: Theme.spacingM
                         anchors.right: parent.right

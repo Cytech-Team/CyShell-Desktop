@@ -86,7 +86,7 @@ Item {
     function fetchEntry(requestedId) {
         loadFailed = false;
         loadTimeoutTimer.restart();
-        DMSService.sendRequest("clipboard.getEntry", {
+        CyShellService.sendRequest("clipboard.getEntry", {
             "id": requestedId
         }, function (response) {
             loadTimeoutTimer.stop();
@@ -205,7 +205,7 @@ Item {
             return;
         }
 
-        DMSService.sendRequest("clipboard.copy", {
+        CyShellService.sendRequest("clipboard.copy", {
             "text": root.editorText
         }, function (response) {
             if (response.error) {
@@ -263,7 +263,7 @@ Item {
             width: parent.width
             height: ClipboardConstants.headerHeight
 
-            DankActionButton {
+            CyActionButton {
                 iconName: "arrow_back"
                 Accessible.name: I18n.tr("Back")
                 iconSize: Theme.iconSize - 4
@@ -281,7 +281,7 @@ Item {
                 anchors.centerIn: parent
             }
 
-            DankActionButton {
+            CyActionButton {
                 iconName: "close"
                 Accessible.name: I18n.tr("Close")
                 iconSize: Theme.iconSize - 4
@@ -292,7 +292,7 @@ Item {
             }
         }
 
-        DankTextEdit {
+        CyTextEdit {
             id: editField
             width: parent.width
             height: Math.max(Theme.fontSizeMedium * 8, parent.height - editorHeader.height - editorActions.height - Theme.spacingM * 2)
@@ -335,7 +335,7 @@ Item {
                 Layout.fillWidth: true
             }
 
-            DankButton {
+            CyButton {
                 id: cancelButton
                 text: I18n.tr("Cancel")
                 backgroundColor: Theme.chipSurface
@@ -348,14 +348,14 @@ Item {
                 spacing: Theme.spacingS
                 opacity: root.textLoaded ? 1 : 0.6
 
-                DankButton {
+                CyButton {
                     text: I18n.tr("Save")
                     backgroundColor: Theme.primary
                     textColor: Theme.onPrimary
                     onClicked: root.saveEntry("history")
                 }
 
-                DankIconButton {
+                CyIconButton {
                     variant: "filled"
                     iconName: saveMenu.visible ? "expand_less" : "expand_more"
                     tooltipText: I18n.tr("Save")
@@ -397,7 +397,7 @@ Item {
                         anchors.verticalCenter: parent.verticalCenter
                         spacing: Theme.spacingS
 
-                        DankIcon {
+                        CyIcon {
                             name: "save"
                             size: Theme.iconSizeSmall
                             color: Theme.surfaceText
@@ -435,7 +435,7 @@ Item {
                         anchors.verticalCenter: parent.verticalCenter
                         spacing: Theme.spacingS
 
-                        DankIcon {
+                        CyIcon {
                             name: "close"
                             size: Theme.iconSizeSmall
                             color: Theme.surfaceText
@@ -474,7 +474,7 @@ Item {
                         anchors.verticalCenter: parent.verticalCenter
                         spacing: Theme.spacingS
 
-                        DankIcon {
+                        CyIcon {
                             name: "content_paste"
                             size: Theme.iconSizeSmall
                             color: Theme.surfaceText

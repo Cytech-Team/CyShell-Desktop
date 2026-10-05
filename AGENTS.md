@@ -1,11 +1,11 @@
 ## What is this?
 
-DMS is an open-source desktop shell for Wayland compositors on linux, built to work with many compositors.
+CyShell Desktop is a Labwc-only Wayland desktop shell by Cytech Team Development with an embedded Go backend, Quickshell UI, and agent-native control surface.
 
 ## Repo Structure
 
-- core/ - Go. `cmd/dms` runs quickshell, CLI utilities, and the unix socket server the UI depends on. `cmd/dankinstall` is a separate installer TUI.
-- quickshell/ - the entire UI: Common/ (singletons, Theme, settings), Services/ (system and core access), Modules/ (bar, dock, lock, ...), Modals/, Widgets/ (Dank* components), PLUGINS/, translations/
+- core/ - Go. `cmd/cyshell` runs quickshell, CLI utilities, and the unix socket server the UI depends on. `cmd/cyshell-install` is a separate installer TUI.
+- quickshell/ - the entire UI: Common/ (singletons, Theme, settings), Services/ (system and core access), Modules/ (bar, dock, lock, ...), Modals/, Widgets/ (Cy* native components plus Dank*/N* compatibility wrappers), PLUGINS/, translations/
 - dank-qml-common/ - submodule of shared QML widgets
 - docs/, distro/ - IPC and theme docs, packaging
 
@@ -18,7 +18,7 @@ DMS is an open-source desktop shell for Wayland compositors on linux, built to w
 - The shell runs 24/7. Audit every change for idle CPU, extra processes, timers, and retained memory.
 - `core` and `quickshell` share the socket protocol. Changing one means checking the other.
 - QML uses Theme tokens, never hardcoded colors, spacing, or constants.
-- Use the Dank* wrappers in Widgets/ instead of raw ListView/Flickable/ScrollView.
+- Use the Cy* wrappers in Widgets/ instead of raw ListView/Flickable/ScrollView. Dank*/N* wrappers are compatibility surfaces, not first-class CyShell APIs.
 - User-facing text goes through I18n.tr(). Reuse catalog terms. Never edit translation catalogs.
 - Guard clauses, early returns.
 - Comment only what the code cannot say: a non-obvious why, a trap, a workaround. Never narrate what the code does or restate a name. Keep it to a line or two, and delete useless or paragraph comments you come across.

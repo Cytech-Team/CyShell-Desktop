@@ -7,7 +7,7 @@ import (
 	"runtime"
 	"runtime/debug"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/log"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/log"
 )
 
 const (
@@ -25,7 +25,7 @@ func tuneRuntime() {
 }
 
 func startPprof() {
-	addr := os.Getenv("DMS_PPROF")
+	addr := os.Getenv("CYSHELL_PPROF")
 	if addr == "" {
 		return
 	}

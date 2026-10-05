@@ -63,7 +63,7 @@ Singleton {
         const request = Object.assign({}, draft, {
             protocol: 1
         });
-        request.backup_dir = request.backup_dir || (Quickshell.env("XDG_CONFIG_HOME") || Quickshell.env("HOME") + "/.config") + "/DankMaterialShell/aqueous-backups";
+        request.backup_dir = request.backup_dir || (Quickshell.env("XDG_CONFIG_HOME") || Quickshell.env("HOME") + "/.config") + "/CyShell/aqueous-backups";
         const input = JSON.stringify(request);
         const required = ["validate", "stdin_requests", "generation_check", "atomic_file_replace", "shell_dms"];
         for (const [key, capability] of Object.entries({

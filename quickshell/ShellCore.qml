@@ -1,8 +1,8 @@
 import QtQuick
 import Quickshell
 import qs.Common
-import qs.Modules.DankBar
-import qs.Modules.DankIsland
+import qs.Modules.CyBar
+import qs.Modules.CyIsland
 import qs.Modules.Frame
 import qs.Modules.WorkspaceOverlays
 import qs.Services
@@ -12,12 +12,15 @@ Item {
 
     readonly property var log: Log.scoped("ShellCore")
 
+    CyPointerEdgeService {
+        id: cyPointerEdgeService
+    }
+
     property bool barSurfacesLoaded: true
     property int pendingFrameTransitionRevision: 0
     property bool frameSurfacesLoaded: true
 
     property alias dankBarRepeater: dankBarRepeater
-    property alias hyprlandOverviewLoader: hyprlandOverviewLoader
 
     signal surfaceRecoveryPass
 
@@ -85,7 +88,7 @@ Item {
 
     Connections {
         target: SettingsData
-        function onForceDankBarLayoutRefresh() {
+        function onForceCyBarLayoutRefresh() {
             root.recreateBarSurfaces();
         }
     }
@@ -116,8 +119,6 @@ Item {
 
         Component.onCompleted: BarWidgetService.dankBarRepeater = dankBarRepeater
 
-        property var hyprlandOverviewLoaderRef: hyprlandOverviewLoader
-
         // Horizontal bars must claim their exclusive zones first, so vertical bars wait for every enabled horizontal bar to load
         readonly property int horizontalWanted: SettingsData.barConfigs.filter(c => (c.enabled ?? false) && c.position !== SettingsData.Position.Left && c.position !== SettingsData.Position.Right).length
         property int horizontalReady: 0
@@ -142,9 +143,8 @@ Item {
             asynchronous: false
             onItemChanged: dankBarRepeater.recountHorizontalReady()
 
-            sourceComponent: DankBar {
+            sourceComponent: CyBar {
                 barConfig: barLoader.barConfig
-                hyprlandOverviewLoader: dankBarRepeater.hyprlandOverviewLoaderRef
             }
         }
     }
@@ -152,8 +152,7 @@ Item {
     Loader {
         active: SettingsData.dankIslandEnabled
         asynchronous: false
-        sourceComponent: DankIsland {
-            hyprlandOverviewLoader: root.hyprlandOverviewLoader
+        sourceComponent: CyIsland {
         }
     }
 
@@ -344,11 +343,4 @@ Item {
         }
     }
 
-    LazyLoader {
-        id: hyprlandOverviewLoader
-        active: CompositorService.isHyprland
-        component: HyprlandOverview {
-            id: hyprlandOverview
-        }
-    }
 }

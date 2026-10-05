@@ -4,7 +4,7 @@ import qs.Modals
 import qs.Services
 import qs.Widgets
 
-DankFloatingWindow {
+CyFloatingWindow {
     id: win
 
     property alias shouldBeVisible: win.visible
@@ -47,15 +47,16 @@ DankFloatingWindow {
         anchors.fill: parent
         spacing: 0
 
-        DankWindowHeader {
+        CyWindowHeader {
             id: titleBar
             width: parent.width
             z: 10
-            controls: windowControls
-            title: KeybindsService.cheatsheet.title || I18n.tr("Keybinds")
+            controls: win.useServerSideTitlebar ? null : windowControls
+            title: win.useServerSideTitlebar ? "" : (KeybindsService.cheatsheet.title || I18n.tr("Keybinds"))
+            showDivider: !win.useServerSideTitlebar
             onCloseRequested: win.hide()
 
-            DankActionButton {
+            CyActionButton {
                 iconName: "close_fullscreen"
                 buttonSize: Theme.buttonHeightXXS
                 iconSize: Theme.iconSizeSmall

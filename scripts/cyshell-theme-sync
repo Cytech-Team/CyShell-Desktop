@@ -1,0 +1,281 @@
+#!/usr/bin/env python3
+import argparse
+import os
+import re
+import shutil
+import subprocess
+from pathlib import Path
+
+
+def run(args, check=False):
+    try:
+        return subprocess.run(args, text=True, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, check=check).stdout.strip()
+    except (FileNotFoundError, subprocess.CalledProcessError):
+        return ""
+
+
+def gget(schema, key, default=""):
+    out = run(["gsettings", "get", schema, key])
+    if not out:
+        return default
+    if len(out) >= 2 and out[0] == out[-1] == "'":
+        return out[1:-1].replace("\\'", "'")
+    return out
+
+
+def gset_str(schema, key, value):
+    escaped = value.replace("\\", "\\\\").replace("'", "\\'")
+    run(["gsettings", "set", schema, key, f"'{escaped}'"])
+
+
+def gset_int(schema, key, value):
+    run(["gsettings", "set", schema, key, str(int(value))])
+
+
+def ensure_section(lines, section):
+    header = f"[{section}]"
+    if any(line.strip() == header for line in lines):
+        return lines
+    if lines and lines[-1].strip():
+        lines.append("")
+    lines.extend([header])
+    return lines
+
+
+def ini_set(path: Path, section: str, key: str, value: str):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    lines = path.read_text(errors="ignore").splitlines() if path.exists() else []
+    lines = ensure_section(lines, section)
+    header = f"[{section}]"
+    start = next(i for i, line in enumerate(lines) if line.strip() == header)
+    end = len(lines)
+    for i in range(start + 1, len(lines)):
+        if lines[i].lstrip().startswith("[") and lines[i].rstrip().endswith("]"):
+            end = i
+            break
+    pat = re.compile(rf"^\s*{re.escape(key)}\s*=")
+    for i in range(start + 1, end):
+        if pat.match(lines[i]):
+            lines[i] = f"{key}={value}"
+            break
+    else:
+        lines.insert(end, f"{key}={value}")
+    path.write_text("\n".join(lines).rstrip() + "\n")
+
+
+def theme_exists(name: str):
+    home = Path.home()
+    for root in (home / ".local/share/themes", home / ".themes", Path("/usr/share/themes"), Path("/usr/local/share/themes")):
+        if (root / name).is_dir():
+            return True
+    return False
+
+
+def resolve_gtk_theme(current: str, mode: str):
+    current = current or "adw-gtk3-dark"
+    if mode == "light":
+        candidates = []
+        if current.lower().endswith("-dark"):
+            candidates.append(current[:-5])
+        candidates += ["adw-gtk3", "Adwaita"]
+    else:
+        candidates = []
+        if not current.lower().endswith("-dark"):
+            candidates.append(current + "-dark")
+        candidates += [current if current.lower().endswith("-dark") else "", "adw-gtk3-dark", "Adwaita-dark"]
+    for name in candidates:
+        if name and theme_exists(name):
+            return name
+    return current
+
+
+def parse_font(spec: str, fallback_family: str, fallback_size: int):
+    spec = (spec or "").strip()
+    m = re.match(r"^(.*)\s+(\d+(?:\.\d+)?)$", spec)
+    if m:
+        return m.group(1).strip(), int(round(float(m.group(2))))
+    return spec or fallback_family, fallback_size
+
+
+def qt_font(family: str, size: int):
+    return f'"{family},{size},-1,5,50,0,0,0,0,0"'
+
+
+def kde_font(family: str, size: int):
+    return f"{family},{size},-1,5,50,0,0,0,0,0"
+
+
+def set_env_line(path: Path, key: str, value: str):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    lines = path.read_text(errors="ignore").splitlines() if path.exists() else []
+    pat = re.compile(rf"^\s*{re.escape(key)}=")
+    for i, line in enumerate(lines):
+        if pat.match(line):
+            lines[i] = f"{key}={value}"
+            break
+    else:
+        lines.append(f"{key}={value}")
+    path.write_text("\n".join(lines).rstrip() + "\n")
+
+
+def main():
+    ap = argparse.ArgumentParser(description="Synchronize CyShell appearance to system-aware Linux apps")
+    ap.add_argument("--mode", choices=("dark", "light"), required=True)
+    ap.add_argument("--icon-theme", default="System Default")
+    ap.add_argument("--config-dir", default=os.environ.get("XDG_CONFIG_HOME", str(Path.home() / ".config")))
+    args = ap.parse_args()
+
+    config = Path(args.config_dir)
+    mode = args.mode
+    prefer_dark = mode == "dark"
+
+    schema = "org.gnome.desktop.interface"
+    old_gtk = gget(schema, "gtk-theme", "adw-gtk3-dark")
+    gtk_theme = resolve_gtk_theme(old_gtk, mode)
+    icon_theme = args.icon_theme
+    if not icon_theme or icon_theme == "System Default":
+        icon_theme = gget(schema, "icon-theme", "Papirus-Dark" if prefer_dark else "Papirus")
+    cursor_theme = gget(schema, "cursor-theme", os.environ.get("XCURSOR_THEME", "Adwaita"))
+    try:
+        cursor_size = int(gget(schema, "cursor-size", os.environ.get("XCURSOR_SIZE", "24")))
+    except ValueError:
+        cursor_size = 24
+    font_spec = gget(schema, "font-name", "Noto Sans 11")
+    mono_spec = gget(schema, "monospace-font-name", "Noto Sans Mono 12")
+    font_family, font_size = parse_font(font_spec, "Noto Sans", 11)
+    mono_family, mono_size = parse_font(mono_spec, "Noto Sans Mono", 12)
+
+    # Freedesktop/GNOME settings are the source used by GTK/libadwaita and the
+    # xdg-desktop-portal Settings API (Electron/Chromium/Flatpak system mode).
+    gset_str(schema, "color-scheme", "prefer-dark" if prefer_dark else "default")
+    gset_str(schema, "gtk-theme", gtk_theme)
+    gset_str(schema, "icon-theme", icon_theme)
+    gset_str(schema, "cursor-theme", cursor_theme)
+    gset_int(schema, "cursor-size", cursor_size)
+    gset_str(schema, "font-name", font_spec)
+    gset_str(schema, "monospace-font-name", mono_spec)
+
+    # GTK3 + GTK4. User CSS remains intact; settings.ini supplies toolkit-wide
+    # mode/icon/font/cursor values for apps that do not use the portal directly.
+    for gtkver in ("gtk-3.0", "gtk-4.0"):
+        p = config / gtkver / "settings.ini"
+        ini_set(p, "Settings", "gtk-application-prefer-dark-theme", "true" if prefer_dark else "false")
+        ini_set(p, "Settings", "gtk-theme-name", gtk_theme)
+        ini_set(p, "Settings", "gtk-icon-theme-name", icon_theme)
+        ini_set(p, "Settings", "gtk-cursor-theme-name", cursor_theme)
+        ini_set(p, "Settings", "gtk-cursor-theme-size", str(cursor_size))
+        ini_set(p, "Settings", "gtk-font-name", font_spec)
+
+    # GTK2 legacy apps still read ~/.gtkrc-2.0 rather than GSettings/portal.
+    gtk2 = Path.home() / ".gtkrc-2.0"
+    gtk2_lines = []
+    if gtk2.exists():
+        gtk2_lines = [line for line in gtk2.read_text(errors="ignore").splitlines()
+                      if not re.match(r"^\s*gtk-(theme-name|icon-theme-name|font-name|cursor-theme-name|cursor-theme-size)\s*=", line)]
+    gtk2_lines += [
+        f'gtk-theme-name="{gtk_theme}"',
+        f'gtk-icon-theme-name="{icon_theme}"',
+        f'gtk-font-name="{font_spec}"',
+        f'gtk-cursor-theme-name="{cursor_theme}"',
+        f'gtk-cursor-theme-size={cursor_size}',
+    ]
+    gtk2.write_text("\n".join(gtk2_lines).rstrip() + "\n")
+
+    # Qt5/Qt6 through qt5ct/qt6ct. Point at the palette that CyShell's matugen
+    # actually writes; old configs on this machine pointed at a KDE .colors file.
+    for qtname in ("qt5ct", "qt6ct"):
+        p = config / qtname / f"{qtname}.conf"
+        palette = config / qtname / "colors" / "matugen.conf"
+        if palette.exists():
+            ini_set(p, "Appearance", "color_scheme_path", str(palette))
+            ini_set(p, "Appearance", "custom_palette", "true")
+        ini_set(p, "Appearance", "style", "Fusion")
+        ini_set(p, "Appearance", "icon_theme", icon_theme)
+        ini_set(p, "Fonts", "general", qt_font(font_family, font_size))
+        ini_set(p, "Fonts", "fixed", qt_font(mono_family, mono_size))
+        try:
+            os.utime(p, None)
+        except OSError:
+            pass
+
+    # KDE/Qt apps which read KConfig instead of qtct.
+    kde = config / "kdeglobals"
+    ini_set(kde, "General", "ColorScheme", "DankMatugen")
+    ini_set(kde, "General", "Name", "cyshell")
+    for key in ("font", "menuFont", "toolBarFont", "smallestReadableFont"):
+        ini_set(kde, "General", key, kde_font(font_family, font_size))
+    ini_set(kde, "General", "fixed", kde_font(mono_family, mono_size))
+    ini_set(kde, "KDE", "widgetStyle", "Fusion")
+    ini_set(kde, "Icons", "Theme", icon_theme)
+
+    # XSettings for legacy X11/GTK clients if xsettingsd is installed later.
+    xs = config / "xsettingsd" / "xsettingsd.conf"
+    xs.parent.mkdir(parents=True, exist_ok=True)
+    xs.write_text(
+        f'Net/ThemeName "{gtk_theme}"\n'
+        f'Net/IconThemeName "{icon_theme}"\n'
+        f'Gtk/CursorThemeName "{cursor_theme}"\n'
+        f'Gtk/CursorThemeSize {cursor_size}\n'
+        f'Gtk/FontName "{font_spec}"\n'
+    )
+    if shutil.which("xsettingsd") and run(["pgrep", "-x", "xsettingsd"]):
+        run(["pkill", "-HUP", "-x", "xsettingsd"])
+
+    # Environment for newly launched Qt apps and D-Bus/systemd activated apps.
+    envd = config / "environment.d" / "90-cyshell-theme.conf"
+    envd.parent.mkdir(parents=True, exist_ok=True)
+    envd.write_text(
+        "QT_QPA_PLATFORMTHEME=qt5ct\n"
+        "QT_QPA_PLATFORMTHEME_QT6=qt6ct\n"
+        "QT_STYLE_OVERRIDE=Fusion\n"
+        f"XCURSOR_THEME={cursor_theme}\n"
+        f"XCURSOR_SIZE={cursor_size}\n"
+    )
+    labwc_env = config / "labwc" / "environment"
+    if labwc_env.exists():
+        for key, value in (
+            ("QT_QPA_PLATFORMTHEME", "qt5ct"),
+            ("QT_QPA_PLATFORMTHEME_QT6", "qt6ct"),
+            ("QT_STYLE_OVERRIDE", "Fusion"),
+            ("XCURSOR_THEME", cursor_theme),
+            ("XCURSOR_SIZE", str(cursor_size)),
+        ):
+            set_env_line(labwc_env, key, value)
+
+    env_pairs = [
+        "QT_QPA_PLATFORMTHEME=qt5ct",
+        "QT_QPA_PLATFORMTHEME_QT6=qt6ct",
+        "QT_STYLE_OVERRIDE=Fusion",
+        f"XCURSOR_THEME={cursor_theme}",
+        f"XCURSOR_SIZE={cursor_size}",
+    ]
+    if shutil.which("dbus-update-activation-environment"):
+        run(["dbus-update-activation-environment", "--systemd", *env_pairs])
+    if shutil.which("systemctl"):
+        run(["systemctl", "--user", "set-environment", *env_pairs])
+
+    # Nudge process-local Qt/KDE theme listeners. qt5ct/qt6ct also watch their
+    # config mtimes; this DBus notification covers KConfig consumers when present.
+    for qdbus in ("qdbus6", "qdbus"):
+        if shutil.which(qdbus):
+            run([qdbus, "org.kde.KGlobalSettings", "/KGlobalSettings",
+                 "org.kde.KGlobalSettings.notifyChange", "0", "0"])
+            run([qdbus, "org.kde.KGlobalSettings", "/KGlobalSettings",
+                 "org.kde.KGlobalSettings.notifyChange", "4", "0"])
+            break
+
+    # Do not restart portals: the GTK portal watches GSettings and emits
+    # SettingChanged live, avoiding disruption to active file pickers.
+    portal = run([
+        "gdbus", "call", "--session",
+        "--dest", "org.freedesktop.portal.Desktop",
+        "--object-path", "/org/freedesktop/portal/desktop",
+        "--method", "org.freedesktop.portal.Settings.Read",
+        "org.freedesktop.appearance", "color-scheme",
+    ]) if shutil.which("gdbus") else ""
+
+    print(f"CyShell theme sync: mode={mode} gtk={gtk_theme} icons={icon_theme} cursor={cursor_theme}:{cursor_size} portal={portal or 'n/a'}")
+
+
+if __name__ == "__main__":
+    main()

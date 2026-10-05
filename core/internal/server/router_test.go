@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/apppicker"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/clipboard"
 	"github.com/AvengeMedia/dankgo/ipc"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/server/apppicker"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/server/clipboard"
 	"github.com/stretchr/testify/require"
 )
 

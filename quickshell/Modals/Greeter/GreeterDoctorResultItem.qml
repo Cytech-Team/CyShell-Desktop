@@ -37,7 +37,7 @@ Rectangle {
     radius: Theme.cornerRadius
     color: Theme.withAlpha(statusColor, 0.08)
 
-    DankIcon {
+    CyIcon {
         id: statusIcon
         anchors.left: parent.left
         anchors.leftMargin: Theme.spacingM
@@ -95,7 +95,7 @@ Rectangle {
         }
     }
 
-    DankActionButton {
+    CyActionButton {
         id: urlButton
         anchors.right: parent.right
         anchors.rightMargin: Theme.spacingM

@@ -49,7 +49,7 @@ Rectangle {
             anchors.horizontalCenter: parent.horizontalCenter
             spacing: Theme.spacingS
 
-            DankIcon {
+            CyIcon {
                 name: root.iconName
                 size: Theme.iconSize - 4
                 color: root.iconColor

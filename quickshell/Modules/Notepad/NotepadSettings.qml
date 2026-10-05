@@ -106,7 +106,7 @@ Item {
             z: parent.z - 1
         }
 
-        DankFlickable {
+        CyFlickable {
             id: settingsFlickable
             anchors.fill: parent
             clip: true
@@ -142,7 +142,7 @@ Item {
                     color: Theme.outlineHeavy
                 }
 
-                DankToggle {
+                CyToggle {
                     anchors.left: parent.left
                     anchors.leftMargin: -Theme.spacingM
                     width: parent.width + Theme.spacingM
@@ -154,7 +154,7 @@ Item {
                     }
                 }
 
-                DankToggle {
+                CyToggle {
                     anchors.left: parent.left
                     anchors.leftMargin: -Theme.spacingM
                     width: parent.width + Theme.spacingM
@@ -166,7 +166,7 @@ Item {
                     }
                 }
 
-                DankToggle {
+                CyToggle {
                     anchors.left: parent.left
                     anchors.leftMargin: -Theme.spacingM
                     width: parent.width + Theme.spacingM
@@ -201,7 +201,7 @@ Item {
                         anchors.verticalCenter: parent.verticalCenter
                         spacing: Theme.spacingM
 
-                        DankIcon {
+                        CyIcon {
                             name: "search"
                             size: Theme.iconSize - 2
                             color: Theme.primary
@@ -234,7 +234,7 @@ Item {
                     color: "transparent"
                     visible: !SettingsData.notepadUseMonospace
 
-                    DankDropdown {
+                    CyDropdown {
                         id: fontDropdown
                         anchors.left: parent.left
                         anchors.leftMargin: -Theme.spacingM
@@ -292,7 +292,7 @@ Item {
                             spacing: Theme.spacingS
                             anchors.verticalCenter: parent.verticalCenter
 
-                            DankActionButton {
+                            CyActionButton {
                                 buttonSize: 32
                                 iconName: "remove"
                                 Accessible.name: I18n.tr("Decrease")
@@ -323,7 +323,7 @@ Item {
                                 }
                             }
 
-                            DankActionButton {
+                            CyActionButton {
                                 buttonSize: 32
                                 iconName: "add"
                                 Accessible.name: I18n.tr("Increase")
@@ -350,7 +350,7 @@ Item {
                         width: parent.width
                         spacing: Theme.spacingS
 
-                        DankToggle {
+                        CyToggle {
                             anchors.left: parent.left
                             anchors.leftMargin: -Theme.spacingM
                             width: parent.width + Theme.spacingM
@@ -366,7 +366,7 @@ Item {
                             }
                         }
 
-                        DankSlider {
+                        CySlider {
                             anchors.left: parent.left
                             anchors.leftMargin: -Theme.spacingM
                             width: parent.width + Theme.spacingM
@@ -407,7 +407,7 @@ Item {
                                 color: Theme.surfaceText
                             }
 
-                            DankButtonGroup {
+                            CyButtonGroup {
                                 model: [I18n.tr("Slideout", "noun, notepad default mode option, side panel"), I18n.tr("Popout", "noun, option to open in a popout window")]
                                 size: "small"
                                 currentIndex: SettingsData.notepadDefaultMode === "popout" ? 1 : 0
@@ -431,7 +431,7 @@ Item {
                                 color: Theme.surfaceText
                             }
 
-                            DankButtonGroup {
+                            CyButtonGroup {
                                 model: [I18n.tr("Right"), I18n.tr("Left")]
                                 size: "small"
                                 currentIndex: SettingsData.notepadSlideoutSide === "left" ? 1 : 0
@@ -443,7 +443,7 @@ Item {
                             }
                         }
 
-                        DankToggle {
+                        CyToggle {
                             anchors.left: parent.left
                             anchors.leftMargin: -Theme.spacingM
                             width: parent.width + Theme.spacingM
@@ -463,7 +463,7 @@ Item {
                             color: Theme.surfaceText
                         }
 
-                        DankSlider {
+                        CySlider {
                             anchors.left: parent.left
                             anchors.leftMargin: Theme.spacingXS
                             width: parent.width - Theme.spacingXS * 2
@@ -515,7 +515,7 @@ Item {
                         height: 36
                         spacing: Theme.spacingS
 
-                        DankIcon {
+                        CyIcon {
                             name: root.shortcutsExpanded ? "expand_less" : "expand_more"
                             size: Theme.iconSizeSmall
                             color: Theme.surfaceText

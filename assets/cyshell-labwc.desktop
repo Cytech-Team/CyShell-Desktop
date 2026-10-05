@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=labwc
+Comment=LabWC with CyShell in-process integration
+Exec=/usr/local/bin/cyshell-labwc-session
+Icon=labwc
+Type=Application
+DesktopNames=labwc;wlroots

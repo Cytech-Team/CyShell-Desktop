@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/windowrules"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/windowrules"
 )
 
 func TestParseMangoWindowRuleLine(t *testing.T) {

@@ -2,10 +2,10 @@ import QtQuick
 import Quickshell
 import qs.Common
 import qs.Services
-import qs.Modules.DankBar
-import qs.Modules.DankBar.Widgets
+import qs.Modules.CyBar
+import qs.Modules.CyBar.Widgets
 import qs.Modules.OSD
-import qs.DankCommon.Common as DC
+import qs.CyCommon.Common as DC
 import "Common/WorkspaceModel.js" as WorkspaceModel
 
 ShellRoot {
@@ -68,7 +68,7 @@ ShellRoot {
 
     Component {
         id: contentComponent
-        DankBarContent {}
+        CyBarContent {}
     }
 
     QtObject {

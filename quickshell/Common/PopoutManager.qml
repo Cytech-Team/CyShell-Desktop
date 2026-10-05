@@ -4,6 +4,7 @@ pragma ComponentBehavior: Bound
 import Quickshell
 import QtQuick
 import qs.Common
+import Quickshell.Wayland
 
 Singleton {
     id: root
@@ -11,7 +12,7 @@ Singleton {
     property var currentPopoutsByScreen: ({})
     property var currentPopoutTriggers: ({})
 
-    // Set by the screenshot IPC handshake (dms screenshot region select); cleared by end() or any popout/modal open.
+    // Set by the screenshot IPC handshake (cyshell screenshot region select); cleared by end() or any popout/modal open.
     property bool screenshotActive: false
 
     signal popoutOpening
@@ -175,10 +176,32 @@ Singleton {
         // Keep map entries until each popout's close animation finishes (hidePopout).
     }
 
+    function hasPresentedPopout() {
+        for (const screenName in currentPopoutsByScreen) {
+            const popout = currentPopoutsByScreen[screenName];
+            if (popout && !_isStale(popout) && (popout.shouldBeVisible || popout.isClosing))
+                return true;
+        }
+        return false;
+    }
+
+    Connections {
+        target: ToplevelManager
+
+        function onActiveToplevelChanged() {
+            // With OnDemand layer focus, another app can receive its first click
+            // before the shell gets this activation update. Release all popouts
+            // when the compositor reports any active-window transition, including
+            // a transition to the desktop where activeToplevel is null.
+            if (root.hasPresentedPopout())
+                root.closeAllPopouts();
+        }
+    }
+
     function dismissAllForScreen(screenName) {
         if (!screenName)
             return;
-        if (currentPopoutsByScreen[screenName])
+        if (hasPresentedPopout())
             closeAllPopouts();
         if (ModalManager.currentModalsByScreen[screenName])
             ModalManager.closeAllModalsExcept(null);

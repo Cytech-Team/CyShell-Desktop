@@ -18,12 +18,12 @@ import (
 	wlclient "github.com/AvengeMedia/dankgo/wayland/client"
 	"github.com/godbus/dbus/v5"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/errdefs"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/geolocation"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/icc"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/log"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/proto/wlr_gamma_control"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/wayland/shm"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/errdefs"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/geolocation"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/icc"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/log"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/proto/wlr_gamma_control"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/wayland/shm"
 )
 
 const animKelvinStep = 25
@@ -430,7 +430,7 @@ func (m *Manager) removeOutputByRegistryName(registryName uint32) {
 		return
 	}
 
-	// The name entries go first: they are what `dms icc status`/`listOutputs`
+	// The name entries go first: they are what `cyshell icc status`/`listOutputs`
 	// report, and a rebound wl_output reusing a released object ID would
 	// otherwise attach the previous monitor's profile from the stale name.
 	m.outputNames.Delete(foundID)
@@ -1844,7 +1844,7 @@ func (m *Manager) SetOutputTemp(outputName string, temp int) error {
 		}
 
 		// Without controls there are no outputs to write a ramp for, which is
-		// why the slider and `dms icc set-temp` used to do nothing until a
+		// why the slider and `cyshell icc set-temp` used to do nothing until a
 		// restart on an install that had never enabled the night light.
 		m.ensureOutputControls()
 

@@ -3,12 +3,12 @@ import QtTest
 import Quickshell
 import qs.Common
 import qs.Modules.ControlCenter
-import qs.Modules.DankIsland
+import qs.Modules.CyIsland
 import qs.Modules.ControlCenter.Components
 import qs.Modules.ControlCenter.Widgets
 import "Modules/ControlCenter/utils/widgets.js" as WidgetUtils
 import qs.Modules.ControlCenter.Models
-import qs.DankCommon.Common as DC
+import qs.CyCommon.Common as DC
 
 ShellRoot {
     id: root

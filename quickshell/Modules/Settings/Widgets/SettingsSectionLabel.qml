@@ -66,7 +66,7 @@ Item {
         spacing: Theme.spacingXS
     }
 
-    DankIcon {
+    CyIcon {
         id: caret
         anchors.right: parent.right
         anchors.verticalCenter: label.verticalCenter

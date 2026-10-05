@@ -3,9 +3,9 @@ import Quickshell
 import qs.Common
 import qs.Services
 import qs.Widgets
-import qs.Modules.DankBar
+import qs.Modules.CyBar
 import qs.Modules.SurfaceWidgets
-import qs.DankCommon.Common as DC
+import qs.CyCommon.Common as DC
 
 ShellRoot {
     id: root

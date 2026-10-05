@@ -61,7 +61,7 @@ Column {
         visible: root.description !== ""
     }
 
-    DankTextField {
+    CyTextField {
         id: textField
         width: parent.width
         placeholderText: root.placeholder

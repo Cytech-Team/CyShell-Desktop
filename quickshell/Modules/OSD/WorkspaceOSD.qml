@@ -6,7 +6,7 @@ import qs.Common
 import qs.Services
 import qs.Widgets
 
-DankOSD {
+CyOSD {
     id: root
 
     property string workspaceLabel: ""

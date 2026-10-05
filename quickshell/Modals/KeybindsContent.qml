@@ -79,14 +79,14 @@ FocusScope {
                 Layout.fillWidth: true
             }
 
-            DankActionButton {
+            CyActionButton {
                 visible: content.showFloatingToggle
                 iconName: content.floating ? "close_fullscreen" : "open_in_new"
                 tooltipText: content.floating ? I18n.tr("Dock window") : I18n.tr("Open as window")
                 onClicked: content.floatingToggleRequested()
             }
 
-            DankSearchField {
+            CySearchField {
                 id: searchField
                 Layout.alignment: Qt.AlignRight
                 keyForwardTargets: [content]
@@ -107,7 +107,7 @@ FocusScope {
             }
         }
 
-        DankFlickable {
+        CyFlickable {
             id: mainFlickable
             width: parent.width
             height: parent.height - parent.spacing - 40

@@ -135,7 +135,7 @@ Item {
                 anchors.rightMargin: NotificationMetrics.cardPadding
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: Theme.spacingXS
-                DankButton {
+                CyButton {
                     anchors.verticalCenter: parent.verticalCenter
                     text: I18n.tr("Dismiss")
                     buttonHeight: NotificationMetrics.controlSize
@@ -144,7 +144,7 @@ Item {
                     textColor: Theme.primary
                     onClicked: NotificationService.dismissGroup(root.notificationGroup?.key || "")
                 }
-                DankButton {
+                CyButton {
                     anchors.verticalCenter: parent.verticalCenter
                     text: (root.notificationGroup?.count || 0).toString()
                     iconName: "expand_less"
@@ -276,7 +276,7 @@ Item {
         onAppMuted: NotificationService.dismissGroup(root.notificationGroup?.key || "")
     }
 
-    DankDropdown {
+    CyDropdown {
         id: notificationCardContextMenu
         showTrigger: false
         popupWidth: NotificationMetrics.menuWidth

@@ -1,3 +1,2 @@
-import qs.DankCommon.Widgets as DankCommon
-
-DankCommon.DankLocationSearch {}
+import QtQuick
+CyLocationSearch {}

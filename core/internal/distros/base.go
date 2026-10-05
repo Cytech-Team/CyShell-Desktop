@@ -13,16 +13,16 @@ import (
 	"strings"
 	"time"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/config"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/deps"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/netfetch"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/privesc"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/version"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/config"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/deps"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/netfetch"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/privesc"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/version"
 )
 
 const (
 	forceQuickshellGit = false
-	forceDMSGit        = false
+	forceCyShellGit    = false
 )
 
 // BaseDistribution provides common functionality for all distributions
@@ -113,26 +113,26 @@ func (b *BaseDistribution) detectDankCalendar() deps.Dependency {
 	return b.detectOptionalPackage("dankcalendar", "Calendar application", b.commandExists("dcal") || b.commandExists("dankcalendar"))
 }
 
-func (b *BaseDistribution) detectDMS() deps.Dependency {
-	dmsPath := filepath.Join(os.Getenv("HOME"), ".config/quickshell/dms")
+func (b *BaseDistribution) detectCyShell() deps.Dependency {
+	cyShellPath := filepath.Join(os.Getenv("HOME"), ".config", "quickshell", "cyshell")
 
 	status := deps.StatusMissing
 	currentVersion := ""
 
-	if _, err := os.Stat(dmsPath); err == nil {
+	if _, err := os.Stat(cyShellPath); err == nil {
 		status = deps.StatusInstalled
 
 		// Only get current version, don't check for updates (lazy loading)
-		current, err := version.GetCurrentDMSVersion()
+		current, err := version.GetCurrentCyShellVersion()
 		if err == nil {
 			currentVersion = current
 		}
 	}
 
 	dep := deps.Dependency{
-		Name:        "dms (DankMaterialShell)",
+		Name:        "CyShell",
 		Status:      status,
-		Description: "Desktop Management System configuration",
+		Description: "CyShell desktop shell and configuration",
 		Required:    true,
 		CanToggle:   true,
 	}
@@ -559,7 +559,7 @@ func (b *BaseDistribution) WriteEnvironmentConfig(terminal deps.Terminal) error 
 TERMINAL=%s
 `, terminalCmd)
 
-	envFile := filepath.Join(envDir, "90-dms.conf")
+	envFile := filepath.Join(envDir, "90-cyshell.conf")
 	if err := os.WriteFile(envFile, []byte(content), 0o644); err != nil {
 		return fmt.Errorf("failed to write environment config: %w", err)
 	}
@@ -568,15 +568,15 @@ TERMINAL=%s
 	return nil
 }
 
-func (b *BaseDistribution) EnableDMSService(ctx context.Context, wm deps.WindowManager) error {
+func (b *BaseDistribution) EnableCyShellService(ctx context.Context, wm deps.WindowManager) error {
 	switch wm {
 	case deps.WindowManagerNiri:
-		if err := exec.CommandContext(ctx, "systemctl", "--user", "add-wants", "niri.service", "dms").Run(); err != nil {
-			b.log("Warning: failed to add dms as a want for niri.service")
+		if err := exec.CommandContext(ctx, "systemctl", "--user", "add-wants", "niri.service", "cyshell.service").Run(); err != nil {
+			b.log("Warning: failed to add cyshell.service as a want for niri.service")
 		}
 	case deps.WindowManagerHyprland:
-		if err := exec.CommandContext(ctx, "systemctl", "--user", "add-wants", "hyprland-session.target", "dms").Run(); err != nil {
-			b.log("Warning: failed to add dms as a want for hyprland-session.target")
+		if err := exec.CommandContext(ctx, "systemctl", "--user", "add-wants", "hyprland-session.target", "cyshell.service").Run(); err != nil {
+			b.log("Warning: failed to add cyshell.service as a want for hyprland-session.target")
 		}
 	}
 
@@ -602,9 +602,9 @@ func (b *BaseDistribution) WriteHyprlandSessionTarget() error {
 	return nil
 }
 
-// installDMSBinary installs the DMS binary from GitHub releases
-func (b *BaseDistribution) installDMSBinary(ctx context.Context, sudoPassword string, progressChan chan<- InstallProgressMsg) error {
-	b.log("Installing/updating DMS binary...")
+// installCyShellBinary installs the CyShell binary from CyShell releases
+func (b *BaseDistribution) installCyShellBinary(ctx context.Context, sudoPassword string, progressChan chan<- InstallProgressMsg) error {
+	b.log("Installing/updating CyShell binary...")
 
 	// Detect architecture
 	arch := runtime.GOARCH
@@ -612,78 +612,78 @@ func (b *BaseDistribution) installDMSBinary(ctx context.Context, sudoPassword st
 	case "amd64":
 	case "arm64":
 	default:
-		return fmt.Errorf("unsupported architecture for DMS: %s", arch)
+		return fmt.Errorf("unsupported architecture for CyShell: %s", arch)
 	}
 
 	progressChan <- InstallProgressMsg{
 		Phase:       PhaseConfiguration,
 		Progress:    0.80,
-		Step:        "Downloading DMS binary...",
+		Step:        "Downloading CyShell binary...",
 		IsComplete:  false,
-		CommandInfo: fmt.Sprintf("Downloading dms-%s.gz", arch),
+		CommandInfo: fmt.Sprintf("Downloading cyshell-%s.gz", arch),
 	}
 
 	version, err := netfetch.LatestReleaseTag(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to get latest DMS version: %w", err)
+		return fmt.Errorf("failed to get latest CyShell version: %w", err)
 	}
 
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		return fmt.Errorf("failed to get user home directory: %w", err)
 	}
-	tmpDir := filepath.Join(homeDir, ".cache", "dankinstall", "manual-builds")
+	tmpDir := filepath.Join(homeDir, ".cache", "cyshell-install", "manual-builds")
 	if err := os.MkdirAll(tmpDir, 0o755); err != nil {
 		return fmt.Errorf("failed to create temp directory: %w", err)
 	}
 	defer os.RemoveAll(tmpDir)
 
 	// Download the gzipped binary
-	downloadURL := fmt.Sprintf("https://github.com/AvengeMedia/DankMaterialShell/releases/download/%s/dms-cli-%s.gz", version, arch)
-	gzPath := filepath.Join(tmpDir, "dms.gz")
+	downloadURL := fmt.Sprintf("https://github.com/Cytech-Team/CyShell-Desktop/releases/download/%s/cyshell-%s.gz", version, arch)
+	gzPath := filepath.Join(tmpDir, "cyshell.gz")
 
 	if err := netfetch.ToFile(ctx, downloadURL, netfetch.Options{Timeout: 5 * time.Minute}, gzPath); err != nil {
-		return fmt.Errorf("failed to download DMS binary: %w", err)
+		return fmt.Errorf("failed to download CyShell binary: %w", err)
 	}
 
 	progressChan <- InstallProgressMsg{
 		Phase:       PhaseConfiguration,
 		Progress:    0.85,
-		Step:        "Extracting DMS binary...",
+		Step:        "Extracting CyShell binary...",
 		IsComplete:  false,
-		CommandInfo: "gunzip dms.gz",
+		CommandInfo: "gunzip cyshell.gz",
 	}
 
 	// Extract the binary
 	extractCmd := exec.CommandContext(ctx, "gunzip", gzPath)
 	if err := extractCmd.Run(); err != nil {
-		return fmt.Errorf("failed to extract DMS binary: %w", err)
+		return fmt.Errorf("failed to extract CyShell binary: %w", err)
 	}
 
-	binaryPath := filepath.Join(tmpDir, "dms")
+	binaryPath := filepath.Join(tmpDir, "cyshell")
 
 	// Make it executable
 	chmodCmd := exec.CommandContext(ctx, "chmod", "+x", binaryPath)
 	if err := chmodCmd.Run(); err != nil {
-		return fmt.Errorf("failed to make DMS binary executable: %w", err)
+		return fmt.Errorf("failed to make CyShell binary executable: %w", err)
 	}
 
 	progressChan <- InstallProgressMsg{
 		Phase:       PhaseConfiguration,
 		Progress:    0.88,
-		Step:        "Installing DMS to /usr/local/bin...",
+		Step:        "Installing CyShell to /usr/local/bin...",
 		IsComplete:  false,
 		NeedsSudo:   true,
-		CommandInfo: "sudo cp dms /usr/local/bin/",
+		CommandInfo: "sudo cp cyshell /usr/local/bin/",
 	}
 
 	// Install to /usr/local/bin
 	installCmd := privesc.ExecCommand(ctx, sudoPassword,
-		fmt.Sprintf("cp %s /usr/local/bin/dms", binaryPath))
+		fmt.Sprintf("cp %s /usr/local/bin/cyshell", binaryPath))
 	if err := installCmd.Run(); err != nil {
-		return fmt.Errorf("failed to install DMS binary: %w", err)
+		return fmt.Errorf("failed to install CyShell binary: %w", err)
 	}
 
-	b.log("DMS binary installed successfully")
+	b.log("CyShell binary installed successfully")
 	return nil
 }

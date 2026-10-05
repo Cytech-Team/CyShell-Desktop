@@ -11,7 +11,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/utils"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/utils"
 )
 
 const niriScreenshotTimeout = 5 * time.Second
@@ -26,7 +26,7 @@ func CaptureNiriWindowImage(showPointer bool) (image.Image, error) {
 		return nil, fmt.Errorf("NIRI_SOCKET not set")
 	}
 
-	path := filepath.Join(utils.RuntimeDir(), fmt.Sprintf("dms-window-%d.png", os.Getpid()))
+	path := filepath.Join(utils.RuntimeDir(), fmt.Sprintf("cyshell-window-%d.png", os.Getpid()))
 
 	events, err := subscribeNiriEvents(socket)
 	if err != nil {

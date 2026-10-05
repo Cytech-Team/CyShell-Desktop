@@ -17,7 +17,7 @@ Variants {
         screen: modelData
 
         WlrLayershell.layer: WlrLayer.Background
-        WlrLayershell.namespace: "dms:blurwallpaper"
+        WlrLayershell.namespace: "cyshell:blurwallpaper"
         WlrLayershell.exclusionMode: ExclusionMode.Ignore
 
         anchors.top: true
@@ -235,7 +235,7 @@ Variants {
                 }
             }
 
-            // Theme changes repaint DankBackdrop but nothing else wakes the render loop
+            // Theme changes repaint CyBackdrop but nothing else wakes the render loop
             readonly property color themePrimary: Theme.primary
             readonly property color themeBackground: Theme.background
             readonly property bool idleShellLocked: IdleService.isShellLocked
@@ -277,7 +277,7 @@ Variants {
                 active: !root.source || root.isColorSource || root.loadFailed
                 asynchronous: true
 
-                sourceComponent: DankBackdrop {
+                sourceComponent: CyBackdrop {
                     screenName: modelData.name
                 }
             }

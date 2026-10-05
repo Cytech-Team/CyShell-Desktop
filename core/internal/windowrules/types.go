@@ -1,6 +1,6 @@
 package windowrules
 
-import "github.com/AvengeMedia/DankMaterialShell/core/internal/configfrag"
+import "github.com/Cytech-Team/CyShell-Desktop/core/internal/configfrag"
 
 type MatchCriteria struct {
 	AppID              string `json:"appId,omitempty"`
@@ -124,7 +124,7 @@ func DMSRulesStatusFrom(s configfrag.Status) *DMSRulesStatus {
 		Included:        s.Included,
 		IncludePosition: s.IncludePosition,
 		TotalIncludes:   s.TotalIncludes,
-		RulesAfterDMS:   s.EntriesAfterDMS,
+		RulesAfterDMS:   s.EntriesAfterCyShell,
 		Effective:       s.Effective,
 		OverriddenBy:    s.OverriddenBy,
 		StatusMessage:   s.StatusMessage,

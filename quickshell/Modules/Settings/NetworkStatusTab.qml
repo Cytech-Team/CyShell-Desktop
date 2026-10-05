@@ -136,7 +136,7 @@ Item {
                             height: 1
                         }
 
-                        DankButtonGroup {
+                        CyButtonGroup {
                             id: preferenceButtons
 
                             readonly property var preferenceValues: {

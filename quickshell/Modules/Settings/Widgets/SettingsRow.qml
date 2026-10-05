@@ -152,7 +152,7 @@ T.Control {
         }
     }
 
-    DankRipple {
+    CyRipple {
         id: ripple
         visible: root.clickable
         rippleColor: Theme.surfaceText
@@ -226,7 +226,7 @@ T.Control {
                     visible: children.length > 0
                 }
 
-                DankIcon {
+                CyIcon {
                     id: leadingIcon
                     anchors.verticalCenter: parent.verticalCenter
                     name: root.iconName
@@ -270,7 +270,7 @@ T.Control {
                 }
             }
 
-            DankActionButton {
+            CyActionButton {
                 id: resetButton
                 anchors.right: trailingArea.visible ? trailingArea.left : parent.right
                 anchors.rightMargin: trailingArea.visible ? Theme.spacingS : 0
@@ -307,7 +307,7 @@ T.Control {
                     anchors.verticalCenter: parent.verticalCenter
                 }
 
-                DankIcon {
+                CyIcon {
                     name: "chevron_right"
                     size: Theme.iconSize
                     color: Theme.surfaceVariantText

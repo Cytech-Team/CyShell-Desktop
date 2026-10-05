@@ -3,8 +3,8 @@ import QtQuick
 import Quickshell.Services.SystemTray
 import qs.Common
 import qs.Services
-import qs.Modules.DankBar.Widgets
-import "../DankBar/WidgetModel.js" as WidgetModel
+import qs.Modules.CyBar.Widgets
+import "../CyBar/WidgetModel.js" as WidgetModel
 
 Item {
     id: root
@@ -34,16 +34,123 @@ Item {
         return surfaceContext.axis?.edge === "left" ? 2 : (surfaceContext.axis?.edge === "right" ? 3 : (surfaceContext.axis?.edge === "top" ? 0 : 1));
     }
 
+    function _forwardRemotePopout(spec) {
+        if (PopoutService.transientUiOwner || !spec)
+            return false;
+
+        const action = spec.mode === "hover" ? "open" : "toggle";
+        const section = spec.section || getWidgetSection(spec.widgetItem);
+        const visual = spec.useCenterSection && section === "center" ? surfaceContext.centerSection : spec.visualItem;
+        const anchor = surfaceContext.popupAnchor(spec.widgetItem, section, visual, spec.triggerWidth);
+        const trigger = anchor?.trigger ? { x: anchor.trigger.x, y: anchor.trigger.y, width: anchor.trigger.width } : null;
+        const originalBarConfig = anchor?.config ?? null;
+        if (trigger && surfaceContext.kind === "dock" && originalBarConfig?.widgetExpansion === "inline") {
+            const bounds = surfaceContext.host?.surfaceBounds;
+            if (bounds) {
+                const gap = CompositorService.usesConnectedFrameChromeForScreen(anchor.screen) && !originalBarConfig.useOverlayLayer
+                    ? 0
+                    : (originalBarConfig.popupGapsAuto !== false ? Math.max(4, anchor.spacing) : originalBarConfig.popupGapsManual ?? 4);
+                switch (anchor.position) {
+                case SettingsData.Position.Top:
+                    trigger.y = bounds.y + bounds.height + gap;
+                    break;
+                case SettingsData.Position.Bottom:
+                    trigger.y = bounds.y - gap;
+                    break;
+                case SettingsData.Position.Left:
+                    trigger.x = bounds.x + bounds.width + gap;
+                    break;
+                case SettingsData.Position.Right:
+                    trigger.x = bounds.x - gap;
+                    break;
+                }
+            }
+        }
+        const barConfig = originalBarConfig ? Object.assign({}, originalBarConfig) : null;
+        if (barConfig)
+            barConfig.widgetExpansion = "none";
+        const source = spec.triggerSource || "";
+        const dashActivities = ["home", "media", "wallpaper", "weather"];
+        const tab = spec.tab || (dashActivities.includes(spec.islandActivity) ? (spec.islandActivity === "home" ? "overview" : spec.islandActivity) : "");
+        const payload = PopoutService.transientUiPayload(
+            trigger?.x,
+            trigger?.y,
+            trigger?.width,
+            anchor?.section || section,
+            anchor?.screen || surfaceContext.screen,
+            source,
+            tab,
+            spec.mode,
+            spec.islandActivity,
+            anchor?.position,
+            anchor?.thickness,
+            anchor?.spacing,
+            barConfig
+        );
+        const invokeTransient = surface => PopoutService._externalShellCall("transient-ui", "invoke", [surface, action, payload]);
+
+        // CyBarHoverController builds Dash keys as <barId>-<section>-<tab>
+        // and carries the tab separately; unlike click specs, these requests
+        // do not set islandActivity.
+        const dashHoverMatch = source.match(/^(?:dash-)?(.+)-(left|center|right)-(overview|media|weather)$/);
+        if (!spec.islandActivity && spec.mode === "hover" && dashHoverMatch && tab === dashHoverMatch[3])
+            return invokeTransient("dash");
+
+        switch (spec.islandActivity || "") {
+        case "controlcenter":
+            return invokeTransient("controlCenter");
+        case "notificationcenter":
+            return invokeTransient("notificationCenter");
+        case "home":
+        case "media":
+        case "wallpaper":
+        case "weather": {
+            return invokeTransient("dash");
+        }
+        case "launcher":
+            return PopoutService._externalShellCall("launcher", action, []);
+        }
+
+        switch (spec.triggerSource || "") {
+        case "controlCenter":
+            return invokeTransient("controlCenter");
+        case "notifications":
+            return invokeTransient("notificationCenter");
+        case "battery":
+            return invokeTransient("battery");
+        case "dndDuration":
+        case "idleInhibit":
+            return invokeTransient("duration");
+        case "colorPicker":
+            return invokeTransient("colorPicker");
+        case "vpn":
+            return invokeTransient("vpn");
+        case "systemUpdate":
+            return invokeTransient("systemUpdate");
+        case "clipboard":
+            return PopoutService._externalShellCall("clipboard", action, []);
+        case "powerMenu":
+            return PopoutService._externalShellCall("powermenu", action, []);
+        case "cpu":
+        case "memory":
+        case "cpu_temp":
+        case "gpu_temp":
+            return PopoutService._externalShellCall("processlist", spec.mode === "hover" ? "open" : "focusOrToggle", []);
+        default:
+            return false;
+        }
+    }
+
     function openWidgetPopout(spec) {
         if (!spec)
             return false;
         CompositorService.noteScreenInteraction(surfaceContext.screen);
         spec.registration = BarWidgetService.registrationForItem(spec.widgetItem);
         surfaceContext.ensureVisible(spec.widgetItem);
-        if (surfaceContext.kind === "dock" && !surfaceContext.inlineExpansion && spec.islandActivity && PopoutService.routeToIsland(spec.islandActivity, surfaceContext.screen, spec.mode !== "hover", spec.section || ""))
+        if (surfaceContext.kind === "dock" && !surfaceContext.inlineExpansion && spec.islandActivity && PopoutService.routeToIsland(spec.islandActivity, surfaceContext.screen, spec.mode !== "hover", spec.section || "", surfaceContext.configId))
             return true;
         if (!spec.loader)
-            return false;
+            return _forwardRemotePopout(spec);
         spec.loader.active = true;
 
         let popout = _resolvePopoutFromLoader(spec.loader);
@@ -60,7 +167,7 @@ Item {
         if (loader.item)
             return loader.item;
 
-        const pairs = [[PopoutService.appDrawerLoader, PopoutService.appDrawerPopout], [PopoutService.batteryPopoutLoader, PopoutService.batteryPopout], [PopoutService.clipboardHistoryPopoutLoader, PopoutService.clipboardHistoryPopout], [PopoutService.controlCenterLoader, PopoutService.controlCenterPopout], [PopoutService.dankDashPopoutLoader, PopoutService.dankDashPopout], [PopoutService.layoutPopoutLoader, PopoutService.layoutPopout], [PopoutService.notificationCenterLoader, PopoutService.notificationCenterPopout], [PopoutService.processListPopoutLoader, PopoutService.processListPopout], [PopoutService.systemUpdateLoader, PopoutService.systemUpdatePopout], [PopoutService.vpnPopoutLoader, PopoutService.vpnPopout], [PopoutService.colorPickerPopoutLoader, PopoutService.colorPickerPopout], [PopoutService.durationPopoutLoader, PopoutService.durationPopout], [PopoutService.powerMenuPopoutLoader, PopoutService.powerMenuPopout]];
+        const pairs = [[PopoutService.appDrawerLoader, PopoutService.appDrawerPopout], [PopoutService.batteryPopoutLoader, PopoutService.batteryPopout], [PopoutService.clipboardHistoryPopoutLoader, PopoutService.clipboardHistoryPopout], [PopoutService.controlCenterLoader, PopoutService.controlCenterPopout], [PopoutService.dankDashPopoutLoader, PopoutService.dankDashPopout], [PopoutService.notificationCenterLoader, PopoutService.notificationCenterPopout], [PopoutService.processListPopoutLoader, PopoutService.processListPopout], [PopoutService.systemUpdateLoader, PopoutService.systemUpdatePopout], [PopoutService.vpnPopoutLoader, PopoutService.vpnPopout], [PopoutService.colorPickerPopoutLoader, PopoutService.colorPickerPopout], [PopoutService.durationPopoutLoader, PopoutService.durationPopout], [PopoutService.powerMenuPopoutLoader, PopoutService.powerMenuPopout]];
         for (let i = 0; i < pairs.length; i++) {
             if (loader === pairs[i][0] && pairs[i][1])
                 return pairs[i][1];
@@ -147,7 +254,6 @@ Item {
             gpuTempComponent,
             notificationButtonComponent,
             batteryComponent,
-            layoutComponent,
             controlCenterButtonComponent,
             capsLockIndicatorComponent,
             idleInhibitorComponent,
@@ -159,16 +265,29 @@ Item {
             notepadButtonComponent,
             colorPickerComponent,
             systemUpdateComponent,
-            powerMenuButtonComponent
+            powerMenuButtonComponent,
+            cyStartComponent,
+            cySearchComponent,
+            cyTaskViewComponent,
+            cyLanguageComponent,
+            cyClockComponent,
+            cyPeekComponent
         });
 
         let pluginMap = PluginService.getWidgetComponents();
-        return Object.assign(baseMap, pluginMap);
+        return Object.assign({}, pluginMap, baseMap);
     }
 
     function getWidgetComponent(widgetId) {
         return componentMap[widgetId] || componentMap[widgetId.split(":")[0]] || null;
     }
+
+    Component { id: cyStartComponent; CyStart {} }
+    Component { id: cySearchComponent; CySearch {} }
+    Component { id: cyTaskViewComponent; CyTaskView {} }
+    Component { id: cyLanguageComponent; CyLanguage {} }
+    Component { id: cyClockComponent; CyClock {} }
+    Component { id: cyPeekComponent; CyPeek {} }
 
     Component {
         id: clipboardComponent
@@ -397,7 +516,21 @@ Item {
                     useCenterSection: true,
                     triggerSource: root._dashTriggerSource(section, "overview"),
                     islandActivity: "home",
+                    tab: "overview",
                     prepare: popout => popout.requestTab("overview"),
+                    mode: "click",
+                    setTriggerScreen: true
+                });
+            }
+
+            onCalendarClicked: {
+                const section = root.getWidgetSection(parent) || "center";
+                root.openWidgetPopout({
+                    loader: PopoutService.notificationCenterLoader,
+                    widgetItem: clockWidget,
+                    section,
+                    islandActivity: "notificationcenter",
+                    triggerSource: "notifications",
                     mode: "click",
                     setTriggerScreen: true
                 });
@@ -418,6 +551,7 @@ Item {
                     useCenterSection: true,
                     triggerSource: root._dashTriggerSource(section, "media"),
                     islandActivity: "media",
+                    tab: "media",
                     prepare: popout => popout.requestTab("media"),
                     mode: "click",
                     setTriggerScreen: true
@@ -446,6 +580,7 @@ Item {
                     useCenterSection: true,
                     triggerSource: root._dashTriggerSource(section, "media"),
                     islandActivity: "media",
+                    tab: "media",
                     prepare: popout => popout.requestTab("media"),
                     mode: "click",
                     setTriggerScreen: true
@@ -473,6 +608,7 @@ Item {
                     useCenterSection: true,
                     triggerSource: root._dashTriggerSource(section, "weather"),
                     islandActivity: "weather",
+                    tab: "weather",
                     prepare: popout => popout.requestTab("weather"),
                     mode: "click",
                     setTriggerScreen: true
@@ -644,7 +780,7 @@ Item {
 
         NotificationCenterButton {
             id: notificationButton
-            hasUnread: surfaceContext.notificationCount > 0
+            hasUnread: NotificationService.notifications.length > 0 && NotificationService.unreadCount > 0
             isActive: PopoutService.notificationCenterLoader?.item ? PopoutService.notificationCenterLoader?.item.shouldBeVisible : false
             widgetThickness: surfaceContext.widgetThickness
             barThickness: surfaceContext.thickness
@@ -696,30 +832,6 @@ Item {
                     widgetItem: batteryWidget,
                     section: root.getWidgetSection(parent) || "right",
                     triggerSource: "battery",
-                    mode: "click"
-                });
-            }
-        }
-    }
-
-    Component {
-        id: layoutComponent
-
-        DWLLayout {
-            id: layoutWidget
-            layoutPopupVisible: PopoutService.layoutPopoutLoader?.item ? PopoutService.layoutPopoutLoader?.item.shouldBeVisible : false
-            widgetThickness: surfaceContext.widgetThickness
-            barThickness: surfaceContext.thickness
-            axis: surfaceContext.axis
-            section: root.getWidgetSection(parent) || "center"
-            popoutTarget: PopoutService.layoutPopoutLoader?.item ?? null
-            parentScreen: surfaceContext.screen
-            onToggleLayoutPopup: {
-                root.openWidgetPopout({
-                    loader: PopoutService.layoutPopoutLoader,
-                    widgetItem: layoutWidget,
-                    section: root.getWidgetSection(parent) || "center",
-                    triggerSource: "layout",
                     mode: "click"
                 });
             }

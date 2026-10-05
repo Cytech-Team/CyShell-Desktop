@@ -15,10 +15,10 @@ Singleton {
     readonly property url pictures: StandardPaths.standardLocations(StandardPaths.PicturesLocation)[0]
     readonly property url xdgCache: StandardPaths.standardLocations(StandardPaths.GenericCacheLocation)[0]
 
-    readonly property url data: `${StandardPaths.standardLocations(StandardPaths.GenericDataLocation)[0]}/DankMaterialShell`
-    readonly property url state: `${StandardPaths.standardLocations(StandardPaths.GenericStateLocation)[0]}/DankMaterialShell`
-    readonly property url cache: `${StandardPaths.standardLocations(StandardPaths.GenericCacheLocation)[0]}/DankMaterialShell`
-    readonly property url config: `${StandardPaths.standardLocations(StandardPaths.GenericConfigLocation)[0]}/DankMaterialShell`
+    readonly property url data: `${StandardPaths.standardLocations(StandardPaths.GenericDataLocation)[0]}/CyShell`
+    readonly property url state: `${StandardPaths.standardLocations(StandardPaths.GenericStateLocation)[0]}/CyShell`
+    readonly property url cache: `${StandardPaths.standardLocations(StandardPaths.GenericCacheLocation)[0]}/CyShell`
+    readonly property url config: `${StandardPaths.standardLocations(StandardPaths.GenericConfigLocation)[0]}/CyShell`
 
     readonly property url imagecache: `${cache}/imagecache`
 
@@ -121,7 +121,7 @@ Singleton {
     }
 
     function copyPathToClipboard(path: string): void {
-        Quickshell.execDetached([Proc.dmsBin, "cl", "copy", path]);
+        Quickshell.execDetached([Proc.cyshellBin, "cl", "copy", path]);
     }
 
     function resolveIconUrl(iconName: string): string {
@@ -162,8 +162,8 @@ Singleton {
     }
 
     function getAppName(appId: string, desktopEntry: var): string {
-        if (appId === "org.quickshell" || appId === "com.danklinux.dms") {
-            return "dms";
+        if (appId === "org.quickshell" || appId === "com.cytechteam.cyshell") {
+            return "CyShell";
         }
 
         return desktopEntry && desktopEntry.name ? desktopEntry.name : appId;

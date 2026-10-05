@@ -17,7 +17,7 @@ const (
 	media1Iface         = "org.bluez.Media1"
 	mprisPlayerIface    = "org.mpris.MediaPlayer2.Player"
 	introspectableIface = "org.freedesktop.DBus.Introspectable"
-	mprisPlayerPath     = dbus.ObjectPath("/com/danklinux/bluez/player")
+	mprisPlayerPath     = dbus.ObjectPath("/com/cytechteam/cyshell/bluez/player")
 )
 
 const mprisPlayerIntrospection = `
@@ -187,7 +187,7 @@ func playerTrackID(snapshot PlayerSnapshot) dbus.ObjectPath {
 	}
 	metadata := fmt.Sprintf("%q\x00%q\x00%q\x00%d", snapshot.Title, snapshot.Artist, snapshot.Album, snapshot.Length)
 	hash := sha256.Sum256([]byte(metadata))
-	return dbus.ObjectPath(fmt.Sprintf("/com/danklinux/bluez/player/track/%x", hash[:12]))
+	return dbus.ObjectPath(fmt.Sprintf("/com/cytechteam/cyshell/bluez/player/track/%x", hash[:12]))
 }
 
 func changedPlayerProperties(old, current PlayerSnapshot) map[string]dbus.Variant {

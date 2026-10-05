@@ -1,3 +1,3 @@
 import qs.Widgets
 
-DankReorderGroup {}
+CyReorderGroup {}

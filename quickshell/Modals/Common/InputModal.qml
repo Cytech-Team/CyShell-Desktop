@@ -3,10 +3,10 @@ import qs.Common
 import qs.Modals.Common
 import qs.Widgets
 
-DankModal {
+CyModal {
     id: root
 
-    layerNamespace: "dms:input-modal"
+    layerNamespace: "cyshell:input-modal"
     keepPopoutsOpen: true
 
     property string inputTitle: ""
@@ -75,7 +75,7 @@ DankModal {
         });
     }
 
-    content: DankDialog {
+    content: CyDialog {
         id: inputDialog
         property alias textInputRef: textInput
 
@@ -84,7 +84,7 @@ DankModal {
         onAccepted: root.confirmAndClose()
         onRejected: root.cancelAndClose()
 
-        DankTextField {
+        CyTextField {
             id: textInput
 
             width: parent.width
@@ -98,7 +98,7 @@ DankModal {
         }
 
         actions: [
-            DankButton {
+            CyButton {
                 maximumWidth: inputDialog.actionWidth
                 wrapText: true
                 text: root.cancelButtonText
@@ -106,7 +106,7 @@ DankModal {
                 textColor: Theme.primary
                 onClicked: root.cancelAndClose()
             },
-            DankButton {
+            CyButton {
                 maximumWidth: inputDialog.actionWidth
                 wrapText: true
                 text: root.confirmButtonText

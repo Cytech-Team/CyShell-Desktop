@@ -3,9 +3,9 @@ import QtTest
 import Quickshell
 import qs.Common
 import qs.Services
-import qs.Modules.DankDash
-import qs.Modules.DankDash.Media
-import qs.DankCommon.Common as DC
+import qs.Modules.CyDash
+import qs.Modules.CyDash.Media
+import qs.CyCommon.Common as DC
 
 ShellRoot {
     id: root
@@ -226,7 +226,7 @@ ShellRoot {
                     lyrics: false
                 }
             };
-            DMSService.capabilities = ["lyrics"];
+            CyShellService.capabilities = ["lyrics"];
             input.wait(30);
             const lyricsToggle = find(media, item => item.selectionMode === "single" && item.checkEnabled === false);
             check(!!lyricsToggle && !lyricsToggle.visible, "lyrics option gates the button");
@@ -342,7 +342,7 @@ ShellRoot {
             }), "escape falls through once nothing is open");
             input.wait(30);
             check(!media.lyricsFocusTarget, "closing lyrics destroys the overlay");
-            DMSService.capabilities = [];
+            CyShellService.capabilities = [];
             input.wait(30);
             check(!lyricsToggle.visible, "lyrics button hides against a core without the capability");
             const probe = transportProbe.createObject(viewport, {

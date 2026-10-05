@@ -3,9 +3,9 @@ import QtTest
 import Quickshell
 import qs.Common
 import qs.Services
-import qs.Modules.DankBar.Popouts
-import qs.Modules.DankBar.Widgets
-import qs.DankCommon.Common as DC
+import qs.Modules.CyBar.Popouts
+import qs.Modules.CyBar.Widgets
+import qs.CyCommon.Common as DC
 
 ShellRoot {
     id: root

@@ -146,7 +146,7 @@ Column {
                 clickable: true
                 onClicked: root.setSetting(modelData.setting, !root.page.value(modelData.setting))
 
-                DankToggle {
+                CyToggle {
                     hideText: true
                     checked: root.page.value(indicatorRow.modelData.setting)
                     onToggled: value => root.setSetting(indicatorRow.modelData.setting, value)

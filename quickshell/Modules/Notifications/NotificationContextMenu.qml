@@ -4,7 +4,7 @@ import qs.Modules.Notifications
 import qs.Services
 import qs.Widgets
 
-DankContextMenu {
+CyContextMenu {
     id: root
 
     property alias appName: actions.appName
@@ -14,7 +14,7 @@ DankContextMenu {
     signal dismissRequested
     signal appMuted
 
-    layerNamespace: "dms:notification-context-menu"
+    layerNamespace: "cyshell:notification-context-menu"
     minMenuWidth: NotificationMetrics.menuWidth
     menuItems: actions.items.map(item => ({
                 type: "item",

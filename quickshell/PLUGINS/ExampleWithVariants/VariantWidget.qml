@@ -17,7 +17,7 @@ PluginComponent {
         Row {
             spacing: Theme.spacingXS
 
-            DankIcon {
+            CyIcon {
                 name: root.displayIcon
                 size: Theme.iconSize - 8
                 color: Theme.surfaceText
@@ -38,7 +38,7 @@ PluginComponent {
         Column {
             spacing: 1
 
-            DankIcon {
+            CyIcon {
                 name: root.displayIcon
                 size: Theme.iconSize - 8
                 color: Theme.surfaceText

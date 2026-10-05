@@ -1,0 +1,131 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+STATE="$HOME/.local/state/cyshell/keyboard-layout"
+mkdir -p "$(dirname "$STATE")"
+
+# CyShell/Labwc has exactly two configured groups: us,th. Only trust the
+# Scroll Lock LED when XKB is explicitly configured with grp_led:scroll.
+# The current CyShell setup intentionally keeps Scroll Lock independent from
+# language, so otherwise the LED is NOT a keyboard-layout source of truth.
+layout_led_enabled() {
+  local options="${XKB_DEFAULT_OPTIONS:-}" env_file
+  env_file="${XDG_CONFIG_HOME:-$HOME/.config}/labwc/environment"
+  if [[ -r "$env_file" ]]; then
+    options+=" $(sed -n 's/^XKB_DEFAULT_OPTIONS=//p' "$env_file" | tail -n1)"
+  fi
+  [[ ",${options// /,}," == *",grp_led:scroll,"* ]]
+}
+
+real_layout() {
+  layout_led_enabled || return 1
+
+  local found=0 value=0 f v
+  shopt -s nullglob
+  for f in /sys/class/leds/input*::scrolllock/brightness; do
+    found=1
+    v="$(cat "$f" 2>/dev/null || printf '0')"
+    if [[ "$v" != "0" ]]; then
+      value=1
+      break
+    fi
+  done
+  shopt -u nullglob
+
+  if (( found == 0 )); then
+    return 1
+  fi
+  if (( value != 0 )); then
+    printf 'th\n'
+  else
+    printf 'en\n'
+  fi
+}
+
+stored_layout() {
+  if [[ -r "$STATE" ]]; then
+    local v
+    v="$(tr -d '\r\n ' < "$STATE")"
+    case "$v" in en|th) printf '%s\n' "$v"; return ;; esac
+  fi
+  printf 'en\n'
+}
+
+save_layout() {
+  printf '%s\n' "$1" > "$STATE"
+}
+
+actual_layout() {
+  local value
+  if value="$(real_layout)"; then
+    save_layout "$value"
+    printf '%s\n' "$value"
+  else
+    stored_layout
+  fi
+}
+
+switch_group() {
+  /usr/bin/ydotool key 56:1 42:1 42:0 56:0
+}
+
+set_layout() {
+  local target="$1" current value i
+  current="$(actual_layout)"
+  if [[ "$current" == "$target" ]]; then
+    printf '%s\n' "$current"
+    return 0
+  fi
+
+  switch_group
+  if ! value="$(real_layout)"; then
+    save_layout "$target"
+    printf '%s\n' "$target"
+    return 0
+  fi
+
+  for i in {1..25}; do
+    sleep 0.02
+    if value="$(real_layout)" && [[ "$value" == "$target" ]]; then
+      save_layout "$value"
+      printf '%s\n' "$value"
+      return 0
+    fi
+  done
+
+  value="$(actual_layout)"
+  printf 'failed to switch keyboard layout: requested=%s actual=%s\n' "$target" "$value" >&2
+  return 1
+}
+
+case "${1:-status}" in
+  status|get)
+    actual_layout
+    ;;
+  set)
+    target="${2:-}"
+    case "$target" in en|th) ;; *) printf 'usage: %s set <en|th>\n' "$0" >&2; exit 2 ;; esac
+    set_layout "$target"
+    ;;
+  toggle)
+    current="$(actual_layout)"
+    if [[ "$current" == th ]]; then target=en; else target=th; fi
+    set_layout "$target"
+    ;;
+  note)
+    target="${2:-}"
+    case "$target" in en|th) ;; *) printf 'usage: %s note <en|th>\n' "$0" >&2; exit 2 ;; esac
+    save_layout "$target"
+    printf '%s\n' "$target"
+    ;;
+  note-toggle)
+    # Compatibility alias: unlike the old implementation, never invent state.
+    current="$(actual_layout)"
+    if [[ "$current" == th ]]; then target=en; else target=th; fi
+    set_layout "$target"
+    ;;
+  *)
+    printf 'usage: %s {status|get|set <en|th>|toggle|note <en|th>|note-toggle}\n' "$0" >&2
+    exit 2
+    ;;
+esac

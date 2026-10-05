@@ -1,10 +1,10 @@
 # Void Linux packaging
 
-XBPS templates for DankMaterialShell on [Void Linux](https://voidlinux.org).
+XBPS templates for CyShell on [Void Linux](https://voidlinux.org).
 
 | Package | Source repo | Template |
 | --- | --- | --- |
-| `dms` | DankMaterialShell | [`srcpkgs/dms/template`](srcpkgs/dms/template) |
+| `cyshell` | CyShell | [`srcpkgs/cyshell/template`](srcpkgs/cyshell/template) |
 | `dgop` | AvengeMedia/dgop | maintained in the **danklinux** repo (`distro/void/srcpkgs/dgop`) |
 | `danksearch` | AvengeMedia/danksearch | maintained in the **danklinux** repo (`distro/void/srcpkgs/danksearch`) |
 
@@ -12,7 +12,7 @@ All build from source.
 
 ## Distribution
 
-This is a DMS maintained repo for VoidLinux until these packages are officially merged upstream in the Void Linux repositories, you can install them from our self-hosted custom XBPS repositories served via GitHub Pages.
+This is a CyShell compatibility package repo for VoidLinux until these packages are officially merged upstream in the Void Linux repositories, you can install them from our self-hosted custom XBPS repositories served via GitHub Pages.
 
 ### Using the Self-Hosted Repositories
 
@@ -29,24 +29,24 @@ We serve both stable release and development packages from Cloudflare R2 at
 Create configuration files in `/etc/xbps.d/` pointing to our repositories (needed for both stable and git/nightly variants):
 
 ```sh
-echo "repository=https://void.danklinux.com/dms/current" | sudo tee /etc/xbps.d/dms.conf
+echo "repository=https://void.danklinux.com/cyshell/current" | sudo tee /etc/xbps.d/cyshell.conf
 echo "repository=https://void.danklinux.com/danklinux/current" | sudo tee /etc/xbps.d/danklinux.conf
 ```
 
-#### 2. Install DMS
+#### 2. Install CyShell
 
 Synchronize repositories and install the package:
 
 * For the **stable** variant:
 
     ```sh
-    sudo xbps-install -S dms
+    sudo xbps-install -S cyshell
     ```
 
 * For the **git/nightly** variant (this will conflict with and replace the stable package):
 
     ```sh
-    sudo xbps-install -S dms-git
+    sudo xbps-install -S cyshell-git
     ```
 
 *Note: On the first sync, `xbps-install` will output our signing key fingerprint and ask you to type `y` to trust and import it. Verify that the key matches our official signing fingerprint.*
@@ -56,7 +56,7 @@ checkout at `srcpkgs/<pkg>/template` to build or submit it.
 
 ## Dependencies
 
-Installing `dms` automatically pulls in `quickshell`, `accountsservice`, `dgop`,
+Installing `cyshell` automatically pulls in `quickshell`, `accountsservice`, `dgop`,
 `matugen` (which drives the Material You theming), `dbus`, `elogind`, and
 `mesa-dri` (GL drivers, required for compositors to render).
 The rest are optional, install whichever features you want:
@@ -78,30 +78,30 @@ The rest are optional, install whichever features you want:
 Inside a `void-packages` checkout (symlink or copy these `srcpkgs/<pkg>` dirs in):
 
 ```sh
-# build the dependency packages first (dms requires dgop)
+# build the dependency packages first (cyshell requires dgop)
 ./xbps-src pkg dgop
 ./xbps-src pkg danksearch
-./xbps-src pkg dms
+./xbps-src pkg cyshell
 
 # lint (xlint ships in the xtools package)
-xlint srcpkgs/dms/template
+xlint srcpkgs/cyshell/template
 
 # install the built packages
-sudo xbps-install --repository=hostdir/binpkgs dms dgop
+sudo xbps-install --repository=hostdir/binpkgs cyshell dgop
 ```
 
-`dms` requires Go ≥ 1.26 in the build environment (per `core/go.mod`).
+`cyshell` requires Go ≥ 1.26 in the build environment (per `core/go.mod`).
 
 ## Running the shell
 
-DMS is a user-level Wayland shell with **no system service** — start it from your
+CyShell is a user-level Wayland shell with **no system service** — start it from your
 compositor's autostart, e.g. niri:
 
 ```kdl
-spawn-at-startup "dms" "run"
+spawn-at-startup "cyshell" "run"
 ```
 
-or Hyprland: `exec-once = dms run`.
+or Hyprland: `exec-once = cyshell run`.
 
 From a TTY on Void without a greeter, start your compositor through a D-Bus
 session:

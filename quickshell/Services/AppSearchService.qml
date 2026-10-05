@@ -116,6 +116,21 @@ Singleton {
         return _hiddenAppsSet.has(appId);
     }
 
+    function _applicationDuplicateKey(app) {
+        const name = String(app?.name || "").trim().toLowerCase();
+        const comment = String(app?.comment || "").trim().toLowerCase();
+        if (!name || !comment)
+            return "";
+        const listKey = values => Array.isArray(values) ? values.map(value => String(value).trim().toLowerCase()).sort().join("\u001f") : "";
+        return JSON.stringify([
+            name,
+            String(app?.genericName || "").trim().toLowerCase(),
+            comment,
+            listKey(app?.categories),
+            listKey(app?.keywords)
+        ]);
+    }
+
     function _visibleSearchIndex() {
         if (_searchIndex !== null)
             return _searchIndex;
@@ -146,6 +161,11 @@ Singleton {
                     return false;
                 if (id)
                     seen.add(id);
+                const duplicateKey = _applicationDuplicateKey(applyAppOverride(app));
+                if (duplicateKey && seen.has(duplicateKey))
+                    return false;
+                if (duplicateKey)
+                    seen.add(duplicateKey);
                 return true;
             });
         }
@@ -271,7 +291,7 @@ Singleton {
             },
             "dms_settings_search": {
                 id: "dms_settings_search",
-                name: I18n.tr("Search settings", "launcher plugin name that searches DMS settings"),
+                name: I18n.tr("Search settings", "launcher plugin name that searches CyShell settings"),
                 cornerIcon: "search",
                 comment: I18n.tr("CyShell Settings"),
                 defaultTrigger: "?",
@@ -286,6 +306,16 @@ Singleton {
                 isLauncher: true,
                 viewMode: "list",
                 viewModeEnforced: true
+            },
+            "cytechSearch": {
+                id: "cytechSearch",
+                name: "Cytech Search",
+                cornerIcon: "search",
+                comment: "CyShell native search provider",
+                defaultTrigger: "",
+                isLauncher: true,
+                viewMode: "list",
+                defaultSectionPriority: 1.8
             }
         })
 
@@ -413,15 +443,15 @@ Singleton {
         }
 
         if (pluginId === "dms_vpn") {
-            if (!DMSNetworkService.vpnAvailable)
+            if (!CyNetworkService.vpnAvailable)
                 return [];
             const q = (query || "").toString().trim().toLowerCase();
             if (!q && !allowEmptyQuery && !getBuiltInPluginTrigger(pluginId))
                 return [];
-            return (DMSNetworkService.profiles || []).map(profile => {
+            return (CyNetworkService.profiles || []).map(profile => {
                 const id = profile.uuid || profile.name || "";
-                const active = DMSNetworkService.isActiveVpnUuid(id);
-                const connecting = DMSNetworkService.isVpnConnectingUuid(id);
+                const active = CyNetworkService.isActiveVpnUuid(id);
+                const connecting = CyNetworkService.isVpnConnectingUuid(id);
                 const typeLabel = VPNService.getVpnTypeFromProfile(profile);
                 return {
                     name: profile.name || I18n.tr("VPN", "virtual private network, widget and page title"),
@@ -509,7 +539,7 @@ Singleton {
                 const id = parts.slice(1).join(":");
                 if (!id)
                     return false;
-                DMSNetworkService.toggleVpn(id);
+                CyNetworkService.toggleVpn(id);
                 return true;
             }
         }
@@ -1025,7 +1055,71 @@ Singleton {
         return getPluginItemsForPlugin(pluginId, query);
     }
 
+    function _cytechSearchTrimmed(value) {
+        return String(value || "").trim();
+    }
+
+    function _cytechSearchLooksLikeMath(query) {
+        const q = _cytechSearchTrimmed(query);
+        if (q.length === 0 || q.length > 120 || !/[0-9]/.test(q))
+            return false;
+        return /^[0-9+\-*/%().\s]+$/.test(q);
+    }
+
+    function _cytechSearchCalculate(query) {
+        const q = _cytechSearchTrimmed(query);
+        if (!_cytechSearchLooksLikeMath(q))
+            return null;
+        try {
+            const value = Function('"use strict"; return (' + q + ')')();
+            if (typeof value !== "number" || !Number.isFinite(value))
+                return null;
+            return String(value);
+        } catch (e) {
+            return null;
+        }
+    }
+
+    function _cytechSearchItems(query) {
+        const q = _cytechSearchTrimmed(query);
+        if (!q)
+            return [];
+        const items = [];
+        if (q.startsWith(">")) {
+            const command = _cytechSearchTrimmed(q.substring(1));
+            if (command)
+                items.push({ name: "Run command: " + command, comment: "Execute in your login shell", icon: "terminal", action: "command:" + command, categories: ["Commands"], _preScored: 995 });
+            return items;
+        }
+        const result = _cytechSearchCalculate(q);
+        if (result !== null)
+            items.push({ name: result, comment: q + " = " + result + "  •  Enter to copy", icon: "calculate", action: "copy:" + result, categories: ["Calculator"], _preScored: 990 });
+        items.push({ name: "Search the web for “" + q + "”", comment: "Open in your default browser", icon: "language", action: "web:" + q, categories: ["Web"], _preScored: 905 });
+        return items;
+    }
+
+    function _executeCytechSearchItem(item) {
+        if (!item?.action)
+            return false;
+        const action = String(item.action);
+        if (action.startsWith("copy:")) {
+            Quickshell.execDetached(["cyshell", "cl", "copy", action.substring(5)]);
+            return true;
+        }
+        if (action.startsWith("web:")) {
+            SessionService.launchDetachedApp(["xdg-open", "https://www.google.com/search?q=" + encodeURIComponent(action.substring(4))], Quickshell.env("HOME"), {});
+            return true;
+        }
+        if (action.startsWith("command:")) {
+            SessionService.launchDetachedApp(["sh", "-lc", action.substring(8)], Quickshell.env("HOME"), {});
+            return true;
+        }
+        return false;
+    }
+
     function getPluginItemsForPlugin(pluginId, query) {
+        if (pluginId === "cytechSearch")
+            return _cytechSearchItems(query);
         if (typeof PluginService === "undefined") {
             return [];
         }
@@ -1045,6 +1139,8 @@ Singleton {
     }
 
     function executePluginItem(item, pluginId) {
+        if (pluginId === "cytechSearch")
+            return _executeCytechSearchItem(item);
         if (typeof PluginService === "undefined")
             return false;
 
@@ -1078,7 +1174,7 @@ Singleton {
         if (typeof instance.getPasteText === "function") {
             const text = instance.getPasteText(item);
             if (text)
-                return ["dms", "cl", "copy", text];
+                return ["cyshell", "cl", "copy", text];
         }
 
         return null;

@@ -138,7 +138,7 @@ Item {
                 title: I18n.tr("Status", "noun, settings row or section title showing current state")
                 trailingBadge: CupsService.cupsAvailable ? I18n.tr("Available") : I18n.tr("Unavailable")
 
-                DankBadge {
+                CyBadge {
                     color: CupsService.cupsAvailable ? Theme.success : Theme.error
                 }
             }
@@ -164,7 +164,7 @@ Item {
                 iconName: "add_circle"
                 title: I18n.tr("Configure a new printer")
 
-                DankActionButton {
+                CyActionButton {
                     iconName: printerTab.showAddPrinter ? "expand_less" : "expand_more"
                     Accessible.name: printerTab.showAddPrinter ? I18n.tr("Cancel") : I18n.tr("Add printer")
                     onClicked: {
@@ -228,7 +228,7 @@ Item {
                         printerTab.selectDevice(device);
                 }
 
-                DankRefreshButton {
+                CyRefreshButton {
                     buttonSize: 32
                     anchors.verticalCenter: parent.verticalCenter
                     busy: CupsService.loadingDevices
@@ -288,12 +288,12 @@ Item {
                     const error = result?.data?.error || result?.error || "";
                     return [details, error].filter(line => line !== "").join("\n");
                 }
-                leading: DankBadge {
+                leading: CyBadge {
                     visible: printerTab.testConnectionResult !== null
                     color: printerTab.testConnectionResult?.success ? Theme.success : Theme.error
                 }
 
-                DankButton {
+                CyButton {
                     text: printerTab.testingConnection ? I18n.tr("Testing...", "Button state while testing printer connection") : I18n.tr("Test connection", "Button to test connection to a printer by IP address")
                     iconName: printerTab.testingConnection ? "sync" : "lan"
                     buttonHeight: 36
@@ -362,7 +362,7 @@ Item {
                         printerTab.selectedPpd = ppd.name;
                 }
 
-                DankRefreshButton {
+                CyRefreshButton {
                     buttonSize: 32
                     anchors.verticalCenter: parent.verticalCenter
                     busy: CupsService.loadingPPDs
@@ -404,7 +404,7 @@ Item {
                     width: parent.width
                     layoutDirection: Qt.RightToLeft
 
-                    DankButton {
+                    CyButton {
                         text: CupsService.creatingPrinter ? I18n.tr("Creating...", "create printer button label while the printer is being added") : I18n.tr("Create printer")
                         iconName: CupsService.creatingPrinter ? "sync" : "add"
                         buttonHeight: 36
@@ -440,7 +440,7 @@ Item {
                     color: Theme.surfaceVariantText
                     anchors.verticalCenter: parent.verticalCenter
                 },
-                DankActionButton {
+                CyActionButton {
                     iconName: "refresh"
                     Accessible.name: I18n.tr("Refresh")
                     buttonSize: 32
@@ -454,7 +454,7 @@ Item {
                     width: parent.width
                     spacing: Theme.spacingS
 
-                    DankIcon {
+                    CyIcon {
                         name: "print_disabled"
                         size: 32
                         color: Theme.surfaceVariantText
@@ -509,7 +509,7 @@ Item {
                         clickable: true
                         onClicked: CupsService.setSelectedPrinter(printerDelegate.modelData)
 
-                        DankActionButton {
+                        CyActionButton {
                             iconName: printerDelegate.isExpanded ? "expand_less" : "expand_more"
                             Accessible.name: printerDelegate.isExpanded ? I18n.tr("Collapse") : I18n.tr("Expand")
                             onClicked: {
@@ -517,7 +517,7 @@ Item {
                             }
                         }
 
-                        DankActionButton {
+                        CyActionButton {
                             iconName: "delete"
                             Accessible.name: I18n.tr("Delete")
                             onClicked: {
@@ -615,7 +615,7 @@ Item {
                                 width: parent.width
                                 spacing: Theme.spacingS
 
-                                DankButton {
+                                CyButton {
                                     text: printerDelegate.isStopped ? I18n.tr("Resume", "verb, button that resumes a paused printer") : I18n.tr("Pause")
                                     iconName: printerDelegate.isStopped ? "play_arrow" : "pause"
                                     buttonHeight: Theme.buttonHeightXS
@@ -630,7 +630,7 @@ Item {
                                     }
                                 }
 
-                                DankButton {
+                                CyButton {
                                     text: I18n.tr("Test page")
                                     iconName: "description"
                                     buttonHeight: Theme.buttonHeightXS
@@ -639,7 +639,7 @@ Item {
                                     onClicked: CupsService.printTestPage(printerDelegate.modelData)
                                 }
 
-                                DankButton {
+                                CyButton {
                                     text: printerDelegate.printerData?.accepting ? I18n.tr("Reject jobs") : I18n.tr("Accept jobs")
                                     iconName: printerDelegate.printerData?.accepting ? "block" : "check_circle"
                                     buttonHeight: Theme.buttonHeightXS
@@ -668,7 +668,7 @@ Item {
                                     anchors.verticalCenter: parent.verticalCenter
                                 }
 
-                                DankButton {
+                                CyButton {
                                     text: I18n.tr("Clear All")
                                     iconName: "delete_sweep"
                                     buttonHeight: Theme.buttonHeightXS
@@ -706,21 +706,21 @@ Item {
                                 return size + " KB • " + date.toLocaleString(Qt.locale(), Locale.ShortFormat);
                             }
 
-                            DankActionButton {
+                            CyActionButton {
                                 visible: jobRow.modelData.state === "pending"
                                 iconName: "pause"
                                 Accessible.name: I18n.tr("Pause")
                                 onClicked: CupsService.holdJob(jobRow.modelData.id)
                             }
 
-                            DankActionButton {
+                            CyActionButton {
                                 visible: jobRow.modelData.state === "pending-held" || jobRow.modelData.state === "completed" || jobRow.modelData.state === "aborted"
                                 iconName: "replay"
                                 tooltipText: I18n.tr("Retry")
                                 onClicked: CupsService.restartJob(jobRow.modelData.id)
                             }
 
-                            DankActionButton {
+                            CyActionButton {
                                 iconName: "close"
                                 Accessible.name: I18n.tr("Cancel")
                                 onClicked: CupsService.cancelJob(printerDelegate.modelData, jobRow.modelData.id)
@@ -744,7 +744,7 @@ Item {
                     color: Theme.surfaceVariantText
                     anchors.verticalCenter: parent.verticalCenter
                 },
-                DankActionButton {
+                CyActionButton {
                     iconName: "refresh"
                     Accessible.name: I18n.tr("Refresh")
                     buttonSize: 32
@@ -765,7 +765,7 @@ Item {
                     title: modelData.name || I18n.tr("Unknown")
                     subtitle: ((modelData.members?.length ?? 0) === 1 ? I18n.tr("%1 printer") : I18n.tr("%1 printers")).arg(modelData.members?.length ?? 0)
 
-                    DankActionButton {
+                    CyActionButton {
                         iconName: "delete"
                         Accessible.name: I18n.tr("Delete")
                         onClicked: {

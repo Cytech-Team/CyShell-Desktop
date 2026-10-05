@@ -55,7 +55,13 @@ Variants {
                 return "file://" + path.split('/').map(s => encodeURIComponent(s)).join('/');
             }
 
-            property string source: SessionData.getMonitorWallpaper(modelData.name) || ""
+            property string source: ""
+
+            function refreshWallpaperSource() {
+                const nextSource = SessionData.getMonitorWallpaper(modelData.name) || "";
+                if (source !== nextSource)
+                    source = nextSource;
+            }
             property bool isColorSource: source.startsWith("#")
             property string transitionType: SessionData.wallpaperTransition
             property string actualTransitionType: transitionType
@@ -75,14 +81,15 @@ Variants {
 
             Connections {
                 target: SessionData
-                function onIsLightModeChanged() {
-                    if (SessionData.perModeWallpaper) {
-                        var newSource = SessionData.getMonitorWallpaper(modelData.name) || "";
-                        if (newSource !== root.source) {
-                            root.source = newSource;
-                        }
-                    }
-                }
+                function onWallpaperPathChanged() { root.refreshWallpaperSource(); }
+                function onPerMonitorWallpaperChanged() { root.refreshWallpaperSource(); }
+                function onMonitorWallpapersChanged() { root.refreshWallpaperSource(); }
+                function onPerModeWallpaperChanged() { root.refreshWallpaperSource(); }
+                function onWallpaperPathLightChanged() { root.refreshWallpaperSource(); }
+                function onWallpaperPathDarkChanged() { root.refreshWallpaperSource(); }
+                function onMonitorWallpapersLightChanged() { root.refreshWallpaperSource(); }
+                function onMonitorWallpapersDarkChanged() { root.refreshWallpaperSource(); }
+                function onIsLightModeChanged() { root.refreshWallpaperSource(); }
             }
 
             Connections {
@@ -166,6 +173,13 @@ Variants {
             }
 
             function completeFreeze() {
+                const nextSource = nextWallpaper.source.toString();
+                // Keep the current image alive while a newer selection is
+                // still loading or its frame has not replaced the old image.
+                if (nextSource && (nextWallpaper.status !== Image.Ready || root.currentSource !== nextSource)) {
+                    invalidate();
+                    return;
+                }
                 if (currentWallpaper.status === Image.Ready && !root.effectiveScrolling)
                     currentWallpaper.source = "";
                 finishTransition();
@@ -266,7 +280,7 @@ Variants {
             onSessionMonitorWallpaperFillModesChanged: regenerate()
             onSessionPerMonitorWallpaperChanged: regenerate()
 
-            // Theme changes repaint DankBackdrop but nothing else wakes the render loop
+            // Theme changes repaint CyBackdrop but nothing else wakes the render loop
             readonly property color themePrimary: Theme.primary
             readonly property color themeBackground: Theme.background
 
@@ -537,6 +551,7 @@ Variants {
             }
 
             Component.onCompleted: {
+                root.refreshWallpaperSource();
                 isInitialized = true;
                 if (!source || isColorSource) {
                     contentReady = true;
@@ -587,7 +602,7 @@ Variants {
 
                 const formattedSource = source.startsWith("file://") ? source : encodeFileUrl(source);
 
-                if (!isInitialized || !root.currentSource) {
+                if (!isInitialized) {
                     if (!CompositorService.randrReady) {
                         _deferredSource = formattedSource;
                         return;
@@ -639,8 +654,12 @@ Variants {
             }
 
             function startTransition() {
+                if (!root.currentSource && defaultBackdropLoader.status !== Loader.Ready && defaultBackdropLoader.status !== Loader.Error)
+                    return;
                 root.useNextForEffect = true;
                 root.effectActive = true;
+                if (!root.currentSource)
+                    srcCurrent.scheduleUpdate();
                 srcNext.scheduleUpdate();
                 transitionDelayTimer.start();
             }
@@ -670,11 +689,6 @@ Variants {
                     root.changePending = false;
                     return;
                 }
-                if (!root.currentSource) {
-                    setWallpaperImmediate(newPath);
-                    return;
-                }
-
                 if (root.effectiveScrolling) {
                     setWallpaperImmediate(newPath);
                     return;
@@ -712,11 +726,17 @@ Variants {
             }
 
             Loader {
+                id: defaultBackdropLoader
                 anchors.fill: parent
-                active: !root.source || root.isColorSource || currentWallpaper.status === Image.Error
+                active: !root.currentSource || root.isColorSource || currentWallpaper.status === Image.Error
                 asynchronous: true
 
-                sourceComponent: DankBackdrop {
+                onLoaded: {
+                    if (!root.currentSource && nextWallpaper.status === Image.Ready && root.actualTransitionType !== "none")
+                        root.startTransition();
+                }
+
+                sourceComponent: CyBackdrop {
                     screenName: modelData.name
                 }
             }
@@ -836,8 +856,8 @@ Variants {
             ShaderEffectSource {
                 id: srcCurrent
                 anchors.fill: parent
-                sourceItem: currentWallpaper
-                visible: root.frozenValid && !root.effectiveScrolling
+                sourceItem: root.currentSource ? currentWallpaper : defaultBackdropLoader.item
+                visible: (root.frozenValid || (root.effectActive && !root.currentSource)) && !root.effectiveScrolling
                 hideSource: false
                 live: false
                 smooth: true

@@ -21,7 +21,7 @@ Singleton {
     property bool pendingUpdate: false
     property int subscriptionGeneration: 0
     readonly property bool pollingActive: dgopAvailable && refCount > 0 && enabledModules.length > 0
-    readonly property bool dgopAvailable: DMSService.isConnected && DMSService.capabilities.includes("dgop")
+    readonly property bool dgopAvailable: CyShellService.isConnected && CyShellService.capabilities.includes("dgop")
     property bool sessionGpuIdsSeeded: false
 
     property var moduleRefCounts: ({})
@@ -262,7 +262,7 @@ Singleton {
 
         isUpdating = true;
         const generation = subscriptionGeneration;
-        DMSService.sendRequest("dgop.meta", params, response => {
+        CyShellService.sendRequest("dgop.meta", params, response => {
             if (!response.result) {
                 log.warn("dgop.meta failed:", response.error || "empty result");
             } else if (pollingActive && generation === subscriptionGeneration) {
@@ -280,7 +280,7 @@ Singleton {
     function initializeGpuMetadata() {
         if (!dgopAvailable)
             return;
-        DMSService.sendRequest("dgop.gpu", null, response => {
+        CyShellService.sendRequest("dgop.gpu", null, response => {
             if (!response.result) {
                 log.warn("dgop.gpu failed:", response.error || "empty result");
                 return;
@@ -292,7 +292,7 @@ Singleton {
     function initializeSystemMetadata() {
         if (!dgopAvailable)
             return;
-        DMSService.sendRequest("dgop.hardware", null, response => {
+        CyShellService.sendRequest("dgop.hardware", null, response => {
             if (!response.result) {
                 log.warn("dgop.hardware failed:", response.error || "empty result");
                 return;
@@ -308,7 +308,7 @@ Singleton {
             return;
         diskMountsRequested = true;
         const previousMounts = diskMounts;
-        DMSService.sendRequest("dgop.meta", {
+        CyShellService.sendRequest("dgop.meta", {
             modules: ["diskmounts"]
         }, response => {
             if (!response.result?.diskmounts) {

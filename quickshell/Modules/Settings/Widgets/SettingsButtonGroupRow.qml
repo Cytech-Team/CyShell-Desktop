@@ -42,7 +42,7 @@ SettingsRow {
         visible: root.compact
     }
 
-    DankButtonGroup {
+    CyButtonGroup {
         id: buttonGroup
         parent: root.compact ? bodyHost : trailingHost
         x: root.compact ? (parent.width - width) / 2 : 0

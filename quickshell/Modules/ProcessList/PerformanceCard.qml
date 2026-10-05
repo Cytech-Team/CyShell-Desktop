@@ -126,7 +126,7 @@ Rectangle {
             Layout.fillWidth: true
             spacing: Theme.spacingS
 
-            DankIcon {
+            CyIcon {
                 name: card.icon
                 size: Theme.iconSize
                 color: card.accentColor

@@ -8,9 +8,9 @@ import (
 	"testing"
 	"time"
 
-	mockdbus "github.com/AvengeMedia/DankMaterialShell/core/internal/mocks/github.com/godbus/dbus/v5"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/models"
 	"github.com/AvengeMedia/dankgo/ipc"
+	mockdbus "github.com/Cytech-Team/CyShell-Desktop/core/internal/mocks/github.com/godbus/dbus/v5"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/server/models"
 	"github.com/godbus/dbus/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"

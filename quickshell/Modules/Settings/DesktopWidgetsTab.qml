@@ -102,13 +102,13 @@ Item {
                     Row {
                         spacing: Theme.spacingM
 
-                        DankButton {
+                        CyButton {
                             text: I18n.tr("Add widget")
                             iconName: "add"
                             onClicked: root.showWidgetBrowser()
                         }
 
-                        DankButton {
+                        CyButton {
                             text: I18n.tr("Browse plugins")
                             iconName: "store"
                             onClicked: root.showDesktopPluginBrowser()
@@ -137,7 +137,7 @@ Item {
                         spacing: Theme.spacingS
                         width: parent.width
 
-                        DankTextField {
+                        CyTextField {
                             id: newGroupField
                             outlined: true
                             leftIconName: "folder"
@@ -154,7 +154,7 @@ Item {
                             }
                         }
 
-                        DankButton {
+                        CyButton {
                             id: addGroupBtn
                             iconName: "add"
                             text: I18n.tr("Add")
@@ -191,7 +191,7 @@ Item {
                                     anchors.rightMargin: Theme.spacingS
                                     spacing: Theme.spacingS
 
-                                    DankIcon {
+                                    CyIcon {
                                         name: "folder"
                                         visible: !groupNameLoader.active
                                         size: Theme.iconSizeSmall
@@ -206,7 +206,7 @@ Item {
                                         height: active && item ? item.implicitHeight : 0
                                         anchors.verticalCenter: parent.verticalCenter
 
-                                        sourceComponent: DankTextField {
+                                        sourceComponent: CyTextField {
                                             outlined: true
                                             leftIconName: "folder"
                                             labelText: I18n.tr("Name")
@@ -241,7 +241,7 @@ Item {
                                         width: parent.width - Theme.iconSizeSmall - deleteGroupBtn.width - Theme.spacingS * 3
                                     }
 
-                                    DankActionButton {
+                                    CyActionButton {
                                         id: deleteGroupBtn
                                         iconName: "delete"
                                         Accessible.name: I18n.tr("Delete")
@@ -358,7 +358,7 @@ Item {
                             radius: Theme.fullRadius(width, height)
                             color: Theme.primarySelected
 
-                            DankIcon {
+                            CyIcon {
                                 anchors.centerIn: parent
                                 name: "drag_pan"
                                 size: Theme.iconSize
@@ -400,7 +400,7 @@ Item {
                             radius: Theme.fullRadius(width, height)
                             color: Theme.primarySelected
 
-                            DankIcon {
+                            CyIcon {
                                 anchors.centerIn: parent
                                 name: "open_in_full"
                                 size: Theme.iconSize
@@ -442,7 +442,7 @@ Item {
                             radius: Theme.fullRadius(width, height)
                             color: Theme.primarySelected
 
-                            DankIcon {
+                            CyIcon {
                                 anchors.centerIn: parent
                                 name: "drag_indicator"
                                 size: Theme.iconSize

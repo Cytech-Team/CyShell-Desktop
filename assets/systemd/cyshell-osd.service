@@ -1,0 +1,16 @@
+[Unit]
+Description=CyShell OSD Surface
+PartOf=graphical-session.target
+After=cyshell.service graphical-session.target
+Wants=cyshell.service
+Requisite=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/cyshell surface osd
+Restart=on-failure
+RestartSec=1
+TimeoutStopSec=5
+
+[Install]
+WantedBy=graphical-session.target

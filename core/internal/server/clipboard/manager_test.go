@@ -16,9 +16,9 @@ import (
 	"github.com/stretchr/testify/require"
 	bolt "go.etcd.io/bbolt"
 
-	mocks_wlcontext "github.com/AvengeMedia/DankMaterialShell/core/internal/mocks/wlcontext"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/models"
 	"github.com/AvengeMedia/dankgo/ipc"
+	mocks_wlcontext "github.com/Cytech-Team/CyShell-Desktop/core/internal/mocks/wlcontext"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/server/models"
 )
 
 type clipboardTestConn struct {

@@ -9,10 +9,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/deps"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/deps"
 )
 
-const hyprlandBackupDirName = ".dms-backups"
+const hyprlandBackupDirName = ".cyshell-backups"
 
 type ConfigDeployer struct {
 	logChan chan<- string
@@ -193,9 +193,9 @@ func (cd *ConfigDeployer) deployNiriConfig(terminal deps.Terminal, useSystemd bo
 		return result, result.Error
 	}
 
-	dmsDir := filepath.Join(configDir, "dms")
-	if err := os.MkdirAll(dmsDir, 0o755); err != nil {
-		result.Error = fmt.Errorf("failed to create dms directory: %w", err)
+	cyShellDir := filepath.Join(configDir, "cyshell")
+	if err := os.MkdirAll(cyShellDir, 0o755); err != nil {
+		result.Error = fmt.Errorf("failed to create cyshell directory: %w", err)
 		return result, result.Error
 	}
 
@@ -238,7 +238,7 @@ func (cd *ConfigDeployer) deployNiriConfig(terminal deps.Terminal, useSystemd bo
 	}
 
 	if existingConfig != "" {
-		mergedConfig, err := cd.mergeNiriOutputSections(newConfig, existingConfig, dmsDir)
+		mergedConfig, err := cd.mergeNiriOutputSections(newConfig, existingConfig, cyShellDir)
 		if err != nil {
 			cd.log(fmt.Sprintf("Warning: Failed to merge output sections: %v", err))
 		} else {
@@ -252,8 +252,8 @@ func (cd *ConfigDeployer) deployNiriConfig(terminal deps.Terminal, useSystemd bo
 		return result, result.Error
 	}
 
-	if err := cd.deployNiriDmsConfigs(dmsDir, terminalCommand); err != nil {
-		result.Error = fmt.Errorf("failed to deploy dms configs: %w", err)
+	if err := cd.deployNiriDmsConfigs(cyShellDir, terminalCommand); err != nil {
+		result.Error = fmt.Errorf("failed to deploy cyshell configs: %w", err)
 		return result, result.Error
 	}
 
@@ -262,7 +262,7 @@ func (cd *ConfigDeployer) deployNiriConfig(terminal deps.Terminal, useSystemd bo
 	return result, nil
 }
 
-func (cd *ConfigDeployer) deployNiriDmsConfigs(dmsDir, terminalCommand string) error {
+func (cd *ConfigDeployer) deployNiriDmsConfigs(cyShellDir, terminalCommand string) error {
 	configs := []struct {
 		name    string
 		content string
@@ -278,7 +278,7 @@ func (cd *ConfigDeployer) deployNiriDmsConfigs(dmsDir, terminalCommand string) e
 	}
 
 	for _, cfg := range configs {
-		path := filepath.Join(dmsDir, cfg.name)
+		path := filepath.Join(cyShellDir, cfg.name)
 		// Skip if file already exists and is not empty to preserve user modifications
 		if info, err := os.Stat(path); err == nil && info.Size() > 0 {
 			cd.log(fmt.Sprintf("Skipping %s (already exists)", cfg.name))
@@ -305,9 +305,9 @@ func (cd *ConfigDeployer) deployMangoConfig(terminal deps.Terminal, _ bool) (Dep
 		return result, result.Error
 	}
 
-	dmsDir := filepath.Join(configDir, "dms")
-	if err := os.MkdirAll(dmsDir, 0o755); err != nil {
-		result.Error = fmt.Errorf("failed to create dms directory: %w", err)
+	cyShellDir := filepath.Join(configDir, "cyshell")
+	if err := os.MkdirAll(cyShellDir, 0o755); err != nil {
+		result.Error = fmt.Errorf("failed to create cyshell directory: %w", err)
 		return result, result.Error
 	}
 
@@ -323,7 +323,7 @@ func (cd *ConfigDeployer) deployMangoConfig(terminal deps.Terminal, _ bool) (Dep
 		terminalCommand = "ghostty"
 	}
 
-	// DMS owns config.conf for mango (like niri/hyprland): back up and replace.
+	// CyShell owns config.conf for mango (like niri/hyprland): back up and replace.
 	if existingData, err := os.ReadFile(result.Path); err == nil {
 		cd.log("Found existing Mango configuration")
 		timestamp := time.Now().Format("2006-01-02_15-04-05")
@@ -341,8 +341,8 @@ func (cd *ConfigDeployer) deployMangoConfig(terminal deps.Terminal, _ bool) (Dep
 		return result, result.Error
 	}
 
-	if err := cd.deployMangoDmsConfigs(dmsDir, terminalCommand); err != nil {
-		result.Error = fmt.Errorf("failed to deploy dms configs: %w", err)
+	if err := cd.deployMangoDmsConfigs(cyShellDir, terminalCommand); err != nil {
+		result.Error = fmt.Errorf("failed to deploy cyshell configs: %w", err)
 		return result, result.Error
 	}
 
@@ -351,13 +351,13 @@ func (cd *ConfigDeployer) deployMangoConfig(terminal deps.Terminal, _ bool) (Dep
 	return result, nil
 }
 
-func (cd *ConfigDeployer) deployMangoDmsConfigs(dmsDir, terminalCommand string) error {
+func (cd *ConfigDeployer) deployMangoDmsConfigs(cyShellDir, terminalCommand string) error {
 	configs := []struct {
 		name      string
 		content   string
 		overwrite bool
 	}{
-		// binds.conf is DMS-owned (overwrite); the rest are runtime/user-managed.
+		// binds.conf is CyShell-owned (overwrite); the rest are runtime/user-managed.
 		{"binds.conf", strings.ReplaceAll(MangoBindsConfig, "{{TERMINAL_COMMAND}}", terminalCommand), true},
 		{"colors.conf", MangoColorsConfig, false},
 		{"layout.conf", MangoLayoutConfig, false},
@@ -367,7 +367,7 @@ func (cd *ConfigDeployer) deployMangoDmsConfigs(dmsDir, terminalCommand string) 
 	}
 
 	for _, cfg := range configs {
-		path := filepath.Join(dmsDir, cfg.name)
+		path := filepath.Join(cyShellDir, cfg.name)
 		if !cfg.overwrite {
 			if info, err := os.Stat(path); err == nil && info.Size() > 0 {
 				cd.log(fmt.Sprintf("Skipping %s (already exists)", cfg.name))
@@ -577,7 +577,7 @@ func (cd *ConfigDeployer) deployAlacrittyConfig() ([]DeploymentResult, error) {
 	return results, nil
 }
 
-func (cd *ConfigDeployer) mergeNiriOutputSections(newConfig, existingConfig, dmsDir string) (string, error) {
+func (cd *ConfigDeployer) mergeNiriOutputSections(newConfig, existingConfig, cyShellDir string) (string, error) {
 	outputRegex := regexp.MustCompile(`(?m)^(/-)?\s*output\s+"[^"]+"\s*\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}`)
 	var existingOutputs []string
 	for _, output := range outputRegex.FindAllString(existingConfig, -1) {
@@ -591,7 +591,7 @@ func (cd *ConfigDeployer) mergeNiriOutputSections(newConfig, existingConfig, dms
 		return newConfig, nil
 	}
 
-	outputsPath := filepath.Join(dmsDir, "outputs.kdl")
+	outputsPath := filepath.Join(cyShellDir, "outputs.kdl")
 	if _, err := os.Stat(outputsPath); err != nil {
 		var outputsContent strings.Builder
 		for _, output := range existingOutputs {
@@ -601,7 +601,7 @@ func (cd *ConfigDeployer) mergeNiriOutputSections(newConfig, existingConfig, dms
 		if err := os.WriteFile(outputsPath, []byte(outputsContent.String()), 0o644); err != nil {
 			cd.log(fmt.Sprintf("Warning: Failed to migrate outputs to %s: %v", outputsPath, err))
 		} else {
-			cd.log("Migrated output sections to dms/outputs.kdl")
+			cd.log("Migrated output sections to cyshell/outputs.kdl")
 		}
 	}
 
@@ -644,9 +644,9 @@ func (cd *ConfigDeployer) deployHyprlandConfig(terminal deps.Terminal, useSystem
 		return result, result.Error
 	}
 
-	dmsDir := filepath.Join(configDir, "dms")
-	if err := os.MkdirAll(dmsDir, 0o755); err != nil {
-		result.Error = fmt.Errorf("failed to create dms directory: %w", err)
+	cyShellDir := filepath.Join(configDir, "cyshell")
+	if err := os.MkdirAll(cyShellDir, 0o755); err != nil {
+		result.Error = fmt.Errorf("failed to create cyshell directory: %w", err)
 		return result, result.Error
 	}
 
@@ -692,7 +692,7 @@ func (cd *ConfigDeployer) deployHyprlandConfig(terminal deps.Terminal, useSystem
 	}
 
 	if existingConfig != "" {
-		mergedConfig, err := cd.mergeHyprlandMonitorSections(newConfig, existingConfig, dmsDir)
+		mergedConfig, err := cd.mergeHyprlandMonitorSections(newConfig, existingConfig, cyShellDir)
 		if err != nil {
 			cd.log(fmt.Sprintf("Warning: Failed to merge monitor sections: %v", err))
 		} else {
@@ -714,7 +714,7 @@ func (cd *ConfigDeployer) deployHyprlandConfig(terminal deps.Terminal, useSystem
 		}
 	}
 
-	movedLegacy, mainConfBackup, err := backupLegacyHyprlandConfFiles(configDir, dmsDir, backupDir)
+	movedLegacy, mainConfBackup, err := backupLegacyHyprlandConfFiles(configDir, cyShellDir, backupDir)
 	if err != nil {
 		result.Error = fmt.Errorf("failed to back up legacy hyprlang configs: %w", err)
 		return result, result.Error
@@ -730,8 +730,8 @@ func (cd *ConfigDeployer) deployHyprlandConfig(terminal deps.Terminal, useSystem
 		cd.log(fmt.Sprintf("Moved %d legacy hyprlang config(s) to %s", movedLegacy, backupDir))
 	}
 
-	if err := cd.deployHyprlandDmsConfigs(dmsDir, terminalCommand); err != nil {
-		result.Error = fmt.Errorf("failed to deploy dms configs: %w", err)
+	if err := cd.deployHyprlandDmsConfigs(cyShellDir, terminalCommand); err != nil {
+		result.Error = fmt.Errorf("failed to deploy cyshell configs: %w", err)
 		return result, result.Error
 	}
 
@@ -768,15 +768,15 @@ func backupHyprlandConfigFile(dst string, data []byte) (string, error) {
 	return dst, nil
 }
 
-func backupLegacyHyprlandConfFiles(configDir, dmsDir, backupDir string) (int, string, error) {
+func backupLegacyHyprlandConfFiles(configDir, cyShellDir, backupDir string) (int, string, error) {
 	mainConf := filepath.Join(configDir, "hyprland.conf")
 	legacyPaths := []string{mainConf}
-	dmsConfPaths, err := filepath.Glob(filepath.Join(dmsDir, "*.conf"))
+	cyShellConfPaths, err := filepath.Glob(filepath.Join(cyShellDir, "*.conf"))
 	if err != nil {
 		return 0, "", err
 	}
-	legacyPaths = append(legacyPaths, dmsConfPaths...)
-	backupPaths, err := adjacentHyprlandBackupFiles(configDir, dmsDir)
+	legacyPaths = append(legacyPaths, cyShellConfPaths...)
+	backupPaths, err := adjacentHyprlandBackupFiles(configDir, cyShellDir)
 	if err != nil {
 		return 0, "", err
 	}
@@ -824,13 +824,13 @@ func moveHyprlandConfigFile(src, dst string) (string, error) {
 	return dst, nil
 }
 
-func adjacentHyprlandBackupFiles(configDir, dmsDir string) ([]string, error) {
+func adjacentHyprlandBackupFiles(configDir, cyShellDir string) ([]string, error) {
 	var paths []string
 	patterns := []string{
 		filepath.Join(configDir, "hyprland.conf.backup.*"),
 		filepath.Join(configDir, "hyprland.lua.backup.*"),
-		filepath.Join(dmsDir, "*.conf.backup.*"),
-		filepath.Join(dmsDir, "*.lua.backup.*"),
+		filepath.Join(cyShellDir, "*.conf.backup.*"),
+		filepath.Join(cyShellDir, "*.lua.backup.*"),
 	}
 	for _, pattern := range patterns {
 		matches, err := filepath.Glob(pattern)
@@ -842,23 +842,23 @@ func adjacentHyprlandBackupFiles(configDir, dmsDir string) ([]string, error) {
 	return paths, nil
 }
 
-func (cd *ConfigDeployer) deployHyprlandDmsConfigs(dmsDir string, terminalCommand string) error {
+func (cd *ConfigDeployer) deployHyprlandDmsConfigs(cyShellDir string, terminalCommand string) error {
 	configs := []struct {
 		name      string
 		content   string
 		overwrite bool
 	}{
-		{name: "colors.lua", content: DMSColorsLuaConfig},
-		{name: "layout.lua", content: DMSLayoutLuaConfig},
-		{name: "binds.lua", content: strings.ReplaceAll(DMSBindsLuaConfig, "{{TERMINAL_COMMAND}}", terminalCommand), overwrite: true},
-		{name: "binds-user.lua", content: DMSBindsUserLuaConfig},
-		{name: "outputs.lua", content: DMSOutputsLuaConfig},
-		{name: "cursor.lua", content: DMSCursorLuaConfig},
-		{name: "windowrules.lua", content: DMSWindowRulesLuaConfig},
+		{name: "colors.lua", content: CyShellColorsLuaConfig},
+		{name: "layout.lua", content: CyShellLayoutLuaConfig},
+		{name: "binds.lua", content: strings.ReplaceAll(CyShellBindsLuaConfig, "{{TERMINAL_COMMAND}}", terminalCommand), overwrite: true},
+		{name: "binds-user.lua", content: CyShellBindsUserLuaConfig},
+		{name: "outputs.lua", content: CyShellOutputsLuaConfig},
+		{name: "cursor.lua", content: CyShellCursorLuaConfig},
+		{name: "windowrules.lua", content: CyShellWindowRulesLuaConfig},
 	}
 
 	for _, cfg := range configs {
-		path := filepath.Join(dmsDir, cfg.name)
+		path := filepath.Join(cyShellDir, cfg.name)
 		existed := false
 		if info, err := os.Stat(path); err == nil && info.Size() > 0 {
 			existed = true
@@ -880,16 +880,16 @@ func (cd *ConfigDeployer) deployHyprlandDmsConfigs(dmsDir string, terminalComman
 	return nil
 }
 
-func (cd *ConfigDeployer) mergeHyprlandMonitorSections(newConfig, existingConfig, dmsDir string) (string, error) {
+func (cd *ConfigDeployer) mergeHyprlandMonitorSections(newConfig, existingConfig, cyShellDir string) (string, error) {
 	_ = newConfig
 	lines := extractHyprlangMonitorLines(existingConfig)
 	if len(lines) == 0 {
 		return newConfig, nil
 	}
 
-	outputsPath := filepath.Join(dmsDir, "outputs.lua")
+	outputsPath := filepath.Join(cyShellDir, "outputs.lua")
 	if info, err := os.Stat(outputsPath); err == nil && info.Size() > 0 {
-		cd.log("Skipping monitor migration: dms/outputs.lua already exists")
+		cd.log("Skipping monitor migration: cyshell/outputs.lua already exists")
 		return newConfig, nil
 	}
 
@@ -915,7 +915,7 @@ func (cd *ConfigDeployer) mergeHyprlandMonitorSections(newConfig, existingConfig
 	if err := os.WriteFile(outputsPath, []byte(b.String()), 0o644); err != nil {
 		return newConfig, err
 	}
-	cd.log("Migrated monitor sections to dms/outputs.lua")
+	cd.log("Migrated monitor sections to cyshell/outputs.lua")
 	return newConfig, nil
 }
 
@@ -931,12 +931,12 @@ func (cd *ConfigDeployer) transformNiriConfigForNonSystemd(config, terminalComma
 
 	config = regexp.MustCompile(`environment \{[^}]*\}`).ReplaceAllString(config, envVars)
 
-	spawnDms := `spawn-at-startup "dms" "run"`
-	if !strings.Contains(config, spawnDms) {
-		// Insert spawn-at-startup for dms after the environment block
+	spawnCyShell := `spawn-at-startup "cyshell" "run"`
+	if !strings.Contains(config, spawnCyShell) {
+		// Insert spawn-at-startup for cyshell after the environment block
 		envBlockEnd := regexp.MustCompile(`environment \{[^}]*\}`)
 		if loc := envBlockEnd.FindStringIndex(config); loc != nil {
-			config = config[:loc[1]] + "\n" + spawnDms + config[loc[1]:]
+			config = config[:loc[1]] + "\n" + spawnCyShell + config[loc[1]:]
 		}
 	}
 

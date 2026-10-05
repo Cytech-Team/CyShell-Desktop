@@ -8,10 +8,10 @@ import (
 	"os/signal"
 	"time"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/log"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/proto/wlr_layer_shell"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/proto/wlr_screencopy"
 	"github.com/AvengeMedia/dankgo/wayland/client"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/log"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/proto/wlr_layer_shell"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/proto/wlr_screencopy"
 	"golang.org/x/sys/unix"
 )
 

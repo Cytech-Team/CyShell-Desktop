@@ -1,6 +1,6 @@
 import QtQuick
 import qs.Modules.Notifications
-import qs.DankCommon.Common as DC
+import qs.CyCommon.Common as DC
 import Quickshell
 import qs.Common
 import qs.Services
@@ -221,7 +221,7 @@ Item {
         anchors.fill: parent
         spacing: Theme.spacingS
 
-        DankFilterChips {
+        CyFilterChips {
             id: filterChips
             width: parent.width
             currentIndex: root.getChipIndex()
@@ -234,7 +234,7 @@ Item {
             }
         }
 
-        DankListView {
+        CyListView {
             id: historyListView
             width: parent.width
             height: parent.height - filterChips.height - Theme.spacingS

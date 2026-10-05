@@ -14,6 +14,13 @@ import (
 
 const approvalTimeout = 2 * time.Minute
 
+const (
+	approvalModeAsk    = "ask"
+	approvalModeAuto   = "auto"
+	approvalModeFull   = "full"
+	approvalModeCustom = "custom"
+)
+
 type AppPolicyState struct {
 	AppKey      string            `json:"appKey"`
 	AppName     string            `json:"appName"`
@@ -57,6 +64,44 @@ func sensitiveAppScope(scope string) bool {
 	}
 }
 
+func normalizeApprovalMode(mode string) (string, bool) {
+	switch strings.ToLower(strings.TrimSpace(mode)) {
+	case "", approvalModeAsk, "manual", "ask_for_approval":
+		return approvalModeAsk, true
+	case approvalModeAuto, "approve_for_me", "auto_approve":
+		return approvalModeAuto, true
+	case approvalModeFull, "full_access", "bypass", "bypass_permissions", "bypasspermissions":
+		return approvalModeFull, true
+	case approvalModeCustom, "rules_only", "rules", "dont_ask", "dontask":
+		return approvalModeCustom, true
+	default:
+		return "", false
+	}
+}
+
+func (m *Manager) ApprovalMode() string {
+	m.approvalModeMu.RLock()
+	defer m.approvalModeMu.RUnlock()
+	if m.approvalMode == "" {
+		return approvalModeAsk
+	}
+	return m.approvalMode
+}
+
+func (m *Manager) SetApprovalMode(mode string) error {
+	normalized, ok := normalizeApprovalMode(mode)
+	if !ok {
+		return fmt.Errorf("invalid Agent approval mode %q", mode)
+	}
+	m.approvalModeMu.Lock()
+	m.approvalMode = normalized
+	m.approvalModeMu.Unlock()
+	m.cancelActiveCalls()
+	err := m.persistControl()
+	m.broadcastState()
+	return err
+}
+
 func normalizePolicyMode(mode string) (string, bool) {
 	switch strings.ToLower(strings.TrimSpace(mode)) {
 	case "allow":
@@ -90,6 +135,45 @@ func (m *Manager) AppPolicies() []AppPolicyState {
 	return items
 }
 
+func (m *Manager) clearSessionAppScopeLocked(appKey, scope string) {
+	if m.sessionAppAllows == nil {
+		return
+	}
+	scopes := m.sessionAppAllows[appKey]
+	if scopes == nil {
+		return
+	}
+	delete(scopes, scope)
+	if len(scopes) == 0 {
+		delete(m.sessionAppAllows, appKey)
+	}
+}
+
+func (m *Manager) setSessionAppAllow(appKey string, scopes []string) {
+	m.appPoliciesMu.Lock()
+	defer m.appPoliciesMu.Unlock()
+	if m.sessionAppAllows == nil {
+		m.sessionAppAllows = make(map[string]map[string]bool)
+	}
+	current := m.sessionAppAllows[appKey]
+	if current == nil {
+		current = make(map[string]bool)
+		m.sessionAppAllows[appKey] = current
+	}
+	for _, scope := range scopes {
+		scope = strings.TrimSpace(scope)
+		if scope != "" {
+			current[scope] = true
+		}
+	}
+}
+
+func (m *Manager) sessionAppAllowed(appKey, scope string) bool {
+	m.appPoliciesMu.RLock()
+	defer m.appPoliciesMu.RUnlock()
+	return m.sessionAppAllows[appKey][scope]
+}
+
 func (m *Manager) SetAppPolicy(appKey, appName, scope, mode string) error {
 	appKey = strings.TrimSpace(appKey)
 	if appKey == "" {
@@ -103,6 +187,7 @@ func (m *Manager) SetAppPolicy(appKey, appName, scope, mode string) error {
 		return fmt.Errorf("invalid app policy mode %q", mode)
 	}
 	m.appPoliciesMu.Lock()
+	m.clearSessionAppScopeLocked(appKey, scope)
 	cfg := m.appPolicies[appKey]
 	if cfg.Permissions == nil {
 		cfg.Permissions = map[string]string{}
@@ -134,6 +219,7 @@ func (m *Manager) ClearAppPolicy(appKey string) error {
 	}
 	m.appPoliciesMu.Lock()
 	delete(m.appPolicies, appKey)
+	delete(m.sessionAppAllows, appKey)
 	m.appPoliciesMu.Unlock()
 	m.cancelActiveCalls()
 	err := m.persistControl()
@@ -175,12 +261,16 @@ func (m *Manager) RespondApproval(id, decision string) error {
 
 	decision = strings.ToLower(strings.TrimSpace(decision))
 	remember := decision == "allow_always" || decision == "deny_always"
-	allow := decision == "allow_once" || decision == "allow_always"
-	if decision != "allow_once" && decision != "allow_always" && decision != "deny_once" && decision != "deny_always" {
+	session := decision == "allow_session"
+	allow := decision == "allow_once" || session || decision == "allow_always"
+	if decision != "allow_once" && decision != "allow_session" && decision != "allow_always" && decision != "deny_once" && decision != "deny_always" {
 		return fmt.Errorf("invalid approval decision %q", decision)
 	}
 	if remember && !pending.request.CanRemember {
 		return errors.New("this approval target cannot be remembered safely")
+	}
+	if session {
+		m.setSessionAppAllow(pending.request.AppKey, pending.request.Scopes)
 	}
 	if remember {
 		mode := "deny"
@@ -229,6 +319,65 @@ func appApprovalRelevantTool(name string) bool {
 	}
 }
 
+func autoApprovalRiskyScope(scope string) bool {
+	switch scope {
+	case "files.write", "system.control", "remote.control", "power.control":
+		return true
+	default:
+		return false
+	}
+}
+
+func approvalTargetForTool(name string) approvalTarget {
+	label := strings.ReplaceAll(strings.TrimSpace(name), "_", " ")
+	if label == "" {
+		label = "Agent action"
+	}
+	return approvalTarget{
+		key:         "tool:" + strings.ToLower(strings.TrimSpace(name)),
+		name:        label,
+		canRemember: false,
+	}
+}
+
+func (m *Manager) checkGeneralApproval(ctx context.Context, name string, raw json.RawMessage) error {
+	if appApprovalRelevantTool(name) {
+		return nil
+	}
+
+	mode := m.ApprovalMode()
+	if mode == approvalModeFull || mode == approvalModeCustom {
+		return nil
+	}
+
+	scopes := m.requiredScopes(name, raw)
+	needsAsk := make([]string, 0, len(scopes))
+	target := approvalTargetForTool(name)
+	for _, scope := range scopes {
+		shouldAsk := false
+		switch mode {
+		case approvalModeAsk:
+			// Match the normal ChatGPT-style manual baseline: read-only local
+			// inspection is quiet, while state changes and network access ask.
+			shouldAsk = !m.toolReadOnly(name) || scope == "network.access"
+		case approvalModeAuto:
+			// "Approve for me" only interrupts for broadly consequential
+			// machine/file/remote/session mutations. Routine shell settings,
+			// window actions, device controls and network reads proceed.
+			shouldAsk = autoApprovalRiskyScope(scope)
+		}
+		if !shouldAsk || m.sessionAppAllowed(target.key, scope) {
+			continue
+		}
+		needsAsk = append(needsAsk, scope)
+	}
+
+	if len(needsAsk) == 0 {
+		return nil
+	}
+	return m.awaitApproval(ctx, target, name, raw, needsAsk)
+}
+
 func (m *Manager) checkAppApprovals(ctx context.Context, name string, raw json.RawMessage) error {
 	if !appApprovalRelevantTool(name) {
 		return nil
@@ -246,13 +395,28 @@ func (m *Manager) checkAppApprovals(ctx context.Context, name string, raw json.R
 
 	target := m.resolveApprovalTarget(name, raw)
 	needsAsk := make([]string, 0, len(sensitive))
+	approvalMode := m.ApprovalMode()
 	for _, scope := range sensitive {
 		mode := m.appPolicyMode(target.key, scope)
-		switch mode {
-		case "allow":
-			continue
-		case "deny":
+		if mode == "deny" {
 			return fmt.Errorf("CyShell Agent per-app policy denies %s for %s", scope, target.name)
+		}
+		if mode == "allow" || m.sessionAppAllowed(target.key, scope) {
+			continue
+		}
+
+		switch approvalMode {
+		case approvalModeFull:
+			continue
+		case approvalModeAuto:
+			// "Approve for me" treats read-only app inspection and screen capture
+			// as low-risk. Direct input/control still pauses for user approval.
+			if scope != "app.control" {
+				continue
+			}
+			needsAsk = append(needsAsk, scope)
+		case approvalModeCustom, approvalModeAsk:
+			needsAsk = append(needsAsk, scope)
 		default:
 			needsAsk = append(needsAsk, scope)
 		}

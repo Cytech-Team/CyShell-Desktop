@@ -104,7 +104,14 @@ Scope {
     }
 
     FileView {
-        id: dankshellConfigWatcher
+        id: cyShellConfigWatcher
+
+        path: "/etc/pam.d/cyshell"
+        printErrors: false
+    }
+
+    FileView {
+        id: legacyDankshellConfigWatcher
 
         path: "/etc/pam.d/dankshell"
         printErrors: false
@@ -112,6 +119,14 @@ Scope {
 
     FileView {
         id: u2fConfigWatcher
+
+        path: "/etc/pam.d/cyshell-u2f"
+        watchChanges: true
+        printErrors: false
+    }
+
+    FileView {
+        id: legacyU2fConfigWatcher
 
         path: "/etc/pam.d/dankshell-u2f"
         watchChanges: true
@@ -125,12 +140,19 @@ Scope {
         printErrors: false
     }
 
-    // Fallback stack written by `dms auth resolve-lock` when no managed
-    // /etc/pam.d/dankshell exists. See #2789.
+    // Fallback stack written by `cyshell auth resolve-lock` when no managed
+    // /etc/pam.d/cyshell exists. Legacy dankshell remains read-only compatible.
     readonly property string userPamDir: Paths.strip(Paths.state) + "/pam"
 
     FileView {
         id: userPamWatcher
+
+        path: root.userPamDir + "/cyshell"
+        printErrors: false
+    }
+
+    FileView {
+        id: legacyUserPamWatcher
 
         path: root.userPamDir + "/dankshell"
         printErrors: false
@@ -139,7 +161,7 @@ Scope {
     Process {
         id: resolveUserPam
 
-        command: ["dms", "auth", "resolve-lock", "--quiet"]
+        command: ["cyshell", "auth", "resolve-lock", "--quiet"]
         running: false
         onExited: exitCode => {
             if (exitCode === 0)
@@ -163,9 +185,13 @@ Scope {
                 return SettingsData.lockPamPath.slice(SettingsData.lockPamPath.lastIndexOf("/") + 1);
             if (SettingsData.lockPamExternallyManaged)
                 return "login";
-            if (dankshellConfigWatcher.loaded)
+            if (cyShellConfigWatcher.loaded)
+                return "cyshell";
+            if (legacyDankshellConfigWatcher.loaded)
                 return "dankshell";
             if (userPamWatcher.loaded)
+                return "cyshell";
+            if (legacyUserPamWatcher.loaded)
                 return "dankshell";
             return "login";
         }
@@ -176,9 +202,9 @@ Scope {
             }
             if (SettingsData.lockPamExternallyManaged)
                 return "/etc/pam.d";
-            if (dankshellConfigWatcher.loaded)
+            if (cyShellConfigWatcher.loaded || legacyDankshellConfigWatcher.loaded)
                 return "/etc/pam.d";
-            if (userPamWatcher.loaded)
+            if (userPamWatcher.loaded || legacyUserPamWatcher.loaded)
                 return root.userPamDir;
             return Quickshell.shellDir + "/assets/pam";
         }
@@ -368,14 +394,16 @@ Scope {
         config: {
             if (root.customU2fPamActive)
                 return SettingsData.lockU2fPamPath.slice(SettingsData.lockU2fPamPath.lastIndexOf("/") + 1);
-            return u2fConfigWatcher.loaded ? "dankshell-u2f" : "u2f";
+            if (u2fConfigWatcher.loaded)
+                return "cyshell-u2f";
+            return legacyU2fConfigWatcher.loaded ? "dankshell-u2f" : "u2f";
         }
         configDirectory: {
             if (root.customU2fPamActive) {
                 const idx = SettingsData.lockU2fPamPath.lastIndexOf("/");
                 return idx > 0 ? SettingsData.lockU2fPamPath.slice(0, idx) : "/";
             }
-            return u2fConfigWatcher.loaded ? "/etc/pam.d" : Quickshell.shellDir + "/assets/pam";
+            return (u2fConfigWatcher.loaded || legacyU2fConfigWatcher.loaded) ? "/etc/pam.d" : Quickshell.shellDir + "/assets/pam";
         }
 
         onMessageChanged: {
@@ -508,11 +536,12 @@ Scope {
         root.attemptInfoMessages = [];
         root.lockoutAnnouncedThisAttempt = false;
         root.resetAuthFlows();
-        if (!SettingsData.lockPamExternallyManaged && !dankshellConfigWatcher.loaded && !userPamWatcher.loaded)
+        if (!SettingsData.lockPamExternallyManaged && !cyShellConfigWatcher.loaded && !legacyDankshellConfigWatcher.loaded && !userPamWatcher.loaded && !legacyUserPamWatcher.loaded)
             ensureUserPamConfig();
         // FileView cannot watch a path that does not exist yet; re-read so a
         // dedicated service created after startup is used on the next lock.
         u2fConfigWatcher.reload();
+        legacyU2fConfigWatcher.reload();
         fprint.checkAvail();
         u2f.checkAvail();
     }

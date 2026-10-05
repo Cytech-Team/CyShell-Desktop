@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/netfetch"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/netfetch"
 )
 
 const (
@@ -113,7 +113,7 @@ func fetchDearmoredKey(ctx context.Context, url string) ([]byte, error) {
 
 // privesc.ExecCommand owns stdin for the sudo password, so the key cannot be piped in.
 func writeTempKeyring(keyring []byte) (string, error) {
-	f, err := os.CreateTemp("", "dms-repo-key-*.gpg")
+	f, err := os.CreateTemp("", "cyshell-repo-key-*.gpg")
 	if err != nil {
 		return "", fmt.Errorf("failed to create temp keyring: %w", err)
 	}

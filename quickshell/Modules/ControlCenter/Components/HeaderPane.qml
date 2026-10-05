@@ -42,53 +42,36 @@ Item {
         anchors.right: actionButtonsRow.left
         anchors.rightMargin: Theme.spacingM
         anchors.verticalCenter: parent.verticalCenter
-        anchors.leftMargin: Theme.spacingS
-        height: CcMetrics.headerAvatarSize
+        height: parent.height
 
-        DankCircularImage {
-            id: avatar
-            anchors.left: parent.left
-            anchors.verticalCenter: parent.verticalCenter
-            width: CcMetrics.headerAvatarSize
-            height: CcMetrics.headerAvatarSize
-            imageSource: {
-                if (PortalService.profileImage === "")
-                    return "";
-                if (PortalService.profileImage.startsWith("/"))
-                    return "file://" + PortalService.profileImage;
-                return PortalService.profileImage;
-            }
-            fallbackIcon: "person"
+        property date now: new Date()
+
+        Timer {
+            interval: 30000
+            repeat: true
+            running: root.visible
+            triggeredOnStart: true
+            onTriggered: parent.now = new Date()
         }
 
-        Item {
-            anchors.left: avatar.right
-            anchors.leftMargin: Theme.spacingM
-            anchors.right: parent.right
-            anchors.verticalCenter: parent.verticalCenter
-            implicitHeight: userLabel.implicitHeight + Theme.spacingXXS + uptimeLabel.implicitHeight
+        StyledText {
+            id: timeLabel
+            anchors.left: parent.left
+            anchors.top: parent.top
+            anchors.topMargin: 4
+            text: Qt.formatTime(parent.now, "h:mm AP")
+            font.pixelSize: Theme.fontSizeXXLarge
+            font.weight: Theme.fontWeightMedium
+            color: Theme.surfaceText
+        }
 
-            StyledText {
-                id: userLabel
-                width: parent.width
-                text: UserInfoService.fullName || UserInfoService.username || I18n.tr("User")
-                font.pixelSize: Theme.fontSizeLarge
-                font.weight: Theme.fontWeightMedium
-                color: Theme.surfaceText
-                elide: Text.ElideRight
-                horizontalAlignment: Text.AlignLeft
-            }
-
-            StyledText {
-                id: uptimeLabel
-                y: userLabel.implicitHeight + Theme.spacingXXS
-                width: parent.width
-                text: DgopService.uptime ? I18n.tr("up", "uptime prefix, e.g. 'up 4h 2m'") + " " + DgopService.uptime.slice(3) : I18n.tr("Unknown")
-                font.pixelSize: Theme.fontSizeSmall
-                color: Theme.surfaceVariantText
-                elide: Text.ElideRight
-                horizontalAlignment: Text.AlignLeft
-            }
+        StyledText {
+            anchors.left: parent.left
+            anchors.top: timeLabel.bottom
+            anchors.topMargin: 2
+            text: Qt.formatDate(parent.now, "ddd, MMM d")
+            font.pixelSize: Theme.fontSizeMedium
+            color: Theme.surfaceVariantText
         }
     }
 
@@ -97,53 +80,27 @@ Item {
         height: CcMetrics.headerActionSize
         anchors.right: parent.right
         anchors.verticalCenter: parent.verticalCenter
-        spacing: Theme.spacingXS
+        spacing: Theme.spacingS
 
-        DankActionButton {
+        CyActionButton {
             buttonSize: CcMetrics.headerActionSize
             iconSize: CcMetrics.headerActionIconSize
-            iconName: "lock"
+            iconName: "monitor"
             iconColor: Theme.surfaceText
-            Accessible.name: I18n.tr("Lock")
-            onClicked: root.lockRequested()
+            backgroundColor: Theme.withAlpha(Theme.surfaceContainerHigh, 0.88)
+            Accessible.name: I18n.tr("Display")
+            onClicked: root.settingsButtonClicked()
         }
 
-        DankActionButton {
+        CyActionButton {
             buttonSize: CcMetrics.headerActionSize
             iconSize: CcMetrics.headerActionIconSize
             iconName: "power_settings_new"
             iconColor: Theme.surfaceText
+            backgroundColor: Theme.withAlpha(Theme.surfaceContainerHigh, 0.88)
             Accessible.name: I18n.tr("Power")
             onClicked: root.powerButtonClicked()
         }
-
-        DankActionButton {
-            buttonSize: CcMetrics.headerActionSize
-            iconSize: CcMetrics.headerActionIconSize
-            iconName: "settings"
-            iconColor: Theme.surfaceText
-            Accessible.name: I18n.tr("Settings")
-            onClicked: root.settingsButtonClicked()
-        }
-
-        DankActionButton {
-            buttonSize: CcMetrics.headerActionSize
-            iconSize: CcMetrics.headerActionIconSize
-            iconName: "close"
-            iconColor: Theme.surfaceText
-            visible: root.editMode
-            Accessible.name: I18n.tr("Cancel")
-            onClicked: root.editCancelled()
-        }
-
-        DankActionButton {
-            buttonSize: CcMetrics.headerActionSize
-            iconSize: CcMetrics.headerActionIconSize
-            iconName: root.editMode ? "done" : "edit"
-            iconColor: root.editMode ? Theme.onSecondaryContainer : Theme.surfaceText
-            backgroundColor: root.editMode ? Theme.secondaryContainer : "transparent"
-            Accessible.name: root.editMode ? I18n.tr("Finish") : I18n.tr("Edit")
-            onClicked: root.editModeToggled()
-        }
     }
+
 }

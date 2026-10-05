@@ -4,9 +4,9 @@ set -euo pipefail
 # Build SRPM locally with correct tarball and upload to Copr
 # Usage: ./copr-upload.sh [PACKAGE] [VERSION] [RELEASE]
 # Examples:
-#   ./copr-upload.sh dms 1.0.3 1
+#   ./copr-upload.sh cyshell 1.0.3 1
 
-PACKAGE="${1:-dms}"
+PACKAGE="${1:-cyshell}"
 VERSION="${2:-}"
 RELEASE="${3:-1}"
 
@@ -14,18 +14,18 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 # Determine Copr project based on package
-if [ "$PACKAGE" = "dms" ]; then
-    COPR_PROJECT="avengemedia/dms"
+if [ "$PACKAGE" = "cyshell" ]; then
+    COPR_PROJECT="avengemedia/cyshell"
 else
     echo "❌ Unknown package: $PACKAGE"
-    echo "Supported packages: dms"
+    echo "Supported packages: cyshell"
     exit 1
 fi
 
 # Get version from latest release if not provided
 if [ -z "$VERSION" ]; then
     echo "📦 Determining latest version..."
-    VERSION=$(curl -s https://api.github.com/repos/AvengeMedia/DankMaterialShell/releases/latest | jq -r '.tag_name' | sed 's/^v//')
+    VERSION=$(curl -s https://api.github.com/repos/AvengeMedia/CyShell/releases/latest | jq -r '.tag_name' | sed 's/^v//')
     if [ -z "$VERSION" ] || [ "$VERSION" = "null" ]; then
         echo "❌ Failed to determine version. Please specify manually."
         exit 1
@@ -41,9 +41,9 @@ cd ~/rpmbuild/SOURCES
 
 # Download source tarball from GitHub releases
 echo "📦 Downloading source tarball for v${VERSION}..."
-if [ ! -f ~/rpmbuild/SOURCES/dms-qml.tar.gz ]; then
-    wget -O ~/rpmbuild/SOURCES/dms-qml.tar.gz "https://github.com/AvengeMedia/DankMaterialShell/releases/download/v${VERSION}/dms-qml.tar.gz" || {
-        echo "❌ Failed to download dms-qml.tar.gz for v${VERSION}"
+if [ ! -f ~/rpmbuild/SOURCES/cyshell-qml.tar.gz ]; then
+    wget -O ~/rpmbuild/SOURCES/cyshell-qml.tar.gz "https://github.com/Cytech-Team/CyShell-Desktop/releases/download/v${VERSION}/cyshell-qml.tar.gz" || {
+        echo "❌ Failed to download cyshell-qml.tar.gz for v${VERSION}"
         exit 1
     }
     echo "✅ Source tarball downloaded"

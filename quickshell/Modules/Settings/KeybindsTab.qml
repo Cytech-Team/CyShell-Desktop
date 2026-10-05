@@ -7,6 +7,7 @@ import qs.Modals.Common
 import qs.Modules.Settings.Widgets
 import qs.Services
 import qs.Widgets
+import "../../Common/KeybindActions.js" as Actions
 
 Item {
     id: keybindsTab
@@ -20,12 +21,14 @@ Item {
     property string selectedCategory: ""
     property string searchQuery: ""
     property string requestedSearchQuery: ""
+    property string requestedAction: ""
     property string expandedKey: ""
     property bool showingNewBind: false
 
     property int _lastDataVersion: -1
     property var _cachedCategories: []
     property var _filteredBinds: []
+    property var _matchingUnboundActions: []
     property real _savedScrollY: 0
     property bool _preserveScroll: false
     property string _editingKey: ""
@@ -57,7 +60,7 @@ Item {
 
     function beginEdit(binding, key) {
         if (hasEditDraft || editBusy || KeybindsService.bindMutationBusy) {
-            ToastService.showInfo(I18n.tr("Save or discard the current edit before editing another shortcut.", "Aqueous keyboard shortcut editor, retaining an unsaved edit while reviewing current bindings"));
+            ToastService.showInfo(I18n.tr("Save or discard the current edit before editing another shortcut."));
             return false;
         }
         try {
@@ -67,7 +70,7 @@ Item {
             reviewingEdit = false;
             return true;
         } catch (e) {
-            ToastService.showError(I18n.tr("Failed to load keybinds", "Aqueous shortcut editor could not load the current bindings"), AqueousService.errorMessage(String(e)), String(e));
+            ToastService.showError(I18n.tr("Failed to load keybinds"), String(e), String(e));
             return false;
         }
     }
@@ -169,6 +172,30 @@ Item {
         KeybindsService.loadBinds(false);
     }
 
+    function _updateUnboundActions(query, allBinds) {
+        const q = String(query || "").trim().toLowerCase();
+        if (!q || (selectedCategory && selectedCategory !== "CyShell")) {
+            _matchingUnboundActions = [];
+            return;
+        }
+        const known = Actions.getCyShellActions(false, false);
+        const matches = [];
+        for (let i = 0; i < known.length; i++) {
+            const action = known[i];
+            const alreadyBound = allBinds.some(bind => Actions.actionsEquivalent(bind.action, action.id));
+            if (alreadyBound)
+                continue;
+            const currentId = String(action.id || "").toLowerCase();
+            const label = String(action.label || "").toLowerCase();
+            if (currentId.indexOf(q) === -1 && label.indexOf(q) === -1)
+                continue;
+            matches.push(action);
+            if (matches.length >= 20)
+                break;
+        }
+        _matchingUnboundActions = matches;
+    }
+
     function _updateFiltered() {
         let allBinds = KeybindsService.getFlatBinds();
         if (keybindsTab.editDraft?.action) {
@@ -180,10 +207,12 @@ Item {
         }
         if (!searchQuery && !selectedCategory) {
             _filteredBinds = allBinds;
+            _matchingUnboundActions = [];
             return;
         }
 
         const q = searchQuery.toLowerCase();
+        _updateUnboundActions(q, allBinds);
         const isOverrideFilter = selectedCategory === "__overrides__";
         const result = [];
 
@@ -197,7 +226,11 @@ Item {
                         break;
                     }
                 }
-                if (!keyMatch && group.desc.toLowerCase().indexOf(q) === -1 && group.action.toLowerCase().indexOf(q) === -1)
+                const descText = String(group.desc || "").toLowerCase();
+                const actionText = String(group.action || "").toLowerCase();
+                const canonicalAction = Actions.canonicalizeCyShellAction(group.action).toLowerCase();
+                const actionLabel = Actions.getActionLabel(group.action, "labwc").toLowerCase();
+                if (!keyMatch && descText.indexOf(q) === -1 && actionText.indexOf(q) === -1 && canonicalAction.indexOf(q) === -1 && actionLabel.indexOf(q) === -1)
                     continue;
             }
             if (isOverrideFilter) {
@@ -234,27 +267,34 @@ Item {
             if (!binding || !keybindsTab.beginEdit(binding, binding.keys[0]?.key || ""))
                 return;
         } else if (keybindsTab.hasEditDraft && action !== keybindsTab.editDraft.action) {
-            ToastService.showInfo(I18n.tr("Save or discard the current edit before editing another shortcut.", "Aqueous keyboard shortcut editor, retaining an unsaved edit while reviewing current bindings"));
+            ToastService.showInfo(I18n.tr("Save or discard the current edit before editing another shortcut."));
             return;
         }
         expandedKey = expandedKey === action ? "" : action;
     }
 
-    function startNewBind() {
-        if (KeybindsService.readOnly) {
-            KeybindsService.showHyprlandReadOnlyWarning();
-            return;
-        }
+    function startNewBind(prefillAction, prefillDescription) {
+        const action = prefillAction || "";
+        const description = prefillDescription || (action ? Actions.getActionLabel(action, KeybindsService.currentProvider) : "");
         if (KeybindsService.requiresBindReview) {
             if (!keybindsTab.beginEdit({
-                action: "",
-                desc: ""
+                action: action,
+                desc: description
             }, ""))
                 return;
-            newBindItem.resetEdits();
         }
         showingNewBind = true;
         expandedKey = "";
+        Qt.callLater(() => {
+            newBindItem.resetEdits();
+            if (action)
+                newBindItem.updateEdit({
+                    action: action,
+                    desc: description
+                });
+            newBindItem.startAddingNewKey();
+            scrollToTop();
+        });
     }
 
     function cancelNewBind() {
@@ -287,7 +327,7 @@ Item {
         const baselineDraft = keybindsTab.editDraft;
         removeBindConfirm.showWithOptions({
             title: I18n.tr("Remove Shortcut?"),
-            message: KeybindsService.currentProvider === "hyprland" ? I18n.tr("Remove the shortcut %1? An unbind entry will be saved to dms/binds-user.lua so it stays removed across CyShell updates.", "hyprland remove shortcut confirmation, %1 is the key combination").arg(key) : I18n.tr("Remove the shortcut %1?", "remove shortcut confirmation, %1 is the key combination").arg(key),
+            message: I18n.tr("Remove the shortcut %1?", "remove shortcut confirmation, %1 is the key combination").arg(key),
             confirmText: I18n.tr("Remove"),
             confirmColor: Theme.primary,
             onConfirm: () => {
@@ -325,6 +365,21 @@ Item {
                 KeybindsService.resetBind(key);
                 keybindsTab._editingKey = remainingKey;
             }
+        });
+    }
+
+    function confirmResetAllBinds() {
+        if (KeybindsService.bindMutationBusy || editBusy || hasEditDraft || reviewingEdit)
+            return;
+        const overrideCount = KeybindsService.managedOverrideCount;
+        if (overrideCount <= 0)
+            return;
+        removeBindConfirm.showWithOptions({
+            title: I18n.tr("Reset all shortcuts?"),
+            message: I18n.tr("Remove %1 CyShell-managed keybind overrides? Your original Labwc shortcuts and other configuration will be kept.", "reset all keybind confirmation; %1 is the number of CyShell overrides").arg(overrideCount),
+            confirmText: I18n.tr("Reset all"),
+            confirmColor: Theme.primary,
+            onConfirm: () => KeybindsService.resetAllBinds()
         });
     }
 
@@ -385,6 +440,7 @@ Item {
             keybindsTab._updateCategories();
             keybindsTab._updateFiltered();
             keybindsTab._preserveScroll = false;
+            Qt.callLater(keybindsTab._applyRequestedAction);
             if (wasPreserving) {
                 if (keybindsTab.expandedKey)
                     Qt.callLater(keybindsTab._scrollToExpandedItem);
@@ -427,6 +483,32 @@ Item {
         }
     }
 
+    function _clearRequestedAction(action) {
+        if (parentModal?.keybindRequestedAction === action)
+            parentModal.keybindRequestedAction = "";
+    }
+
+    function _applyRequestedAction() {
+        if (!requestedAction || KeybindsService.loading)
+            return;
+        const action = requestedAction;
+        const binding = KeybindsService.getFlatBinds().find(bind => Actions.actionsEquivalent(bind.action, action));
+        selectedCategory = "";
+        searchField.text = "";
+        searchQuery = "";
+        if (binding) {
+            showingNewBind = false;
+            expandedKey = binding.action;
+            _editingKey = binding.keys?.[0]?.key || "";
+            _updateFiltered();
+            _clearRequestedAction(action);
+            Qt.callLater(_scrollToExpandedItem);
+            return;
+        }
+        startNewBind(action, Actions.getActionLabel(action, KeybindsService.currentProvider));
+        _clearRequestedAction(action);
+    }
+
     function _applyRequestedSearch() {
         if (!requestedSearchQuery)
             return;
@@ -442,22 +524,27 @@ Item {
 
     Component.onCompleted: {
         _ensureCurrentProvider();
-        Qt.callLater(_applyRequestedSearch);
+        Qt.callLater(() => {
+            _applyRequestedAction();
+            _applyRequestedSearch();
+        });
     }
 
     onRequestedSearchQueryChanged: Qt.callLater(_applyRequestedSearch)
+    onRequestedActionChanged: Qt.callLater(_applyRequestedAction)
 
     onVisibleChanged: {
         if (!visible)
             return;
         _ensureCurrentProvider();
         Qt.callLater(() => {
+            _applyRequestedAction();
             _applyRequestedSearch();
             scrollToTop();
         });
     }
 
-    DankFlickable {
+    CyFlickable {
         id: flickable
         anchors.fill: parent
         clip: true
@@ -490,7 +577,7 @@ Item {
                         width: parent.width
                         spacing: Theme.spacingM
 
-                        DankIcon {
+                        CyIcon {
                             name: "keyboard"
                             size: Theme.iconSize
                             color: Theme.primary
@@ -512,8 +599,8 @@ Item {
                             }
 
                             StyledText {
-                                readonly property string bindsFile: KeybindsService.requiresBindReview ? "aqueous-config" : KeybindsService.currentProvider === "niri" ? "dms/binds.kdl" : KeybindsService.currentProvider === "hyprland" ? "dms/binds-user.lua" : KeybindsService.currentProvider === "labwc" ? "labwc/rc.xml (CyShell block)" : "dms/binds.conf"
-                                text: KeybindsService.requiresBindReview ? I18n.tr("Click any shortcut to edit Aqueous configuration", "Aqueous keyboard shortcut editor, retaining an unsaved edit while reviewing current bindings") : KeybindsService.readOnly ? I18n.tr("Hyprland conf mode is read-only in Settings") : I18n.tr("Click any shortcut to edit. Changes save to %1", "keyboard shortcuts page hint, %1 is the binds file path").arg(bindsFile)
+                                readonly property string bindsFile: "labwc/rc.xml (existing shortcuts + CyShell overrides)"
+                                text: I18n.tr("Click any shortcut to edit. Changes save to %1", "keyboard shortcuts page hint, %1 is the binds file path").arg(bindsFile)
                                 font.pixelSize: Theme.fontSizeSmall
                                 color: Theme.surfaceVariantText
                                 wrapMode: Text.WordWrap
@@ -527,7 +614,7 @@ Item {
                         width: parent.width
                         spacing: Theme.spacingM
 
-                        DankSearchField {
+                        CySearchField {
                             id: searchField
                             width: parent.width - addButton.width - Theme.spacingM
                             placeholderText: I18n.tr("Search shortcuts...")
@@ -537,7 +624,7 @@ Item {
                             }
                         }
 
-                        DankActionButton {
+                        CyActionButton {
                             id: addButton
                             width: searchField.height
                             height: searchField.height
@@ -552,94 +639,27 @@ Item {
                             onClicked: keybindsTab.startNewBind()
                         }
                     }
-                }
-            }
-
-            StyledRect {
-                id: warningBox
-                width: Math.min(keybindsTab.contentMaxWidth, parent.width - Theme.spacingL * 2)
-                height: warningSection.implicitHeight + Theme.spacingL * 2
-                anchors.horizontalCenter: parent.horizontalCenter
-                radius: Theme.cornerRadius
-
-                readonly property var status: KeybindsService.dmsStatus
-                readonly property bool showLegacy: KeybindsService.readOnly
-                readonly property bool showWarning: !showLegacy && status.included && status.overriddenBy > 0
-                readonly property bool showSetup: !showLegacy && !status.included
-
-                color: (showLegacy || showWarning || showSetup) ? Theme.withAlpha(Theme.primary, 0.15) : Theme.withAlpha(Theme.primary, 0)
-                border.color: (showLegacy || showWarning || showSetup) ? Theme.withAlpha(Theme.primary, 0.3) : Theme.withAlpha(Theme.primary, 0)
-                border.width: Theme.outlineWidth
-                visible: (showLegacy || showWarning || showSetup) && !KeybindsService.loading
-
-                Column {
-                    id: warningSection
-                    anchors.fill: parent
-                    anchors.margins: Theme.spacingL
-                    spacing: Theme.spacingM
 
                     Row {
                         width: parent.width
                         spacing: Theme.spacingM
+                        visible: KeybindsService.managedOverrideCount > 0 || KeybindsService.resetAllBusy
 
-                        DankIcon {
-                            name: warningBox.showWarning ? "info" : "warning"
-                            size: Theme.iconSize
-                            color: Theme.primary
-                            anchors.verticalCenter: parent.verticalCenter
+                        Item {
+                            width: parent.width - resetAllButton.implicitWidth - parent.spacing
+                            height: resetAllButton.implicitHeight
                         }
 
-                        Column {
-                            width: parent.width - Theme.iconSize - (fixButton.visible ? fixButton.width + Theme.spacingM : 0) - Theme.spacingM
-                            spacing: Theme.spacingXS
-                            anchors.verticalCenter: parent.verticalCenter
-
-                            StyledText {
-                                text: {
-                                    if (warningBox.showLegacy)
-                                        return I18n.tr("Hyprland conf mode");
-                                    if (warningBox.showSetup)
-                                        return I18n.tr("First Time Setup");
-                                    if (warningBox.showWarning)
-                                        return I18n.tr("Possible override conflicts");
-                                    return "";
-                                }
-                                font.pixelSize: Theme.fontSizeMedium
-                                font.weight: Theme.fontWeightMedium
-                                color: Theme.primary
-                                width: parent.width
-                                horizontalAlignment: Text.AlignLeft
-                            }
-
-                            StyledText {
-                                text: {
-                                    if (warningBox.showLegacy)
-                                        return I18n.tr("This install is still using hyprland.conf. Run dms setup to migrate before changing these settings.");
-                                    if (warningBox.showSetup)
-                                        return I18n.tr("Click 'Setup' to create %1 and add include to your compositor config.", "include setup banner, %1 is the dms config file name").arg("dms/binds");
-                                    if (warningBox.showWarning) {
-                                        const count = warningBox.status.overriddenBy;
-                                        return (count === 1 ? I18n.tr("%1 CyShell bind may be overridden by config binds that come after the include.", "singular, keybinds warning, %1 is 1") : I18n.tr("%1 CyShell binds may be overridden by config binds that come after the include.", "plural, keybinds warning, %1 is a count")).arg(count);
-                                    }
-                                    return "";
-                                }
-                                font.pixelSize: Theme.fontSizeSmall
-                                color: Theme.surfaceVariantText
-                                wrapMode: Text.WordWrap
-                                width: parent.width
-                                horizontalAlignment: Text.AlignLeft
-                            }
-                        }
-
-                        DankButton {
-                            id: fixButton
-                            visible: !warningBox.showLegacy && warningBox.showSetup
-                            text: KeybindsService.fixing ? I18n.tr("Setting up...") : I18n.tr("Setup", "verb, button that creates the dms include config file")
-                            backgroundColor: Theme.primary
-                            textColor: Theme.primaryText
-                            enabled: !KeybindsService.fixing
-                            anchors.verticalCenter: parent.verticalCenter
-                            onClicked: KeybindsService.fixDmsBindsInclude()
+                        CyButton {
+                            id: resetAllButton
+                            text: KeybindsService.resetAllBusy ? I18n.tr("Resetting...") : I18n.tr("Reset all")
+                            iconName: "restart_alt"
+                            busy: KeybindsService.resetAllBusy
+                            buttonHeight: Theme.buttonHeightXS
+                            tooltipText: I18n.tr("Remove CyShell keybind overrides and keep your existing Labwc shortcuts")
+                            enabled: !KeybindsService.bindMutationBusy && !keybindsTab.hasEditDraft && !keybindsTab.editBusy && !keybindsTab.reviewingEdit && KeybindsService.managedOverrideCount > 0
+                            opacity: enabled ? 1 : 0.55
+                            onClicked: keybindsTab.confirmResetAllBinds()
                         }
                     }
                 }
@@ -735,7 +755,7 @@ Item {
                     visible: keybindsTab.reviewingEdit || keybindsTab.editError !== ""
                     iconName: "error"
                     iconColor: Theme.error
-                    subtitle: keybindsTab.editError || I18n.tr("Review the current bindings before saving this edit.", "Aqueous keyboard shortcut editor, retaining an unsaved edit while reviewing current bindings")
+                    subtitle: keybindsTab.editError || I18n.tr("Review the current bindings before saving this edit.")
                     subtitleColor: Theme.error
                 }
 
@@ -752,15 +772,15 @@ Item {
                         spacing: Theme.spacingS
                         layoutDirection: Qt.RightToLeft
 
-                        DankButton {
-                            text: I18n.tr("Accept reviewed changes", "Aqueous keyboard shortcut editor, retaining an unsaved edit while reviewing current bindings")
+                        CyButton {
+                            text: I18n.tr("Accept reviewed changes")
                             iconName: "check"
                             visible: keybindsTab.reviewingEdit && !!keybindsTab.reviewSnapshot
                             enabled: !keybindsTab.editBusy && !keybindsTab.editInvalidated
                             onClicked: keybindsTab.acceptReview()
                         }
 
-                        DankButton {
+                        CyButton {
                             text: I18n.tr("Remove", "verb, button that removes an item from a list")
                             iconName: "delete"
                             visible: keybindsTab.hasEditDraft && keybindsTab.editDraft.operation !== "set"
@@ -768,7 +788,7 @@ Item {
                             onClicked: keybindsTab.confirmEditRemoval()
                         }
 
-                        DankButton {
+                        CyButton {
                             text: I18n.tr("Discard")
                             backgroundColor: "transparent"
                             textColor: Theme.surfaceText
@@ -776,7 +796,7 @@ Item {
                             onClicked: keybindsTab.discardEdit()
                         }
 
-                        DankActionButton {
+                        CyActionButton {
                             iconName: "refresh"
                             iconColor: Theme.surfaceVariantText
                             Accessible.name: I18n.tr("Refresh")
@@ -807,7 +827,7 @@ Item {
                         width: parent.width
                         spacing: Theme.spacingM
 
-                        DankIcon {
+                        CyIcon {
                             name: "add"
                             size: Theme.iconSize
                             color: Theme.surfaceText
@@ -832,7 +852,7 @@ Item {
                                 keys: [
                                     {
                                         key: "",
-                                        source: "dms",
+                                        source: "cyshell",
                                         isOverride: true
                                     }
                                 ],
@@ -877,7 +897,7 @@ Item {
                         width: parent.width
                         spacing: Theme.spacingM
 
-                        DankIcon {
+                        CyIcon {
                             name: "list"
                             size: Theme.iconSize
                             color: Theme.primary
@@ -903,7 +923,7 @@ Item {
                         spacing: Theme.spacingM
                         visible: KeybindsService.loading
 
-                        DankIcon {
+                        CyIcon {
                             id: loadingIcon
                             name: "sync"
                             size: 20
@@ -932,7 +952,55 @@ Item {
                         text: I18n.tr("No keybinds found")
                         font.pixelSize: Theme.fontSizeMedium
                         color: Theme.surfaceVariantText
-                        visible: !KeybindsService.loading && keybindsTab._filteredBinds.length === 0
+                        visible: !KeybindsService.loading && keybindsTab._filteredBinds.length === 0 && keybindsTab._matchingUnboundActions.length === 0
+                    }
+                }
+            }
+
+            StyledRect {
+                width: Math.min(keybindsTab.contentMaxWidth, parent.width - Theme.spacingL * 2)
+                height: availableActionsColumn.implicitHeight + Theme.spacingL * 2
+                anchors.horizontalCenter: parent.horizontalCenter
+                radius: Theme.cornerRadius
+                color: Theme.floatingWindowNestedSurface
+                border.color: Theme.outlineMedium
+                border.width: Theme.layerOutlineWidth
+                visible: !KeybindsService.loading && keybindsTab._matchingUnboundActions.length > 0
+
+                Column {
+                    id: availableActionsColumn
+                    anchors.fill: parent
+                    anchors.margins: Theme.spacingL
+                    spacing: Theme.spacingS
+
+                    StyledText {
+                        text: I18n.tr("Available actions")
+                        font.pixelSize: Theme.fontSizeMedium
+                        font.weight: Theme.fontWeightMedium
+                        color: Theme.surfaceText
+                    }
+
+                    StyledText {
+                        text: I18n.tr("These actions exist in CyShell but do not have a shortcut yet.")
+                        font.pixelSize: Theme.fontSizeSmall
+                        color: Theme.surfaceVariantText
+                        width: parent.width
+                        wrapMode: Text.WordWrap
+                    }
+
+                    Repeater {
+                        model: keybindsTab._matchingUnboundActions
+
+                        delegate: SettingsRow {
+                            required property var modelData
+                            width: availableActionsColumn.width
+                            title: modelData.label || Actions.getActionLabel(modelData.id, KeybindsService.currentProvider)
+                            subtitle: I18n.tr("Not bound · click to set a shortcut")
+                            iconName: "add_link"
+                            clickable: true
+                            showChevron: true
+                            onClicked: keybindsTab.startNewBind(modelData.id, modelData.label || "")
+                        }
                     }
                 }
             }

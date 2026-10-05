@@ -11,7 +11,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/log"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/log"
 )
 
 func init() {
@@ -138,10 +138,10 @@ func (b archHelperBackend) Upgrade(ctx context.Context, opts UpgradeOptions, onL
 	}
 	term := findTerminal(opts.Terminal)
 	if term == "" {
-		return fmt.Errorf("no terminal found (pick one in DMS settings, set $TERMINAL, or install kitty/ghostty/foot/alacritty)")
+		return fmt.Errorf("no terminal found (pick one in CyShell settings, set $TERMINAL, or install kitty/ghostty/foot/alacritty)")
 	}
 	cmd := strings.Join(archHelperUpgradeArgv(b.id, opts.IncludeAUR, opts.Ignored), " ")
-	title := fmt.Sprintf("DMS — System Update (%s)", b.id)
+	title := fmt.Sprintf("CyShell — System Update (%s)", b.id)
 	return Run(ctx, wrapInTerminal(term, title, cmd, opts.TerminalArgs), RunOptions{OnLine: onLine})
 }
 
@@ -254,7 +254,7 @@ func pacmanPrivateDB() (string, error) {
 	if tmp == "" {
 		tmp = "/tmp"
 	}
-	dir := filepath.Join(tmp, fmt.Sprintf("dms-checkup-db-%d", os.Getuid()))
+	dir := filepath.Join(tmp, fmt.Sprintf("cyshell-checkup-db-%d", os.Getuid()))
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return "", err
 	}

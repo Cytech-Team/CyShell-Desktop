@@ -10,12 +10,17 @@ Item {
 
     required property var host
     property var externalKeyboardController: null
-    property real cachedHeaderHeight: Theme.buttonHeightXS
 
     readonly property alias notificationList: notificationList
     readonly property alias notificationHeader: notificationHeader
     readonly property int currentTab: notificationHeader.currentTab
     readonly property bool hostOwnsHeight: root.host.hostOwnsHeight ?? false
+    readonly property real desiredPanelHeight: Math.min(maxContentHeight, NotificationMetrics.centerMaxHeight + Theme.buttonHeightM * 2)
+    readonly property real panelSpacing: Theme.spacingS
+    readonly property real panelPadding: Theme.spacingM
+    readonly property real panelContentHeight: Math.max(0, desiredPanelHeight - Theme.spacingXS * 2 - panelSpacing)
+    readonly property real notificationPaneHeight: panelContentHeight * 0.32
+    readonly property real expandedCalendarHeight: panelContentHeight - notificationPaneHeight
 
     LayoutMirroring.enabled: I18n.isRtl
     LayoutMirroring.childrenInherit: true
@@ -27,30 +32,7 @@ Item {
         return (root.host.screen?.height ?? 1080) * NotificationMetrics.screenHeightRatio;
     }
 
-    readonly property real targetImplicitHeight: {
-        let baseHeight = Theme.spacingL * 2;
-        baseHeight += cachedHeaderHeight;
-        baseHeight += Theme.spacingM * 2;
-
-        let listHeight = NotificationMetrics.emptyHeight;
-        if (notificationHeader.currentTab === 0) {
-            if (NotificationService.groupedNotifications.length === 0) {
-                listHeight = NotificationMetrics.emptyHeight;
-            } else if (root.hostOwnsHeight) {
-                listHeight = notificationList.sessionContentHeight > 0 ? notificationList.sessionContentHeight : notificationList.estimateContentHeight(NotificationService.groupedNotifications.length);
-            } else {
-                listHeight = root.host.shouldBeVisible ? notificationList.stableContentHeight : notificationList.listContentHeight;
-            }
-        } else if (NotificationService.historyList.length > 0) {
-            listHeight = Math.max(NotificationMetrics.emptyHeight, NotificationService.historyList.length * NotificationMetrics.estimatedCardHeight);
-        }
-
-        if (!root.hostOwnsHeight)
-            listHeight = Math.min(listHeight, NotificationMetrics.centerMaxHeight);
-
-        baseHeight += listHeight;
-        return Math.max(NotificationMetrics.centerMinHeight, Math.min(baseHeight, maxContentHeight));
-    }
+    readonly property real targetImplicitHeight: root.hostOwnsHeight ? height : desiredPanelHeight - (calendarPanel.calendarExpanded ? 0 : expandedCalendarHeight - calendarPanel.collapsedHeight)
 
     implicitHeight: root.hostOwnsHeight ? height : targetImplicitHeight
 
@@ -90,60 +72,92 @@ Item {
         id: contentColumn
 
         anchors.fill: parent
-        anchors.margins: PopoutMetrics.contentPadding
+        anchors.margins: 0
         focus: true
 
         Column {
             id: contentColumnInner
 
             anchors.fill: parent
-            spacing: Theme.spacingM
+            anchors.margins: Theme.spacingXS
+            spacing: root.panelSpacing
 
-            NotificationHeader {
-                id: notificationHeader
+            Rectangle {
+                id: notificationPane
 
-                objectName: "notificationHeader"
-                transientSurfaceTracker: root.host.transientSurfaceTracker ?? null
-                onHeightChanged: root.cachedHeaderHeight = height
-                onSettingsRequested: {
-                    if (typeof root.host.requestSettings === "function")
-                        root.host.requestSettings();
-                }
-            }
-
-            Item {
-                visible: notificationHeader.currentTab === 0
                 width: parent.width
-                height: parent.height - root.cachedHeaderHeight - contentColumnInner.spacing
+                height: root.notificationPaneHeight
+                radius: Theme.cornerRadiusL
+                color: Theme.foregroundColor(Theme.cardSurface, Theme.isFloatingWindow(root))
+                border.width: Theme.layerOutlineWidth
+                border.color: Theme.outlineVariant
+                clip: true
 
-                KeyboardNavigatedNotificationList {
-                    id: notificationList
-
-                    objectName: "notificationList"
+                Item {
                     anchors.fill: parent
-                    cardAnimateExpansion: root.host.animateCardExpansion ?? true
-                    trackStableContentHeight: !root.hostOwnsHeight
-                    trackSessionContentHeight: root.hostOwnsHeight
-                    transientSurfaceTracker: root.host.transientSurfaceTracker ?? null
+                    anchors.margins: root.panelPadding
+
+                    NotificationHeader {
+                        id: notificationHeader
+
+                        objectName: "notificationHeader"
+                        width: parent.width
+                        calendarLayout: true
+                        transientSurfaceTracker: root.host.transientSurfaceTracker ?? null
+                        onSettingsRequested: {
+                            if (typeof root.host.requestSettings === "function")
+                                root.host.requestSettings();
+                        }
+                    }
+
+                    Item {
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.top: notificationHeader.bottom
+                        anchors.bottom: parent.bottom
+                        anchors.topMargin: Theme.spacingS
+
+                        KeyboardNavigatedNotificationList {
+                            id: notificationList
+
+                            objectName: "notificationList"
+                            anchors.fill: parent
+                            visible: notificationHeader.currentTab === 0
+                            cardAnimateExpansion: root.host.animateCardExpansion ?? true
+                            trackStableContentHeight: !root.hostOwnsHeight
+                            trackSessionContentHeight: root.hostOwnsHeight
+                            transientSurfaceTracker: root.host.transientSurfaceTracker ?? null
+                        }
+
+                        HistoryNotificationList {
+                            id: historyList
+
+                            visible: notificationHeader.currentTab === 1
+                            anchors.fill: parent
+                        }
+                    }
+                }
+
+                NotificationKeyboardHints {
+                    anchors.bottom: parent.bottom
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.margins: root.panelPadding
+                    showHints: notificationHeader.currentTab === 0 ? (root.externalKeyboardController?.showKeyboardHints ?? false) : historyList.showKeyboardHints
+                    z: 200
                 }
             }
 
-            HistoryNotificationList {
-                id: historyList
-
-                visible: notificationHeader.currentTab === 1
+            NotificationCalendar {
+                id: calendarPanel
                 width: parent.width
-                height: parent.height - root.cachedHeaderHeight - contentColumnInner.spacing
+                expandedHeight: root.expandedCalendarHeight
+                onFocusSessionStarted: {
+                    if (typeof root.host.close === "function")
+                        root.host.close();
+                }
             }
         }
     }
 
-    NotificationKeyboardHints {
-        anchors.bottom: parent.bottom
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.margins: PopoutMetrics.contentPadding
-        showHints: notificationHeader.currentTab === 0 ? (root.externalKeyboardController?.showKeyboardHints ?? false) : historyList.showKeyboardHints
-        z: 200
-    }
 }

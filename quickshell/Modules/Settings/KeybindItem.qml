@@ -59,7 +59,7 @@ Item {
     readonly property bool hasConfigConflict: configConflict !== null
     readonly property string _originalKey: editingKeyIndex >= 0 && editingKeyIndex < keys.length ? keys[editingKeyIndex].key : ""
     readonly property string _selectedDesc: editingKeyIndex >= 0 && editingKeyIndex < keys.length ? (keys[editingKeyIndex].desc || bindData.desc || "") : (bindData.desc || "")
-    readonly property var _conflicts: editKey ? KeyUtils.getConflictingBinds(editKey, bindData.action, KeybindsService.getFlatBinds(), KeybindsService.currentProvider === "niri" ? KeybindsService.modKey : "Super") : []
+    readonly property var _conflicts: editKey ? KeyUtils.getConflictingBinds(editKey, bindData.action, KeybindsService.getFlatBinds(), KeybindsService.modKey) : []
     readonly property bool hasConflict: _conflicts.length > 0
 
     readonly property real _inputHeight: Math.round(Theme.fontSizeMedium * 3)
@@ -198,10 +198,8 @@ Item {
     }
 
     function startAddingNewKey() {
-        if (readOnly) {
-            KeybindsService.showHyprlandReadOnlyWarning();
+        if (readOnly)
             return;
-        }
         addingNewKey = true;
         editingKeyIndex = -1;
         editKey = "";
@@ -267,10 +265,8 @@ Item {
     }
 
     function doSave() {
-        if (readOnly) {
-            KeybindsService.showHyprlandReadOnlyWarning();
+        if (readOnly)
             return;
-        }
         if (!canSave())
             return;
         const origKey = addingNewKey ? "" : _originalKey;
@@ -304,10 +300,8 @@ Item {
     }
 
     function startRecording() {
-        if (readOnly) {
-            KeybindsService.showHyprlandReadOnlyWarning();
+        if (readOnly)
             return;
-        }
         recording = true;
     }
 
@@ -431,7 +425,7 @@ Item {
                             visible: root.hasOverride && !root.hasConfigConflict
                         }
 
-                        DankIcon {
+                        CyIcon {
                             name: "warning"
                             size: Theme.iconSizeSmall
                             color: Theme.primary
@@ -451,7 +445,7 @@ Item {
                     }
                 }
 
-                DankIcon {
+                CyIcon {
                     name: root.isExpanded ? "expand_less" : "expand_more"
                     size: Theme.iconSizeMedium
                     color: Theme.surfaceVariantText
@@ -520,7 +514,7 @@ Item {
                             width: parent.width
                             spacing: Theme.spacingS
 
-                            DankIcon {
+                            CyIcon {
                                 name: "warning"
                                 size: Theme.iconSizeSmall
                                 color: Theme.primary
@@ -626,7 +620,7 @@ Item {
                                 color: addKeyArea.pressed ? Theme.surfaceTextHover : (addKeyArea.containsMouse && !root.addingNewKey ? Theme.surfaceTextHover : Theme.withAlpha(Theme.surfaceTextHover, 0))
                             }
 
-                            DankIcon {
+                            CyIcon {
                                 name: "add"
                                 size: Theme.iconSizeSmall
                                 color: root.addingNewKey ? Theme.primaryText : Theme.surfaceVariantText
@@ -698,7 +692,7 @@ Item {
                                     elide: Text.ElideRight
                                 }
 
-                                DankActionButton {
+                                CyActionButton {
                                     id: recordBtn
                                     width: root._chipHeight
                                     height: root._chipHeight
@@ -752,8 +746,6 @@ Item {
                                     mods.push("Shift");
                             }
                             const hasShift = mods.includes("Shift");
-                            if (KeybindsService.currentProvider === "niri")
-                                mods = KeyUtils.withSymbolicMod(mods, KeybindsService.modKey);
 
                             const key = KeyUtils.xkbKeyFromQtKey(qtKey, !!(event.modifiers & Qt.KeypadModifier), hasShift, event.nativeScanCode);
                             if (!key) {
@@ -794,8 +786,6 @@ Item {
                                     mods.push("Alt");
                                 if (wheel.modifiers & Qt.MetaModifier)
                                     mods.push("Super");
-                                if (KeybindsService.currentProvider === "niri")
-                                    mods = KeyUtils.withSymbolicMod(mods, KeybindsService.modKey);
 
                                 let wheelKey = "";
                                 if (wheel.angleDelta.y > 0)
@@ -832,7 +822,7 @@ Item {
                             color: singleAddKeyArea.pressed ? Theme.surfaceTextHover : (singleAddKeyArea.containsMouse && !root.addingNewKey ? Theme.surfaceTextHover : Theme.withAlpha(Theme.surfaceTextHover, 0))
                         }
 
-                        DankIcon {
+                        CyIcon {
                             name: "add"
                             size: Theme.iconSizeSmall + 2
                             color: root.addingNewKey ? Theme.primaryText : Theme.surfaceVariantText
@@ -855,7 +845,7 @@ Item {
                     visible: root.hasConflict
                     Layout.leftMargin: root._labelWidth + Theme.spacingM
 
-                    DankIcon {
+                    CyIcon {
                         name: "warning"
                         size: Theme.iconSizeSmall
                         color: Theme.primary
@@ -896,7 +886,7 @@ Item {
                                 required property int index
 
                                 readonly property var tooltipTexts: ({
-                                        "dms": I18n.tr("CyShell actions (launcher, clipboard, etc.)"),
+                                        "cyshell": I18n.tr("CyShell actions (launcher, clipboard, etc.)"),
                                         "compositor": I18n.tr("Compositor actions (focus, move, etc.)", "keybind action type tooltip"),
                                         "spawn": I18n.tr("Run a program (e.g., firefox, kitty)"),
                                         "shell": I18n.tr("Run a shell command (e.g., notify-send)")
@@ -916,7 +906,7 @@ Item {
                                     anchors.rightMargin: Theme.spacingS
                                     spacing: Theme.spacingXS
 
-                                    DankIcon {
+                                    CyIcon {
                                         name: typeDelegate.modelData.icon
                                         size: Theme.iconSizeSmall
                                         color: root._actionType === typeDelegate.modelData.id ? Theme.surfaceText : Theme.surfaceVariantText
@@ -943,10 +933,10 @@ Item {
                                         if (root.readOnly)
                                             return;
                                         switch (typeDelegate.modelData.id) {
-                                        case "dms":
+                                        case "cyshell":
                                             root.updateEdit({
-                                                "action": KeybindsService.dmsActions[0].id,
-                                                "desc": KeybindsService.dmsActions[0].label
+                                                "action": KeybindsService.cyShellActions[0].id,
+                                                "desc": KeybindsService.cyShellActions[0].label
                                             });
                                             break;
                                         case "compositor":
@@ -971,7 +961,7 @@ Item {
                                     }
                                 }
 
-                                DankTooltipHost {
+                                CyTooltipHost {
                                     text: typeDelegate.tooltipTexts[typeDelegate.modelData.id]
                                     target: typeDelegate
                                     hoverArea: typeArea
@@ -984,7 +974,7 @@ Item {
                 RowLayout {
                     Layout.fillWidth: true
                     spacing: Theme.spacingM
-                    visible: root._actionType === "dms"
+                    visible: root._actionType === "cyshell"
 
                     StyledText {
                         text: I18n.tr("Action")
@@ -994,17 +984,17 @@ Item {
                         Layout.preferredWidth: root._labelWidth
                     }
 
-                    DankDropdown {
+                    CyDropdown {
                         Layout.fillWidth: true
                         compactMode: true
                         currentValue: KeybindsService.getActionLabel(root.editAction) || I18n.tr("Select", "verb, dropdown placeholder or option that opens a picker") + "…"
-                        options: KeybindsService.getDmsActions().map(a => a.label)
+                        options: KeybindsService.getCyShellActions().map(a => a.label)
                         enableFuzzySearch: true
                         maxPopupHeight: 300
                         onValueChanged: value => {
                             if (root.readOnly)
                                 return;
-                            const actions = KeybindsService.getDmsActions();
+                            const actions = KeybindsService.getCyShellActions();
                             for (const act of actions) {
                                 if (act.label === value) {
                                     root.updateEdit({
@@ -1019,17 +1009,17 @@ Item {
                 }
 
                 RowLayout {
-                    id: dmsArgsRow
+                    id: cyShellArgsRow
                     Layout.fillWidth: true
                     spacing: Theme.spacingM
 
                     readonly property var argConfig: Actions.getActionArgConfig(KeybindsService.currentProvider, root.editAction)
-                    readonly property var parsedArgs: argConfig?.type === "dms" ? Actions.parseDmsActionArgs(root.editAction) : null
-                    readonly property var dmsActionArgs: Actions.getDmsActionArgs()
-                    readonly property bool hasAmountArg: parsedArgs?.base ? (dmsActionArgs[parsedArgs.base]?.args?.some(a => a.name === "amount") ?? false) : false
-                    readonly property bool hasDeviceArg: parsedArgs?.base ? (dmsActionArgs[parsedArgs.base]?.args?.some(a => a.name === "device") ?? false) : false
-                    readonly property bool hasTabArg: parsedArgs?.base ? (dmsActionArgs[parsedArgs.base]?.args?.some(a => a.name === "tab") ?? false) : false
-                    readonly property var flagArgs: parsedArgs?.base ? (dmsActionArgs[parsedArgs.base]?.args?.filter(a => a.type === "flag") ?? []) : []
+                    readonly property var parsedArgs: argConfig?.type === "cyshell" ? Actions.parseCyShellActionArgs(root.editAction) : null
+                    readonly property var cyShellActionArgs: Actions.getCyShellActionArgs()
+                    readonly property bool hasAmountArg: parsedArgs?.base ? (cyShellActionArgs[parsedArgs.base]?.args?.some(a => a.name === "amount") ?? false) : false
+                    readonly property bool hasDeviceArg: parsedArgs?.base ? (cyShellActionArgs[parsedArgs.base]?.args?.some(a => a.name === "device") ?? false) : false
+                    readonly property bool hasTabArg: parsedArgs?.base ? (cyShellActionArgs[parsedArgs.base]?.args?.some(a => a.name === "tab") ?? false) : false
+                    readonly property var flagArgs: parsedArgs?.base ? (cyShellActionArgs[parsedArgs.base]?.args?.filter(a => a.type === "flag") ?? []) : []
 
                     function flagLabel(name) {
                         switch (name) {
@@ -1044,19 +1034,19 @@ Item {
                         }
                     }
 
-                    visible: root._actionType === "dms" && argConfig?.type === "dms"
+                    visible: root._actionType === "cyshell" && argConfig?.type === "cyshell"
 
-                    DankTextField {
-                        id: dmsAmountField
+                    CyTextField {
+                        id: cyShellAmountField
                         outlined: true
                         leftIconName: "tune"
-                        labelText: I18n.tr("Amount", "keybind editor field, numeric amount argument of a dms action")
+                        labelText: I18n.tr("Amount", "keybind editor field, numeric amount argument of a CyShell action")
                         Layout.preferredWidth: Math.round(Theme.fontSizeMedium * 5.5) + Theme.iconButtonSize
                         Layout.preferredHeight: implicitHeight
                         placeholderText: "5"
-                        visible: dmsArgsRow.hasAmountArg
+                        visible: cyShellArgsRow.hasAmountArg
 
-                        readonly property var argsRowParsedArgs: dmsArgsRow.parsedArgs
+                        readonly property var argsRowParsedArgs: cyShellArgsRow.parsedArgs
 
                         onArgsRowParsedArgsChanged: {
                             const newText = argsRowParsedArgs?.args?.amount || "";
@@ -1065,16 +1055,16 @@ Item {
                         }
 
                         Component.onCompleted: {
-                            text = dmsArgsRow.parsedArgs?.args?.amount || "";
+                            text = cyShellArgsRow.parsedArgs?.args?.amount || "";
                         }
 
                         onEditingFinished: {
-                            if (!dmsArgsRow.parsedArgs)
+                            if (!cyShellArgsRow.parsedArgs)
                                 return;
                             const oldAction = root.editAction;
-                            const newArgs = Object.assign({}, dmsArgsRow.parsedArgs.args);
+                            const newArgs = Object.assign({}, cyShellArgsRow.parsedArgs.args);
                             newArgs.amount = text || "5";
-                            const newAction = Actions.buildDmsAction(dmsArgsRow.parsedArgs.base, newArgs);
+                            const newAction = Actions.buildCyShellAction(cyShellArgsRow.parsedArgs.base, newArgs);
                             const changes = {
                                 "action": newAction
                             };
@@ -1088,20 +1078,20 @@ Item {
                         text: "%"
                         font.pixelSize: Theme.fontSizeSmall
                         color: Theme.surfaceVariantText
-                        visible: dmsArgsRow.hasAmountArg
+                        visible: cyShellArgsRow.hasAmountArg
                     }
 
-                    DankTextField {
-                        id: dmsDeviceField
+                    CyTextField {
+                        id: cyShellDeviceField
                         outlined: true
                         leftIconName: "devices"
                         labelText: I18n.tr("Device")
                         Layout.fillWidth: true
                         Layout.preferredHeight: implicitHeight
                         placeholderText: I18n.tr("leave empty for default")
-                        visible: dmsArgsRow.hasDeviceArg
+                        visible: cyShellArgsRow.hasDeviceArg
 
-                        readonly property var argsRowParsedArgs: dmsArgsRow.parsedArgs
+                        readonly property var argsRowParsedArgs: cyShellArgsRow.parsedArgs
 
                         onArgsRowParsedArgsChanged: {
                             const newText = argsRowParsedArgs?.args?.device || "";
@@ -1110,23 +1100,23 @@ Item {
                         }
 
                         Component.onCompleted: {
-                            text = dmsArgsRow.parsedArgs?.args?.device || "";
+                            text = cyShellArgsRow.parsedArgs?.args?.device || "";
                         }
 
                         onEditingFinished: {
-                            if (!dmsArgsRow.parsedArgs)
+                            if (!cyShellArgsRow.parsedArgs)
                                 return;
-                            const newArgs = Object.assign({}, dmsArgsRow.parsedArgs.args);
+                            const newArgs = Object.assign({}, cyShellArgsRow.parsedArgs.args);
                             newArgs.device = text;
                             root.updateEdit({
-                                "action": Actions.buildDmsAction(dmsArgsRow.parsedArgs.base, newArgs)
+                                "action": Actions.buildCyShellAction(cyShellArgsRow.parsedArgs.base, newArgs)
                             });
                         }
                     }
 
                     Item {
                         Layout.fillWidth: true
-                        visible: !dmsArgsRow.hasDeviceArg && !dmsArgsRow.hasTabArg
+                        visible: !cyShellArgsRow.hasDeviceArg && !cyShellArgsRow.hasTabArg
                     }
 
                     StyledText {
@@ -1135,16 +1125,16 @@ Item {
                         font.weight: Theme.fontWeightMedium
                         color: Theme.surfaceVariantText
                         Layout.preferredWidth: root._labelWidth
-                        visible: dmsArgsRow.hasTabArg
+                        visible: cyShellArgsRow.hasTabArg
                     }
 
-                    DankDropdown {
-                        id: dmsTabDropdown
+                    CyDropdown {
+                        id: cyShellTabDropdown
                         Layout.fillWidth: true
                         compactMode: true
-                        visible: dmsArgsRow.hasTabArg
+                        visible: cyShellArgsRow.hasTabArg
                         currentValue: {
-                            const tab = dmsArgsRow.parsedArgs?.args?.tab || "";
+                            const tab = cyShellArgsRow.parsedArgs?.args?.tab || "";
                             switch (tab) {
                             case "media":
                                 return I18n.tr("Media");
@@ -1158,9 +1148,9 @@ Item {
                         }
                         options: [I18n.tr("Overview"), I18n.tr("Media"), I18n.tr("Wallpaper"), I18n.tr("Weather")]
                         onValueChanged: value => {
-                            if (!dmsArgsRow.parsedArgs)
+                            if (!cyShellArgsRow.parsedArgs)
                                 return;
-                            const newArgs = Object.assign({}, dmsArgsRow.parsedArgs.args);
+                            const newArgs = Object.assign({}, cyShellArgsRow.parsedArgs.args);
                             switch (value) {
                             case I18n.tr("Media"):
                                 newArgs.tab = "media";
@@ -1176,7 +1166,7 @@ Item {
                                 break;
                             }
                             root.updateEdit({
-                                "action": Actions.buildDmsAction(dmsArgsRow.parsedArgs.base, newArgs)
+                                "action": Actions.buildCyShellAction(cyShellArgsRow.parsedArgs.base, newArgs)
                             });
                         }
                     }
@@ -1187,35 +1177,35 @@ Item {
                         font.weight: Theme.fontWeightMedium
                         color: Theme.surfaceVariantText
                         Layout.preferredWidth: root._labelWidth
-                        visible: dmsArgsRow.flagArgs.length > 0
+                        visible: cyShellArgsRow.flagArgs.length > 0
                     }
 
                     Repeater {
-                        model: dmsArgsRow.flagArgs
+                        model: cyShellArgsRow.flagArgs
 
                         delegate: RowLayout {
                             id: flagToggle
                             required property var modelData
                             spacing: Theme.spacingXS
 
-                            DankToggle {
+                            CyToggle {
                                 checked: {
-                                    const set = dmsArgsRow.parsedArgs?.args[flagToggle.modelData.name] === true;
+                                    const set = cyShellArgsRow.parsedArgs?.args[flagToggle.modelData.name] === true;
                                     return flagToggle.modelData.inverted ? !set : set;
                                 }
                                 onToggled: newChecked => {
-                                    if (root.readOnly || !dmsArgsRow.parsedArgs)
+                                    if (root.readOnly || !cyShellArgsRow.parsedArgs)
                                         return;
-                                    const newArgs = Object.assign({}, dmsArgsRow.parsedArgs.args);
+                                    const newArgs = Object.assign({}, cyShellArgsRow.parsedArgs.args);
                                     newArgs[flagToggle.modelData.name] = flagToggle.modelData.inverted ? !newChecked : newChecked;
                                     root.updateEdit({
-                                        "action": Actions.buildDmsAction(dmsArgsRow.parsedArgs.base, newArgs)
+                                        "action": Actions.buildCyShellAction(cyShellArgsRow.parsedArgs.base, newArgs)
                                     });
                                 }
                             }
 
                             StyledText {
-                                text: dmsArgsRow.flagLabel(flagToggle.modelData.name)
+                                text: cyShellArgsRow.flagLabel(flagToggle.modelData.name)
                                 font.pixelSize: Theme.fontSizeSmall
                                 color: Theme.surfaceVariantText
                             }
@@ -1224,7 +1214,7 @@ Item {
 
                     Item {
                         Layout.fillWidth: true
-                        visible: dmsArgsRow.flagArgs.length > 0
+                        visible: cyShellArgsRow.flagArgs.length > 0
                     }
                 }
 
@@ -1241,7 +1231,7 @@ Item {
                         Layout.preferredWidth: root._labelWidth
                     }
 
-                    DankDropdown {
+                    CyDropdown {
                         id: compositorCatDropdown
                         Layout.preferredWidth: Math.round(Theme.fontSizeMedium * 8.5)
                         compactMode: true
@@ -1260,7 +1250,7 @@ Item {
                         options: KeybindsService.getCompositorCategories()
                     }
 
-                    DankDropdown {
+                    CyDropdown {
                         Layout.fillWidth: true
                         compactMode: true
                         currentValue: KeybindsService.getActionLabel(root.editAction) || I18n.tr("Select", "verb, dropdown placeholder or option that opens a picker") + "…"
@@ -1293,7 +1283,7 @@ Item {
                             color: customToggleArea.pressed ? Theme.surfaceTextHover : (customToggleArea.containsMouse ? Theme.surfaceTextHover : Theme.withAlpha(Theme.surfaceTextHover, 0))
                         }
 
-                        DankIcon {
+                        CyIcon {
                             name: "edit"
                             size: Theme.iconSizeSmall + 2
                             color: Theme.surfaceVariantText
@@ -1312,7 +1302,7 @@ Item {
                             }
                         }
 
-                        DankTooltipHost {
+                        CyTooltipHost {
                             text: I18n.tr("Custom")
                             target: parent
                             hoverArea: customToggleArea
@@ -1349,9 +1339,6 @@ Item {
 
                         if (argDef.type !== "text" && argDef.type !== "number")
                             return false;
-
-                        if (KeybindsService.currentProvider === "mangowc")
-                            return true;
 
                         return index === 0;
                     }
@@ -1412,7 +1399,7 @@ Item {
                                 spacing: Theme.spacingXS
                                 visible: editorVisible
 
-                                DankTextField {
+                                CyTextField {
                                     id: argField
                                     outlined: true
                                     leftIconName: "tune"
@@ -1466,7 +1453,7 @@ Item {
                             }
                             spacing: Theme.spacingXS
 
-                            DankToggle {
+                            CyToggle {
                                 id: focusToggle
                                 checked: optionsRow.parsedArgs?.args?.focus !== false
                                 onToggled: newChecked => {
@@ -1500,7 +1487,7 @@ Item {
                                 visible: optionsRow.argConfig?.base !== "screenshot-window"
                                 spacing: Theme.spacingXS
 
-                                DankToggle {
+                                CyToggle {
                                     id: showPointerToggle
                                     checked: optionsRow.parsedArgs?.args["show-pointer"] === true
                                     onToggled: newChecked => {
@@ -1525,7 +1512,7 @@ Item {
                                 visible: optionsRow.argConfig?.base !== "screenshot"
                                 spacing: Theme.spacingXS
 
-                                DankToggle {
+                                CyToggle {
                                     id: writeToDiskToggle
                                     checked: optionsRow.parsedArgs?.args["write-to-disk"] === true
                                     onToggled: newChecked => {
@@ -1551,7 +1538,7 @@ Item {
                             visible: optionsRow.argConfig?.base === "quit"
                             spacing: Theme.spacingXS
 
-                            DankToggle {
+                            CyToggle {
                                 checked: optionsRow.parsedArgs?.args["skip-confirmation"] === true
                                 onToggled: newChecked => {
                                     const args = newChecked ? {
@@ -1577,14 +1564,14 @@ Item {
                     spacing: Theme.spacingM
                     visible: root._actionType === "compositor" && root.useCustomCompositor
 
-                    DankTextField {
+                    CyTextField {
                         id: customCompositorField
                         outlined: true
                         leftIconName: "terminal"
                         labelText: I18n.tr("Custom")
                         Layout.fillWidth: true
                         Layout.preferredHeight: implicitHeight
-                        placeholderText: KeybindsService.currentProvider === "hyprland" ? I18n.tr("e.g., hl.dsp.focus({ workspace = \"3\" })") : I18n.tr("e.g., focus-workspace 3, resize-column -10")
+                        placeholderText: I18n.tr("e.g., SnapToEdge left combine=yes")
                         text: root._actionType === "compositor" ? root.editAction : ""
                         onTextChanged: {
                             if (root._actionType !== "compositor")
@@ -1607,7 +1594,7 @@ Item {
                             color: presetToggleArea.pressed ? Theme.surfaceTextHover : (presetToggleArea.containsMouse ? Theme.surfaceTextHover : Theme.withAlpha(Theme.surfaceTextHover, 0))
                         }
 
-                        DankIcon {
+                        CyIcon {
                             name: "list"
                             size: Theme.iconSizeSmall + 2
                             color: Theme.surfaceVariantText
@@ -1630,7 +1617,7 @@ Item {
                             }
                         }
 
-                        DankTooltipHost {
+                        CyTooltipHost {
                             text: I18n.tr("Presets", "noun plural, keybind editor tooltip, switch from custom to preset compositor actions")
                             target: parent
                             hoverArea: presetToggleArea
@@ -1643,7 +1630,7 @@ Item {
                     spacing: Theme.spacingM
                     visible: root._actionType === "spawn"
 
-                    DankTextField {
+                    CyTextField {
                         id: spawnTextField
                         outlined: true
                         leftIconName: "terminal"
@@ -1670,7 +1657,7 @@ Item {
                     spacing: Theme.spacingM
                     visible: root._actionType === "shell"
 
-                    DankTextField {
+                    CyTextField {
                         id: shellTextField
                         outlined: true
                         leftIconName: "terminal"
@@ -1693,9 +1680,9 @@ Item {
                 RowLayout {
                     Layout.fillWidth: true
                     spacing: Theme.spacingM
-                    visible: KeybindsService.currentProvider !== "aqueous"
+                    visible: true
 
-                    DankTextField {
+                    CyTextField {
                         id: titleField
                         outlined: true
                         leftIconName: "title"
@@ -1713,114 +1700,7 @@ Item {
                 RowLayout {
                     Layout.fillWidth: true
                     spacing: Theme.spacingM
-                    visible: KeybindsService.currentProvider === "hyprland"
-
-                    StyledText {
-                        text: I18n.tr("Flags", "noun plural, keybind editor row label for hyprland bind flags")
-                        font.pixelSize: Theme.fontSizeSmall
-                        font.weight: Theme.fontWeightMedium
-                        color: Theme.surfaceVariantText
-                        Layout.preferredWidth: root._labelWidth
-                    }
-
-                    Flow {
-                        Layout.fillWidth: true
-                        spacing: Theme.spacingM
-
-                        RowLayout {
-                            spacing: Theme.spacingXS
-
-                            DankToggle {
-                                checked: root.editFlags.indexOf("e") !== -1
-                                onToggled: newChecked => {
-                                    let flags = root.editFlags.split("").filter(f => f !== "e");
-                                    if (newChecked)
-                                        flags.push("e");
-                                    root.updateEdit({
-                                        "flags": flags.join("")
-                                    });
-                                }
-                            }
-
-                            StyledText {
-                                text: I18n.tr("Repeat", "noun, keybind option, action repeats while key is held")
-                                font.pixelSize: Theme.fontSizeSmall
-                                color: Theme.surfaceVariantText
-                            }
-                        }
-
-                        RowLayout {
-                            spacing: Theme.spacingXS
-
-                            DankToggle {
-                                checked: root.editFlags.indexOf("l") !== -1
-                                onToggled: newChecked => {
-                                    let flags = root.editFlags.split("").filter(f => f !== "l");
-                                    if (newChecked)
-                                        flags.push("l");
-                                    root.updateEdit({
-                                        "flags": flags.join("")
-                                    });
-                                }
-                            }
-
-                            StyledText {
-                                text: I18n.tr("Locked", "adjective, hyprland bind flag toggle, bind works on lock screen")
-                                font.pixelSize: Theme.fontSizeSmall
-                                color: Theme.surfaceVariantText
-                            }
-                        }
-
-                        RowLayout {
-                            spacing: Theme.spacingXS
-
-                            DankToggle {
-                                checked: root.editFlags.indexOf("r") !== -1
-                                onToggled: newChecked => {
-                                    let flags = root.editFlags.split("").filter(f => f !== "r");
-                                    if (newChecked)
-                                        flags.push("r");
-                                    root.updateEdit({
-                                        "flags": flags.join("")
-                                    });
-                                }
-                            }
-
-                            StyledText {
-                                text: I18n.tr("Release", "noun, hyprland bind flag toggle, trigger on key release")
-                                font.pixelSize: Theme.fontSizeSmall
-                                color: Theme.surfaceVariantText
-                            }
-                        }
-
-                        RowLayout {
-                            spacing: Theme.spacingXS
-
-                            DankToggle {
-                                checked: root.editFlags.indexOf("o") !== -1
-                                onToggled: newChecked => {
-                                    let flags = root.editFlags.split("").filter(f => f !== "o");
-                                    if (newChecked)
-                                        flags.push("o");
-                                    root.updateEdit({
-                                        "flags": flags.join("")
-                                    });
-                                }
-                            }
-
-                            StyledText {
-                                text: I18n.tr("Long press")
-                                font.pixelSize: Theme.fontSizeSmall
-                                color: Theme.surfaceVariantText
-                            }
-                        }
-                    }
-                }
-
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: Theme.spacingM
-                    visible: KeybindsService.currentProvider === "labwc"
+                    visible: true
 
                     StyledText {
                         text: I18n.tr("Options")
@@ -1837,7 +1717,7 @@ Item {
                         RowLayout {
                             spacing: Theme.spacingXS
 
-                            DankToggle {
+                            CyToggle {
                                 checked: root.editFlags.indexOf("r") !== -1
                                 onToggled: newChecked => {
                                     let flags = root.editFlags.split("").filter(f => f !== "r");
@@ -1859,7 +1739,7 @@ Item {
                         RowLayout {
                             spacing: Theme.spacingXS
 
-                            DankToggle {
+                            CyToggle {
                                 checked: root.editAllowWhenLocked
                                 onToggled: newChecked => root.updateEdit({
                                     "allowWhenLocked": newChecked
@@ -1876,7 +1756,7 @@ Item {
                         RowLayout {
                             spacing: Theme.spacingXS
 
-                            DankToggle {
+                            CyToggle {
                                 checked: root.editAllowInhibiting === false
                                 onToggled: newChecked => root.updateEdit({
                                     "allowInhibiting": newChecked ? false : true
@@ -1885,128 +1765,6 @@ Item {
 
                             StyledText {
                                 text: I18n.tr("Override inhibition", "labwc keybind option, keep shortcut active when an app inhibits compositor shortcuts")
-                                font.pixelSize: Theme.fontSizeSmall
-                                color: Theme.surfaceVariantText
-                            }
-                        }
-                    }
-                }
-
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: Theme.spacingM
-                    visible: KeybindsService.currentProvider === "niri"
-
-                    DankTextField {
-                        id: cooldownField
-                        outlined: true
-                        leftIconName: "timer"
-                        labelText: I18n.tr("Cooldown", "noun, niri keybind cooldown time field label")
-                        Layout.preferredWidth: Math.round(Theme.fontSizeMedium * 7) + Theme.iconButtonSize
-                        Layout.preferredHeight: implicitHeight
-                        placeholderText: "0"
-
-                        readonly property int rootEditCooldownMs: root.editCooldownMs
-
-                        onRootEditCooldownMsChanged: {
-                            const newText = rootEditCooldownMs > 0 ? String(rootEditCooldownMs) : "";
-                            if (text !== newText)
-                                text = newText;
-                        }
-
-                        Component.onCompleted: {
-                            text = root.editCooldownMs > 0 ? String(root.editCooldownMs) : "";
-                        }
-
-                        onTextChanged: {
-                            const val = parseInt(text) || 0;
-                            if (val !== root.editCooldownMs)
-                                root.updateEdit({
-                                    "cooldownMs": val
-                                });
-                        }
-                    }
-
-                    StyledText {
-                        text: I18n.tr("ms", "milliseconds unit suffix after a number field")
-                        font.pixelSize: Theme.fontSizeSmall
-                        color: Theme.surfaceVariantText
-                    }
-
-                    Item {
-                        Layout.fillWidth: true
-                    }
-                }
-
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: Theme.spacingM
-                    visible: KeybindsService.currentProvider === "niri"
-
-                    StyledText {
-                        text: I18n.tr("Options")
-                        font.pixelSize: Theme.fontSizeSmall
-                        font.weight: Theme.fontWeightMedium
-                        color: Theme.surfaceVariantText
-                        Layout.preferredWidth: root._labelWidth
-                    }
-
-                    Flow {
-                        Layout.fillWidth: true
-                        spacing: Theme.spacingM
-
-                        RowLayout {
-                            spacing: Theme.spacingXS
-
-                            DankToggle {
-                                checked: root.editRepeat !== false
-                                onToggled: newChecked => {
-                                    root.updateEdit({
-                                        "repeat": newChecked ? undefined : false
-                                    });
-                                }
-                            }
-
-                            StyledText {
-                                text: I18n.tr("Repeat")
-                                font.pixelSize: Theme.fontSizeSmall
-                                color: Theme.surfaceVariantText
-                            }
-                        }
-
-                        RowLayout {
-                            spacing: Theme.spacingXS
-
-                            DankToggle {
-                                checked: root.editAllowWhenLocked
-                                onToggled: newChecked => {
-                                    root.updateEdit({
-                                        "allowWhenLocked": newChecked
-                                    });
-                                }
-                            }
-
-                            StyledText {
-                                text: I18n.tr("When locked")
-                                font.pixelSize: Theme.fontSizeSmall
-                                color: Theme.surfaceVariantText
-                            }
-                        }
-
-                        RowLayout {
-                            spacing: Theme.spacingXS
-
-                            DankToggle {
-                                checked: root.editAllowInhibiting !== false
-                                onToggled: newChecked => {
-                                    root.updateEdit({
-                                        "allowInhibiting": newChecked ? undefined : false
-                                    });
-                                }
-                            }
-
-                            StyledText {
-                                text: I18n.tr("Inhibitable", "adjective, niri keybind option, apps may inhibit this shortcut")
                                 font.pixelSize: Theme.fontSizeSmall
                                 color: Theme.surfaceVariantText
                             }
@@ -2024,7 +1782,7 @@ Item {
                     Layout.fillWidth: true
                     spacing: Theme.spacingM
 
-                    DankActionButton {
+                    CyActionButton {
                         Layout.preferredWidth: root._buttonHeight
                         Layout.preferredHeight: root._buttonHeight
                         circular: false
@@ -2032,11 +1790,11 @@ Item {
                         Accessible.name: I18n.tr("Delete")
                         iconSize: Theme.iconSizeMedium
                         iconColor: Theme.error
-                        visible: root.editingKeyIndex >= 0 && root.editingKeyIndex < root.keys.length && (root.keys[root.editingKeyIndex].isDMSManaged || root.keys[root.editingKeyIndex].isOverride) && !root.isNew && !root.readOnly
+                        visible: root.editingKeyIndex >= 0 && root.editingKeyIndex < root.keys.length && (root.keys[root.editingKeyIndex].isCyShellManaged || root.keys[root.editingKeyIndex].isOverride || (KeybindsService.currentProvider === "labwc" && root.keys[root.editingKeyIndex].source === "config")) && !root.isNew && !root.readOnly
                         onClicked: root.removeBind(root._originalKey)
                     }
 
-                    DankButton {
+                    CyButton {
                         text: I18n.tr("Reset to default")
                         buttonHeight: root._buttonHeight
                         backgroundColor: Theme.chipSurface
@@ -2056,7 +1814,7 @@ Item {
                         visible: !root.isNew
                     }
 
-                    DankButton {
+                    CyButton {
                         text: I18n.tr("Cancel")
                         buttonHeight: root._buttonHeight
                         backgroundColor: Theme.chipSurface
@@ -2072,7 +1830,7 @@ Item {
                         }
                     }
 
-                    DankButton {
+                    CyButton {
                         text: root.isNew ? I18n.tr("Add") : I18n.tr("Save")
                         buttonHeight: root._buttonHeight
                         enabled: root.canSave()

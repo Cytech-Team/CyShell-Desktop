@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/errdefs"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/log"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/errdefs"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/log"
 )
 
 // Event strings per WPA_EVENT_* in contrib/wpa/src/common/wpa_ctrl.h

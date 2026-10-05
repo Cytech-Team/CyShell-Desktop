@@ -5,13 +5,13 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/deps"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/distros"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/utils"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/deps"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/distros"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/utils"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-const dmsDepName = "CyShell Desktop"
+const cyShellDepName = "CyShell"
 
 func (m Model) viewDetectingDeps() string {
 	var b strings.Builder
@@ -91,7 +91,7 @@ func (m Model) dependencyStatus(dep deps.Dependency) (marker, status string) {
 		return "✗ ", m.styles.Subtle.Render("Will skip")
 	case m.reinstallItems[dep.Name]:
 		return "🔄 ", m.styles.Warning.Render("Will upgrade")
-	case dep.Name == dmsDepName:
+	case dep.Name == cyShellDepName:
 		switch dep.Status {
 		case deps.StatusInstalled:
 			return "⚡ ", m.styles.Success.Render("✓ Required (installed)")
@@ -191,7 +191,7 @@ func (m Model) toggleSelectedDependency() {
 	}
 
 	dep := m.dependencies[m.selectedDep]
-	if dep.Name == dmsDepName {
+	if dep.Name == cyShellDepName {
 		return
 	}
 

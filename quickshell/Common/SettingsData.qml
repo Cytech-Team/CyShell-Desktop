@@ -3,7 +3,7 @@ pragma ComponentBehavior: Bound
 
 import QtCore
 import QtQuick
-import "../DankCommon/Common/Shape.js" as Shape
+import "../CyCommon/Common/Shape.js" as Shape
 import Quickshell
 import Quickshell.Io
 import qs.Common
@@ -13,7 +13,7 @@ import "GSettings.js" as GSettings
 import "LayoutResolver.js" as LayoutResolver
 import "settings/SettingsSpec.js" as Spec
 import "settings/SettingsStore.js" as Store
-import "../DankCommon/Common/settings/SpecUtil.js" as SpecUtil
+import "../CyCommon/Common/settings/SpecUtil.js" as SpecUtil
 import "settings/BarWidgetDefaults.js" as WidgetDefaults
 import "settings/DockConfig.js" as DockConfig
 
@@ -23,7 +23,7 @@ Singleton {
 
     readonly property int settingsConfigVersion: 29
 
-    readonly property bool isGreeterMode: Quickshell.env("DMS_RUN_GREETER") === "1" || Quickshell.env("DMS_RUN_GREETER") === "true"
+    readonly property bool isGreeterMode: Quickshell.env("CYSHELL_RUN_GREETER") === "1" || Quickshell.env("CYSHELL_RUN_GREETER") === "true"
 
     enum Position {
         Top,
@@ -79,7 +79,7 @@ Singleton {
     readonly property string _homeUrl: StandardPaths.writableLocation(StandardPaths.HomeLocation)
     readonly property string _configUrl: StandardPaths.writableLocation(StandardPaths.ConfigLocation)
     readonly property string _configDir: Paths.strip(_configUrl)
-    readonly property string pluginSettingsPath: _configDir + "/DankMaterialShell/plugin_settings.json"
+    readonly property string pluginSettingsPath: _configDir + "/CyShell/plugin_settings.json"
     readonly property bool qtengineActive: Quickshell.env("QT_QPA_PLATFORMTHEME") === "qtengine" || Quickshell.env("QT_QPA_PLATFORMTHEME_QT6") === "qtengine"
 
     property bool _loading: false
@@ -87,6 +87,10 @@ Singleton {
     property bool _parseError: false
     property bool _pluginParseError: false
     property bool _hasLoaded: false
+    property string _pendingSettingsWrite: ""
+    property string _pendingPluginSettingsWrite: ""
+    property bool _settingsWriteInFlight: false
+    property bool _pluginSettingsWriteInFlight: false
     property bool _isReadOnly: false
     property bool _hasUnsavedChanges: false
     property bool _selfWrite: false
@@ -405,6 +409,9 @@ Singleton {
     property bool greeterRememberLastSession: Spec.SPEC.greeterRememberLastSession.def
     property bool greeterRememberLastUser: Spec.SPEC.greeterRememberLastUser.def
     property bool greeterAutoLogin: Spec.SPEC.greeterAutoLogin.def
+    property string greeterLayoutHorizontal: Spec.SPEC.greeterLayoutHorizontal.def
+    property int greeterPanelWidth: Spec.SPEC.greeterPanelWidth.def
+    property int greeterVerticalOffset: Spec.SPEC.greeterVerticalOffset.def
     property bool greeterEnableFprint: Spec.SPEC.greeterEnableFprint.def
     property bool greeterEnableU2f: Spec.SPEC.greeterEnableU2f.def
 
@@ -802,7 +809,7 @@ Singleton {
     property bool notificationCompactMode: Spec.SPEC.notificationCompactMode.def
     property bool notificationShowTimeoutBar: Spec.SPEC.notificationShowTimeoutBar.def
     property bool notificationDedupeEnabled: Spec.SPEC.notificationDedupeEnabled.def
-    property int notificationPopupPosition: SettingsData.Position.Top
+    property int notificationPopupPosition: Spec.SPEC.notificationPopupPosition.def
     property int notificationAnimationDuration: Spec.SPEC.notificationAnimationDuration.def
     property bool notificationHistoryEnabled: Spec.SPEC.notificationHistoryEnabled.def
     property int notificationHistoryMaxCount: Spec.SPEC.notificationHistoryMaxCount.def
@@ -1007,6 +1014,8 @@ Singleton {
     property var updaterIgnoredPackages: Spec.SPEC.updaterIgnoredPackages.def
 
     property string displayNameMode: Spec.SPEC.displayNameMode.def
+    property string primaryDisplayName: Spec.SPEC.primaryDisplayName.def
+    property var labwcDisplayConfiguration: Spec.SPEC.labwcDisplayConfiguration.def
     property var screenPreferences: Spec.SPEC.screenPreferences.def
     property var showOnLastDisplay: Spec.SPEC.showOnLastDisplay.def
     property var displayProfiles: Spec.SPEC.displayProfiles.def
@@ -1014,12 +1023,45 @@ Singleton {
     property bool displayProfileAutoSelect: Spec.SPEC.displayProfileAutoSelect.def
     property bool displayShowDisconnected: Spec.SPEC.displayShowDisconnected.def
     property bool displaySnapToEdge: Spec.SPEC.displaySnapToEdge.def
+    property bool displayAutoPrimaryOnLidClose: Spec.SPEC.displayAutoPrimaryOnLidClose.def
+    property bool displayRestorePrimaryOnLidOpen: Spec.SPEC.displayRestorePrimaryOnLidOpen.def
+    property string displayLidPrimaryRestore: Spec.SPEC.displayLidPrimaryRestore.def
+    property string displayLidFailoverTarget: Spec.SPEC.displayLidFailoverTarget.def
     property var barIpcRevealStates: ({})
 
     property var dockConfigs: Spec.SPEC.dockConfigs.def
     property var barConfigs: Spec.SPEC.barConfigs.def
+    property var appsDockSharedConfig: Spec.SPEC.appsDockSharedConfig.def
+
+    function appsDockSharedOption(key, fallbackValue) {
+        const value = appsDockSharedConfig?.[key];
+        return value === undefined ? fallbackValue : value;
+    }
+
+    function setAppsDockSharedOption(key, value) {
+        const next = Object.assign({}, appsDockSharedConfig || Spec.SPEC.appsDockSharedConfig.def);
+        if (JSON.stringify(next[key]) === JSON.stringify(value))
+            return;
+        next[key] = value;
+        appsDockSharedConfig = next;
+        saveSettings();
+    }
+
+    function resetAppsDockSharedOptions(keys) {
+        const defaults = Spec.SPEC.appsDockSharedConfig.def;
+        for (const key of keys || [])
+            setAppsDockSharedOption(key, defaults[key]);
+    }
 
     property var desktopWidgetInstances: Spec.SPEC.desktopWidgetInstances.def
+    property string desktopIconLayoutMode: Spec.SPEC.desktopIconLayoutMode.def
+    property bool screenEdgesEnabled: Spec.SPEC.screenEdgesEnabled.def
+    property int screenEdgeThickness: Spec.SPEC.screenEdgeThickness.def
+    property string screenEdgeLeftAction: Spec.SPEC.screenEdgeLeftAction.def
+    property string screenEdgeRightAction: Spec.SPEC.screenEdgeRightAction.def
+    property string screenEdgeTopAction: Spec.SPEC.screenEdgeTopAction.def
+    property string screenEdgeBottomAction: Spec.SPEC.screenEdgeBottomAction.def
+    property var desktopIconPositions: Spec.SPEC.desktopIconPositions.def
     property var desktopWidgetGroups: Spec.SPEC.desktopWidgetGroups.def
 
     function getDefaultSystemMonitorConfig() {
@@ -1182,7 +1224,7 @@ Singleton {
         saveSettings();
     }
 
-    signal forceDankBarLayoutRefresh
+    signal forceCyBarLayoutRefresh
     signal forceDockLayoutRefresh
     signal widgetDataChanged
     signal workspaceIconsUpdated
@@ -1190,6 +1232,8 @@ Singleton {
     signal compositorInputRefreshNeeded
     signal compositorCursorRefreshNeeded
     signal notificationPopupsInvalidated
+
+    onNotificationPopupPositionChanged: notificationPopupsInvalidated()
 
     function refreshAuthAvailability() {
         if (isGreeterMode)
@@ -1250,6 +1294,15 @@ Singleton {
         updateGtkIconTheme();
         updateQtIconTheme();
         updateCosmicIconTheme();
+        if (typeof SessionData !== "undefined") {
+            const mode = SessionData.isLightMode ? "light" : "dark";
+            Quickshell.execDetached([
+                "cyshell-theme-sync",
+                "--mode", mode,
+                "--icon-theme", resolveIconTheme(),
+                "--config-dir", _configDir
+            ]);
+        }
     }
 
     function setIconThemeUnmanaged() {
@@ -1277,7 +1330,7 @@ Singleton {
             if (platform === SessionData.lastAppliedIconTheme || platform === root.iconThemeDark || platform === root.iconThemeLight)
                 return;
             root.setIconThemeUnmanaged();
-            ToastService.showWarning(I18n.tr("Icon theme changed outside CyShell; switched to System Default", "shown when an external tool overrides the icon theme DMS applied"));
+            ToastService.showWarning(I18n.tr("Icon theme changed outside CyShell; switched to System Default", "shown when an external tool overrides the icon theme CyShell applied"));
         });
     }
 
@@ -1344,7 +1397,7 @@ Singleton {
             return;
         SessionData.lastAppliedIconTheme = gtkThemeName;
         SessionData.saveSettings();
-        if (typeof DMSService !== "undefined" && DMSService.apiVersion >= 3 && typeof PortalService !== "undefined") {
+        if (typeof CyShellService !== "undefined" && CyShellService.apiVersion >= 3 && typeof PortalService !== "undefined") {
             PortalService.setSystemIconTheme(gtkThemeName);
         }
 
@@ -1369,8 +1422,7 @@ Singleton {
         done
 
         ${GSettings.setCmd("org.gnome.desktop.interface", "icon-theme", gtkThemeName)} || true
-
-        pkill -HUP -f 'gtk' 2>/dev/null || true`;
+`;
 
         Quickshell.execDetached(["sh", "-lc", configScript]);
     }
@@ -1408,7 +1460,7 @@ Singleton {
 
         if (!qtengineActive || !runDmsMatugenTemplates || !matugenTemplateQtengine)
             return;
-        Proc.runCommand("updateQtengineIconTheme", [Proc.dmsBin, "matugen", "qtengine", "--icon-theme", qtThemeName], () => {});
+        Proc.runCommand("updateQtengineIconTheme", [Proc.cyshellBin, "matugen", "qtengine", "--icon-theme", qtThemeName], () => {});
     }
 
     function scheduleAuthApply() {
@@ -1656,8 +1708,8 @@ Singleton {
             if (wasReadOnly)
                 log.info("settings.json is now writable");
             if (_pendingMigration) {
-                _selfWrite = true;
-                settingsFile.setText(JSON.stringify(_pendingMigration, null, 2));
+                _pendingSettingsWrite = JSON.stringify(_pendingMigration, null, 2);
+                _flushSettingsWrite();
             }
         }
         _pendingMigration = null;
@@ -1735,22 +1787,78 @@ Singleton {
         }
     }
 
+    function _coreSettingsBrokerReady() {
+        return CyShellService.isConnected && Array.isArray(CyShellService.capabilities) && CyShellService.capabilities.includes("settings");
+    }
+
+    function _flushSettingsWrite() {
+        if (_settingsWriteInFlight || !_pendingSettingsWrite || !_coreSettingsBrokerReady())
+            return;
+        const json = _pendingSettingsWrite;
+        _pendingSettingsWrite = "";
+        _settingsWriteInFlight = true;
+        CyShellService.sendRequest("settings.replace", {
+            "kind": "settings",
+            "json": json
+        }, response => {
+            _settingsWriteInFlight = false;
+            if (response?.error) {
+                log.error("Core settings write failed:", response.error);
+                if (!_pendingSettingsWrite)
+                    _pendingSettingsWrite = json;
+                settingsWriteRetry.restart();
+                return;
+            }
+            if (_pendingSettingsWrite)
+                Qt.callLater(root._flushSettingsWrite);
+        }, 5000);
+    }
+
+    function _flushPluginSettingsWrite() {
+        if (_pluginSettingsWriteInFlight || !_pendingPluginSettingsWrite || !_coreSettingsBrokerReady())
+            return;
+        const json = _pendingPluginSettingsWrite;
+        _pendingPluginSettingsWrite = "";
+        _pluginSettingsWriteInFlight = true;
+        CyShellService.sendRequest("settings.replace", {
+            "kind": "plugins",
+            "json": json
+        }, response => {
+            _pluginSettingsWriteInFlight = false;
+            if (response?.error) {
+                log.error("Core plugin settings write failed:", response.error);
+                if (!_pendingPluginSettingsWrite)
+                    _pendingPluginSettingsWrite = json;
+                pluginSettingsWriteRetry.restart();
+                return;
+            }
+            if (_pendingPluginSettingsWrite)
+                Qt.callLater(root._flushPluginSettingsWrite);
+        }, 5000);
+    }
+
     function saveSettings() {
         if (isGreeterMode || _loading || _parseError || !_hasLoaded)
             return;
         const json = JSON.stringify(Store.toJson(root), null, 2);
-        if (json === settingsFile.text())
-            return;
-        _selfWrite = true;
-        settingsFile.setText(json);
+        _pendingSettingsWrite = json;
+        _flushSettingsWrite();
         if (_isReadOnly)
             _checkSettingsWritable();
+    }
+
+    function reloadFromDisk() {
+        if (isGreeterMode)
+            return;
+        settingsFile.reload();
+        pluginSettingsFile.reload();
     }
 
     function savePluginSettings() {
         if (isGreeterMode || _pluginSettingsLoading || _pluginParseError)
             return;
-        pluginSettingsFile.setText(JSON.stringify(pluginSettings, null, 2));
+        _pendingPluginSettingsWrite = JSON.stringify(pluginSettings, null, 2);
+        _flushPluginSettingsWrite();
     }
 
     function _connectedFrameBarStyleSnapshot(config) {
@@ -2660,7 +2768,7 @@ Singleton {
         return env;
     }
 
-    function setDankBarLeftWidgets(order) {
+    function setCyBarLeftWidgets(order) {
         const defaultBar = getPrimaryBarConfig();
         if (defaultBar) {
             updateBarConfig(defaultBar.id, {
@@ -2670,7 +2778,7 @@ Singleton {
         }
     }
 
-    function setDankBarCenterWidgets(order) {
+    function setCyBarCenterWidgets(order) {
         const defaultBar = getPrimaryBarConfig();
         if (defaultBar) {
             updateBarConfig(defaultBar.id, {
@@ -2680,7 +2788,7 @@ Singleton {
         }
     }
 
-    function setDankBarRightWidgets(order) {
+    function setCyBarRightWidgets(order) {
         const defaultBar = getPrimaryBarConfig();
         if (defaultBar) {
             updateBarConfig(defaultBar.id, {
@@ -3040,6 +3148,36 @@ Singleton {
 
     property alias settingsFile: settingsFile
 
+    Connections {
+        target: CyShellService
+
+        function onConnectionStateChanged() {
+            if (!CyShellService.isConnected)
+                return;
+            root._flushSettingsWrite();
+            root._flushPluginSettingsWrite();
+        }
+
+        function onCapabilitiesReceived() {
+            root._flushSettingsWrite();
+            root._flushPluginSettingsWrite();
+        }
+    }
+
+    Timer {
+        id: settingsWriteRetry
+        interval: 750
+        repeat: false
+        onTriggered: root._flushSettingsWrite()
+    }
+
+    Timer {
+        id: pluginSettingsWriteRetry
+        interval: 750
+        repeat: false
+        onTriggered: root._flushPluginSettingsWrite()
+    }
+
     Timer {
         id: settingsFileReloadDebounce
         interval: 50
@@ -3050,16 +3188,16 @@ Singleton {
     FileView {
         id: settingsFile
 
-        path: isGreeterMode ? "" : StandardPaths.writableLocation(StandardPaths.ConfigLocation) + "/DankMaterialShell/settings.json"
+        path: isGreeterMode ? "" : StandardPaths.writableLocation(StandardPaths.ConfigLocation) + "/CyShell/settings.json"
         blockLoading: true
         blockWrites: true
         atomicWrites: true
         watchChanges: !isGreeterMode
         onFileChanged: {
-            if (_selfWrite) {
-                _selfWrite = false;
-                return;
-            }
+            // Multiple CyShell UI processes share this file. Never suppress a
+            // change just because this process wrote recently: another process
+            // can win the atomic rename in the same window and would otherwise
+            // leave this SettingsData instance stale.
             settingsFileReloadDebounce.restart();
         }
         onLoaded: {
@@ -3117,7 +3255,7 @@ Singleton {
         }
     }
 
-    readonly property string _greeterCacheDir: Quickshell.env("CYSHELL_GREET_CFG_DIR") || Quickshell.env("DMS_GREET_CFG_DIR") || "/var/cache/cyshell-greeter"
+    readonly property string _greeterCacheDir: Quickshell.env("CYSHELL_GREET_CFG_DIR") || "/var/cache/cyshell-greeter"
 
     property string greeterSettingsBaseDir: root._greeterCacheDir
 

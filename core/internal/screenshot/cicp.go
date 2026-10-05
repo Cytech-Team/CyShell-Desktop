@@ -4,7 +4,7 @@ import (
 	"encoding/binary"
 	"hash/crc32"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/proto/wp_color_management"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/proto/wp_color_management"
 )
 
 // CICP holds H.273 coding-independent code points describing the color

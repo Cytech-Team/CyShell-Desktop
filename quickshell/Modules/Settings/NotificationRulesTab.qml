@@ -120,7 +120,7 @@ Item {
             tags: ["notification", "rules", "mute", "ignore", "priority", "regex", "history"]
 
             headerActions: [
-                DankActionButton {
+                CyActionButton {
                     buttonSize: 36
                     iconName: "restart_alt"
                     tooltipText: I18n.tr("Reset to default")
@@ -129,7 +129,7 @@ Item {
                     iconColor: Theme.surfaceVariantText
                     onClicked: SettingsData.resetNotificationRules()
                 },
-                DankActionButton {
+                CyActionButton {
                     buttonSize: 36
                     iconName: "add"
                     Accessible.name: I18n.tr("Add")
@@ -186,7 +186,7 @@ Item {
                                         height: 1
                                     }
 
-                                    DankToggle {
+                                    CyToggle {
                                         id: enableToggle
                                         width: 40
                                         height: 24
@@ -209,7 +209,7 @@ Item {
                                             color: deleteArea.containsMouse ? Theme.withAlpha(Theme.error, 0.2) : Theme.withAlpha(Theme.error, 0)
                                         }
 
-                                        DankIcon {
+                                        CyIcon {
                                             anchors.centerIn: parent
                                             name: "delete"
                                             size: 18
@@ -230,7 +230,7 @@ Item {
                                     width: parent.width
                                     spacing: Theme.spacingXXS
 
-                                    DankTextField {
+                                    CyTextField {
                                         outlined: true
                                         leftIconName: "filter_list"
                                         labelText: I18n.tr("Pattern")
@@ -255,7 +255,7 @@ Item {
                                             color: Theme.surfaceVariantText
                                         }
 
-                                        DankDropdown {
+                                        CyDropdown {
                                             width: parent.width
                                             compactMode: true
                                             dropdownWidth: parent.width
@@ -276,7 +276,7 @@ Item {
                                             color: Theme.surfaceVariantText
                                         }
 
-                                        DankDropdown {
+                                        CyDropdown {
                                             width: parent.width
                                             compactMode: true
                                             dropdownWidth: parent.width
@@ -296,7 +296,7 @@ Item {
                                             color: Theme.surfaceVariantText
                                         }
 
-                                        DankDropdown {
+                                        CyDropdown {
                                             width: parent.width
                                             compactMode: true
                                             dropdownWidth: parent.width
@@ -317,7 +317,7 @@ Item {
                                             color: Theme.surfaceVariantText
                                         }
 
-                                        DankDropdown {
+                                        CyDropdown {
                                             width: parent.width
                                             compactMode: true
                                             dropdownWidth: parent.width
@@ -346,7 +346,7 @@ Item {
                                         height: 1
                                     }
 
-                                    DankToggle {
+                                    CyToggle {
                                         id: bypassDndToggle
                                         width: 40
                                         height: 24
@@ -410,7 +410,7 @@ Item {
                                     height: 1
                                 }
 
-                                DankButton {
+                                CyButton {
                                     id: unmuteBtn
                                     text: I18n.tr("Unmute")
                                     backgroundColor: Theme.chipSurface
@@ -432,7 +432,7 @@ Item {
                                         color: mutedDeleteArea.containsMouse ? Theme.withAlpha(Theme.error, 0.2) : Theme.withAlpha(Theme.error, 0)
                                     }
 
-                                    DankIcon {
+                                    CyIcon {
                                         anchors.centerIn: parent
                                         name: "delete"
                                         size: 18

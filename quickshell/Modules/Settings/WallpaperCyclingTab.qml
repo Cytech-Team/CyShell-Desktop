@@ -144,7 +144,7 @@ Item {
                 subtitle: root.wallpaperFolder
                 enabled: root.canCycle
 
-                DankActionButton {
+                CyActionButton {
                     buttonSize: Theme.iconButtonSize
                     iconName: "skip_previous"
                     iconSize: Theme.iconSizeMedium
@@ -156,7 +156,7 @@ Item {
                     onClicked: root.cycle(true)
                 }
 
-                DankActionButton {
+                CyActionButton {
                     buttonSize: Theme.iconButtonSize
                     iconName: "skip_next"
                     iconSize: Theme.iconSizeMedium
@@ -185,7 +185,7 @@ Item {
                 title: I18n.tr("Folder")
                 subtitle: root.folderPath || I18n.tr("Use desktop wallpaper")
 
-                DankButton {
+                CyButton {
                     text: I18n.tr("Browse")
                     horizontalPadding: Theme.spacingL
                     anchors.verticalCenter: parent.verticalCenter

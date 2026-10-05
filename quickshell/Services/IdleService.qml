@@ -14,7 +14,7 @@ Singleton {
     property bool enabled: true
     property bool respectInhibitors: true
 
-    readonly property bool externalInhibitActive: DMSService.screensaverInhibited
+    readonly property bool externalInhibitActive: CyShellService.screensaverInhibited
 
     readonly property bool isOnBattery: BatteryService.batteryAvailable && !BatteryService.isPluggedIn
     readonly property int monitorTimeout: isOnBattery ? SettingsData.batteryMonitorTimeout : SettingsData.acMonitorTimeout
@@ -191,7 +191,7 @@ Singleton {
 
     onExternalInhibitActiveChanged: {
         if (externalInhibitActive) {
-            const apps = DMSService.screensaverInhibitors.map(i => i.appName).join(", ");
+            const apps = CyShellService.screensaverInhibitors.map(i => i.appName).join(", ");
             log.info("External idle inhibit active from:", apps || "unknown");
         } else {
             log.info("External idle inhibit released");

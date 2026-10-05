@@ -15,6 +15,7 @@ SettingsRow {
 
     readonly property bool hasCustomAlias: AudioService.hasDeviceAlias(deviceNode?.name ?? "")
     readonly property string displayedName: AudioService.displayName(deviceNode)
+    readonly property bool isDefaultDevice: deviceNode === (deviceType === "input" ? AudioService.source : AudioService.sink)
 
     signal editRequested(var deviceNode)
     signal hideRequested(var deviceNode)
@@ -22,11 +23,11 @@ SettingsRow {
     title: displayedName
     subtitle: hasCustomAlias ? I18n.tr("Original: %1").arg(AudioService.originalName(deviceNode)) : (deviceNode?.name ?? "")
     iconName: deviceType === "input" ? "mic" : "speaker"
-    trailingBadge: hasCustomAlias ? I18n.tr("Custom") : ""
+    trailingBadge: isDefaultDevice ? I18n.tr("Default") : (hasCustomAlias ? I18n.tr("Custom") : "")
     modified: hasCustomAlias
     onResetRequested: AudioService.removeDeviceAlias(deviceNode.name)
 
-    DankActionButton {
+    CyActionButton {
         visible: root.showHideButton
         iconName: root.isHidden ? "visibility" : "visibility_off"
         iconSize: Theme.iconSizeMedium
@@ -34,7 +35,7 @@ SettingsRow {
         onClicked: root.hideRequested(root.deviceNode)
     }
 
-    DankActionButton {
+    CyActionButton {
         visible: !root.isHidden
         iconName: "edit"
         iconSize: Theme.iconSizeMedium

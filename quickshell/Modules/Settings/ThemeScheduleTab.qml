@@ -12,7 +12,7 @@ Item {
 
     property var parentModal: null
 
-    readonly property bool matugenSmartCapable: Theme.matugenAvailable && DMSService.matugenSmartSupported && Theme.currentTheme === Theme.dynamic
+    readonly property bool matugenSmartCapable: Theme.matugenAvailable && CyShellService.matugenSmartSupported && Theme.currentTheme === Theme.dynamic
     readonly property var modes: matugenSmartCapable ? ["manual", "time", "location", "wallpaper"] : ["manual", "time", "location"]
     readonly property var modeLabels: [I18n.tr("Manual"), I18n.tr("Schedule", "noun, time based light and dark theme switching mode"), I18n.tr("Location", "noun, automatic mode based on geographic location, also weather location card"), I18n.tr("Wallpaper")].slice(0, modes.length)
     readonly property string mode: {

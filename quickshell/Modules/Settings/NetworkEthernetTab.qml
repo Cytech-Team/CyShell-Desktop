@@ -112,7 +112,7 @@ Item {
                                             anchors.rightMargin: Theme.spacingS
                                             spacing: Theme.spacingS
 
-                                            DankIcon {
+                                            CyIcon {
                                                 name: "lan"
                                                 size: 20
                                                 color: isConnected ? Theme.primary : Theme.surfaceText
@@ -188,7 +188,7 @@ Item {
                                                 color: ethExpandBtn.containsMouse ? Theme.surfacePressed : Theme.withAlpha(Theme.surfacePressed, 0)
                                                 visible: isConnected
 
-                                                DankIcon {
+                                                CyIcon {
                                                     anchors.centerIn: parent
                                                     name: isExpanded ? "expand_less" : "expand_more"
                                                     size: 18
@@ -218,7 +218,7 @@ Item {
                                                 color: ethDisconnectBtn.containsMouse ? Theme.errorHover : Theme.withAlpha(Theme.errorHover, 0)
                                                 visible: isConnected
 
-                                                DankIcon {
+                                                CyIcon {
                                                     anchors.centerIn: parent
                                                     name: "link_off"
                                                     size: 18
@@ -233,7 +233,7 @@ Item {
                                                     onClicked: NetworkService.disconnectEthernetDevice(modelData.name)
                                                 }
 
-                                                DankTooltipHost {
+                                                CyTooltipHost {
                                                     text: I18n.tr("Disconnect")
                                                     target: parent
                                                     hoverArea: ethDisconnectBtn
@@ -343,7 +343,7 @@ Item {
                                                     height: NetworkService.networkWiredInfoLoading ? 40 : 0
                                                     visible: NetworkService.networkWiredInfoLoading
 
-                                                    DankSpinner {
+                                                    CySpinner {
                                                         anchors.centerIn: parent
                                                         size: 20
                                                     }
@@ -390,7 +390,7 @@ Item {
                                     anchors.verticalCenter: parent.verticalCenter
                                     spacing: Theme.spacingS
 
-                                    DankIcon {
+                                    CyIcon {
                                         name: "lan"
                                         size: 20
                                         color: modelData.isActive ? Theme.primary : Theme.surfaceText

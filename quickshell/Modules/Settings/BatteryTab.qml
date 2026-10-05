@@ -4,7 +4,7 @@ import qs.Common
 import qs.Services
 import qs.Widgets
 import qs.Modules.Settings.Widgets
-import qs.Modules.DankBar.Popouts
+import qs.Modules.CyBar.Popouts
 
 Item {
     id: root
@@ -17,7 +17,7 @@ Item {
         return Theme.surfaceText;
     }
 
-    // The sysfs names DMS can write, in the order they are tried. Hardware that
+    // The sysfs names CyShell can write, in the order they are tried. Hardware that
     // exposes none of them, a Lenovo IdeaPad on ideapad_laptop for instance,
     // used to run the apply script to completion without writing anything, and
     // sh exiting 0 was indistinguishable from a successful write.
@@ -87,7 +87,7 @@ done
                         width: parent.width
                         spacing: Theme.spacingM
 
-                        DankIcon {
+                        CyIcon {
                             name: BatteryService.getBatteryIcon()
                             size: Theme.iconSizeLarge
                             color: root.batteryStatusColor
@@ -274,7 +274,7 @@ done
                         height: 1
                     }
 
-                    DankButton {
+                    CyButton {
                         id: applyButton
                         text: I18n.tr("Apply to hardware")
                         iconName: "lock"

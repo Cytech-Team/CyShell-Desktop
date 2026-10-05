@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/configfrag"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/configfrag"
 )
 
 func marshalKeys(t *testing.T, v any) map[string]json.RawMessage {
@@ -20,21 +20,21 @@ func marshalKeys(t *testing.T, v any) map[string]json.RawMessage {
 	return out
 }
 
-func TestDMSBindsStatusKeySpellings(t *testing.T) {
-	keys := marshalKeys(t, DMSBindsStatus{
-		Exists:          true,
-		Included:        true,
-		IncludePosition: 2,
-		TotalIncludes:   3,
-		BindsAfterDMS:   4,
-		Effective:       true,
-		OverriddenBy:    4,
-		StatusMessage:   "DMS binds are active",
-		ConfigFormat:    "lua",
-		ReadOnly:        true,
+func TestCyShellBindsStatusKeySpellings(t *testing.T) {
+	keys := marshalKeys(t, CyShellBindsStatus{
+		Exists:            true,
+		Included:          true,
+		IncludePosition:   2,
+		TotalIncludes:     3,
+		BindsAfterCyShell: 4,
+		Effective:         true,
+		OverriddenBy:      4,
+		StatusMessage:     "CyShell binds are active",
+		ConfigFormat:      "lua",
+		ReadOnly:          true,
 	})
 
-	want := []string{"exists", "included", "includePosition", "totalIncludes", "bindsAfterDms", "effective", "overriddenBy", "statusMessage", "configFormat", "readOnly"}
+	want := []string{"exists", "included", "includePosition", "totalIncludes", "bindsAfterCyShell", "effective", "overriddenBy", "statusMessage", "configFormat", "readOnly"}
 	if len(keys) != len(want) {
 		t.Fatalf("key count = %d, want %d: %v", len(keys), len(want), keys)
 	}
@@ -45,8 +45,8 @@ func TestDMSBindsStatusKeySpellings(t *testing.T) {
 	}
 }
 
-func TestDMSBindsStatusOmitsFormatAndReadOnlyWhenUnset(t *testing.T) {
-	keys := marshalKeys(t, DMSBindsStatus{})
+func TestCyShellBindsStatusOmitsFormatAndReadOnlyWhenUnset(t *testing.T) {
+	keys := marshalKeys(t, CyShellBindsStatus{})
 
 	if _, ok := keys["configFormat"]; ok {
 		t.Error("configFormat must be omitted when empty")
@@ -54,63 +54,63 @@ func TestDMSBindsStatusOmitsFormatAndReadOnlyWhenUnset(t *testing.T) {
 	if _, ok := keys["readOnly"]; ok {
 		t.Error("readOnly must be omitted when false")
 	}
-	for _, key := range []string{"exists", "included", "includePosition", "totalIncludes", "bindsAfterDms", "effective", "overriddenBy", "statusMessage"} {
+	for _, key := range []string{"exists", "included", "includePosition", "totalIncludes", "bindsAfterCyShell", "effective", "overriddenBy", "statusMessage"} {
 		if _, ok := keys[key]; !ok {
 			t.Errorf("zero value must still carry %q", key)
 		}
 	}
 }
 
-func TestDMSBindsStatusValuesSurviveTheWire(t *testing.T) {
-	data, err := json.Marshal(DMSBindsStatus{IncludePosition: 2, TotalIncludes: 3, BindsAfterDMS: 4, OverriddenBy: 4, StatusMessage: "x"})
+func TestCyShellBindsStatusValuesSurviveTheWire(t *testing.T) {
+	data, err := json.Marshal(CyShellBindsStatus{IncludePosition: 2, TotalIncludes: 3, BindsAfterCyShell: 4, OverriddenBy: 4, StatusMessage: "x"})
 	if err != nil {
 		t.Fatalf("marshal: %v", err)
 	}
-	var back DMSBindsStatus
+	var back CyShellBindsStatus
 	if err := json.Unmarshal(data, &back); err != nil {
 		t.Fatalf("unmarshal: %v", err)
 	}
-	if back.BindsAfterDMS != 4 {
-		t.Errorf("bindsAfterDms = %d, want 4", back.BindsAfterDMS)
+	if back.BindsAfterCyShell != 4 {
+		t.Errorf("bindsAfterCyShell = %d, want 4", back.BindsAfterCyShell)
 	}
 	if back.IncludePosition != 2 || back.TotalIncludes != 3 {
 		t.Errorf("include position/total = %d/%d, want 2/3", back.IncludePosition, back.TotalIncludes)
 	}
 }
 
-func TestDMSBindsStatusFromCarriesEveryField(t *testing.T) {
-	got := DMSBindsStatusFrom(configfrag.Status{
-		Exists:          true,
-		Included:        true,
-		IncludePosition: 2,
-		TotalIncludes:   3,
-		EntriesAfterDMS: 7,
-		Effective:       true,
-		OverriddenBy:    7,
-		StatusMessage:   "DMS binds are active",
-		ConfigFormat:    "lua",
-		ReadOnly:        true,
+func TestCyShellBindsStatusFromCarriesEveryField(t *testing.T) {
+	got := CyShellBindsStatusFrom(configfrag.Status{
+		Exists:              true,
+		Included:            true,
+		IncludePosition:     2,
+		TotalIncludes:       3,
+		EntriesAfterCyShell: 7,
+		Effective:           true,
+		OverriddenBy:        7,
+		StatusMessage:       "CyShell binds are active",
+		ConfigFormat:        "lua",
+		ReadOnly:            true,
 	})
 
-	want := DMSBindsStatus{
-		Exists:          true,
-		Included:        true,
-		IncludePosition: 2,
-		TotalIncludes:   3,
-		BindsAfterDMS:   7,
-		Effective:       true,
-		OverriddenBy:    7,
-		StatusMessage:   "DMS binds are active",
-		ConfigFormat:    "lua",
-		ReadOnly:        true,
+	want := CyShellBindsStatus{
+		Exists:            true,
+		Included:          true,
+		IncludePosition:   2,
+		TotalIncludes:     3,
+		BindsAfterCyShell: 7,
+		Effective:         true,
+		OverriddenBy:      7,
+		StatusMessage:     "CyShell binds are active",
+		ConfigFormat:      "lua",
+		ReadOnly:          true,
 	}
 	if *got != want {
-		t.Errorf("DMSBindsStatusFrom = %+v, want %+v", *got, want)
+		t.Errorf("CyShellBindsStatusFrom = %+v, want %+v", *got, want)
 	}
 }
 
-func TestDMSBindsStatusFromKeepsAnUnseenIncludePosition(t *testing.T) {
-	got := DMSBindsStatusFrom(configfrag.BuildStatus(configfrag.NewScan(), false, 0, "", false, configfrag.Messages{Missing: "gone"}))
+func TestCyShellBindsStatusFromKeepsAnUnseenIncludePosition(t *testing.T) {
+	got := CyShellBindsStatusFrom(configfrag.BuildStatus(configfrag.NewScan(), false, 0, "", false, configfrag.Messages{Missing: "gone"}))
 	if got.IncludePosition != -1 {
 		t.Errorf("includePosition = %d, want -1", got.IncludePosition)
 	}

@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	mock_gonetworkmanager "github.com/AvengeMedia/DankMaterialShell/core/internal/mocks/github.com/Wifx/gonetworkmanager/v2"
+	mock_gonetworkmanager "github.com/Cytech-Team/CyShell-Desktop/core/internal/mocks/github.com/Wifx/gonetworkmanager/v2"
 	"github.com/Wifx/gonetworkmanager/v2"
 	"github.com/godbus/dbus/v5"
 	"github.com/stretchr/testify/assert"

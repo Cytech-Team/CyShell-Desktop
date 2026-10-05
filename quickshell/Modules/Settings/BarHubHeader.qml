@@ -100,7 +100,7 @@ Column {
         title: I18n.tr("Bars", "plural noun, the shell bars or panels, settings title")
         settingKey: "barConfigurations"
         tags: ["bar", "configuration", "add", "remove", "enable", "multiple", "name"]
-        headerActions: DankButton {
+        headerActions: CyButton {
             text: I18n.tr("Add")
             iconName: "add"
             buttonHeight: Theme.buttonHeightXS
@@ -136,7 +136,7 @@ Column {
             subtitle: root.editingBarId ? "" : bar.selectedBarName
             visible: !!bar.selectedBarConfig
 
-            DankActionButton {
+            CyActionButton {
                 iconName: root.editingBarId ? "check" : "edit"
                 Accessible.name: root.editingBarId ? I18n.tr("Save") : I18n.tr("Rename")
                 onClicked: {
@@ -148,7 +148,7 @@ Column {
                     root.editingBarId = bar.selectedBarId;
                 }
             }
-            DankActionButton {
+            CyActionButton {
                 visible: root.editingBarId !== ""
                 iconName: "close"
                 Accessible.name: I18n.tr("Cancel")
@@ -159,7 +159,7 @@ Column {
                 width: parent.width
                 active: root.editingBarId !== ""
                 visible: active
-                sourceComponent: DankTextField {
+                sourceComponent: CyTextField {
                     id: renameField
                     width: parent.width
                     outlined: true

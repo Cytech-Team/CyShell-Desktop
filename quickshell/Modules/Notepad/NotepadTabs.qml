@@ -172,7 +172,7 @@ Column {
                                         anchors.verticalCenter: parent.verticalCenter
                                     }
 
-                                    DankTextField {
+                                    CyTextField {
                                         id: renameField
                                         visible: delegateItem.editing
                                         enabled: delegateItem.editing
@@ -231,7 +231,7 @@ Column {
                                         visible: NotepadStorageService.tabs.length > 1 && !delegateItem.editing
                                         anchors.verticalCenter: parent.verticalCenter
 
-                                        DankIcon {
+                                        CyIcon {
                                             name: "close"
                                             size: 14
                                             color: Theme.surfaceTextMedium
@@ -338,7 +338,7 @@ Column {
                             }
                         }
 
-                        DankTooltipHost {
+                        CyTooltipHost {
                             text: tabText.truncated ? (delegateItem.modelData.title || "Untitled") : ""
                             target: delegateItem
                             hoverArea: tabMouseArea
@@ -348,7 +348,7 @@ Column {
             }
         }
 
-        DankActionButton {
+        CyActionButton {
             id: newTabButton
             width: 32
             height: 32

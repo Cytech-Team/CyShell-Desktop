@@ -78,13 +78,17 @@ function setLayout(widgets) {
 }
 
 function resetToDefault(columns) {
-    const ids = ["volumeSlider", "brightnessSlider", "wifi", "bluetooth", "audioOutput", "audioInput", "nightMode", "darkMode"];
-    Common.SettingsData.set("controlCenterWidgets", ids.map(id => Object.assign({
-            "id": id,
-            "enabled": true
-        }, clampSize({
-            "id": id
-        }, columns))));
+    const widgets = [
+        { id: "wifi", enabled: true, w: 2, h: 2 },
+        { id: "bluetooth", enabled: true, w: 2, h: 2 },
+        { id: "audioOutput", enabled: true, w: 2, h: 2 },
+        { id: "nightMode", enabled: true, w: 2, h: 2 },
+        { id: "darkMode", enabled: true, w: 2, h: 2 },
+        { id: "audioInput", enabled: true, w: 2, h: 2 },
+        { id: "brightnessSlider", enabled: true, w: columns, h: 1 },
+        { id: "volumeSlider", enabled: true, w: columns, h: 1 }
+    ];
+    Common.SettingsData.set("controlCenterWidgets", widgets.map(widget => Object.assign({}, widget, clampSize(widget, columns))));
 }
 
 function clearAll() {

@@ -56,8 +56,11 @@ Item {
     property Component popoutContent: null
     property real popoutWidth: 400
     property real popoutHeight: 0
+    property var popoutKeyboardFocus: null
     property var pillClickAction: null
     property var pillRightClickAction: null
+    property var pillHoverAction: null
+    property var pillHoverLeaveAction: null
 
     property Component controlCenterWidget: null
     property string ccWidgetIcon: ""
@@ -241,6 +244,7 @@ Item {
 
         onClicked: root.triggerPopout()
         onRightClicked: root.runPillAction(root.pillRightClickAction)
+        onIsMouseHoveredChanged: root.handlePillHover(isMouseHovered)
     }
 
     BasePill {
@@ -288,6 +292,7 @@ Item {
 
         onClicked: root.triggerPopout()
         onRightClicked: root.runPillAction(root.pillRightClickAction)
+        onIsMouseHoveredChanged: root.handlePillHover(isMouseHovered)
     }
 
     Component.onDestruction: {
@@ -352,11 +357,20 @@ Item {
             pluginPopout.toggle();
     }
 
-    function triggerHoverPopout(widgetHostId) {
-        if (pillClickAction) {
-            triggerPopout();
-            return;
+    function handlePillHover(hovered) {
+        if (hovered) {
+            if (pillHoverAction)
+                runPillAction(pillHoverAction);
+        } else if (pillHoverLeaveAction) {
+            runPillAction(pillHoverLeaveAction);
         }
+    }
+
+    function triggerHoverPopout(widgetHostId) {
+        // Hover must never execute a click action. Action-only widgets such as
+        // CyLanguage use pillClickAction for destructive/state-changing work.
+        if (pillClickAction)
+            return;
         if (!hasPopout || !positionPopout())
             return;
         PopoutManager.requestHoverPopout(pluginPopout, undefined, widgetHostId || pluginId);
@@ -366,6 +380,7 @@ Item {
         id: pluginPopout
         contentWidth: root.popoutWidth
         contentHeight: root.popoutHeight
+        customKeyboardFocus: shouldBeVisible ? root.popoutKeyboardFocus : null
         pluginContent: root.popoutContent
     }
 }

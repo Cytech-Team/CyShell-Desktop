@@ -15,7 +15,7 @@ PanelWindow {
     property var surfaceContext: null
     property real dockVisibleHeight: 40
     property int margin: 10
-    property string layerNamespace: "dms:dock-context-menu"
+    property string layerNamespace: "cyshell:dock-context-menu"
     property real menuMaxWidth: 400
     property real menuMinWidth: 180
 

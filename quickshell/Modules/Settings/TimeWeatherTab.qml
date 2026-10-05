@@ -195,7 +195,7 @@ Item {
                 }
             }
 
-            DankTextField {
+            CyTextField {
                 id: customFormatInput
                 outlined: true
                 leftIconName: "calendar_today"
@@ -276,7 +276,7 @@ Item {
                 }
             }
 
-            DankTextField {
+            CyTextField {
                 id: customLockFormatInput
                 outlined: true
                 leftIconName: "calendar_today"

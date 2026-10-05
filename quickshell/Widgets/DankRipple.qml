@@ -1,3 +1,2 @@
-import qs.DankCommon.Widgets as DankCommon
-
-DankCommon.DankRipple {}
+import QtQuick
+CyRipple {}

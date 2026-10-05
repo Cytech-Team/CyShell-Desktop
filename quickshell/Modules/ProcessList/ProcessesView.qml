@@ -5,7 +5,7 @@ import qs.Common
 import qs.Services
 import qs.Widgets
 
-DankCard {
+CyCard {
     id: root
 
     pad: Theme.spacingS
@@ -285,7 +285,7 @@ DankCard {
             Layout.preferredHeight: ProcessListMetrics.headerHeight
             spacing: Theme.spacingS
 
-            DankButtonGroup {
+            CyButtonGroup {
                 id: sortChips
                 Layout.fillWidth: true
                 readonly property var sortKeys: ["name", "cpu", "memory", "pid"]
@@ -309,7 +309,7 @@ DankCard {
                 }
             }
 
-            DankActionButton {
+            CyActionButton {
                 id: sortDirection
                 KeyNavigation.tab: processListView.currentItem ?? processListView
                 iconName: parent.ascending ? "arrow_upward" : "arrow_downward"
@@ -318,7 +318,7 @@ DankCard {
             }
         }
 
-        DankListView {
+        CyListView {
             id: processListView
             Layout.fillWidth: true
             Layout.fillHeight: true

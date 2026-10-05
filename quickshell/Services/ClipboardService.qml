@@ -13,7 +13,7 @@ Singleton {
 
     readonly property int longTextThreshold: 200
 
-    readonly property bool clipboardAvailable: DMSService.isConnected && (DMSService.capabilities.length === 0 || DMSService.capabilities.includes("clipboard"))
+    readonly property bool clipboardAvailable: CyShellService.isConnected && (CyShellService.capabilities.length === 0 || CyShellService.capabilities.includes("clipboard"))
     property bool pasteSupported: false
     readonly property bool pasteAvailable: clipboardAvailable && pasteSupported
 
@@ -48,7 +48,7 @@ Singleton {
     }
 
     Connections {
-        target: DMSService
+        target: CyShellService
         function onIsConnectedChanged() {
             root.refreshPasteSupport();
         }
@@ -57,11 +57,11 @@ Singleton {
     Component.onCompleted: refreshPasteSupport()
 
     function refreshPasteSupport() {
-        if (!DMSService.isConnected) {
+        if (!CyShellService.isConnected) {
             pasteSupported = false;
             return;
         }
-        DMSService.sendRequest("clipboard.pasteSupported", null, function (response) {
+        CyShellService.sendRequest("clipboard.pasteSupported", null, function (response) {
             root.pasteSupported = !response.error && response.result && response.result.supported === true;
         });
     }
@@ -75,7 +75,7 @@ Singleton {
     }
 
     function sendPasteKeystroke() {
-        DMSService.sendRequest("clipboard.sendPaste", {
+        CyShellService.sendRequest("clipboard.sendPaste", {
             "shift": isTerminalFocused()
         }, function (response) {
             if (response.error) {
@@ -124,7 +124,7 @@ Singleton {
         if (!clipboardAvailable) {
             return;
         }
-        DMSService.sendRequest("clipboard.getHistory", null, function (response) {
+        CyShellService.sendRequest("clipboard.getHistory", null, function (response) {
             if (response.error) {
                 log.warn("Failed to get history:", response.error);
                 return;
@@ -149,7 +149,7 @@ Singleton {
 
         _launcherSearchSeq++;
         const seq = _launcherSearchSeq;
-        DMSService.sendRequest("clipboard.search", {
+        CyShellService.sendRequest("clipboard.search", {
             "query": trimmed,
             "limit": maxItems
         }, function (response) {
@@ -205,7 +205,7 @@ Singleton {
 
     function copyEntry(entry, closeCallback, textOnly) {
         const asText = textOnly === true;
-        DMSService.sendRequest("clipboard.copyEntry", {
+        CyShellService.sendRequest("clipboard.copyEntry", {
             "id": entry.id,
             "textOnly": asText
         }, function (response) {
@@ -235,7 +235,7 @@ Singleton {
             copyEntry(entry, closeCallback);
             return;
         }
-        DMSService.sendRequest("clipboard.copyEntry", {
+        CyShellService.sendRequest("clipboard.copyEntry", {
             "id": entry.id
         }, function (response) {
             if (response.error) {
@@ -257,7 +257,7 @@ Singleton {
     }
 
     function deleteEntry(entry) {
-        DMSService.sendRequest("clipboard.deleteEntry", {
+        CyShellService.sendRequest("clipboard.deleteEntry", {
             "id": entry.id
         }, function (response) {
             if (response.error) {
@@ -282,7 +282,7 @@ Singleton {
             return;
         }
         confirmDialog.show(I18n.tr("Delete Saved Item?"), I18n.tr("This will permanently remove this saved clipboard item. This action cannot be undone."), function () {
-            DMSService.sendRequest("clipboard.deleteEntry", {
+            CyShellService.sendRequest("clipboard.deleteEntry", {
                 "id": entry.id
             }, function (response) {
                 if (response.error) {
@@ -297,7 +297,7 @@ Singleton {
     }
 
     function pinEntry(entry) {
-        DMSService.sendRequest("clipboard.getPinnedCount", null, function (countResponse) {
+        CyShellService.sendRequest("clipboard.getPinnedCount", null, function (countResponse) {
             if (countResponse.error) {
                 ToastService.showError(I18n.tr("Failed to check pin limit"));
                 return;
@@ -309,7 +309,7 @@ Singleton {
                 return;
             }
 
-            DMSService.sendRequest("clipboard.pinEntry", {
+            CyShellService.sendRequest("clipboard.pinEntry", {
                 "id": entry.id
             }, function (response) {
                 if (response.error) {
@@ -323,7 +323,7 @@ Singleton {
     }
 
     function unpinEntry(entry) {
-        DMSService.sendRequest("clipboard.unpinEntry", {
+        CyShellService.sendRequest("clipboard.unpinEntry", {
             "id": entry.id
         }, function (response) {
             if (response.error) {
@@ -344,7 +344,7 @@ Singleton {
             }
             return;
         }
-        DMSService.sendRequest("clipboard.editEntry", {
+        CyShellService.sendRequest("clipboard.editEntry", {
             "id": entry.id,
             "text": text
         }, function (response) {
@@ -365,7 +365,7 @@ Singleton {
     function clearAll() {
         const hasPinned = pinnedCount > 0;
         const savedCount = pinnedCount;
-        DMSService.sendRequest("clipboard.clearHistory", null, function (response) {
+        CyShellService.sendRequest("clipboard.clearHistory", null, function (response) {
             if (response.error) {
                 log.warn("Failed to clear history:", response.error);
                 return;
@@ -383,7 +383,7 @@ Singleton {
         if (ids.length === 0) {
             return;
         }
-        DMSService.sendRequest("clipboard.deleteEntries", {
+        CyShellService.sendRequest("clipboard.deleteEntries", {
             "ids": ids
         }, function (response) {
             if (response.error) {
@@ -457,7 +457,7 @@ Singleton {
     }
 
     Connections {
-        target: DMSService
+        target: CyShellService
         enabled: root.refCount > 0
         function onClipboardStateUpdate(data) {
             const newHistory = data.history || [];

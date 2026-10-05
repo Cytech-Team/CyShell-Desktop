@@ -7,30 +7,12 @@ import qs.Modules.Settings.Widgets
 Column {
     id: root
 
-    LayoutMirroring.enabled: I18n.isRtl
-    LayoutMirroring.childrenInherit: true
-
-    signal requestICCBrowse(string outputName)
-    signal requestICCInfo(string outputName)
-
     required property string outputName
     required property var outputData
-    readonly property bool isConnected: outputData?.connected ?? false
-    readonly property bool isDisabled: {
-        void (DisplayConfigState.pendingHyprlandChanges);
-        void (DisplayConfigState.pendingNiriChanges);
-        if (!root.isConnected)
-            return false;
-        if (CompositorService.isHyprland)
-            return DisplayConfigState.getHyprlandSetting(root.outputData, root.outputName, "disabled", false);
-        if (CompositorService.isNiri)
-            return DisplayConfigState.getNiriSetting(root.outputData, root.outputName, "disabled", false);
-        return false;
-    }
-    readonly property bool isActive: isConnected && !isDisabled
-    readonly property bool vrrSupported: DisplayConfigState.outputs[outputName]?.vrr_supported ?? false
-    readonly property bool hasColorControls: isActive && ICCService.outputNames.indexOf(outputName) !== -1
-    readonly property int neutralTemperature: 7000
+
+    readonly property bool isActive: outputData?.connected && outputData?.enabled
+    readonly property bool isPrimary: DisplayConfigState.effectivePrimaryName === outputName
+    readonly property bool isVirtual: DisplayConfigState.isVirtualOutput(outputData)
 
     width: parent?.width ?? 0
     spacing: Theme.spacingS
@@ -40,295 +22,193 @@ Column {
         title: DisplayConfigState.getOutputDisplayName(root.outputData, root.outputName)
 
         SettingsRow {
-            iconName: root.isActive ? "desktop_windows" : "desktop_access_disabled"
+            iconName: root.isVirtual ? "developer_board" : (root.isActive ? "desktop_windows" : "desktop_access_disabled")
             iconColor: root.isActive ? Theme.primary : Theme.surfaceVariantText
-            title: [root.outputData?.model, root.outputData?.make].filter(part => !!part).join(" - ") || root.outputName
+            title: root.isVirtual
+                ? I18n.tr("Separate virtual desktop for Agent control")
+                : ([root.outputData?.make, root.outputData?.model].filter(value => !!value).join(" · ") || root.outputName)
             subtitle: {
-                if (!root.isConnected)
-                    return I18n.tr("Configuration will be preserved when this display reconnects");
-                if (root.isDisabled)
-                    return I18n.tr("This output is disabled in the current profile");
-                return "";
+                const mode = DisplayConfigState.currentMode(root.outputData) || DisplayConfigState.preferredMode(root.outputData);
+                const ppi = DisplayConfigState.estimatedPpi(root.outputName);
+                let parts = [];
+                if (mode)
+                    parts.push(mode.width + "×" + mode.height + " @ " + DisplayConfigState.formatRefresh(mode.refresh));
+                if (root.outputData?.physicalWidth > 0 && root.outputData?.physicalHeight > 0)
+                    parts.push(root.outputData.physicalWidth + "×" + root.outputData.physicalHeight + " mm");
+                if (ppi > 0)
+                    parts.push("~" + ppi + " PPI");
+                return parts.join(" · ");
             }
-            trailingBadge: {
-                if (!root.isConnected)
-                    return I18n.tr("Disconnected");
-                if (root.isDisabled)
-                    return I18n.tr("Disabled");
-                return "";
-            }
-
-            DankActionButton {
-                visible: !root.isConnected
-                buttonSize: Theme.iconButtonSize
-                iconName: "delete"
-                iconSize: Theme.iconSizeMedium
-                iconColor: Theme.error
-                Accessible.name: I18n.tr("Delete")
-                anchors.verticalCenter: parent.verticalCenter
-                onClicked: DisplayConfigState.deleteDisconnectedOutput(root.outputName)
-            }
-        }
-
-        SettingsDropdownRow {
-            visible: root.isActive
-            text: I18n.tr("Resolution & refresh")
-            currentValue: {
-                const pendingMode = DisplayConfigState.getPendingValue(root.outputName, "mode");
-                if (pendingMode)
-                    return pendingMode;
-                const data = DisplayConfigState.outputs[root.outputName];
-                if (!data?.modes || data?.current_mode === undefined)
-                    return "Auto";
-                const mode = data.modes[data.current_mode];
-                return mode ? DisplayConfigState.formatMode(mode) : "Auto";
-            }
-            options: {
-                const data = DisplayConfigState.outputs[root.outputName];
-                if (!data?.modes)
-                    return ["Auto"];
-                return data.modes.map(mode => DisplayConfigState.formatMode(mode));
-            }
-            onValueChanged: value => {
-                DisplayConfigState.setPendingChange(root.outputName, "mode", value);
-                const snapped = DisplayConfigState.snapScale(root.outputName, root.outputData, scaleRow.currentScale);
-                if (!isNaN(snapped) && Math.abs(snapped - scaleRow.currentScale) > scaleRow.scaleTolerance)
-                    DisplayConfigState.setPendingChange(root.outputName, "scale", snapped);
-            }
-        }
-
-        SettingsRow {
-            id: scaleRow
-
-            readonly property real scaleTolerance: 0.005
-            readonly property string customLabel: I18n.tr("Custom", "dropdown option that opens a custom value input") + "…"
-            property bool customMode: false
-            readonly property real currentScale: {
-                const pendingScale = DisplayConfigState.getPendingValue(root.outputName, "scale");
-                if (pendingScale !== undefined)
-                    return pendingScale;
-                return root.outputData?.logical?.scale || 1.0;
-            }
-            readonly property var scaleOptions: {
-                void (DisplayConfigState.pendingChanges);
-                const values = DisplayConfigState.getScalePresetValues(root.outputName, root.outputData).concat([currentScale]);
-                const valueByLabel = {};
-                for (const value of values) {
-                    const label = DisplayConfigState.formatScaleOption(root.outputName, root.outputData, value);
-                    if (valueByLabel[label] === undefined)
-                        valueByLabel[label] = value;
-                }
-                const labels = Object.keys(valueByLabel).sort((a, b) => valueByLabel[a] - valueByLabel[b]);
-                return {
-                    "labels": labels.concat([customLabel]),
-                    "valueByLabel": valueByLabel
-                };
-            }
-            readonly property string currentLabel: {
-                void (DisplayConfigState.pendingChanges);
-                return DisplayConfigState.formatScaleOption(root.outputName, root.outputData, currentScale);
-            }
-
-            function enterCustomMode() {
-                customMode = true;
-                scaleInput.text = DisplayConfigState.formatScaleLabel(currentScale);
-                scaleInput.forceActiveFocus();
-                scaleInput.selectAll();
-            }
-
-            function leaveCustomMode() {
-                customMode = false;
-                scaleDropdown.currentValue = currentLabel;
-            }
-
-            function applyCustomScale() {
-                if (!customMode)
-                    return;
-                const snapped = DisplayConfigState.snapScale(root.outputName, root.outputData, parseFloat(scaleInput.text));
-                if (!isNaN(snapped))
-                    DisplayConfigState.setPendingChange(root.outputName, "scale", snapped);
-                leaveCustomMode();
-            }
-
-            visible: root.isActive
-            title: I18n.tr("Scale")
-            onCurrentLabelChanged: scaleDropdown.currentValue = currentLabel
-
-            DankDropdown {
-                id: scaleDropdown
-                visible: !scaleRow.customMode
-                width: Math.min(dropdownWidth, scaleRow.width - SettingsMetrics.rowPaddingH * 2)
-                Accessible.name: scaleRow.title
-                options: scaleRow.scaleOptions.labels
-                focusReturnTarget: scaleRow.customMode ? scaleInput : null
-                Component.onCompleted: currentValue = scaleRow.currentLabel
-                onValueChanged: value => {
-                    if (value === scaleRow.customLabel) {
-                        scaleRow.enterCustomMode();
-                        return;
-                    }
-                    const mapped = scaleRow.scaleOptions.valueByLabel[value];
-                    if (mapped !== undefined)
-                        DisplayConfigState.setPendingChange(root.outputName, "scale", mapped);
-                }
-            }
-
-            DankTextField {
-                id: scaleInput
-                visible: scaleRow.customMode
-                outlined: true
-                leftIconName: "zoom_in"
-                width: scaleDropdown.width
-                placeholderText: "0.25 - 4"
-                Accessible.name: scaleRow.title
-                onAccepted: scaleRow.applyCustomScale()
-                onEditingFinished: scaleRow.applyCustomScale()
-                Keys.onEscapePressed: scaleRow.leaveCustomMode()
-            }
-        }
-
-        SettingsDropdownRow {
-            visible: root.isActive
-            text: I18n.tr("Transform", "noun, display rotation and flip dropdown label")
-            currentValue: {
-                const pendingTransform = DisplayConfigState.getPendingValue(root.outputName, "transform");
-                if (pendingTransform)
-                    return DisplayConfigState.getTransformLabel(pendingTransform);
-                return DisplayConfigState.getTransformLabel(root.outputData?.logical?.transform ?? "Normal");
-            }
-            options: [I18n.tr("Normal", "display rotation option", true), "90°", "180°", "270°", I18n.tr("Flipped", "display transform option, mirrored output"), I18n.tr("Flipped 90°"), I18n.tr("Flipped 180°"), I18n.tr("Flipped 270°")]
-            onValueChanged: value => DisplayConfigState.setPendingChange(root.outputName, "transform", DisplayConfigState.getTransformValue(value))
+            trailingBadge: root.isPrimary
+                ? I18n.tr("Main display")
+                : (root.isVirtual ? I18n.tr("Agent Workspace") : "")
         }
 
         SettingsToggleRow {
-            visible: root.isActive && root.vrrSupported && !CompositorService.isMango && !CompositorService.isHyprland && !CompositorService.isNiri
-            text: I18n.tr("Variable refresh rate")
-            checked: {
-                const pendingVrr = DisplayConfigState.getPendingValue(root.outputName, "vrr");
-                if (pendingVrr !== undefined)
-                    return pendingVrr;
-                return DisplayConfigState.outputs[root.outputName]?.vrr_enabled ?? false;
-            }
-            onToggled: checked => DisplayConfigState.setPendingChange(root.outputName, "vrr", checked)
+            text: root.isVirtual ? I18n.tr("Enable Agent Workspace") : I18n.tr("Use this display")
+            checked: root.outputData?.enabled ?? false
+            enabled: checked ? DisplayConfigState.canDisableOutput(root.outputName) : true
+            onToggled: checked => DisplayConfigState.setPendingChange(root.outputName, "enabled", checked)
         }
 
         SettingsDropdownRow {
-            visible: root.isActive && root.vrrSupported && CompositorService.isHyprland
-            text: I18n.tr("Variable refresh rate")
-            options: [I18n.tr("Off"), I18n.tr("On", "adjective, enabled state"), I18n.tr("Fullscreen only")]
-            currentValue: {
-                void (DisplayConfigState.pendingHyprlandChanges);
-                if (DisplayConfigState.getHyprlandSetting(root.outputData, root.outputName, "vrrFullscreenOnly", false))
-                    return I18n.tr("Fullscreen only");
-                const pendingVrr = DisplayConfigState.getPendingValue(root.outputName, "vrr");
-                const vrrEnabled = pendingVrr !== undefined ? pendingVrr : (DisplayConfigState.outputs[root.outputName]?.vrr_enabled ?? false);
-                return vrrEnabled ? I18n.tr("On") : I18n.tr("Off");
-            }
+            visible: root.isActive
+            text: I18n.tr("Resolution")
+            options: DisplayConfigState.resolutionOptions(root.outputName)
+            currentValue: DisplayConfigState.formatResolution(
+                DisplayConfigState.currentMode(root.outputData) || DisplayConfigState.preferredMode(root.outputData)
+            )
             onValueChanged: value => {
-                DisplayConfigState.setPendingChange(root.outputName, "vrr", value !== I18n.tr("Off"));
-                DisplayConfigState.setHyprlandSetting(root.outputData, root.outputName, "vrrFullscreenOnly", value === I18n.tr("Fullscreen only") || null);
+                const modeId = DisplayConfigState.modeIdForResolution(root.outputName, value);
+                if (modeId !== undefined)
+                    DisplayConfigState.setPendingChange(root.outputName, "modeId", modeId);
             }
         }
 
         SettingsDropdownRow {
-            visible: root.isActive && root.vrrSupported && CompositorService.isNiri
-            text: I18n.tr("Variable refresh rate")
-            options: [I18n.tr("Off"), I18n.tr("On"), I18n.tr("On-demand", "variable refresh rate option on niri")]
+            visible: root.isActive
+            text: I18n.tr("Refresh rate")
+            description: I18n.tr("Frames per second supported by this display mode (Hz)")
+            options: DisplayConfigState.refreshOptions(root.outputName)
             currentValue: {
-                void (DisplayConfigState.pendingNiriChanges);
-                if (DisplayConfigState.getNiriSetting(root.outputData, root.outputName, "vrrOnDemand", false))
-                    return I18n.tr("On-demand");
-                const pendingVrr = DisplayConfigState.getPendingValue(root.outputName, "vrr");
-                const vrrEnabled = pendingVrr !== undefined ? pendingVrr : (DisplayConfigState.outputs[root.outputName]?.vrr_enabled ?? false);
-                return vrrEnabled ? I18n.tr("On") : I18n.tr("Off");
+                const mode = DisplayConfigState.currentMode(root.outputData) || DisplayConfigState.preferredMode(root.outputData);
+                return mode ? DisplayConfigState.formatRefresh(mode.refresh) : "";
             }
             onValueChanged: value => {
-                DisplayConfigState.setPendingChange(root.outputName, "vrr", value !== I18n.tr("Off"));
-                DisplayConfigState.setNiriSetting(root.outputData, root.outputName, "vrrOnDemand", value === I18n.tr("On-demand") || null);
+                const modeId = DisplayConfigState.modeIdForRefresh(root.outputName, value);
+                if (modeId !== undefined)
+                    DisplayConfigState.setPendingChange(root.outputName, "modeId", modeId);
+            }
+        }
+
+        SettingsDropdownRow {
+            visible: root.isActive
+            text: I18n.tr("Scale")
+            description: I18n.tr("Wayland display scaling (DPI/UI size)")
+            options: DisplayConfigState.scaleOptions(root.outputName)
+            currentValue: DisplayConfigState.formatScale(root.outputData?.logical?.scale || 1)
+            onValueChanged: value => {
+                const scale = DisplayConfigState.scaleForLabel(value);
+                if (!isNaN(scale) && scale > 0)
+                    DisplayConfigState.setPendingChange(root.outputName, "scale", scale);
             }
         }
 
         SettingsRow {
-            id: colorProfileRow
+            visible: root.isActive
+            title: I18n.tr("Position")
+            subtitle: I18n.tr("Logical desktop coordinates; you can also drag the display above")
 
-            readonly property var iccInfo: ICCService.status[root.outputName]
-            readonly property bool hasProfile: iccInfo !== undefined
+            Row {
+                spacing: Theme.spacingS
 
-            visible: root.hasColorControls
-            title: I18n.tr("Color Profile", "Display Config output card label for the per-monitor ICC profile row")
-            subtitle: {
-                if (!hasProfile)
-                    return I18n.tr("No profile", "Display Config output card ICC row when the output has no profile applied");
-                return iccInfo.description || iccInfo.path || I18n.tr("Active", "Active");
+                StyledText {
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: "X"
+                    color: Theme.surfaceVariantText
+                    font.pixelSize: Theme.fontSizeSmall
+                }
+
+                DankTextField {
+                    id: xField
+                    width: 92
+                    outlined: true
+                    placeholderText: "0"
+                    onAccepted: {
+                        const value = parseInt(text);
+                        if (!isNaN(value))
+                            DisplayConfigState.updatePosition(root.outputName, value, root.outputData?.logical?.y ?? 0);
+                    }
+                    onEditingFinished: {
+                        if (activeFocus)
+                            return;
+                        const value = parseInt(text);
+                        if (!isNaN(value))
+                            DisplayConfigState.updatePosition(root.outputName, value, root.outputData?.logical?.y ?? 0);
+                    }
+                }
+
+                Binding {
+                    target: xField
+                    property: "text"
+                    value: String(root.outputData?.logical?.x ?? 0)
+                    when: !xField.activeFocus
+                }
+
+                StyledText {
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: "Y"
+                    color: Theme.surfaceVariantText
+                    font.pixelSize: Theme.fontSizeSmall
+                }
+
+                DankTextField {
+                    id: yField
+                    width: 92
+                    outlined: true
+                    placeholderText: "0"
+                    onAccepted: {
+                        const value = parseInt(text);
+                        if (!isNaN(value))
+                            DisplayConfigState.updatePosition(root.outputName, root.outputData?.logical?.x ?? 0, value);
+                    }
+                    onEditingFinished: {
+                        if (activeFocus)
+                            return;
+                        const value = parseInt(text);
+                        if (!isNaN(value))
+                            DisplayConfigState.updatePosition(root.outputName, root.outputData?.logical?.x ?? 0, value);
+                    }
+                }
+
+                Binding {
+                    target: yField
+                    property: "text"
+                    value: String(root.outputData?.logical?.y ?? 0)
+                    when: !yField.activeFocus
+                }
             }
-            subtitleColor: hasProfile ? Theme.success : Theme.surfaceVariantText
+        }
 
-            DankActionButton {
-                visible: colorProfileRow.hasProfile
-                buttonSize: Theme.iconButtonSize
-                iconName: "info"
-                iconSize: Theme.iconSizeMedium
-                Accessible.name: I18n.tr("Info")
-                anchors.verticalCenter: parent.verticalCenter
-                onClicked: root.requestICCInfo(root.outputName)
-            }
+        SettingsDropdownRow {
+            visible: root.isActive
+            text: I18n.tr("Orientation")
+            options: [
+                I18n.tr("Normal"),
+                "90°",
+                "180°",
+                "270°",
+                I18n.tr("Flipped"),
+                I18n.tr("Flipped 90°"),
+                I18n.tr("Flipped 180°"),
+                I18n.tr("Flipped 270°")
+            ]
+            currentValue: DisplayConfigState.getTransformLabel(root.outputData?.logical?.transform ?? 0)
+            onValueChanged: value => DisplayConfigState.setPendingChange(
+                root.outputName,
+                "transform",
+                DisplayConfigState.getTransformValue(value)
+            )
+        }
 
-            DankActionButton {
-                visible: colorProfileRow.hasProfile
-                buttonSize: Theme.iconButtonSize
-                iconName: "close"
-                iconSize: Theme.iconSizeMedium
-                iconColor: Theme.error
-                Accessible.name: I18n.tr("Remove")
-                anchors.verticalCenter: parent.verticalCenter
-                onClicked: ICCService.removeICC(root.outputName)
-            }
+        SettingsToggleRow {
+            visible: root.isActive && (root.outputData?.vrr_supported ?? false)
+            text: I18n.tr("Variable refresh rate (VRR)")
+            description: I18n.tr("Adaptive Sync when supported by the monitor and GPU")
+            checked: root.outputData?.vrr_enabled ?? false
+            onToggled: checked => DisplayConfigState.setPendingChange(root.outputName, "vrr", checked)
+        }
+
+        SettingsRow {
+            visible: root.isActive && !root.isPrimary && !root.isVirtual
+            title: I18n.tr("Main display")
+            subtitle: I18n.tr("Use this screen as CyShell's default display")
 
             DankButton {
-                text: I18n.tr("Browse", "Browse")
-                iconName: "folder_open"
-                anchors.verticalCenter: parent.verticalCenter
-                onClicked: root.requestICCBrowse(root.outputName)
+                text: I18n.tr("Make main")
+                iconName: "star"
+                onClicked: DisplayConfigState.setPrimaryDisplay(root.outputName)
             }
-        }
-
-        SettingsSliderRow {
-            readonly property int outputTemperature: ICCService.outputTemps[root.outputName] ?? 0
-
-            visible: root.hasColorControls
-            text: I18n.tr("Color Temperature", "Color Temperature")
-            description: outputTemperature === 0 ? I18n.tr("Default", "Default") : outputTemperature + "K"
-            minimum: 3000
-            maximum: 10000
-            step: 100
-            unit: "K"
-            value: outputTemperature === 0 ? root.neutralTemperature : outputTemperature
-            modified: outputTemperature !== 0
-            resetByKeys: false
-            onResetRequested: ICCService.setOutputTemp(root.outputName, 0)
-            onSliderDragFinished: finalValue => ICCService.setOutputTemp(root.outputName, finalValue)
-        }
-    }
-
-    Loader {
-        readonly property string compositorSettingsSource: {
-            switch (CompositorService.compositor) {
-            case "niri":
-                return "NiriOutputSettings.qml";
-            case "hyprland":
-                return "HyprlandOutputSettings.qml";
-            default:
-                return "";
-            }
-        }
-
-        width: parent.width
-        active: root.isConnected && compositorSettingsSource !== ""
-        visible: active
-        source: compositorSettingsSource
-        onLoaded: {
-            item.outputName = root.outputName;
-            item.outputData = root.outputData;
         }
     }
 }

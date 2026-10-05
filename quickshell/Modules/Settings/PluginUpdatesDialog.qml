@@ -58,9 +58,10 @@ StyledRect {
         let index = 0;
         function updateNext() {
             if (index >= list.length) {
-                isUpdating = false;
-                currentUpdatingPlugin = "";
-                DMSService.listInstalled();
+                CyShellService.listInstalled(() => {
+                    isUpdating = false;
+                    currentUpdatingPlugin = "";
+                }, true);
                 return;
             }
             const plugin = list[index++];
@@ -76,7 +77,7 @@ StyledRect {
                 root.pluginUpdated(plugin.id);
                 updatesList = updatesList.filter(entry => entry.id !== plugin.id);
                 updateNext();
-            });
+            }, false);
         }
         updateNext();
     }
@@ -93,7 +94,7 @@ StyledRect {
             width: parent.width
             spacing: Theme.spacingM
 
-            DankIcon {
+            CyIcon {
                 name: "download"
                 size: Theme.iconSize
                 color: Theme.primary
@@ -109,7 +110,7 @@ StyledRect {
                 wrapMode: Text.Wrap
             }
 
-            DankActionButton {
+            CyActionButton {
                 id: collapseBtn
                 iconName: "close"
                 Accessible.name: I18n.tr("Close")
@@ -126,7 +127,7 @@ StyledRect {
             spacing: Theme.spacingS
             visible: !root.isUpdating && root.updatesList.length > 0
 
-            DankIcon {
+            CyIcon {
                 name: "warning"
                 size: Theme.iconSizeMedium
                 color: Theme.warning
@@ -152,7 +153,7 @@ StyledRect {
                 anchors.centerIn: parent
                 spacing: Theme.spacingM
 
-                DankSpinner {
+                CySpinner {
                     size: Theme.iconSize
                     running: root.isUpdating
                     anchors.verticalCenter: parent.verticalCenter
@@ -175,7 +176,7 @@ StyledRect {
             wrapMode: Text.Wrap
         }
 
-        DankFlickable {
+        CyFlickable {
             width: parent.width
             height: Math.min(listCol.implicitHeight, Theme.smallBreakpoint)
             clip: true
@@ -195,14 +196,14 @@ StyledRect {
                         width: listCol.width
                         iconName: modelData.icon || "extension"
                         title: modelData.name || ""
-                        subtitle: modelData.author ? I18n.tr("by %1", "author attribution").arg(modelData.author) : ""
-                        DankActionButton {
+                        subtitle: [modelData.author ? I18n.tr("by %1", "author attribution").arg(modelData.author) : "", PluginService.pluginSourceLabel(PluginService.availablePlugins[modelData.id]?.source)].filter(Boolean).join(" · ")
+                        CyActionButton {
                             iconName: "open_in_new"
                             tooltipText: I18n.tr("View Changes", "open plugin changes before updating")
                             visible: !!modelData.diffUrl || !!modelData.repo
                             onClicked: Qt.openUrlExternally(modelData.diffUrl || modelData.repo)
                         }
-                        DankActionButton {
+                        CyActionButton {
                             iconName: "download"
                             tooltipText: I18n.tr("Update", "verb, button installing a newer plugin version")
                             enabled: !root.isUpdating && !root.operationsBlocked
@@ -227,7 +228,7 @@ StyledRect {
             spacing: Theme.spacingM
             visible: !isUpdating
 
-            DankButton {
+            CyButton {
                 text: I18n.tr("Cancel")
                 iconName: "close"
                 backgroundColor: Theme.chipSurface
@@ -235,7 +236,7 @@ StyledRect {
                 onClicked: root.hide()
             }
 
-            DankButton {
+            CyButton {
                 text: I18n.tr("Update All")
                 iconName: "download"
                 enabled: !root.operationsBlocked && root.updatesList.length > 0

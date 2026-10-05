@@ -61,7 +61,7 @@ Item {
         return Format.formatRemaining(ms, "", I18n.tr("%1 min left"), I18n.tr("%1 h left"), I18n.tr("%1 h %2 m left"));
     }
 
-    DankFlickable {
+    CyFlickable {
         anchors.fill: parent
         contentHeight: column.height
         clip: true
@@ -97,7 +97,7 @@ Item {
                     Repeater {
                         model: root.presets
 
-                        DankButton {
+                        CyButton {
                             required property var modelData
 
                             buttonHeight: Theme.buttonHeightXS

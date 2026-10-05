@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/utils"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/utils"
 	"github.com/stretchr/testify/require"
 )
 

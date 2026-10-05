@@ -9,19 +9,21 @@ Item {
     id: root
 
     property var parentModal: null
-    readonly property string defaultLauncherAction: "spawn dms ipc call spotlight toggle"
-    readonly property string spotlightBarAction: "spawn dms ipc call spotlight-bar toggle"
+    readonly property string defaultLauncherAction: "spawn cyshell ipc call spotlight toggle"
+    readonly property string spotlightBarAction: "spawn cyshell ipc call spotlight-bar toggle"
     readonly property int keybindDataVersion: KeybindsService._dataVersion
     readonly property bool keybindsAvailable: KeybindsService.available
     readonly property string defaultLauncherKeybindSearch: "spotlight toggle"
     readonly property string compositorLabel: CompositorService.displayName || I18n.tr("Compositor")
     readonly property string spotlightBarKeybindSearch: "spotlight-bar"
 
-    function openKeybindsSearch(query) {
+    function openKeybindAction(action, query) {
         if (!root.parentModal)
             return;
-        if (typeof root.parentModal.showKeybindsSearch === "function") {
-            root.parentModal.showKeybindsSearch(query);
+        if (typeof root.parentModal.showKeybindAction === "function") {
+            root.parentModal.showKeybindAction(action, query || "");
+        } else if (typeof root.parentModal.showKeybindsSearch === "function") {
+            root.parentModal.showKeybindsSearch(query || action);
         } else {
             root.parentModal.navigateTo("keybinds");
         }
@@ -90,7 +92,7 @@ Item {
                 trailingBadgeColor: Theme.primary
                 showChevron: root.keybindsAvailable
                 clickable: root.keybindsAvailable
-                onClicked: root.openKeybindsSearch(root.defaultLauncherKeybindSearch)
+                onClicked: root.openKeybindAction(root.defaultLauncherAction, root.defaultLauncherKeybindSearch)
             }
         }
 
@@ -381,7 +383,7 @@ Item {
                                 }
                             }
 
-                            DankActionButton {
+                            CyActionButton {
                                 anchors.right: parent.right
                                 anchors.rightMargin: Theme.spacingM
                                 anchors.verticalCenter: parent.verticalCenter
@@ -491,7 +493,7 @@ Item {
                                 }
                             }
 
-                            DankActionButton {
+                            CyActionButton {
                                 anchors.right: parent.right
                                 anchors.rightMargin: Theme.spacingM
                                 anchors.verticalCenter: parent.verticalCenter
@@ -609,7 +611,7 @@ Item {
                     trailingBadge: modelData.isBuiltIn ? "CyShell" : ""
                     textIcon: modelData.iconType === "unicode" ? modelData.icon : ""
 
-                    DankToggle {
+                    CyToggle {
                         hideText: true
                         checked: {
                             switch (pluginRow.modelData.id) {
@@ -669,7 +671,7 @@ Item {
                     title: plugin?.name ?? modelData
                     subtitle: plugin?.comment ?? ""
 
-                    DankTextField {
+                    CyTextField {
                         outlined: true
                         leftIconName: "keyboard"
                         labelText: I18n.tr("Trigger", "noun, launcher plugin trigger prefix text field label")
@@ -680,7 +682,7 @@ Item {
                         Component.onCompleted: text = SettingsData.getBuiltInPluginSetting(builtInRow.modelData, "trigger", builtInRow.plugin?.defaultTrigger ?? "")
                     }
 
-                    DankToggle {
+                    CyToggle {
                         hideText: true
                         anchors.verticalCenter: parent.verticalCenter
                         checked: SettingsData.getBuiltInPluginSetting(builtInRow.modelData, "enabled", true)
@@ -705,7 +707,7 @@ Item {
                 trailingBadgeColor: Theme.primary
                 showChevron: root.keybindsAvailable
                 clickable: root.keybindsAvailable
-                onClicked: root.openKeybindsSearch(root.spotlightBarKeybindSearch)
+                onClicked: root.openKeybindAction(root.spotlightBarAction, root.spotlightBarKeybindSearch)
             }
 
             SettingsToggleRow {
@@ -787,7 +789,7 @@ Item {
                         }
                     }
 
-                    DankActionButton {
+                    CyActionButton {
                         id: selectButton
                         iconName: "folder_open"
                         Accessible.name: I18n.tr("Select Launcher Logo")
@@ -816,7 +818,7 @@ Item {
                             anchors.horizontalCenter: parent.horizontalCenter
                             spacing: Theme.spacingM
 
-                            DankButtonGroup {
+                            CyButtonGroup {
                                 id: colorModeGroup
                                 maximumWidth: parent.parent.width - (colorPickerCircle.visible ? colorPickerCircle.width + Theme.spacingM : 0)
                                 buttonPadding: parent.parent.width < 480 ? Theme.spacingS : Theme.spacingL
@@ -979,7 +981,7 @@ Item {
                         anchors.verticalCenter: parent.verticalCenter
                     }
 
-                    DankActionButton {
+                    CyActionButton {
                         id: clearAllButton
                         iconName: "delete_sweep"
                         tooltipText: I18n.tr("Clear All")
@@ -1071,7 +1073,7 @@ Item {
                                 }
                             }
 
-                            DankActionButton {
+                            CyActionButton {
                                 anchors.right: parent.right
                                 anchors.rightMargin: Theme.spacingM
                                 anchors.verticalCenter: parent.verticalCenter

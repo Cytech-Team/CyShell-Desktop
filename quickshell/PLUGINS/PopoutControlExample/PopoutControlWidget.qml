@@ -15,13 +15,13 @@ PluginComponent {
             "notificationCenter": (x, y, w, s, scr) => popoutService?.toggleNotificationCenter(x, y, w, s, scr),
             "appDrawer": (x, y, w, s, scr) => popoutService?.toggleAppDrawer(x, y, w, s, scr),
             "processList": (x, y, w, s, scr) => popoutService?.toggleProcessList(x, y, w, s, scr),
-            "dankDash": (x, y, w, s, scr) => popoutService?.toggleDankDash(0, x, y, w, s, scr),
+            "dankDash": (x, y, w, s, scr) => popoutService?.toggleCyDash(0, x, y, w, s, scr),
             "battery": (x, y, w, s, scr) => popoutService?.toggleBattery(x, y, w, s, scr),
             "vpn": (x, y, w, s, scr) => popoutService?.toggleVpn(x, y, w, s, scr),
             "systemUpdate": (x, y, w, s, scr) => popoutService?.toggleSystemUpdate(x, y, w, s, scr),
             "settings": () => popoutService?.openSettings(),
             "clipboardHistory": () => popoutService?.openClipboardHistory(),
-            "spotlight": () => popoutService?.toggleDankLauncherV2(),
+            "spotlight": () => popoutService?.toggleCyLauncherV2(),
             "powerMenu": () => popoutService?.togglePowerMenu(),
             "colorPicker": () => popoutService?.showColorPicker(),
             "notepad": () => popoutService?.toggleNotepad()
@@ -32,7 +32,7 @@ PluginComponent {
             "notificationCenter": "Notification Center",
             "appDrawer": "App Drawer",
             "processList": "Process List",
-            "dankDash": "DankDash",
+            "dankDash": "CyDash",
             "battery": "Battery Info",
             "vpn": "VPN",
             "systemUpdate": "System Update",
@@ -54,7 +54,7 @@ PluginComponent {
         Row {
             spacing: Theme.spacingXS
 
-            DankIcon {
+            CyIcon {
                 name: "widgets"
                 color: Theme.primary
                 font.pixelSize: Theme.iconSize - 6
@@ -74,7 +74,7 @@ PluginComponent {
         Column {
             spacing: Theme.spacingXS
 
-            DankIcon {
+            CyIcon {
                 name: "widgets"
                 color: Theme.primary
                 font.pixelSize: Theme.iconSize - 6

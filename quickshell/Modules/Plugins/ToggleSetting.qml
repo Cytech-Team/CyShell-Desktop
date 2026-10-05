@@ -61,7 +61,7 @@ Row {
         }
     }
 
-    DankToggle {
+    CyToggle {
         id: toggle
         anchors.verticalCenter: parent.verticalCenter
         checked: root.value

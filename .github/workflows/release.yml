@@ -87,7 +87,7 @@ jobs:
         if: matrix.goos == 'linux'
         run: go test -v ./...
 
-      - name: Build dankinstall (${{ env.ASSET }})
+      - name: Build cyshell-install (${{ env.ASSET }})
         if: matrix.goos == 'linux'
         env:
           GOOS: ${{ matrix.goos }}
@@ -95,52 +95,52 @@ jobs:
           GOARCH: ${{ matrix.arch }}
         run: |
           set -eux
-          cd cmd/dankinstall
+          cd cmd/cyshell-install
           go build -trimpath -ldflags "-s -w -X main.Version=${TAG}" \
-            -o ../../dankinstall-${{ env.ASSET }}
+            -o ../../cyshell-install-${{ env.ASSET }}
           cd ../..
-          gzip -9 -k dankinstall-${{ env.ASSET }}
-          sha256sum dankinstall-${{ env.ASSET }}.gz > dankinstall-${{ env.ASSET }}.gz.sha256
+          gzip -9 -k cyshell-install-${{ env.ASSET }}
+          sha256sum cyshell-install-${{ env.ASSET }}.gz > cyshell-install-${{ env.ASSET }}.gz.sha256
 
       - name: Sync embedded shell
         run: make sync-shell
 
-      - name: Build dms (${{ env.ASSET }})
+      - name: Build cyshell (${{ env.ASSET }})
         env:
           GOOS: ${{ matrix.goos }}
           CGO_ENABLED: 0
           GOARCH: ${{ matrix.arch }}
         run: |
           set -eux
-          cd cmd/dms
+          cd cmd/cyshell
           go build -trimpath -tags withshell -ldflags "-s -w -X main.Version=${TAG}" \
-            -o ../../dms-${{ env.ASSET }}
+            -o ../../cyshell-${{ env.ASSET }}
           cd ../..
-          gzip -9 -k dms-${{ env.ASSET }}
-          sha256sum dms-${{ env.ASSET }}.gz > dms-${{ env.ASSET }}.gz.sha256
+          gzip -9 -k cyshell-${{ env.ASSET }}
+          sha256sum cyshell-${{ env.ASSET }}.gz > cyshell-${{ env.ASSET }}.gz.sha256
 
       - name: Generate shell completions
         if: matrix.goos == 'linux' && matrix.arch == 'amd64'
         run: |
           set -eux
-          chmod +x dms-amd64
-          ./dms-amd64 completion bash > completion.bash
-          ./dms-amd64 completion fish > completion.fish
-          ./dms-amd64 completion zsh > completion.zsh
+          chmod +x cyshell-amd64
+          ./cyshell-amd64 completion bash > completion.bash
+          ./cyshell-amd64 completion fish > completion.fish
+          ./cyshell-amd64 completion zsh > completion.zsh
 
-      - name: Build dms-distropkg (${{ env.ASSET }})
+      - name: Build cyshell-distropkg (${{ env.ASSET }})
         env:
           GOOS: ${{ matrix.goos }}
           CGO_ENABLED: 0
           GOARCH: ${{ matrix.arch }}
         run: |
           set -eux
-          cd cmd/dms
+          cd cmd/cyshell
           go build -trimpath -tags 'distro_binary withshell' -ldflags "-s -w -X main.Version=${TAG}" \
-            -o ../../dms-distropkg-${{ env.ASSET }}
+            -o ../../cyshell-distropkg-${{ env.ASSET }}
           cd ../..
-          gzip -9 -k dms-distropkg-${{ env.ASSET }}
-          sha256sum dms-distropkg-${{ env.ASSET }}.gz > dms-distropkg-${{ env.ASSET }}.gz.sha256
+          gzip -9 -k cyshell-distropkg-${{ env.ASSET }}
+          sha256sum cyshell-distropkg-${{ env.ASSET }}.gz > cyshell-distropkg-${{ env.ASSET }}.gz.sha256
 
       - name: Upload artifacts (${{ env.ASSET }})
         if: matrix.goos == 'linux' && matrix.arch == 'arm64'
@@ -148,12 +148,12 @@ jobs:
         with:
           name: core-assets-${{ env.ASSET }}
           path: |
-            core/dankinstall-${{ env.ASSET }}.gz
-            core/dankinstall-${{ env.ASSET }}.gz.sha256
-            core/dms-${{ env.ASSET }}.gz
-            core/dms-${{ env.ASSET }}.gz.sha256
-            core/dms-distropkg-${{ env.ASSET }}.gz
-            core/dms-distropkg-${{ env.ASSET }}.gz.sha256
+            core/cyshell-install-${{ env.ASSET }}.gz
+            core/cyshell-install-${{ env.ASSET }}.gz.sha256
+            core/cyshell-${{ env.ASSET }}.gz
+            core/cyshell-${{ env.ASSET }}.gz.sha256
+            core/cyshell-distropkg-${{ env.ASSET }}.gz
+            core/cyshell-distropkg-${{ env.ASSET }}.gz.sha256
           if-no-files-found: error
 
       - name: Upload artifacts (${{ env.ASSET }}, no installer)
@@ -162,10 +162,10 @@ jobs:
         with:
           name: core-assets-${{ env.ASSET }}
           path: |
-            core/dms-${{ env.ASSET }}.gz
-            core/dms-${{ env.ASSET }}.gz.sha256
-            core/dms-distropkg-${{ env.ASSET }}.gz
-            core/dms-distropkg-${{ env.ASSET }}.gz.sha256
+            core/cyshell-${{ env.ASSET }}.gz
+            core/cyshell-${{ env.ASSET }}.gz.sha256
+            core/cyshell-distropkg-${{ env.ASSET }}.gz
+            core/cyshell-distropkg-${{ env.ASSET }}.gz.sha256
           if-no-files-found: error
 
       - name: Upload artifacts with completions
@@ -174,12 +174,12 @@ jobs:
         with:
           name: core-assets-${{ env.ASSET }}
           path: |
-            core/dankinstall-${{ env.ASSET }}.gz
-            core/dankinstall-${{ env.ASSET }}.gz.sha256
-            core/dms-${{ env.ASSET }}.gz
-            core/dms-${{ env.ASSET }}.gz.sha256
-            core/dms-distropkg-${{ env.ASSET }}.gz
-            core/dms-distropkg-${{ env.ASSET }}.gz.sha256
+            core/cyshell-install-${{ env.ASSET }}.gz
+            core/cyshell-install-${{ env.ASSET }}.gz.sha256
+            core/cyshell-${{ env.ASSET }}.gz
+            core/cyshell-${{ env.ASSET }}.gz.sha256
+            core/cyshell-distropkg-${{ env.ASSET }}.gz
+            core/cyshell-distropkg-${{ env.ASSET }}.gz.sha256
             core/completion.bash
             core/completion.fish
             core/completion.zsh
@@ -207,8 +207,8 @@ jobs:
   #         GH_TOKEN: ${{ steps.app_token.outputs.token }}
   #       run: |
   #         set -euo pipefail
-  #         git config user.name "dms-ci[bot]"
-  #         git config user.email "dms-ci[bot]@users.noreply.github.com"
+  #         git config user.name "cyshell-ci[bot]"
+  #         git config user.email "cyshell-ci[bot]@users.noreply.github.com"
 
   #         version="${GITHUB_REF#refs/tags/}"
   #         echo "Updating to version: $version"
@@ -286,30 +286,30 @@ jobs:
           ## Assets
 
           ### Complete Packages
-          - **`dms-full-amd64.tar.gz`** - Complete package for x86_64 systems (CLI binaries + QML source + shell completions + installation guide)
-          - **`dms-full-arm64.tar.gz`** - Complete package for ARM64 systems (CLI binaries + QML source + shell completions + installation guide)
-          - **`dms-full-freebsd-amd64.tar.gz`** - Complete package for FreeBSD x86_64 systems
-          - **`dms-full-freebsd-arm64.tar.gz`** - Complete package for FreeBSD ARM64 systems
+          - **`cyshell-full-amd64.tar.gz`** - Complete package for x86_64 systems (CLI binaries + QML source + shell completions + installation guide)
+          - **`cyshell-full-arm64.tar.gz`** - Complete package for ARM64 systems (CLI binaries + QML source + shell completions + installation guide)
+          - **`cyshell-full-freebsd-amd64.tar.gz`** - Complete package for FreeBSD x86_64 systems
+          - **`cyshell-full-freebsd-arm64.tar.gz`** - Complete package for FreeBSD ARM64 systems
 
           ### Individual Components
-          - **`dms-cli-amd64.gz`** - DMS CLI binary for x86_64 systems
-          - **`dms-cli-arm64.gz`** - DMS CLI binary for ARM64 systems
-          - **`dms-cli-freebsd-amd64.gz`** - DMS CLI binary for FreeBSD x86_64 systems
-          - **`dms-cli-freebsd-arm64.gz`** - DMS CLI binary for FreeBSD ARM64 systems
-          - **`dms-distropkg-amd64.gz`** - DMS CLI binary built with distro_package tag for AMD64 systems
-          - **`dms-distropkg-arm64.gz`** - DMS CLI binary built with distro_package tag for ARM64 systems
-          - **`dms-distropkg-freebsd-amd64.gz`** - DMS CLI binary built with distro_package tag for FreeBSD x86_64 systems
-          - **`dms-distropkg-freebsd-arm64.gz`** - DMS CLI binary built with distro_package tag for FreeBSD ARM64 systems
-          - **`dankinstall-amd64.gz`** - Installer binary for x86_64 systems
-          - **`dankinstall-arm64.gz`** - Installer binary for ARM64 systems
-          - **`dms-cli-<version>.tar.gz`** - Go source code with vendored modules (for distro packaging)
-          - **`dms-qml.tar.gz`** - QML source code only
-          - **`dms-source.tar.gz`** - Full repository source with bundled DankCommon (for distro packaging)
+          - **`cyshell-cli-amd64.gz`** - CyShell CLI binary for x86_64 systems
+          - **`cyshell-cli-arm64.gz`** - CyShell CLI binary for ARM64 systems
+          - **`cyshell-cli-freebsd-amd64.gz`** - CyShell CLI binary for FreeBSD x86_64 systems
+          - **`cyshell-cli-freebsd-arm64.gz`** - CyShell CLI binary for FreeBSD ARM64 systems
+          - **`cyshell-distropkg-amd64.gz`** - CyShell CLI binary built with distro_package tag for AMD64 systems
+          - **`cyshell-distropkg-arm64.gz`** - CyShell CLI binary built with distro_package tag for ARM64 systems
+          - **`cyshell-distropkg-freebsd-amd64.gz`** - CyShell CLI binary built with distro_package tag for FreeBSD x86_64 systems
+          - **`cyshell-distropkg-freebsd-arm64.gz`** - CyShell CLI binary built with distro_package tag for FreeBSD ARM64 systems
+          - **`cyshell-install-amd64.gz`** - Installer binary for x86_64 systems
+          - **`cyshell-install-arm64.gz`** - Installer binary for ARM64 systems
+          - **`cyshell-cli-<version>.tar.gz`** - Go source code with vendored modules (for distro packaging)
+          - **`cyshell-qml.tar.gz`** - QML source code only
+          - **`cyshell-source.tar.gz`** - Full repository source with bundled DankCommon (for distro packaging)
 
           ### Checksums
           - **`*.sha256`** - SHA256 checksums for verifying download integrity
 
-          **Installation:** Extract the `dms-full-*.tar.gz` package for your architecture and follow the `INSTALL.md` instructions inside.
+          **Installation:** Extract the `cyshell-full-*.tar.gz` package for your architecture and follow the `INSTALL.md` instructions inside.
 
           ---
 
@@ -333,21 +333,21 @@ jobs:
 
           mkdir -p _release_assets
 
-          # Copy core binaries and rename dms-*.gz to dms-cli-*.gz
-          for file in _core_assets/dms-*.gz*; do
+          # Copy core binaries and rename cyshell-*.gz to cyshell-cli-*.gz
+          for file in _core_assets/cyshell-*.gz*; do
             if [ -f "$file" ]; then
               basename=$(basename "$file")
-              if [[ "$basename" == dms-distropkg-* ]]; then
+              if [[ "$basename" == cyshell-distropkg-* ]]; then
                 cp "$file" "_release_assets/$basename"
               else
-                newname=$(echo "$basename" | sed 's/^dms-/dms-cli-/')
+                newname=$(echo "$basename" | sed 's/^cyshell-/cyshell-cli-/')
                 cp "$file" "_release_assets/$newname"
               fi
             fi
           done
 
-          # Copy dankinstall binaries
-          cp _core_assets/dankinstall-*.gz* _release_assets/
+          # Copy cyshell-install binaries
+          cp _core_assets/cyshell-install-*.gz* _release_assets/
 
           # Copy completions
           cp _core_assets/completion.* _release_assets/ 2>/dev/null || true
@@ -364,9 +364,9 @@ jobs:
               --exclude='_release_assets' \
               --exclude='_core_assets' \
               --exclude='RELEASE_BODY.md' \
-              --transform "s,^\.,DankMaterialShell-${VERSION_NUM},S" \
-              -czf _release_assets/dms-source.tar.gz .
-          (cd _release_assets && sha256sum dms-source.tar.gz > dms-source.tar.gz.sha256)
+              --transform "s,^\.,CyShell-Desktop-${VERSION_NUM},S" \
+              -czf _release_assets/cyshell-source.tar.gz .
+          (cd _release_assets && sha256sum cyshell-source.tar.gz > cyshell-source.tar.gz.sha256)
 
           # Create QML source package (exclude build artifacts and git files)
           # Copy root LICENSE and CONTRIBUTING.md to quickshell/ for packaging
@@ -381,29 +381,29 @@ jobs:
               --exclude='./tests' \
               --exclude='*.tar.gz' \
               --exclude-from=../scripts/shell-test-excludes.txt \
-              -czf ../_release_assets/dms-qml.tar.gz .)
+              -czf ../_release_assets/cyshell-qml.tar.gz .)
 
           # Generate checksum for QML package
-          (cd _release_assets && sha256sum dms-qml.tar.gz > dms-qml.tar.gz.sha256)
+          (cd _release_assets && sha256sum cyshell-qml.tar.gz > cyshell-qml.tar.gz.sha256)
 
           # Create full packages for each os/architecture
           for arch in amd64 arm64 freebsd-amd64 freebsd-arm64; do
-            mkdir -p _temp_full/dms
+            mkdir -p _temp_full/cyshell
             mkdir -p _temp_full/bin
             mkdir -p _temp_full/completions
 
             # Extract QML source
-            tar -xzf _release_assets/dms-qml.tar.gz -C _temp_full/dms
+            tar -xzf _release_assets/cyshell-qml.tar.gz -C _temp_full/cyshell
 
             # Add CLI binaries
-            if [ -f "_core_assets/dms-${arch}.gz" ]; then
-              gunzip -c "_core_assets/dms-${arch}.gz" > _temp_full/bin/dms
-              chmod +x _temp_full/bin/dms
+            if [ -f "_core_assets/cyshell-${arch}.gz" ]; then
+              gunzip -c "_core_assets/cyshell-${arch}.gz" > _temp_full/bin/cyshell
+              chmod +x _temp_full/bin/cyshell
             fi
 
-            if [ -f "_core_assets/dms-distropkg-${arch}.gz" ]; then
-              gunzip -c "_core_assets/dms-distropkg-${arch}.gz" > _temp_full/bin/dms-distropkg
-              chmod +x _temp_full/bin/dms-distropkg
+            if [ -f "_core_assets/cyshell-distropkg-${arch}.gz" ]; then
+              gunzip -c "_core_assets/cyshell-distropkg-${arch}.gz" > _temp_full/bin/cyshell-distropkg
+              chmod +x _temp_full/bin/cyshell-distropkg
             fi
 
             # Add shell completions
@@ -420,7 +420,7 @@ jobs:
 
             # Create installation guide
             cat > _temp_full/INSTALL.md << 'EOFINSTALL'
-          # DankMaterialShell Installation
+          # CyShell Installation
 
           ## Requirements
 
@@ -430,49 +430,49 @@ jobs:
 
           ## Installation Steps
 
-          The Quickshell UI is embedded in the `dms` binary. The bundled `dms/`
-          tree is optional — pass it with `-c` or `DMS_SHELL_DIR` to run a
+          The Quickshell UI is embedded in the `cyshell` binary. The bundled `cyshell/`
+          tree is optional — pass it with `-c` or `CYSHELL_SHELL_DIR` to run a
           modified copy instead of the embedded UI.
 
-          1. **Install the DMS CLI binaries:**
+          1. **Install the CyShell CLI binaries:**
              ```bash
-             sudo install -m 755 bin/dms /usr/local/bin/dms
+             sudo install -m 755 bin/cyshell /usr/local/bin/cyshell
              ```
 
           2. **Install shell completions (optional):**
              ```bash
              # Bash
-             sudo install -m 644 completions/completion.bash /usr/share/bash-completion/completions/dms
+             sudo install -m 644 completions/completion.bash /usr/share/bash-completion/completions/cyshell
 
              # Fish
-             sudo install -m 644 completions/completion.fish /usr/share/fish/vendor_completions.d/dms.fish
+             sudo install -m 644 completions/completion.fish /usr/share/fish/vendor_completions.d/cyshell.fish
 
              # Zsh
-             sudo install -m 644 completions/completion.zsh /usr/share/zsh/site-functions/_dms
+             sudo install -m 644 completions/completion.zsh /usr/share/zsh/site-functions/_cyshell
              ```
 
           3. **Start the shell:**
              ```bash
-             dms run
+             cyshell run
              ```
 
           ## Configuration
 
-          - Settings are stored in `~/.config/DankMaterialShell/settings.json`
-          - Plugins go in `~/.config/DankMaterialShell/plugins/`
-          - See the documentation in the `dms/` directory for more details
+          - Settings are stored in `~/.config/CyShell/settings.json`
+          - Plugins go in `~/.config/CyShell/plugins/`
+          - See the documentation in the `cyshell/` directory for more details
 
           ## Troubleshooting
 
-          - Run with verbose output: `DMS_LOG_LEVEL=debug dms run`
+          - Run with verbose output: `CYSHELL_LOG_LEVEL=debug cyshell run`
           - Ensure all dependencies are installed
           EOFINSTALL
 
             # Create the full package
-            (cd _temp_full && tar -czf "../_release_assets/dms-full-${arch}.tar.gz" .)
+            (cd _temp_full && tar -czf "../_release_assets/cyshell-full-${arch}.tar.gz" .)
 
             # Generate checksum
-            (cd _release_assets && sha256sum "dms-full-${arch}.tar.gz" > "dms-full-${arch}.tar.gz.sha256")
+            (cd _release_assets && sha256sum "cyshell-full-${arch}.tar.gz" > "cyshell-full-${arch}.tar.gz.sha256")
 
             # Cleanup
             rm -rf _temp_full
@@ -485,11 +485,11 @@ jobs:
           cd core
           go mod vendor
           cd ..
-          tar czf "_release_assets/dms-cli-${VERSION_NUM}.tar.gz" \
-            --transform "s,^core/,dms-cli-${VERSION_NUM}/," \
+          tar czf "_release_assets/cyshell-cli-${VERSION_NUM}.tar.gz" \
+            --transform "s,^core/,cyshell-cli-${VERSION_NUM}/," \
             --exclude='core/.git' \
             core/
-          (cd _release_assets && sha256sum "dms-cli-${VERSION_NUM}.tar.gz" > "dms-cli-${VERSION_NUM}.tar.gz.sha256")
+          (cd _release_assets && sha256sum "cyshell-cli-${VERSION_NUM}.tar.gz" > "cyshell-cli-${VERSION_NUM}.tar.gz.sha256")
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2

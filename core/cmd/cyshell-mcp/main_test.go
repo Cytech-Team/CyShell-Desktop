@@ -25,6 +25,56 @@ func TestDispatchToolsListUsesEmbeddedShellIPC(t *testing.T) {
 	}
 }
 
+func TestDispatchToolsListAddsComputerUseCompatibilityAlias(t *testing.T) {
+	call := func(method string, params map[string]any) (any, error) {
+		if method != "cycom.tools.list" {
+			t.Fatalf("method = %q", method)
+		}
+		return []any{map[string]any{
+			"name":        "window_list",
+			"description": "List compositor windows.",
+			"inputSchema": map[string]any{"type": "object"},
+		}}, nil
+	}
+	result, rpcErr := dispatch(rpcRequest{Method: "tools/list"}, call)
+	if rpcErr != nil {
+		t.Fatal(rpcErr)
+	}
+	tools := result.(map[string]any)["tools"].([]any)
+	seen := map[string]bool{}
+	for _, raw := range tools {
+		tool, _ := raw.(map[string]any)
+		name, _ := tool["name"].(string)
+		seen[name] = true
+	}
+	if !seen["window_list"] || !seen["list_windows"] {
+		t.Fatalf("missing canonical/compatibility tool: %#v", tools)
+	}
+}
+
+func TestDispatchCompatibilityAliasCallsCanonicalTool(t *testing.T) {
+	call := func(method string, params map[string]any) (any, error) {
+		if method != "cycom.tools.call" {
+			t.Fatalf("method = %q", method)
+		}
+		if params["name"] != "window_list" {
+			t.Fatalf("name = %#v, want window_list", params["name"])
+		}
+		return map[string]any{"windows": []any{}}, nil
+	}
+	params, _ := json.Marshal(map[string]any{
+		"name":      "list_windows",
+		"arguments": map[string]any{"reason": "find open Figma windows"},
+	})
+	result, rpcErr := dispatch(rpcRequest{Method: "tools/call", Params: params}, call)
+	if rpcErr != nil {
+		t.Fatal(rpcErr)
+	}
+	if result.(map[string]any)["isError"] != false {
+		t.Fatalf("unexpected tool response: %#v", result)
+	}
+}
+
 func TestDispatchToolCallForwardsReason(t *testing.T) {
 	call := func(method string, params map[string]any) (any, error) {
 		if method != "cycom.tools.call" {

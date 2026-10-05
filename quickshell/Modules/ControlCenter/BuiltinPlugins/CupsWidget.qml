@@ -40,7 +40,7 @@ PluginComponent {
                 settingsTab: "printers"
             }
 
-            DankFlickable {
+            CyFlickable {
                 anchors.fill: parent
                 contentHeight: detailColumn.height
                 clip: true
@@ -64,7 +64,7 @@ PluginComponent {
                             title: I18n.tr("Printers")
                             subtitle: CupsService.getCurrentPrinterStatePrettyShort()
 
-                            DankDropdown {
+                            CyDropdown {
                                 anchors.verticalCenter: parent.verticalCenter
                                 compactMode: true
                                 dropdownWidth: CcMetrics.rowDropdownWidth
@@ -79,7 +79,7 @@ PluginComponent {
                             width: parent.width
                             spacing: Theme.spacingS
 
-                            DankButton {
+                            CyButton {
                                 buttonHeight: Theme.buttonHeightXS
                                 iconName: detailRoot.printerStopped ? "play_arrow" : "pause"
                                 iconSize: Theme.iconSizeSmall
@@ -95,7 +95,7 @@ PluginComponent {
                                 }
                             }
 
-                            DankButton {
+                            CyButton {
                                 buttonHeight: Theme.buttonHeightXS
                                 iconName: "delete_forever"
                                 iconSize: Theme.iconSizeSmall
@@ -133,7 +133,7 @@ PluginComponent {
                                 title: "#" + modelData.id + " • " + modelData.state
                                 subtitle: new Date(modelData.timeCreated).toLocaleString(Qt.locale(), Locale.ShortFormat) + " • " + I18n.tr("%1 KB", "print job size in kilobytes").arg(Math.round(modelData.size / 1024))
 
-                                DankActionButton {
+                                CyActionButton {
                                     anchors.verticalCenter: parent.verticalCenter
                                     buttonSize: Theme.buttonHeightXS
                                     iconSize: Theme.iconSizeMedium

@@ -53,7 +53,7 @@ Singleton {
 
     // ionice is util-linux only; the BSDs get plain nice
     readonly property var lowPriorityCmd: Qt.platform.os === "linux" ? ["nice", "-n", "19", "ionice", "-c3"] : ["nice", "-n", "19"]
-    readonly property var fetchCmd: [Proc.dmsBin, "dl", "--connect-timeout", "8", "--timeout", "20"]
+    readonly property var fetchCmd: [Proc.cyshellBin, "dl", "--connect-timeout", "8", "--timeout", "20"]
 
     property var weatherIcons: ({
             "0": "clear_day",

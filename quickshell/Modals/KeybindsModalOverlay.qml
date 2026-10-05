@@ -5,12 +5,12 @@ import qs.Modals
 import qs.Modals.Common
 import qs.Services
 
-DankModal {
+CyModal {
     id: overlay
 
     signal floatingToggleRequested
 
-    layerNamespace: "dms:keybinds"
+    layerNamespace: "cyshell:keybinds"
     useOverlayLayer: true
     property real _maxW: Math.min(overlay.screenWidth * 0.92, 1200)
     property real _maxH: Math.min(overlay.screenHeight * 0.92, 900)

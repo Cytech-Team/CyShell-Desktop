@@ -114,26 +114,6 @@ Column {
             onSliderValueChanged: newValue => SettingsData.set("blurLayerOutlineOpacity", newValue / 100)
         }
 
-        SettingsToggleRow {
-            tab: "theme"
-            tags: ["blur", "background", "transparency", "glass", "frosted"]
-            settingKey: "blurEnabled"
-            text: I18n.tr("Background blur")
-            description: BlurService.available ? "" : I18n.tr("Your compositor does not support background blur (ext-background-effect-v1)")
-            checked: SettingsData.blurEnabled ?? false
-            enabled: BlurService.available
-            onToggled: checked => SettingsData.set("blurEnabled", checked)
-        }
-
-        SettingsNavRow {
-            tab: "theme"
-            tags: ["blur", "xray", "compositor", "layout"]
-            settingKey: "blurXrayLink"
-            visible: CompositorService.isNiri || CompositorService.isHyprland
-            title: I18n.tr("Xray options are in Compositor → Layout")
-            onClicked: root.parentModal?.navigateTo("compositor_layout")
-        }
-
         SettingsButtonGroupRow {
             tab: "theme"
             tags: ["corner", "radius", "rounded", "square", "fixed", "material", "shape"]
@@ -358,7 +338,7 @@ Column {
                 clickable: true
                 onClicked: targetCard.showHidden = !targetCard.showHidden
 
-                DankIcon {
+                CyIcon {
                     anchors.verticalCenter: parent.verticalCenter
                     name: targetCard.showHidden ? "expand_less" : "expand_more"
                     size: Theme.iconSize

@@ -66,7 +66,7 @@ Row {
             visible: false
             color: "transparent"
 
-            WlrLayershell.namespace: "dms:control-center-widget-library"
+            WlrLayershell.namespace: "cyshell:control-center-widget-library"
             WlrLayershell.layer: WlrLayershell.Overlay
             WlrLayershell.exclusiveZone: -1
             WlrLayershell.keyboardFocus: PopoutManager.screenshotActive ? WlrKeyboardFocus.None : (visible ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None)
@@ -112,7 +112,7 @@ Row {
         }
     }
 
-    DankButton {
+    CyButton {
         width: root.buttonWidth
         buttonHeight: Theme.buttonHeightS
         iconName: "add"
@@ -122,7 +122,7 @@ Row {
         onClicked: root.openWidgetLibrary()
     }
 
-    DankButton {
+    CyButton {
         width: root.buttonWidth
         buttonHeight: Theme.buttonHeightS
         iconName: "settings_backup_restore"
@@ -132,7 +132,7 @@ Row {
         onClicked: root.resetToDefault()
     }
 
-    DankButton {
+    CyButton {
         width: root.buttonWidth
         buttonHeight: Theme.buttonHeightS
         iconName: "clear_all"

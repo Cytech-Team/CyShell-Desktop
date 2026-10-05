@@ -10,7 +10,7 @@ import qs.Modals
 import qs.Modules.Notifications as Notifications
 import qs.Services
 import qs.Widgets
-import qs.DankCommon.Session
+import qs.CyCommon.Session
 import "../../Common/KeyUtils.js" as KeyUtils
 
 Item {
@@ -123,8 +123,8 @@ Item {
         if (root.unlocking)
             return;
         lockerReadySent = true;
-        if (SessionService.loginctlAvailable && DMSService.apiVersion >= 2) {
-            DMSService.sendRequest("loginctl.lockerReady", null, resp => {
+        if (SessionService.loginctlAvailable && CyShellService.apiVersion >= 2) {
+            CyShellService.sendRequest("loginctl.lockerReady", null, resp => {
                 if (resp?.error)
                     log.warn("lockerReady failed:", resp.error);
                 else
@@ -186,12 +186,12 @@ Item {
         }
         asynchronous: true
 
-        sourceComponent: DankBackdrop {
+        sourceComponent: CyBackdrop {
             screenName: root.screenName
         }
     }
 
-    Loader {
+    Item {
         id: wallpaperBackground
         anchors.fill: parent
 
@@ -209,11 +209,57 @@ Item {
 
         readonly property real screenScale: CompositorService.getScreenScale(Quickshell.screens.find(s => s.name === root.screenName) ?? null)
         readonly property size decodeSize: Qt.size(Math.round(width * screenScale), Math.round(height * screenScale))
+        property string displayedSource: ""
+        property string incomingSource: ""
+        property real transitionProgress: 0
 
-        active: wallpaperSource !== "" && width > 0 && height > 0
-        asynchronous: false
+        function syncWallpaperSource() {
+            const next = wallpaperSource;
+            if (wallpaperTransition.running) {
+                wallpaperTransition.stop();
+                if (incomingSource)
+                    displayedSource = incomingSource;
+                incomingSource = "";
+                transitionProgress = 0;
+            }
+            if (next === displayedSource)
+                return;
+            if (!displayedSource || !next || fillModeName === "Scrolling" || SettingsData.reduceMotion || SessionData.wallpaperTransition === "none") {
+                displayedSource = next;
+                incomingSource = "";
+                transitionProgress = 0;
+                return;
+            }
+            incomingSource = next;
+            transitionProgress = 0;
+            Qt.callLater(() => {
+                if (wallpaperBackground.incomingSource === next && incomingWallpaper.status === Image.Ready)
+                    wallpaperBackground.startWallpaperTransition();
+            });
+        }
 
-        sourceComponent: fillModeName === "Scrolling" ? scrollWallpaperComp : plainWallpaperComp
+        function startWallpaperTransition() {
+            if (!incomingSource || wallpaperTransition.running)
+                return;
+            if (LockMetrics.effectsDuration <= 0) {
+                finishWallpaperTransition();
+                return;
+            }
+            wallpaperTransition.start();
+        }
+
+        function finishWallpaperTransition() {
+            if (incomingSource)
+                displayedSource = incomingSource;
+            incomingSource = "";
+            transitionProgress = 0;
+        }
+
+        Component.onCompleted: displayedSource = wallpaperSource
+        onWallpaperSourceChanged: syncWallpaperSource()
+        onFillModeNameChanged: syncWallpaperSource()
+
+        visible: displayedSource !== "" || incomingSource !== ""
 
         layer.enabled: true
         layer.effect: MultiEffect {
@@ -224,24 +270,58 @@ Item {
             blurMultiplier: 1
         }
 
-        Behavior on opacity {
-            NumberAnimation {
-                duration: LockMetrics.effectsDuration
-                easing.type: Easing.BezierSpline
-                easing.bezierCurve: Theme.expressiveCurves.expressiveEffects
+        Loader {
+            id: currentWallpaper
+            anchors.fill: parent
+            active: wallpaperBackground.displayedSource !== "" && wallpaperBackground.width > 0 && wallpaperBackground.height > 0
+            sourceComponent: wallpaperBackground.fillModeName === "Scrolling" ? scrollWallpaperComp : plainWallpaperComp
+            opacity: wallpaperBackground.incomingSource ? 1 - wallpaperBackground.transitionProgress : 1
+        }
+
+        Image {
+            id: incomingWallpaper
+            anchors.fill: parent
+            visible: wallpaperBackground.incomingSource !== "" && wallpaperBackground.fillModeName !== "Scrolling"
+            source: wallpaperBackground.incomingSource
+            sourceSize: wallpaperBackground.decodeSize
+            fillMode: Theme.getFillMode(wallpaperBackground.fillModeName)
+            smooth: true
+            cache: true
+            asynchronous: true
+            opacity: wallpaperBackground.transitionProgress
+            onStatusChanged: {
+                if (status === Image.Ready)
+                    wallpaperBackground.startWallpaperTransition();
+                else if (status === Image.Error) {
+                    root.log.warn("failed to load lock screen wallpaper for", root.screenName + ":", source);
+                    wallpaperBackground.incomingSource = "";
+                    wallpaperBackground.transitionProgress = 0;
+                }
             }
+        }
+
+        NumberAnimation {
+            id: wallpaperTransition
+            target: wallpaperBackground
+            property: "transitionProgress"
+            from: 0
+            to: 1
+            duration: LockMetrics.effectsDuration
+            easing.type: Easing.BezierSpline
+            easing.bezierCurve: Theme.expressiveCurves.expressiveEffects
+            onFinished: wallpaperBackground.finishWallpaperTransition()
         }
     }
 
     Component {
         id: plainWallpaperComp
         Image {
-            source: wallpaperBackground.wallpaperSource
+            source: wallpaperBackground.displayedSource
             sourceSize: wallpaperBackground.decodeSize
             fillMode: Theme.getFillMode(wallpaperBackground.fillModeName)
             smooth: true
             cache: true
-            asynchronous: false
+            asynchronous: true
         }
     }
 
@@ -252,7 +332,7 @@ Item {
                 id: scrollSource
                 anchors.fill: parent
                 visible: false
-                source: wallpaperBackground.wallpaperSource
+                source: wallpaperBackground.displayedSource
                 sourceSize: wallpaperBackground.decodeSize
                 asynchronous: false
                 cache: true
@@ -515,7 +595,7 @@ Item {
                         anchors.centerIn: parent
                         spacing: Theme.spacingS
 
-                        DankIcon {
+                        CyIcon {
                             name: "notifications"
                             size: Theme.iconSize
                             color: Theme.onSurfaceVariant
@@ -536,7 +616,7 @@ Item {
             Component {
                 id: notificationListComponent
 
-                DankFlickable {
+                CyFlickable {
                     width: parent.width
                     height: Math.min(notificationColumn.implicitHeight, LockMetrics.notificationMaxHeight, Math.max(0, root.height - lockNotificationPanel.y - Theme.spacingXL))
                     contentHeight: notificationColumn.implicitHeight
@@ -596,7 +676,7 @@ Item {
                 spacing: Theme.spacingM
                 Layout.fillWidth: true
 
-                DankCircularImage {
+                CyCircularImage {
                     Layout.preferredWidth: LockMetrics.avatarSize
                     Layout.preferredHeight: LockMetrics.fieldHeight
                     imageSource: {
@@ -636,7 +716,7 @@ Item {
                         width: Theme.iconSizeSmall
                         height: Theme.iconSizeSmall
 
-                        DankIcon {
+                        CyIcon {
                             id: lockIcon
 
                             anchors.centerIn: parent
@@ -910,7 +990,7 @@ Item {
                             }
                         }
 
-                        // IME commits use a hidden password input: https://github.com/AvengeMedia/DankMaterialShell/issues/2950
+                        // IME commits use a hidden password input: https://github.com/AvengeMedia/CyShell/issues/2950
                         TextInput {
                             id: imeCommitSink
 
@@ -1088,7 +1168,7 @@ Item {
                             }
                         }
 
-                        DankTextCursor {
+                        CyTextCursor {
                             id: passwordCursor
 
                             x: passwordDisplay.x + passwordDisplay.cursorRectangle.x
@@ -1177,7 +1257,7 @@ Item {
                         color: "transparent"
                         visible: !demoMode && (pam.passwd.active || root.unlocking)
 
-                        DankIcon {
+                        CyIcon {
                             anchors.centerIn: parent
                             name: "check_circle"
                             size: Theme.iconSizeSmall
@@ -1305,9 +1385,9 @@ Item {
             anchors.topMargin: Theme.spacingS
             anchors.horizontalCenter: passwordLayout.horizontalCenter
             spacing: Theme.spacingXS
-            opacity: DMSService.capsLockState ? 1 : 0
+            opacity: CyShellService.capsLockState ? 1 : 0
 
-            DankIcon {
+            CyIcon {
                 name: "shift_lock"
                 size: Theme.iconSizeSmall
                 color: Theme.error

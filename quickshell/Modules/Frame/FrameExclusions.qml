@@ -19,7 +19,7 @@ Scope {
 
             screen: root.screen
             edge: modelData
-            layerNamespace: "dms:frame-exclusion"
+            layerNamespace: "cyshell:frame-exclusion"
             exclusionSize: {
                 const layout = ShellLayout.forScreen(root.screen);
                 const band = layout?.edges[modelData];

@@ -349,7 +349,7 @@ Column {
         id: clipboardCopyProcComp
         Process {
             property string content: ""
-            command: ["sh", "-c", "printf '%s' \"$CONTENT\" | dms clipboard copy"]
+            command: ["sh", "-c", "printf '%s' \"$CONTENT\" | cyshell clipboard copy"]
             environment: ({
                     "CONTENT": content
                 })
@@ -379,7 +379,7 @@ Column {
             anchors.rightMargin: Theme.spacingM
             spacing: Theme.spacingS
 
-            DankSearchField {
+            CySearchField {
                 id: searchField
                 Layout.fillWidth: true
                 Layout.alignment: Qt.AlignVCenter
@@ -447,7 +447,7 @@ Column {
             }
 
             // Navigation buttons
-            DankActionButton {
+            CyActionButton {
                 id: prevButton
                 Layout.alignment: Qt.AlignVCenter
                 iconName: "keyboard_arrow_up"
@@ -458,7 +458,7 @@ Column {
                 onClicked: root.findPrevious()
             }
 
-            DankActionButton {
+            CyActionButton {
                 id: nextButton
                 Layout.alignment: Qt.AlignVCenter
                 iconName: "keyboard_arrow_down"
@@ -469,7 +469,7 @@ Column {
                 onClicked: root.findNext()
             }
 
-            DankActionButton {
+            CyActionButton {
                 id: closeSearchButton
                 Layout.alignment: Qt.AlignVCenter
                 iconName: "close"
@@ -503,7 +503,7 @@ Column {
                 Layout.preferredWidth: inlinePreviewVisible ? parent.width * 0.55 : parent.width
                 clip: true
 
-                DankFlickable {
+                CyFlickable {
                     id: flickable
                     anchors.fill: parent
                     clip: true
@@ -583,7 +583,7 @@ Column {
                         topPadding: Theme.spacingM
                         rightPadding: Theme.spacingM
                         bottomPadding: Theme.spacingM
-                        cursorDelegate: DankTextCursor {
+                        cursorDelegate: CyTextCursor {
                             id: notepadCursor
                             width: 1.5
                             color: Theme.surfaceText
@@ -729,7 +729,7 @@ Column {
                         spacing: Theme.spacingS
 
                         // Copy plain text button
-                        DankActionButton {
+                        CyActionButton {
                             iconName: "content_copy"
                             Accessible.name: I18n.tr("Copy Text")
                             iconSize: Theme.iconSize - 4
@@ -752,7 +752,7 @@ Column {
                         }
 
                         // Copy HTML button
-                        DankActionButton {
+                        CyActionButton {
                             iconName: "code"
                             Accessible.name: I18n.tr("Copy HTML")
                             iconSize: Theme.iconSize - 4
@@ -769,7 +769,7 @@ Column {
                     }
                 }
 
-                DankFlickable {
+                CyFlickable {
                     id: previewFlickable
                     anchors.top: previewHeader.bottom
                     anchors.left: parent.left
@@ -816,7 +816,7 @@ Column {
 
                 Row {
                     spacing: Theme.spacingS
-                    DankActionButton {
+                    CyActionButton {
                         iconName: "save"
                         Accessible.name: I18n.tr("Save")
                         iconSize: Theme.iconSize - 2
@@ -834,7 +834,7 @@ Column {
 
                 Row {
                     spacing: Theme.spacingS
-                    DankActionButton {
+                    CyActionButton {
                         iconName: "folder_open"
                         Accessible.name: I18n.tr("Open")
                         iconSize: Theme.iconSize - 2
@@ -851,7 +851,7 @@ Column {
 
                 Row {
                     spacing: Theme.spacingS
-                    DankActionButton {
+                    CyActionButton {
                         iconName: "note_add"
                         Accessible.name: I18n.tr("New")
                         iconSize: Theme.iconSize - 2
@@ -869,7 +869,7 @@ Column {
                 Row {
                     spacing: Theme.spacingS
                     visible: PluginService.isPluginLoaded("dankNotepadModule")
-                    DankActionButton {
+                    CyActionButton {
                         iconName: inlinePreviewVisible ? "visibility" : "visibility_off"
                         Accessible.name: I18n.tr("Preview")
                         iconSize: Theme.iconSize - 2
@@ -892,7 +892,7 @@ Column {
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: Theme.spacingS
 
-                DankActionButton {
+                CyActionButton {
                     visible: !root.inPopout
                     iconName: "open_in_new"
                     tooltipText: I18n.tr("Open as window")
@@ -901,7 +901,7 @@ Column {
                     onClicked: root.popoutRequested()
                 }
 
-                DankActionButton {
+                CyActionButton {
                     visible: root.inPopout
                     iconName: "dock_to_right"
                     tooltipText: I18n.tr("Dock")
@@ -910,7 +910,7 @@ Column {
                     onClicked: root.dockRequested()
                 }
 
-                DankActionButton {
+                CyActionButton {
                     iconName: "more_horiz"
                     tooltipText: I18n.tr("Settings")
                     iconSize: Theme.iconSize - 2
@@ -942,7 +942,7 @@ Column {
                     anchors.rightMargin: Theme.spacingM
                     spacing: Theme.spacingS
 
-                    DankIcon {
+                    CyIcon {
                         name: currentTab && currentTab.isTemporary ? "draft" : "description"
                         size: Theme.iconSize - 4
                         color: Theme.surfaceVariantText
@@ -958,7 +958,7 @@ Column {
                         anchors.verticalCenter: parent.verticalCenter
                     }
 
-                    DankActionButton {
+                    CyActionButton {
                         id: copyPathButton
                         iconName: "content_copy"
                         Accessible.name: I18n.tr("Copy path")
@@ -1036,7 +1036,7 @@ Column {
                     }
                 }
 
-                DankActionButton {
+                CyActionButton {
                     anchors.verticalCenter: parent.verticalCenter
                     iconName: "info"
                     tooltipText: I18n.tr("File info")

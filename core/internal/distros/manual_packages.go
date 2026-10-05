@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/deps"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/privesc"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/deps"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/privesc"
 )
 
 // ManualPackageInstaller provides methods for installing packages from source
@@ -55,9 +55,9 @@ func (m *ManualPackageInstaller) InstallManualPackages(ctx context.Context, pack
 	for _, pkg := range packages {
 		variant := variantMap[pkg]
 		switch pkg {
-		case "dms (DankMaterialShell)", "dms":
-			if err := m.installDankMaterialShell(ctx, variant, sudoPassword, progressChan); err != nil {
-				return fmt.Errorf("failed to install DankMaterialShell: %w", err)
+		case "CyShell", "cyshell":
+			if err := m.installCyShell(ctx, variant, sudoPassword, progressChan); err != nil {
+				return fmt.Errorf("failed to install CyShell: %w", err)
 			}
 		case "niri":
 			if err := m.installNiri(ctx, sudoPassword, progressChan); err != nil {
@@ -95,8 +95,8 @@ func (m *ManualPackageInstaller) installNiri(ctx context.Context, sudoPassword s
 	m.log("Installing niri from source...")
 
 	homeDir, _ := os.UserHomeDir()
-	buildDir := filepath.Join(homeDir, ".cache", "dankinstall", "niri-build")
-	tmpDir := filepath.Join(homeDir, ".cache", "dankinstall", "tmp")
+	buildDir := filepath.Join(homeDir, ".cache", "cyshell-install", "niri-build")
+	tmpDir := filepath.Join(homeDir, ".cache", "cyshell-install", "tmp")
 	if err := os.MkdirAll(buildDir, 0o755); err != nil {
 		return fmt.Errorf("failed to create build directory: %w", err)
 	}
@@ -173,7 +173,7 @@ func (m *ManualPackageInstaller) installQuickshell(ctx context.Context, variant 
 		return fmt.Errorf("HOME environment variable not set")
 	}
 
-	cacheDir := filepath.Join(homeDir, ".cache", "dankinstall")
+	cacheDir := filepath.Join(homeDir, ".cache", "cyshell-install")
 	if err := os.MkdirAll(cacheDir, 0o755); err != nil {
 		return fmt.Errorf("failed to create cache directory: %w", err)
 	}
@@ -279,7 +279,7 @@ func (m *ManualPackageInstaller) installHyprland(ctx context.Context, sudoPasswo
 		return fmt.Errorf("HOME environment variable not set")
 	}
 
-	cacheDir := filepath.Join(homeDir, ".cache", "dankinstall")
+	cacheDir := filepath.Join(homeDir, ".cache", "cyshell-install")
 	if err := os.MkdirAll(cacheDir, 0o755); err != nil {
 		return fmt.Errorf("failed to create cache directory: %w", err)
 	}
@@ -342,7 +342,7 @@ func (m *ManualPackageInstaller) installGhostty(ctx context.Context, sudoPasswor
 		return fmt.Errorf("HOME environment variable not set")
 	}
 
-	cacheDir := filepath.Join(homeDir, ".cache", "dankinstall")
+	cacheDir := filepath.Join(homeDir, ".cache", "cyshell-install")
 	if err := os.MkdirAll(cacheDir, 0o755); err != nil {
 		return fmt.Errorf("failed to create cache directory: %w", err)
 	}
@@ -441,41 +441,41 @@ func (m *ManualPackageInstaller) installMatugen(ctx context.Context, sudoPasswor
 	return nil
 }
 
-func (m *ManualPackageInstaller) installDankMaterialShell(ctx context.Context, variant deps.PackageVariant, sudoPassword string, progressChan chan<- InstallProgressMsg) error {
-	m.log("Installing DankMaterialShell (DMS)...")
+func (m *ManualPackageInstaller) installCyShell(ctx context.Context, variant deps.PackageVariant, sudoPassword string, progressChan chan<- InstallProgressMsg) error {
+	m.log("Installing CyShell...")
 
-	if err := m.installDMSBinary(ctx, sudoPassword, progressChan); err != nil {
-		m.logError("Failed to install DMS binary", err)
+	if err := m.installCyShellBinary(ctx, sudoPassword, progressChan); err != nil {
+		m.logError("Failed to install CyShell binary", err)
 	}
 
-	dmsPath := filepath.Join(os.Getenv("HOME"), ".config/quickshell/dms")
+	cyShellPath := filepath.Join(os.Getenv("HOME"), ".config", "quickshell", "cyshell")
 
-	if _, err := os.Stat(dmsPath); os.IsNotExist(err) {
+	if _, err := os.Stat(cyShellPath); os.IsNotExist(err) {
 		progressChan <- InstallProgressMsg{
 			Phase:       PhaseSystemPackages,
 			Progress:    0.90,
-			Step:        "Cloning DankMaterialShell...",
+			Step:        "Cloning CyShell...",
 			IsComplete:  false,
-			CommandInfo: "git clone --recurse-submodules https://github.com/AvengeMedia/DankMaterialShell.git",
+			CommandInfo: "git clone --recurse-submodules https://github.com/Cytech-Team/CyShell-Desktop.git",
 		}
 
-		configDir := filepath.Dir(dmsPath)
+		configDir := filepath.Dir(cyShellPath)
 		if err := os.MkdirAll(configDir, 0o755); err != nil {
 			return fmt.Errorf("failed to create quickshell config directory: %w", err)
 		}
 
 		cloneCmd := exec.CommandContext(ctx, "git", "clone", "--recurse-submodules",
-			"https://github.com/AvengeMedia/DankMaterialShell.git", dmsPath)
+			"https://github.com/Cytech-Team/CyShell-Desktop.git", cyShellPath)
 		if err := cloneCmd.Run(); err != nil {
-			return fmt.Errorf("failed to clone DankMaterialShell: %w", err)
+			return fmt.Errorf("failed to clone CyShell: %w", err)
 		}
 
-		if forceDMSGit || variant == deps.VariantGit {
-			m.log("Using git variant (master branch)")
+		if forceCyShellGit || variant == deps.VariantGit {
+			m.log("Using git variant (repository default branch)")
 			return nil
 		}
 
-		tagCmd := exec.CommandContext(ctx, "git", "-C", dmsPath, "describe", "--tags", "--abbrev=0", "origin/master")
+		tagCmd := exec.CommandContext(ctx, "git", "-C", cyShellPath, "describe", "--tags", "--abbrev=0", "origin/HEAD")
 		tagOutput, err := tagCmd.Output()
 		if err != nil {
 			m.log("Using default branch (no tags found)")
@@ -483,35 +483,35 @@ func (m *ManualPackageInstaller) installDankMaterialShell(ctx context.Context, v
 		}
 
 		latestTag := strings.TrimSpace(string(tagOutput))
-		checkoutCmd := exec.CommandContext(ctx, "git", "-C", dmsPath, "checkout", latestTag)
+		checkoutCmd := exec.CommandContext(ctx, "git", "-C", cyShellPath, "checkout", latestTag)
 		if err := checkoutCmd.Run(); err != nil {
 			m.logError(fmt.Sprintf("Failed to checkout tag %s", latestTag), err)
 			return nil
 		}
 
-		m.syncDMSSubmodules(ctx, dmsPath)
+		m.syncCyShellSubmodules(ctx, cyShellPath)
 
 		m.log(fmt.Sprintf("Checked out latest tag: %s", latestTag))
-		m.log("DankMaterialShell cloned successfully")
+		m.log("CyShell cloned successfully")
 		return nil
 	}
 
 	progressChan <- InstallProgressMsg{
 		Phase:       PhaseSystemPackages,
 		Progress:    0.90,
-		Step:        "Updating DankMaterialShell...",
+		Step:        "Updating CyShell...",
 		IsComplete:  false,
-		CommandInfo: "Updating ~/.config/quickshell/dms",
+		CommandInfo: "Updating ~/.config/quickshell/cyshell",
 	}
 
-	fetchCmd := exec.CommandContext(ctx, "git", "-C", dmsPath, "fetch", "origin", "--tags", "--force")
+	fetchCmd := exec.CommandContext(ctx, "git", "-C", cyShellPath, "fetch", "origin", "--tags", "--force")
 	if err := fetchCmd.Run(); err != nil {
 		m.logError("Failed to fetch updates", err)
 		return nil
 	}
 
-	if forceDMSGit || variant == deps.VariantGit {
-		branchCmd := exec.CommandContext(ctx, "git", "-C", dmsPath, "rev-parse", "--abbrev-ref", "HEAD")
+	if forceCyShellGit || variant == deps.VariantGit {
+		branchCmd := exec.CommandContext(ctx, "git", "-C", cyShellPath, "rev-parse", "--abbrev-ref", "HEAD")
 		branchOutput, err := branchCmd.Output()
 		if err != nil {
 			m.logError("Failed to get current branch", err)
@@ -520,22 +520,22 @@ func (m *ManualPackageInstaller) installDankMaterialShell(ctx context.Context, v
 
 		branch := strings.TrimSpace(string(branchOutput))
 		if branch == "" {
-			branch = "master"
+			branch = "cyshell-dev"
 		}
 
-		pullCmd := exec.CommandContext(ctx, "git", "-C", dmsPath, "pull", "origin", branch)
+		pullCmd := exec.CommandContext(ctx, "git", "-C", cyShellPath, "pull", "origin", branch)
 		if err := pullCmd.Run(); err != nil {
 			m.logError("Failed to pull updates", err)
 			return nil
 		}
 
-		m.syncDMSSubmodules(ctx, dmsPath)
+		m.syncCyShellSubmodules(ctx, cyShellPath)
 
-		m.log("DankMaterialShell updated successfully (git variant)")
+		m.log("CyShell updated successfully (git variant)")
 		return nil
 	}
 
-	latestTagCmd := exec.CommandContext(ctx, "git", "-C", dmsPath, "describe", "--tags", "--abbrev=0", "origin/master")
+	latestTagCmd := exec.CommandContext(ctx, "git", "-C", cyShellPath, "describe", "--tags", "--abbrev=0", "origin/HEAD")
 	tagOutput, err := latestTagCmd.Output()
 	if err != nil {
 		m.logError("Failed to get latest tag", err)
@@ -543,20 +543,20 @@ func (m *ManualPackageInstaller) installDankMaterialShell(ctx context.Context, v
 	}
 
 	latestTag := strings.TrimSpace(string(tagOutput))
-	checkoutCmd := exec.CommandContext(ctx, "git", "-C", dmsPath, "checkout", latestTag)
+	checkoutCmd := exec.CommandContext(ctx, "git", "-C", cyShellPath, "checkout", latestTag)
 	if err := checkoutCmd.Run(); err != nil {
 		m.logError(fmt.Sprintf("Failed to checkout tag %s", latestTag), err)
 		return nil
 	}
 
-	m.syncDMSSubmodules(ctx, dmsPath)
+	m.syncCyShellSubmodules(ctx, cyShellPath)
 
 	m.log(fmt.Sprintf("Updated to tag: %s", latestTag))
 	return nil
 }
 
-func (m *ManualPackageInstaller) syncDMSSubmodules(ctx context.Context, dmsPath string) {
-	submoduleCmd := exec.CommandContext(ctx, "git", "-C", dmsPath, "submodule", "update", "--init", "--recursive")
+func (m *ManualPackageInstaller) syncCyShellSubmodules(ctx context.Context, cyShellPath string) {
+	submoduleCmd := exec.CommandContext(ctx, "git", "-C", cyShellPath, "submodule", "update", "--init", "--recursive")
 	if err := submoduleCmd.Run(); err != nil {
 		m.logError("Failed to update submodules", err)
 	}

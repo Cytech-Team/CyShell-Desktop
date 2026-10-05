@@ -7,9 +7,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/config"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/deps"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/distros"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/config"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/deps"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/distros"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -166,16 +166,16 @@ func (m Model) configReplacementNote() string {
 	switch configInfo.ConfigType {
 	case "Niri":
 		if m.useSystemdConfig() {
-			return "Replacing Niri writes the CyShell Niri template and uses the user systemd dms service for shell autostart."
+			return "Replacing Niri writes the CyShell Niri template and uses the user systemd cyshell.service for shell autostart."
 		}
-		return `Replacing Niri writes the CyShell Niri template and starts CyShell from Niri with spawn-at-startup "dms" "run".`
+		return `Replacing Niri writes the CyShell Niri template and starts CyShell from Niri with spawn-at-startup "cyshell" "run".`
 	case "Hyprland":
 		if m.useSystemdConfig() {
-			return "Replacing Hyprland writes the CyShell Lua template and uses the user systemd dms service for shell autostart."
+			return "Replacing Hyprland writes the CyShell Lua template and uses the user systemd cyshell.service for shell autostart."
 		}
-		return `Replacing Hyprland writes the CyShell Lua template and starts CyShell from Hyprland with hl.exec_cmd("dms run").`
+		return `Replacing Hyprland writes the CyShell Lua template and starts CyShell from Hyprland with hl.exec_cmd("cyshell run").`
 	case "Mango":
-		return "Replacing Mango writes the CyShell Mango template and starts CyShell from Mango with exec-once=dms run."
+		return "Replacing Mango writes the CyShell Mango template and starts CyShell from Mango with exec-once=cyshell run."
 	case "Ghostty":
 		return "Replacing Ghostty writes the CyShell terminal defaults and theme include."
 	case "Kitty":

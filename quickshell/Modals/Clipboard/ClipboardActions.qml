@@ -9,7 +9,7 @@ Row {
 
     spacing: Theme.spacingS
 
-    DankActionButton {
+    CyActionButton {
         Keys.forwardTo: [actions.modal.modalFocusScope]
         iconName: "push_pin"
         buttonSize: Theme.buttonHeightXXS
@@ -21,7 +21,7 @@ Row {
         onClicked: actions.modal.activeTab = actions.modal.activeTab === "saved" ? "recents" : "saved"
     }
 
-    DankActionButton {
+    CyActionButton {
         Keys.forwardTo: [actions.modal.modalFocusScope]
         iconName: "info"
         buttonSize: Theme.buttonHeightXXS
@@ -32,7 +32,7 @@ Row {
         onClicked: actions.modal.showKeyboardHints = !actions.modal.showKeyboardHints
     }
 
-    DankActionButton {
+    CyActionButton {
         Keys.forwardTo: [actions.modal.modalFocusScope]
         iconName: "delete_sweep"
         buttonSize: Theme.buttonHeightXXS

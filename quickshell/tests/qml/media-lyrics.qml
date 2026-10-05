@@ -4,8 +4,8 @@ import Quickshell
 import Quickshell.Services.Mpris
 import qs.Common
 import qs.Services
-import qs.Modules.DankDash
-import qs.DankCommon.Common as DC
+import qs.Modules.CyDash
+import qs.CyCommon.Common as DC
 
 ShellRoot {
     id: root
@@ -196,7 +196,7 @@ ShellRoot {
     function run() {
         try {
             check(!!media.activePlayer, "fixture player discovered");
-            DMSService.capabilities = ["lyrics"];
+            CyShellService.capabilities = ["lyrics"];
             SettingsData.reduceMotion = true;
             SettingsData.dashOptions = {
                 media: {
@@ -671,13 +671,13 @@ ShellRoot {
             check(media.lyrics.currentTime() > 30.35 && Math.abs(media.lyrics.currentTime() - media.activePlayer.position) < 0.05, "resuming continues from the seek target");
             media.lyricsOpen = false;
             const requestId = "lyrics-cancellation-fixture";
-            DMSService.pendingRequests[requestId] = () => root.unexpectedReply = true;
-            DMSService.requestTimeouts[requestId] = requestTimer.createObject(root);
-            DMSService.clipboardRequestIds[requestId] = true;
-            DMSService.cancelRequest(requestId);
-            check(DMSService.clipboardRequestIds[requestId], "cancelled clipboard replies retain their redaction marker");
-            delete DMSService.clipboardRequestIds[requestId];
-            DMSService.handleResponse({
+            CyShellService.pendingRequests[requestId] = () => root.unexpectedReply = true;
+            CyShellService.requestTimeouts[requestId] = requestTimer.createObject(root);
+            CyShellService.clipboardRequestIds[requestId] = true;
+            CyShellService.cancelRequest(requestId);
+            check(CyShellService.clipboardRequestIds[requestId], "cancelled clipboard replies retain their redaction marker");
+            delete CyShellService.clipboardRequestIds[requestId];
+            CyShellService.handleResponse({
                 id: requestId,
                 result: {}
             });

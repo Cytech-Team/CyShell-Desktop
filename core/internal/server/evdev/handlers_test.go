@@ -11,8 +11,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	mocks "github.com/AvengeMedia/DankMaterialShell/core/internal/mocks/evdev"
 	"github.com/AvengeMedia/dankgo/ipc"
+	mocks "github.com/Cytech-Team/CyShell-Desktop/core/internal/mocks/evdev"
 )
 
 type mockNetConn struct {

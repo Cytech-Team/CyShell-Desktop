@@ -6,9 +6,29 @@ import (
 	"sync"
 	"testing"
 
+	mockdbus "github.com/Cytech-Team/CyShell-Desktop/core/internal/mocks/github.com/godbus/dbus/v5"
+	"github.com/godbus/dbus/v5"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
+
+func TestSetIconFileOnObjectStagesSource(t *testing.T) {
+	iconPath := filepath.Join(t.TempDir(), "avatar.png")
+	require.NoError(t, os.WriteFile(iconPath, []byte("avatar-bytes"), 0o600))
+
+	userObj := mockdbus.NewMockBusObject(t)
+	stagedCopy := mock.MatchedBy(func(path string) bool {
+		if path == iconPath {
+			return false
+		}
+		data, err := os.ReadFile(path)
+		return err == nil && string(data) == "avatar-bytes"
+	})
+	userObj.EXPECT().Call(dbusAccountsUserInterface+".SetIconFile", dbus.Flags(0), stagedCopy).Return(&dbus.Call{})
+
+	require.NoError(t, setIconFileOnObject(userObj, iconPath))
+}
 
 func TestManager_SetIconFile(t *testing.T) {
 	t.Run("accounts not available", func(t *testing.T) {

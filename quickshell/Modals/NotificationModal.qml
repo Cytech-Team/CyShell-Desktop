@@ -6,10 +6,10 @@ import qs.Modals.Common
 import qs.Modules.Notifications.Center
 import qs.Services
 
-DankModal {
+CyModal {
     id: notificationModal
 
-    layerNamespace: "dms:notification-center-modal"
+    layerNamespace: "cyshell:notification-center-modal"
 
     property bool notificationModalOpen: false
     property var notificationListRef: null
@@ -122,7 +122,7 @@ DankModal {
     }
 
     IpcHandler {
-        // DankIsland owns this trigger whenever it is the sole bar for the screen.
+        // CyIsland owns this trigger whenever it is the sole bar for the screen.
         function open(): string {
             if (PopoutService.routeToIsland("notificationcenter", null, false))
                 return "NOTIFICATION_ISLAND_OPEN_SUCCESS";

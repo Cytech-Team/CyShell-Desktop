@@ -4,34 +4,35 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/apppicker"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/bluez"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/brightness"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/clipboard"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/cups"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/cycom"
-	serverDbus "github.com/AvengeMedia/DankMaterialShell/core/internal/server/dbus"
-	serverDgop "github.com/AvengeMedia/DankMaterialShell/core/internal/server/dgop"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/evdev"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/extworkspace"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/freedesktop"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/location"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/loginctl"
-	serverLyrics "github.com/AvengeMedia/DankMaterialShell/core/internal/server/lyrics"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/mime"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/models"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/network"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/notifyactions"
-	serverPlugins "github.com/AvengeMedia/DankMaterialShell/core/internal/server/plugins"
-	serverRegistries "github.com/AvengeMedia/DankMaterialShell/core/internal/server/registries"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/sysupdate"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/tailscale"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/thememode"
-	serverThemes "github.com/AvengeMedia/DankMaterialShell/core/internal/server/themes"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/wallpaper"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/wayland"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/wlroutput"
 	"github.com/AvengeMedia/dankgo/ipc"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/server/apppicker"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/server/bluez"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/server/brightness"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/server/clipboard"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/server/cups"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/server/cycom"
+	serverDbus "github.com/Cytech-Team/CyShell-Desktop/core/internal/server/dbus"
+	serverDgop "github.com/Cytech-Team/CyShell-Desktop/core/internal/server/dgop"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/server/evdev"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/server/extworkspace"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/server/freedesktop"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/server/location"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/server/loginctl"
+	serverLyrics "github.com/Cytech-Team/CyShell-Desktop/core/internal/server/lyrics"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/server/mime"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/server/models"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/server/network"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/server/notifyactions"
+	serverPlugins "github.com/Cytech-Team/CyShell-Desktop/core/internal/server/plugins"
+	serverRegistries "github.com/Cytech-Team/CyShell-Desktop/core/internal/server/registries"
+	serverSettings "github.com/Cytech-Team/CyShell-Desktop/core/internal/server/settingsstore"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/server/sysupdate"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/server/tailscale"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/server/thememode"
+	serverThemes "github.com/Cytech-Team/CyShell-Desktop/core/internal/server/themes"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/server/wallpaper"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/server/wayland"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/server/wlroutput"
 )
 
 var requestMux = newRequestMux()
@@ -85,6 +86,10 @@ func newRequestMux() *ipc.Mux {
 	mux.HandlePrefix("themes.", requestHandler(serverThemes.HandleRequest))
 
 	mux.HandlePrefix("registries.", requestHandler(serverRegistries.HandleRequest))
+
+	mux.HandlePrefix("settings.", requestHandler(func(conn *ipc.ConnWriter, req ipc.Request) {
+		serverSettings.HandleRequest(conn, req, settingsManager)
+	}))
 
 	mux.HandlePrefix("theme.auto.", requestHandler(func(conn *ipc.ConnWriter, req ipc.Request) {
 		if themeModeManager == nil {

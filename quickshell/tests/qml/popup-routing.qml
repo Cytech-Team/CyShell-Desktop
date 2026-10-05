@@ -3,9 +3,9 @@ import Quickshell
 import qs.Common
 import qs.Services
 import qs.Widgets
-import qs.Modules.DankBar
+import qs.Modules.CyBar
 import qs.Modules.Plugins
-import qs.DankCommon.Common as DC
+import qs.CyCommon.Common as DC
 
 ShellRoot {
     id: root
@@ -51,7 +51,7 @@ ShellRoot {
                 values: SettingsData.barConfigs
                 objectProp: "id"
             }
-            delegate: DankBar {
+            delegate: CyBar {
                 required property var modelData
                 barConfig: modelData
             }
@@ -59,7 +59,7 @@ ShellRoot {
         Loader {
             id: dashLoader
             active: false
-            sourceComponent: DankPopout {
+            sourceComponent: CyPopout {
                 property var triggerScreen: null
                 property string requestedTab: ""
                 function requestTab(tab) {

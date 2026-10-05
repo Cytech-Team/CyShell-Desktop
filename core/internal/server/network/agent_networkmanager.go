@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/errdefs"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/log"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/errdefs"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/log"
 	"github.com/godbus/dbus/v5"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
@@ -20,7 +20,7 @@ const (
 	nmAgentManagerIface = "org.freedesktop.NetworkManager.AgentManager"
 	nmSecretAgentIface  = "org.freedesktop.NetworkManager.SecretAgent"
 	agentObjectPath     = "/org/freedesktop/NetworkManager/SecretAgent"
-	agentIdentifier     = "com.danklinux.NMAgent"
+	agentIdentifier     = "com.cytechteam.cyshell.NMAgent"
 )
 
 const (

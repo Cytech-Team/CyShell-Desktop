@@ -12,7 +12,7 @@ Singleton {
     id: root
     readonly property var log: Log.scoped("FirstLaunchService")
 
-    readonly property string configDir: Paths.strip(StandardPaths.writableLocation(StandardPaths.ConfigLocation)) + "/DankMaterialShell"
+    readonly property string configDir: Paths.strip(StandardPaths.writableLocation(StandardPaths.ConfigLocation)) + "/CyShell"
     readonly property string settingsPath: configDir + "/settings.json"
     readonly property string firstLaunchMarkerPath: configDir + "/.firstlaunch"
 
@@ -28,6 +28,11 @@ Singleton {
 
     function showGreeter(startPage) {
         requestedStartPage = startPage || 0;
+        const uiRole = Quickshell.env("CYSHELL_UI_ROLE") || "";
+        if (uiRole !== "" && uiRole !== "shell") {
+            Quickshell.execDetached(["cyshell", "ipc", "call", "welcome", "page", String(requestedStartPage)]);
+            return;
+        }
         greeterRequested();
     }
 

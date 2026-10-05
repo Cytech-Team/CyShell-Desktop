@@ -19,7 +19,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/log"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/log"
 	"github.com/Wifx/gonetworkmanager/v2"
 )
 
@@ -390,7 +390,7 @@ func writeFortinetSAMLPage(w http.ResponseWriter, message string, autoClose bool
 }
 
 const fortinetSAMLPageTemplate = `<!DOCTYPE html><html><head><meta charset="utf-8">` +
-	`<title>DMS VPN</title></head><body style="font-family:system-ui,sans-serif;text-align:center;padding:3rem">` +
+	`<title>CyShell VPN</title></head><body style="font-family:system-ui,sans-serif;text-align:center;padding:3rem">` +
 	`<p>%s</p><p id="hint"></p>%s</body></html>`
 
 const fortinetSAMLCloseScript = `<script>

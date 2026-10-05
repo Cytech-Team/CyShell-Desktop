@@ -5,8 +5,8 @@ import qs.Common
 import qs.Widgets
 import qs.Modules.ControlCenter.Components
 import qs.Modules.ControlCenter.Models
-import qs.Modules.DankDash.Overview
-import qs.DankCommon.Common as DC
+import qs.Modules.CyDash.Overview
+import qs.CyCommon.Common as DC
 
 ShellRoot {
     Component.onCompleted: {
@@ -30,7 +30,7 @@ ShellRoot {
             id: scene
             anchors.fill: parent
 
-            DankFlickable {
+            CyFlickable {
                 id: flick
                 x: 30
                 y: 30

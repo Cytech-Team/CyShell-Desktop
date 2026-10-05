@@ -7,8 +7,8 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/deps"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/privesc"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/deps"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/privesc"
 )
 
 func init() {
@@ -55,14 +55,14 @@ func (d *DebianDistribution) DetectDependencies(ctx context.Context, wm deps.Win
 func (d *DebianDistribution) DetectDependenciesWithTerminal(ctx context.Context, wm deps.WindowManager, terminal deps.Terminal) ([]deps.Dependency, error) {
 	var dependencies []deps.Dependency
 
-	dependencies = append(dependencies, d.detectDMS())
+	dependencies = append(dependencies, d.detectCyShell())
 
 	dependencies = append(dependencies, d.detectSpecificTerminal(terminal))
 
 	dependencies = append(dependencies, d.detectGit())
 	dependencies = append(dependencies, d.detectWindowManager(wm))
 	dependencies = append(dependencies, d.detectQuickshell())
-	dependencies = append(dependencies, d.detectDMSGreeter())
+	dependencies = append(dependencies, d.detectLegacyDMSGreeter())
 	dependencies = append(dependencies, d.detectXDGPortal())
 	dependencies = append(dependencies, d.detectAccountsService())
 
@@ -89,8 +89,8 @@ func (d *DebianDistribution) detectAccountsService() deps.Dependency {
 	return d.detectPackage("accountsservice", "D-Bus interface for user account query and manipulation", d.packageInstalled("accountsservice"))
 }
 
-func (d *DebianDistribution) detectDMSGreeter() deps.Dependency {
-	return d.detectOptionalPackage("dms-greeter", "DankMaterialShell greetd greeter", d.packageInstalled("dms-greeter"))
+func (d *DebianDistribution) detectLegacyDMSGreeter() deps.Dependency {
+	return d.detectOptionalPackage("dms-greeter", "Legacy DMS greetd greeter (compatibility)", d.packageInstalled("dms-greeter"))
 }
 
 func (d *DebianDistribution) packageInstalled(pkg string) bool {
@@ -130,14 +130,14 @@ func (d *DebianDistribution) GetPackageMappingWithVariants(wm deps.WindowManager
 		"xdg-desktop-portal-gtk": {Name: "xdg-desktop-portal-gtk", Repository: RepoTypeSystem},
 		"accountsservice":        {Name: "accountsservice", Repository: RepoTypeSystem},
 
-		// DMS packages from OBS with variant support
-		"dms (DankMaterialShell)": d.getDmsMapping(variants["dms (DankMaterialShell)"]),
-		"quickshell":              d.getQuickshellMapping(variants["quickshell"]),
-		"dms-greeter":             {Name: "dms-greeter", Repository: RepoTypeOBS, RepoURL: "home:AvengeMedia:danklinux"},
-		"matugen":                 {Name: "matugen", Repository: RepoTypeOBS, RepoURL: "home:AvengeMedia:danklinux"},
-		"ghostty":                 {Name: "ghostty", Repository: RepoTypeOBS, RepoURL: "home:AvengeMedia:danklinux"},
-		"danksearch":              {Name: "danksearch", Repository: RepoTypeOBS, RepoURL: "home:AvengeMedia:danklinux"},
-		"dankcalendar":            {Name: "dankcalendar-git", Repository: RepoTypeOBS, RepoURL: "home:AvengeMedia:danklinux"},
+		// Legacy DMS compatibility packages from OBS
+		"CyShell":      d.getCyShellMapping(variants["CyShell"]),
+		"quickshell":   d.getQuickshellMapping(variants["quickshell"]),
+		"dms-greeter":  {Name: "dms-greeter", Repository: RepoTypeOBS, RepoURL: "home:AvengeMedia:danklinux"},
+		"matugen":      {Name: "matugen", Repository: RepoTypeOBS, RepoURL: "home:AvengeMedia:danklinux"},
+		"ghostty":      {Name: "ghostty", Repository: RepoTypeOBS, RepoURL: "home:AvengeMedia:danklinux"},
+		"danksearch":   {Name: "danksearch", Repository: RepoTypeOBS, RepoURL: "home:AvengeMedia:danklinux"},
+		"dankcalendar": {Name: "dankcalendar-git", Repository: RepoTypeOBS, RepoURL: "home:AvengeMedia:danklinux"},
 	}
 
 	if wm == deps.WindowManagerNiri {
@@ -149,11 +149,8 @@ func (d *DebianDistribution) GetPackageMappingWithVariants(wm deps.WindowManager
 	return packages
 }
 
-func (d *DebianDistribution) getDmsMapping(variant deps.PackageVariant) PackageMapping {
-	if variant == deps.VariantGit {
-		return PackageMapping{Name: "dms-git", Repository: RepoTypeOBS, RepoURL: "home:AvengeMedia:dms-git"}
-	}
-	return PackageMapping{Name: "dms", Repository: RepoTypeOBS, RepoURL: "home:AvengeMedia:dms"}
+func (d *DebianDistribution) getCyShellMapping(variant deps.PackageVariant) PackageMapping {
+	return PackageMapping{Name: "cyshell", Repository: RepoTypeManual, BuildFunc: "cyshell"}
 }
 
 func (d *DebianDistribution) getQuickshellMapping(variant deps.PackageVariant) PackageMapping {
@@ -394,8 +391,8 @@ func (d *DebianDistribution) InstallPackages(ctx context.Context, dependencies [
 		d.log(fmt.Sprintf("Warning: failed to write window manager config: %v", err))
 	}
 
-	if err := d.EnableDMSService(ctx, wm); err != nil {
-		d.log(fmt.Sprintf("Warning: failed to enable dms service: %v", err))
+	if err := d.EnableCyShellService(ctx, wm); err != nil {
+		d.log(fmt.Sprintf("Warning: failed to enable cyshell service: %v", err))
 	}
 
 	progressChan <- InstallProgressMsg{

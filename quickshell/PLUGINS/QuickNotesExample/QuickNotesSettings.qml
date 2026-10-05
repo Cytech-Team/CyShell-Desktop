@@ -60,7 +60,7 @@ FocusScope {
                     anchors.verticalCenter: parent.verticalCenter
                 }
 
-                DankTextField {
+                CyTextField {
                     id: triggerField
                     width: 100
                     height: 40
@@ -103,7 +103,7 @@ FocusScope {
                     anchors.verticalCenter: parent.verticalCenter
                 }
 
-                DankTextField {
+                CyTextField {
                     id: maxNotesField
                     width: 80
                     height: 40

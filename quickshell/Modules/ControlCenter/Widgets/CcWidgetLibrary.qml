@@ -45,7 +45,7 @@ Rectangle {
             anchors.right: parent.right
             spacing: Theme.spacingM
 
-            DankIcon {
+            CyIcon {
                 name: "add_circle"
                 size: Theme.iconSize
                 color: Theme.primary
@@ -61,7 +61,7 @@ Rectangle {
             }
         }
 
-        DankSearchField {
+        CySearchField {
             id: searchField
             anchors.top: headerRow.bottom
             anchors.topMargin: Theme.spacingM
@@ -83,7 +83,7 @@ Rectangle {
             }
         }
 
-        DankListView {
+        CyListView {
             id: widgetList
 
             anchors.top: searchField.bottom
@@ -108,7 +108,7 @@ Rectangle {
                 bottomRadius: index === widgetList.count - 1 ? Theme.groupedListOuterRadius : Theme.groupedListInnerRadius
                 onClicked: root.chosen(modelData.id)
 
-                DankIcon {
+                CyIcon {
                     name: "add"
                     size: Theme.iconSize
                     color: Theme.primary

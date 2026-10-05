@@ -83,6 +83,13 @@ Singleton {
             "separator": true
         },
         {
+            "id": "desktop",
+            "text": I18n.tr("Desktop"),
+            "icon": "desktop_windows",
+            "tabIndex": 64,
+            "hint": I18n.tr("Desktop icons, layout and placement")
+        },
+        {
             "id": "dankbar",
             "text": I18n.tr("CyBar"),
             "icon": "toolbar",
@@ -101,7 +108,7 @@ Singleton {
                     "text": I18n.tr("Appearance", "settings page and section title for visual options"),
                     "icon": "palette",
                     "tabIndex": 6,
-                    "hint": I18n.tr("Background, corners, spacing, widget style")
+                    "hint": I18n.tr("Background, spacing, widget style, app presentation")
                 },
                 {
                     "id": "dank_island",
@@ -143,32 +150,32 @@ Singleton {
         },
         {
             "id": "dock",
-            "text": I18n.tr("Dock"),
-            "aliases": ["desktop", "dock_launcher"],
+            "text": I18n.tr("Standalone Dock"),
+            "aliases": ["dock_launcher"],
             "icon": "dock_to_bottom",
             "hubHeader": "DockHubHeader",
-            "hint": I18n.tr("Visibility, position, pinned apps, trash"),
+            "hint": I18n.tr("Optional dock surface with independent apps and pins"),
             "children": [
                 {
                     "id": "dock_general",
                     "text": I18n.tr("General"),
                     "icon": "tune",
                     "tabIndex": 5,
-                    "hint": I18n.tr("Displays, taskbar, auto-hide")
+                    "hint": I18n.tr("Displays, position, auto-hide")
                 },
                 {
                     "id": "dock_widgets",
                     "text": I18n.tr("Apps & widgets"),
                     "icon": "widgets",
                     "tabIndex": 57,
-                    "hint": I18n.tr("Add, remove and configure dock items")
+                    "hint": I18n.tr("Configure widgets, app behavior and pins for this Dock")
                 },
                 {
                     "id": "dock_appearance",
                     "text": I18n.tr("Appearance"),
                     "icon": "palette",
                     "tabIndex": 58,
-                    "hint": I18n.tr("Size, padding, opacity, borders")
+                    "hint": I18n.tr("Size, spacing, app presentation, opacity, borders")
                 },
                 {
                     "id": "dock_advanced",
@@ -179,13 +186,6 @@ Singleton {
                     "hint": I18n.tr("Layers, fullscreen, exclusive zone")
                 }
             ]
-        },
-        {
-            "id": "launcher",
-            "text": I18n.tr("Launcher"),
-            "icon": "grid_view",
-            "tabIndex": 9,
-            "hint": I18n.tr("Style, shortcuts, search, hidden apps")
         },
         {
             "id": "dank_dash",
@@ -271,10 +271,10 @@ Singleton {
             "children": [
                 {
                     "id": "display_config",
-                    "text": I18n.tr("Configuration", "settings page name under displays"),
+                    "text": I18n.tr("Display configuration"),
                     "icon": "display_settings",
                     "tabIndex": 24,
-                    "hint": I18n.tr("Arrangement, resolution, scale, profiles")
+                    "hint": I18n.tr("Main display, layout, resolution, scale and refresh rate")
                 },
                 {
                     "id": "display_gamma",
@@ -324,6 +324,12 @@ Singleton {
             ]
         },
         {
+            "id": "bluetooth",
+            "text": I18n.tr("Bluetooth"),
+            "icon": "bluetooth",
+            "tabIndex": 65
+        },
+        {
             "id": "power_battery",
             "text": I18n.tr("Power & battery"),
             "icon": "power_settings_new",
@@ -342,6 +348,13 @@ Singleton {
                     "icon": "battery_charging_full",
                     "tabIndex": 42,
                     "hint": I18n.tr("Charge limit, alerts, power profiles")
+                },
+                {
+                    "id": "performance",
+                    "text": I18n.tr("Performance"),
+                    "icon": "speed",
+                    "tabIndex": 66,
+                    "hint": I18n.tr("Power profiles")
                 }
             ]
         },
@@ -392,6 +405,57 @@ Singleton {
         },
         {
             "id": "separator_4",
+            "separator": true
+        },
+        {
+            "id": "applications",
+            "text": I18n.tr("Applications"),
+            "icon": "apps",
+            "children": [
+                {
+                    "id": "default_apps",
+                    "text": I18n.tr("Default apps"),
+                    "icon": "star",
+                    "tabIndex": 34,
+                    "hint": I18n.tr("Browser, terminal, file manager, media")
+                },
+                {
+                    "id": "autostart",
+                    "text": I18n.tr("Autostart apps"),
+                    "icon": "line_start",
+                    "tabIndex": 36,
+                    "autostartOnly": true,
+                    "hint": I18n.tr("Apps and commands started with the session")
+                },
+            ]
+        },
+        {
+            "id": "plugins",
+            "text": I18n.tr("Plugins"),
+            "icon": "extension",
+            "hint": I18n.tr("Browse, install, registries"),
+            "tabIndex": 12,
+            "hubHeader": "PluginsHubHeader",
+            "children": [
+                {
+                    "id": "plugins_manage",
+                    "hidden": true,
+                    "text": I18n.tr("Manage Registries", "plugin registry management"),
+                    "icon": "folder_open",
+                    "tabIndex": 28,
+                    "hint": I18n.tr("Plugin directory and registries")
+                }
+            ]
+        },
+        {
+            "id": "launcher",
+            "text": I18n.tr("Launcher"),
+            "icon": "grid_view",
+            "tabIndex": 9,
+            "hint": I18n.tr("Style, shortcuts, search, hidden apps")
+        },
+        {
+            "id": "separator_7",
             "separator": true
         },
         {
@@ -452,45 +516,6 @@ Singleton {
             "separator": true
         },
         {
-            "id": "applications",
-            "text": I18n.tr("Applications"),
-            "icon": "apps",
-            "children": [
-                {
-                    "id": "default_apps",
-                    "text": I18n.tr("Default apps"),
-                    "icon": "star",
-                    "tabIndex": 34,
-                    "hint": I18n.tr("Browser, terminal, file manager, media")
-                },
-                {
-                    "id": "autostart",
-                    "text": I18n.tr("Autostart apps"),
-                    "icon": "line_start",
-                    "tabIndex": 36,
-                    "autostartOnly": true,
-                    "hint": I18n.tr("Apps and commands started with the session")
-                },
-                {
-                    "id": "window_rules",
-                    "text": I18n.tr("Window rules"),
-                    "icon": "select_window",
-                    "tabIndex": 38,
-                    "windowRulesCapable": true,
-                    "hint": I18n.tr("Floating, opacity and placement rules per app")
-                },
-                {
-                    "id": "running_apps",
-                    "advanced": true,
-                    "text": I18n.tr("Running apps"),
-                    "icon": "app_registration",
-                    "tabIndex": 19,
-                    "hyprlandNiriOnly": true,
-                    "hint": I18n.tr("App ID substitutions")
-                }
-            ]
-        },
-        {
             "id": "date_time_region",
             "text": I18n.tr("Date, time & region"),
             "icon": "schedule",
@@ -519,6 +544,10 @@ Singleton {
             ]
         },
         {
+            "id": "separator_8",
+            "separator": true
+        },
+        {
             "id": "system",
             "text": I18n.tr("System & integrations"),
             "icon": "memory",
@@ -540,12 +569,11 @@ Singleton {
                     "hint": I18n.tr("History size, retention, paste behavior")
                 },
                 {
-                    "id": "compositor_layout",
-                    "text": CompositorService.displayName,
-                    "icon": "layers",
-                    "tabIndex": 37,
-                    "layoutCapable": true,
-                    "hint": I18n.tr("Gaps, window borders, corner radius")
+                    "id": "agent",
+                    "text": I18n.tr("Agent"),
+                    "icon": "smart_toy",
+                    "hint": I18n.tr("Embedded AI runtime, semantic desktop access, permissions"),
+                    "tabIndex": 63
                 },
                 {
                     "id": "multiplexers",
@@ -563,31 +591,6 @@ Singleton {
                     "tabIndex": 8,
                     "cupsOnly": true,
                     "hint": I18n.tr("CUPS printers, jobs and classes")
-                }
-            ]
-        },
-        {
-            "id": "agent",
-            "text": I18n.tr("Agent"),
-            "icon": "smart_toy",
-            "hint": I18n.tr("Embedded AI runtime, semantic desktop access, permissions"),
-            "tabIndex": 63
-        },
-        {
-            "id": "plugins",
-            "text": I18n.tr("Plugins"),
-            "icon": "extension",
-            "hint": I18n.tr("Browse, install, registries"),
-            "tabIndex": 12,
-            "hubHeader": "PluginsHubHeader",
-            "children": [
-                {
-                    "id": "plugins_manage",
-                    "hidden": true,
-                    "text": I18n.tr("Manage Registries", "plugin registry management"),
-                    "icon": "folder_open",
-                    "tabIndex": 28,
-                    "hint": I18n.tr("Plugin directory and registries")
                 }
             ]
         },
@@ -739,7 +742,7 @@ Singleton {
             return false;
         if (entry.pointerCapable && !CompositorService.supportsPointerConfig)
             return false;
-        if (entry.clipboardOnly && (!DMSService.isConnected || DMSService.apiVersion < 23))
+        if (entry.clipboardOnly && (!CyShellService.isConnected || CyShellService.apiVersion < 23))
             return false;
         if (entry.updaterOnly && !SystemUpdateService.sysupdateAvailable)
             return false;

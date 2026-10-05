@@ -22,13 +22,13 @@ Singleton {
 
     readonly property string configDir: Paths.strip(StandardPaths.writableLocation(StandardPaths.ConfigLocation))
     readonly property string configPath: configDir + "/mango/config.conf"
-    readonly property string mangoDmsDir: configDir + "/mango/dms"
-    readonly property string bindsPath: mangoDmsDir + "/binds.conf"
-    readonly property string colorsPath: mangoDmsDir + "/colors.conf"
-    readonly property string outputsPath: mangoDmsDir + "/outputs.conf"
-    readonly property string layoutPath: mangoDmsDir + "/layout.conf"
-    readonly property string cursorPath: mangoDmsDir + "/cursor.conf"
-    readonly property string windowRulesPath: mangoDmsDir + "/windowrules.conf"
+    readonly property string mangoCyShellDir: configDir + "/mango/cyshell"
+    readonly property string bindsPath: mangoCyShellDir + "/binds.conf"
+    readonly property string colorsPath: mangoCyShellDir + "/colors.conf"
+    readonly property string outputsPath: mangoCyShellDir + "/outputs.conf"
+    readonly property string layoutPath: mangoCyShellDir + "/layout.conf"
+    readonly property string cursorPath: mangoCyShellDir + "/cursor.conf"
+    readonly property string windowRulesPath: mangoCyShellDir + "/windowrules.conf"
 
     property int _lastGapValue: -1
     property real _ignoreWatchedReloadUntil: 0
@@ -101,7 +101,7 @@ Singleton {
         onFileChanged: root.handleWatchedConfigChanged()
     }
 
-    DankSocket {
+    CySocket {
         id: monitorsSocket
         path: root.socketPath
         connected: root.available
@@ -118,7 +118,7 @@ Singleton {
         }
     }
 
-    DankSocket {
+    CySocket {
         id: clientsSocket
         path: root.socketPath
         connected: root.available
@@ -135,7 +135,7 @@ Singleton {
 
     // mango closes the connection after each non-watch command; queued
     // dispatches drain one per reconnect cycle.
-    DankSocket {
+    CySocket {
         id: dispatchSocket
         path: root.socketPath
         connected: root.available
@@ -618,7 +618,7 @@ Singleton {
         const content = lines.join("\n");
 
         suppressWatchedConfigReloads(1500);
-        Proc.runCommand("mango-write-outputs", ["sh", "-c", `mkdir -p "${mangoDmsDir}" && cat > "${outputsPath}" << 'EOF'\n${content}EOF`], (output, exitCode) => {
+        Proc.runCommand("mango-write-outputs", ["sh", "-c", `mkdir -p "${mangoCyShellDir}" && cat > "${outputsPath}" << 'EOF'\n${content}EOF`], (output, exitCode) => {
             if (exitCode !== 0) {
                 log.warn("Failed to write outputs config:", output);
                 if (callback)
@@ -660,7 +660,7 @@ gappov=${gapsOut}
 `;
 
         suppressWatchedConfigReloads(1500);
-        Proc.runCommand("mango-write-layout", ["sh", "-c", `mkdir -p "${mangoDmsDir}" && cat > "${layoutPath}" << 'EOF'\n${content}EOF`], (output, exitCode) => {
+        Proc.runCommand("mango-write-layout", ["sh", "-c", `mkdir -p "${mangoCyShellDir}" && cat > "${layoutPath}" << 'EOF'\n${content}EOF`], (output, exitCode) => {
             if (exitCode !== 0) {
                 log.warn("Failed to write layout config:", output);
                 return;
@@ -677,7 +677,7 @@ gappov=${gapsOut}
         const settings = typeof SettingsData !== "undefined" ? SettingsData.cursorSettings : null;
         if (!settings) {
             suppressWatchedConfigReloads(1500);
-            Proc.runCommand("mango-write-cursor", ["sh", "-c", `mkdir -p "${mangoDmsDir}" && : > "${cursorPath}"`], (output, exitCode) => {
+            Proc.runCommand("mango-write-cursor", ["sh", "-c", `mkdir -p "${mangoCyShellDir}" && : > "${cursorPath}"`], (output, exitCode) => {
                 if (exitCode !== 0)
                     log.warn("Failed to write cursor config:", output);
             });
@@ -702,7 +702,7 @@ cursor_size=${size}`;
         content += `\n`;
 
         suppressWatchedConfigReloads(1500);
-        Proc.runCommand("mango-write-cursor", ["sh", "-c", `mkdir -p "${mangoDmsDir}" && cat > "${cursorPath}" << 'EOF'\n${content}EOF`], (output, exitCode) => {
+        Proc.runCommand("mango-write-cursor", ["sh", "-c", `mkdir -p "${mangoCyShellDir}" && cat > "${cursorPath}" << 'EOF'\n${content}EOF`], (output, exitCode) => {
             if (exitCode !== 0) {
                 log.warn("Failed to write cursor config:", output);
                 return;

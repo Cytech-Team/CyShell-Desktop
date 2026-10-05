@@ -9,35 +9,36 @@ import (
 	"sync"
 	"time"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/geolocation"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/log"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/matugen"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/apppicker"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/bluez"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/brightness"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/clipboard"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/cups"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/cycom"
-	serverDbus "github.com/AvengeMedia/DankMaterialShell/core/internal/server/dbus"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/evdev"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/extworkspace"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/freedesktop"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/location"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/loginctl"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/models"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/network"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/notifyactions"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/sysupdate"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/tailscale"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/thememode"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/trayrecovery"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/wallpaper"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/wayland"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/wlcontext"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/wlroutput"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/utils"
 	"github.com/AvengeMedia/dankgo/ipc"
 	"github.com/AvengeMedia/dankgo/syncmap"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/geolocation"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/log"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/matugen"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/server/apppicker"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/server/bluez"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/server/brightness"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/server/clipboard"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/server/cups"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/server/cycom"
+	serverDbus "github.com/Cytech-Team/CyShell-Desktop/core/internal/server/dbus"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/server/evdev"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/server/extworkspace"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/server/freedesktop"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/server/location"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/server/loginctl"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/server/models"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/server/network"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/server/notifyactions"
+	settingsstore "github.com/Cytech-Team/CyShell-Desktop/core/internal/server/settingsstore"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/server/sysupdate"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/server/tailscale"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/server/thememode"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/server/trayrecovery"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/server/wallpaper"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/server/wayland"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/server/wlcontext"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/server/wlroutput"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/utils"
 )
 
 const APIVersion = 36
@@ -80,10 +81,11 @@ var wallpaperManager *wallpaper.Manager
 var trayRecoveryManager *trayrecovery.Manager
 var locationManager *location.Manager
 var sysUpdateManager *sysupdate.Manager
+var settingsManager = settingsstore.NewManager()
 var notifyActionsManager *notifyactions.Manager
 var geoClientInstance geolocation.Client
 
-const dbusClientID = "dms-dbus-client"
+const dbusClientID = "cyshell-dbus-client"
 
 var capabilitySubscribers syncmap.Map[string, chan ServerInfo]
 var cupsMu sync.Mutex
@@ -445,7 +447,7 @@ func routeRequestRecovered(ctx context.Context, conn *ipc.ConnWriter, req ipc.Re
 }
 
 func getCapabilities() Capabilities {
-	caps := []string{"plugins", "dgop", "lyrics"}
+	caps := []string{"plugins", "dgop", "lyrics", "settings"}
 
 	if networkManager != nil {
 		caps = append(caps, "network")
@@ -592,6 +594,14 @@ func handleSubscribe(ctx context.Context, conn *ipc.ConnWriter, req ipc.Request)
 
 	shouldSubscribe := func(service string) bool {
 		return serviceSubscribed(services, service, subscribeAll)
+	}
+
+	if shouldSubscribe("settings") && settingsManager != nil {
+		id := clientID + "-settings"
+		source := settingsManager.Subscribe(id)
+		forwardSubscription(&wg, eventChan, stopChan, "settings", source, func() {
+			settingsManager.Unsubscribe(id)
+		}, settingsManager.GetState)
 	}
 
 	if shouldSubscribe("network") && networkManager != nil {
@@ -978,7 +988,7 @@ func (s *Server) Serve(printDocs bool) error {
 		notifyCapabilityChange()
 	})
 
-	log.Infof("DMS API Server listening on: %s", s.ipc.SocketPath())
+	log.Infof("CyShell API Server listening on: %s", s.ipc.SocketPath())
 	log.Infof("API Version: %d", APIVersion)
 	log.Info("Protocol: JSON over Unix socket")
 	log.Info("Request format: {\"id\": <any>, \"method\": \"...\", \"params\": {...}}")
@@ -989,6 +999,9 @@ func (s *Server) Serve(printDocs bool) error {
 		log.Info("  ping          - Test connection")
 		log.Info("  getServerInfo - Get server info (API version and capabilities)")
 		log.Info("  subscribe     - Subscribe to multiple services (params: services [default: all])")
+		log.Info("Settings:")
+		log.Info(" settings.get                 - Get canonical settings snapshot")
+		log.Info(" settings.replace             - Atomically replace settings JSON (params: json, kind?)")
 		log.Info("Plugins:")
 		log.Info(" plugins.list                - List all plugins")
 		log.Info(" plugins.listInstalled       - List installed plugins")
@@ -1045,7 +1058,8 @@ func (s *Server) Serve(printDocs bool) error {
 		log.Info(" loginctl.subscribe          - Subscribe to session state changes (streaming)")
 		log.Info("Freedesktop:")
 		log.Info(" freedesktop.getState                  - Get accounts & settings state")
-		log.Info(" freedesktop.accounts.setIconFile      - Set profile icon (params: path)")
+		log.Info(" freedesktop.accounts.setIconFile      - Set current profile icon (params: path)")
+		log.Info(" freedesktop.accounts.setUserIconFile  - Set another user's profile icon (params: username, path)")
 		log.Info(" freedesktop.accounts.setRealName      - Set real name (params: name)")
 		log.Info(" freedesktop.accounts.setEmail         - Set email (params: email)")
 		log.Info(" freedesktop.accounts.setLanguage      - Set language (params: language)")
@@ -1207,8 +1221,8 @@ func (s *Server) Serve(printDocs bool) error {
 			return
 		}
 
-		ch := loginctlManager.Subscribe("dms-lock-bridge")
-		defer loginctlManager.Unsubscribe("dms-lock-bridge")
+		ch := loginctlManager.Subscribe("cyshell-lock-bridge")
+		defer loginctlManager.Unsubscribe("cyshell-lock-bridge")
 
 		initial := loginctlManager.GetState()
 		lastLocked := initial.Locked

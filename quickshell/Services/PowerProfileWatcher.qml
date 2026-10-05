@@ -16,10 +16,10 @@ Singleton {
     readonly property bool available: typeof PowerProfiles !== "undefined" && daemonRunning
 
     function checkDaemon() {
-        if (!DMSService.isConnected || !DMSService.capabilities.includes("dbus"))
+        if (!CyShellService.isConnected || !CyShellService.capabilities.includes("dbus"))
             return;
 
-        DMSService.dbusCall("system", "org.freedesktop.DBus", "/org/freedesktop/DBus", "org.freedesktop.DBus", "NameHasOwner", ["org.freedesktop.UPower.PowerProfiles"], response => {
+        CyShellService.dbusCall("system", "org.freedesktop.DBus", "/org/freedesktop/DBus", "org.freedesktop.DBus", "NameHasOwner", ["org.freedesktop.UPower.PowerProfiles"], response => {
             if (response.error || !response.result)
                 return;
             root.daemonRunning = response.result.values?.[0] === true;
@@ -102,7 +102,7 @@ Singleton {
     }
 
     Connections {
-        target: DMSService
+        target: CyShellService
 
         function onCapabilitiesReceived() {
             root.checkDaemon();

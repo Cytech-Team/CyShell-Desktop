@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/errdefs"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/log"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/errdefs"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/log"
 	"github.com/godbus/dbus/v5"
 )
 
@@ -18,7 +18,7 @@ const (
 	agentManagerIface = "org.bluez.AgentManager1"
 	agent1Iface       = "org.bluez.Agent1"
 	device1Iface      = "org.bluez.Device1"
-	agentPath         = "/com/danklinux/bluez/agent"
+	agentPath         = "/com/cytechteam/cyshell/bluez/agent"
 	agentCapability   = "KeyboardDisplay"
 )
 

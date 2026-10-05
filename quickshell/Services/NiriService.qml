@@ -51,7 +51,7 @@ Singleton {
     property string _lastGeneratedAlttabContent: ""
     readonly property bool frameLayoutReady: _layoutAppliedRevision >= _frameTransitionRevision
 
-    // dms/layout.kdl is the source of truth for xray; parsed once before the first regeneration
+    // cyshell/layout.kdl is the source of truth for xray; parsed once before the first regeneration
     property bool layoutXrayEnabled: true
     property bool layoutBarXrayEnabled: true
     property bool _layoutXrayLoaded: false
@@ -247,7 +247,7 @@ Singleton {
         }
     }
 
-    DankSocket {
+    CySocket {
         id: eventStreamSocket
         path: root.socketPath
         connected: CompositorService.isNiri
@@ -271,7 +271,7 @@ Singleton {
         }
     }
 
-    DankSocket {
+    CySocket {
         id: requestSocket
         path: root.socketPath
         connected: CompositorService.isNiri
@@ -715,15 +715,19 @@ Singleton {
         if (!data.path)
             return;
         if (pendingScreenshotPath && data.path === pendingScreenshotPath) {
-            const editor = Quickshell.env("DMS_SCREENSHOT_EDITOR");
+            const editor = Quickshell.env("CYSHELL_SCREENSHOT_EDITOR")
+                || Quickshell.env("DMS_SCREENSHOT_EDITOR")
+                || "mark-shot";
             let command;
-            if (editor === "satty" || !editor) {
-                command = ["satty", "-f", data.path];
+            if (editor === "mark-shot") {
+                command = ["mark-shot", data.path];
             } else if (editor === "swappy") {
                 command = ["swappy", "-f", data.path];
             } else {
                 // Custom command with %path% placeholder
                 command = editor.split(" ").map(arg => arg === "%path%" ? data.path : arg);
+                if (!editor.includes("%path%"))
+                    command.push(data.path);
             }
             Quickshell.execDetached({
                 "command": command
@@ -889,7 +893,7 @@ Singleton {
         Paths.mkdir(screenshotsDir);
         pendingScreenshotPath = "";
         const timestamp = Date.now();
-        const path = `${screenshotsDir}/dms-screenshot-${timestamp}.png`;
+        const path = `${screenshotsDir}/cyshell-screenshot-${timestamp}.png`;
         pendingScreenshotPath = path;
 
         return send({
@@ -906,7 +910,7 @@ Singleton {
         Paths.mkdir(screenshotsDir);
         pendingScreenshotPath = "";
         const timestamp = Date.now();
-        const path = `${screenshotsDir}/dms-screenshot-${timestamp}.png`;
+        const path = `${screenshotsDir}/cyshell-screenshot-${timestamp}.png`;
         pendingScreenshotPath = path;
 
         return send({
@@ -924,7 +928,7 @@ Singleton {
         Paths.mkdir(screenshotsDir);
         pendingScreenshotPath = "";
         const timestamp = Date.now();
-        const path = `${screenshotsDir}/dms-screenshot-${timestamp}.png`;
+        const path = `${screenshotsDir}/cyshell-screenshot-${timestamp}.png`;
         pendingScreenshotPath = path;
 
         return send({
@@ -1162,7 +1166,7 @@ Singleton {
             return;
         _layoutXrayLoading = true;
         const configDir = Paths.strip(StandardPaths.writableLocation(StandardPaths.ConfigLocation));
-        Proc.runCommand("niri-read-layout-xray", ["cat", configDir + "/niri/dms/layout.kdl"], (output, exitCode) => {
+        Proc.runCommand("niri-read-layout-xray", ["cat", configDir + "/niri/cyshell/layout.kdl"], (output, exitCode) => {
             _layoutXrayLoading = false;
             if (!_layoutXrayLoaded) {
                 const content = exitCode === 0 ? output : "";
@@ -1205,12 +1209,12 @@ Singleton {
         const gaps = gapsOverride >= 0 ? gapsOverride : defaultGaps;
         const borderSize = (typeof SettingsData !== "undefined" && SettingsData.niriLayoutBorderSize >= 0) ? SettingsData.niriLayoutBorderSize : defaultBorderSize;
         const frameEnabled = typeof SettingsData !== "undefined" && SettingsData.frameEnabled;
-        // dms:frame only in separate mode — connected-mode frame blur overlaps windows via popouts/arcs
-        const excludeNamespaces = ["dms:bar"];
+        // cyshell:frame only in separate mode — connected-mode frame blur overlaps windows via popouts/arcs
+        const excludeNamespaces = ["cyshell:bar"];
         if (typeof SettingsData !== "undefined" && SettingsData.dankIslandEnabled)
-            excludeNamespaces.push("dms:dankisland");
+            excludeNamespaces.push("cyshell:dankisland");
         if (frameEnabled && SettingsData.frameMode !== "connected")
-            excludeNamespaces.push("dms:frame");
+            excludeNamespaces.push("cyshell:frame");
 
         let xrayRules = "";
         if (!layoutXrayEnabled) {
@@ -1224,7 +1228,7 @@ layer-rule {${excludeLines}
 }
 
 window-rule {
-    match app-id="^com.danklinux.dms$"
+    match app-id="^com.cytechteam.cyshell$"
     background-effect {
         xray false
     }
@@ -1237,7 +1241,7 @@ window-rule {
 // bar-xray off`;
 
         const dmsWarning = `// ! DO NOT EDIT !
-// ! AUTO-GENERATED BY DMS !
+// ! AUTO-GENERATED BY CYSHELL !
 // ! CHANGES WILL BE OVERWRITTEN !
 // ! PLACE YOUR CUSTOM CONFIGURATION ELSEWHERE !
 
@@ -1266,9 +1270,9 @@ window-rule {
 }`;
 
         const configDir = Paths.strip(StandardPaths.writableLocation(StandardPaths.ConfigLocation));
-        const niriDmsDir = configDir + "/niri/dms";
-        const configPath = niriDmsDir + "/layout.kdl";
-        const alttabPath = niriDmsDir + "/alttab.kdl";
+        const niriCyShellDir = configDir + "/niri/cyshell";
+        const configPath = niriCyShellDir + "/layout.kdl";
+        const alttabPath = niriCyShellDir + "/alttab.kdl";
 
         writeConfigProcess.configContent = configContent;
         writeConfigProcess.configPath = configPath;
@@ -1286,8 +1290,8 @@ window-rule {
         }
 
         for (const name of ["outputs", "binds", "cursor", "windowrules", "colors", "alttab", "layout", "input"]) {
-            const path = niriDmsDir + "/" + name + ".kdl";
-            Proc.runCommand("niri-ensure-" + name, ["sh", "-c", `mkdir -p "${niriDmsDir}" && [ ! -f "${path}" ] && touch "${path}" || true`], (output, exitCode) => {
+            const path = niriCyShellDir + "/" + name + ".kdl";
+            Proc.runCommand("niri-ensure-" + name, ["sh", "-c", `mkdir -p "${niriCyShellDir}" && [ ! -f "${path}" ] && touch "${path}" || true`], (output, exitCode) => {
                 if (exitCode !== 0)
                     log.warn("Failed to ensure " + name + ".kdl, exit code:", exitCode);
             });
@@ -1298,8 +1302,8 @@ window-rule {
         log.debug("Generating wpblur config...");
 
         const configDir = Paths.strip(StandardPaths.writableLocation(StandardPaths.ConfigLocation));
-        const niriDmsDir = configDir + "/niri/dms";
-        const blurrulePath = niriDmsDir + "/wpblur.kdl";
+        const niriCyShellDir = configDir + "/niri/cyshell";
+        const blurrulePath = niriCyShellDir + "/wpblur.kdl";
         const sourceBlurrulePath = Paths.strip(Qt.resolvedUrl("niri-wpblur.kdl"));
 
         writeBlurruleProcess.blurrulePath = blurrulePath;
@@ -1314,14 +1318,14 @@ window-rule {
         log.debug("Generating cursor config...");
 
         const configDir = Paths.strip(StandardPaths.writableLocation(StandardPaths.ConfigLocation));
-        const niriDmsDir = configDir + "/niri/dms";
-        const cursorPath = niriDmsDir + "/cursor.kdl";
+        const niriCyShellDir = configDir + "/niri/cyshell";
+        const cursorPath = niriCyShellDir + "/cursor.kdl";
 
         const settings = typeof SettingsData !== "undefined" ? SettingsData.cursorSettings : null;
         if (!settings) {
             writeCursorProcess.cursorContent = "";
             writeCursorProcess.cursorPath = cursorPath;
-            writeCursorProcess.command = ["sh", "-c", `mkdir -p "${niriDmsDir}" && : > "${cursorPath}"`];
+            writeCursorProcess.command = ["sh", "-c", `mkdir -p "${niriCyShellDir}" && : > "${cursorPath}"`];
             writeCursorProcess.running = true;
             return;
         }
@@ -1335,13 +1339,13 @@ window-rule {
         if (isDefaultConfig) {
             writeCursorProcess.cursorContent = "";
             writeCursorProcess.cursorPath = cursorPath;
-            writeCursorProcess.command = ["sh", "-c", `mkdir -p "${niriDmsDir}" && : > "${cursorPath}"`];
+            writeCursorProcess.command = ["sh", "-c", `mkdir -p "${niriCyShellDir}" && : > "${cursorPath}"`];
             writeCursorProcess.running = true;
             return;
         }
 
         const dmsWarning = `// ! DO NOT EDIT !
-// ! AUTO-GENERATED BY DMS !
+// ! AUTO-GENERATED BY CYSHELL !
 // ! CHANGES WILL BE OVERWRITTEN !
 // ! PLACE YOUR CUSTOM CONFIGURATION ELSEWHERE !
 
@@ -1537,8 +1541,8 @@ window-rule {
         }
 
         const configDir = Paths.strip(StandardPaths.writableLocation(StandardPaths.ConfigLocation));
-        const niriDmsDir = configDir + "/niri/dms";
-        const outputsPath = niriDmsDir + "/outputs.kdl";
+        const niriCyShellDir = configDir + "/niri/cyshell";
+        const outputsPath = niriCyShellDir + "/outputs.kdl";
 
         Proc.runCommand("niri-write-outputs", ["sh", "-c", replaceFileCommand(outputsPath, kdlContent)], (output, exitCode) => {
             if (exitCode !== 0) {
@@ -1692,7 +1696,7 @@ window-rule {
         const keyboardNumlock = typeof SettingsData !== "undefined" ? SettingsData.keyboardNumlock : false;
 
         const dmsWarning = `// ! DO NOT EDIT !
-// ! AUTO-GENERATED BY DMS !
+// ! AUTO-GENERATED BY CYSHELL !
 // ! CHANGES WILL BE OVERWRITTEN !
 // ! PLACE YOUR CUSTOM CONFIGURATION ELSEWHERE !
 
@@ -1805,8 +1809,8 @@ window-rule {
         inputContent += "}\n";
 
         const configDir = Paths.strip(StandardPaths.writableLocation(StandardPaths.ConfigLocation));
-        const niriDmsDir = configDir + "/niri/dms";
-        const inputPath = niriDmsDir + "/input.kdl";
+        const niriCyShellDir = configDir + "/niri/cyshell";
+        const inputPath = niriCyShellDir + "/input.kdl";
 
         writeInputProcess.inputContent = inputContent;
         writeInputProcess.inputPath = inputPath;

@@ -43,13 +43,13 @@ Variants {
                 if (launcherOpen || _openedForCurrentHover)
                     return;
                 _openedForCurrentHover = true;
-                PopoutService.openDankLauncherV2(false, true);
+                PopoutService.openCyLauncherV2(false, true);
             }
 
             screen: zoneLoader.modelData
             color: "transparent"
 
-            WlrLayershell.namespace: "dms:frame-launcher-hover"
+            WlrLayershell.namespace: "cyshell:frame-launcher-hover"
             WlrLayershell.layer: WlrLayer.Top
             WlrLayershell.exclusionMode: ExclusionMode.Ignore
             WlrLayershell.keyboardFocus: WlrKeyboardFocus.None

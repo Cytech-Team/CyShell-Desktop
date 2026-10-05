@@ -8,7 +8,7 @@ PanelWindow {
 
     required property string edge
     property real exclusionSize: 0
-    property string layerNamespace: "dms:bar-exclusion"
+    property string layerNamespace: "cyshell:bar-exclusion"
 
     visible: exclusionSize > 0
     color: "transparent"

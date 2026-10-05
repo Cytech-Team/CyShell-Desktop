@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	mocks_version "github.com/AvengeMedia/DankMaterialShell/core/internal/mocks/version"
+	mocks_version "github.com/Cytech-Team/CyShell-Desktop/core/internal/mocks/version"
 )
 
 func TestCompareVersions(t *testing.T) {
@@ -33,7 +33,7 @@ func TestCompareVersions(t *testing.T) {
 	}
 }
 
-func TestGetDMSVersionInfo_Structure(t *testing.T) {
+func TestGetCyShellVersionInfo_Structure(t *testing.T) {
 	// Create a temp directory with a fake DMS installation
 	tempDir := t.TempDir()
 	dmsPath := filepath.Join(tempDir, ".config", "quickshell", "dms")
@@ -51,13 +51,13 @@ func TestGetDMSVersionInfo_Structure(t *testing.T) {
 	mockFetcher.EXPECT().GetCurrentVersion(dmsPath).Return("v0.1.0", nil)
 	mockFetcher.EXPECT().GetLatestVersion(dmsPath).Return("v0.1.1", nil)
 
-	info, err := GetDMSVersionInfoWithFetcher(mockFetcher)
+	info, err := GetCyShellVersionInfoWithFetcher(mockFetcher)
 	if err != nil {
-		t.Fatalf("GetDMSVersionInfoWithFetcher() failed: %v", err)
+		t.Fatalf("GetCyShellVersionInfoWithFetcher() failed: %v", err)
 	}
 
 	if info == nil {
-		t.Fatal("GetDMSVersionInfoWithFetcher() returned nil")
+		t.Fatal("GetCyShellVersionInfoWithFetcher() returned nil")
 	}
 
 	if info.Current != "v0.1.0" {
@@ -79,7 +79,7 @@ func TestGetDMSVersionInfo_Structure(t *testing.T) {
 	t.Logf("Current: %s, Latest: %s, HasUpdate: %v", info.Current, info.Latest, info.HasUpdate)
 }
 
-func TestGetDMSVersionInfo_BranchVersion(t *testing.T) {
+func TestGetCyShellVersionInfo_BranchVersion(t *testing.T) {
 	tempDir := t.TempDir()
 	dmsPath := filepath.Join(tempDir, ".config", "quickshell", "dms")
 	os.MkdirAll(dmsPath, 0o755)
@@ -93,9 +93,9 @@ func TestGetDMSVersionInfo_BranchVersion(t *testing.T) {
 	mockFetcher.EXPECT().GetCurrentVersion(dmsPath).Return("master@abc1234", nil)
 	mockFetcher.EXPECT().GetLatestVersion(dmsPath).Return("master@def5678", nil)
 
-	info, err := GetDMSVersionInfoWithFetcher(mockFetcher)
+	info, err := GetCyShellVersionInfoWithFetcher(mockFetcher)
 	if err != nil {
-		t.Fatalf("GetDMSVersionInfoWithFetcher() failed: %v", err)
+		t.Fatalf("GetCyShellVersionInfoWithFetcher() failed: %v", err)
 	}
 
 	if !info.IsBranch {
@@ -111,7 +111,7 @@ func TestGetDMSVersionInfo_BranchVersion(t *testing.T) {
 	}
 }
 
-func TestGetDMSVersionInfo_NoUpdate(t *testing.T) {
+func TestGetCyShellVersionInfo_NoUpdate(t *testing.T) {
 	tempDir := t.TempDir()
 	dmsPath := filepath.Join(tempDir, ".config", "quickshell", "dms")
 	os.MkdirAll(dmsPath, 0o755)
@@ -125,9 +125,9 @@ func TestGetDMSVersionInfo_NoUpdate(t *testing.T) {
 	mockFetcher.EXPECT().GetCurrentVersion(dmsPath).Return("v0.1.0", nil)
 	mockFetcher.EXPECT().GetLatestVersion(dmsPath).Return("v0.1.0", nil)
 
-	info, err := GetDMSVersionInfoWithFetcher(mockFetcher)
+	info, err := GetCyShellVersionInfoWithFetcher(mockFetcher)
 	if err != nil {
-		t.Fatalf("GetDMSVersionInfoWithFetcher() failed: %v", err)
+		t.Fatalf("GetCyShellVersionInfoWithFetcher() failed: %v", err)
 	}
 
 	if info.HasUpdate {
@@ -135,14 +135,14 @@ func TestGetDMSVersionInfo_NoUpdate(t *testing.T) {
 	}
 }
 
-func TestGetCurrentDMSVersion_NotInstalled(t *testing.T) {
+func TestGetCurrentCyShellVersion_NotInstalled(t *testing.T) {
 	originalHome := os.Getenv("HOME")
 	defer os.Setenv("HOME", originalHome)
 
 	tempDir := t.TempDir()
 	os.Setenv("HOME", tempDir)
 
-	_, err := GetCurrentDMSVersion()
+	_, err := GetCurrentCyShellVersion()
 	if err == nil {
 		t.Error("Expected error when DMS not installed, got nil")
 	}

@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/deps"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/deps"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -20,17 +20,17 @@ func TestCleanupStrayHyprlandConfFile(t *testing.T) {
 		td := t.TempDir()
 		t.Setenv("HOME", td)
 		configDir := filepath.Join(td, ".config", "hypr")
-		dmsDir := filepath.Join(configDir, "dms")
-		require.NoError(t, os.MkdirAll(dmsDir, 0o755))
+		cyShellDir := filepath.Join(configDir, "cyshell")
+		require.NoError(t, os.MkdirAll(cyShellDir, 0o755))
 		confPath := filepath.Join(configDir, "hyprland.conf")
-		dmsConfPath := filepath.Join(dmsDir, "colors.conf")
+		cyShellConfPath := filepath.Join(cyShellDir, "colors.conf")
 		require.NoError(t, os.WriteFile(confPath, []byte("# legacy user config\n"), 0o644))
-		require.NoError(t, os.WriteFile(dmsConfPath, []byte("$primary = rgba(d0bcffFF)\n"), 0o644))
+		require.NoError(t, os.WriteFile(cyShellConfPath, []byte("$primary = rgba(d0bcffFF)\n"), 0o644))
 
 		CleanupStrayHyprlandConfFile(nil)
 
 		assert.FileExists(t, confPath, "must not touch hyprland.conf when user has not migrated")
-		assert.FileExists(t, dmsConfPath, "must not touch dms/*.conf when user has not migrated")
+		assert.FileExists(t, cyShellConfPath, "must not touch cyshell/*.conf when user has not migrated")
 		assert.NoDirExists(t, filepath.Join(configDir, hyprlandBackupDirName))
 	})
 
@@ -38,25 +38,25 @@ func TestCleanupStrayHyprlandConfFile(t *testing.T) {
 		td := t.TempDir()
 		t.Setenv("HOME", td)
 		configDir := filepath.Join(td, ".config", "hypr")
-		dmsDir := filepath.Join(configDir, "dms")
-		require.NoError(t, os.MkdirAll(dmsDir, 0o755))
+		cyShellDir := filepath.Join(configDir, "cyshell")
+		require.NoError(t, os.MkdirAll(cyShellDir, 0o755))
 		luaPath := filepath.Join(configDir, "hyprland.lua")
-		require.NoError(t, os.WriteFile(luaPath, []byte("-- dms managed\n"), 0o644))
+		require.NoError(t, os.WriteFile(luaPath, []byte("-- cyshell managed\n"), 0o644))
 		confPath := filepath.Join(configDir, "hyprland.conf")
-		dmsConfPath := filepath.Join(dmsDir, "colors.conf")
+		cyShellConfPath := filepath.Join(cyShellDir, "colors.conf")
 		require.NoError(t, os.WriteFile(confPath, []byte("# autogen\n"), 0o644))
-		require.NoError(t, os.WriteFile(dmsConfPath, []byte("$primary = rgba(d0bcffFF)\n"), 0o644))
+		require.NoError(t, os.WriteFile(cyShellConfPath, []byte("$primary = rgba(d0bcffFF)\n"), 0o644))
 
 		CleanupStrayHyprlandConfFile(nil)
 
 		assert.NoFileExists(t, confPath)
-		assert.NoFileExists(t, dmsConfPath)
+		assert.NoFileExists(t, cyShellConfPath)
 		assert.FileExists(t, luaPath)
 		entries, err := os.ReadDir(filepath.Join(configDir, hyprlandBackupDirName))
 		require.NoError(t, err)
 		require.Len(t, entries, 1)
 		assert.FileExists(t, filepath.Join(configDir, hyprlandBackupDirName, entries[0].Name(), "hyprland.conf"))
-		assert.FileExists(t, filepath.Join(configDir, hyprlandBackupDirName, entries[0].Name(), "dms", "colors.conf"))
+		assert.FileExists(t, filepath.Join(configDir, hyprlandBackupDirName, entries[0].Name(), "cyshell", "colors.conf"))
 	})
 }
 
@@ -387,8 +387,8 @@ func TestHyprlandConfigDeployment(t *testing.T) {
 
 		content, err := os.ReadFile(result.Path)
 		require.NoError(t, err)
-		assert.Contains(t, string(content), `require("dms.binds")`)
-		assert.Contains(t, string(content), "DMS_STARTUP_BEGIN")
+		assert.Contains(t, string(content), `require("cyshell.binds")`)
+		assert.Contains(t, string(content), "CyShell_STARTUP_BEGIN")
 		assert.Contains(t, string(content), "hl.config(")
 	})
 
@@ -410,13 +410,13 @@ general {
 		require.NoError(t, err)
 		err = os.WriteFile(hyprPath, []byte(existingContent), 0o644)
 		require.NoError(t, err)
-		dmsDir := filepath.Join(td, ".config", "hypr", "dms")
-		require.NoError(t, os.MkdirAll(dmsDir, 0o755))
-		require.NoError(t, os.WriteFile(filepath.Join(dmsDir, "binds.conf"), []byte("bind = SUPER, T, exec, foot\n"), 0o644))
-		require.NoError(t, os.WriteFile(filepath.Join(dmsDir, "colors.conf"), []byte("$primary = rgba(d0bcffFF)\n"), 0o644))
-		require.NoError(t, os.WriteFile(filepath.Join(dmsDir, "cursor.conf"), []byte("env = XCURSOR_SIZE,24\n"), 0o644))
+		cyShellDir := filepath.Join(td, ".config", "hypr", "cyshell")
+		require.NoError(t, os.MkdirAll(cyShellDir, 0o755))
+		require.NoError(t, os.WriteFile(filepath.Join(cyShellDir, "binds.conf"), []byte("bind = SUPER, T, exec, foot\n"), 0o644))
+		require.NoError(t, os.WriteFile(filepath.Join(cyShellDir, "colors.conf"), []byte("$primary = rgba(d0bcffFF)\n"), 0o644))
+		require.NoError(t, os.WriteFile(filepath.Join(cyShellDir, "cursor.conf"), []byte("env = XCURSOR_SIZE,24\n"), 0o644))
 		require.NoError(t, os.WriteFile(filepath.Join(filepath.Dir(hyprPath), "hyprland.conf.backup.old"), []byte("old backup\n"), 0o644))
-		require.NoError(t, os.WriteFile(filepath.Join(dmsDir, "binds.conf.backup.old"), []byte("old dms backup\n"), 0o644))
+		require.NoError(t, os.WriteFile(filepath.Join(cyShellDir, "binds.conf.backup.old"), []byte("old cyshell backup\n"), 0o644))
 
 		result, err := cd.deployHyprlandConfig(deps.TerminalKitty, true)
 		require.NoError(t, err)
@@ -432,22 +432,22 @@ general {
 		assert.Equal(t, existingContent, string(backupContent))
 		assert.Contains(t, result.BackupPath, hyprlandBackupDirName)
 		assert.NoFileExists(t, hyprPath)
-		assert.FileExists(t, filepath.Join(filepath.Dir(result.BackupPath), "dms", "binds.conf"))
-		assert.FileExists(t, filepath.Join(filepath.Dir(result.BackupPath), "dms", "colors.conf"))
-		assert.FileExists(t, filepath.Join(filepath.Dir(result.BackupPath), "dms", "cursor.conf"))
+		assert.FileExists(t, filepath.Join(filepath.Dir(result.BackupPath), "cyshell", "binds.conf"))
+		assert.FileExists(t, filepath.Join(filepath.Dir(result.BackupPath), "cyshell", "colors.conf"))
+		assert.FileExists(t, filepath.Join(filepath.Dir(result.BackupPath), "cyshell", "cursor.conf"))
 		assert.FileExists(t, filepath.Join(filepath.Dir(result.BackupPath), "hyprland.conf.backup.old"))
-		assert.FileExists(t, filepath.Join(filepath.Dir(result.BackupPath), "dms", "binds.conf.backup.old"))
-		assert.NoFileExists(t, filepath.Join(dmsDir, "binds.conf"))
-		assert.NoFileExists(t, filepath.Join(dmsDir, "colors.conf"))
-		assert.NoFileExists(t, filepath.Join(dmsDir, "cursor.conf"))
+		assert.FileExists(t, filepath.Join(filepath.Dir(result.BackupPath), "cyshell", "binds.conf.backup.old"))
+		assert.NoFileExists(t, filepath.Join(cyShellDir, "binds.conf"))
+		assert.NoFileExists(t, filepath.Join(cyShellDir, "colors.conf"))
+		assert.NoFileExists(t, filepath.Join(cyShellDir, "cursor.conf"))
 		assert.NoFileExists(t, filepath.Join(filepath.Dir(hyprPath), "hyprland.conf.backup.old"))
-		assert.NoFileExists(t, filepath.Join(dmsDir, "binds.conf.backup.old"))
+		assert.NoFileExists(t, filepath.Join(cyShellDir, "binds.conf.backup.old"))
 
 		newContent, err := os.ReadFile(result.Path)
 		require.NoError(t, err)
-		assert.Contains(t, string(newContent), `require("dms.binds")`)
+		assert.Contains(t, string(newContent), `require("cyshell.binds")`)
 
-		outputsPath := filepath.Join(td, ".config", "hypr", "dms", "outputs.lua")
+		outputsPath := filepath.Join(td, ".config", "hypr", "cyshell", "outputs.lua")
 		outBytes, err := os.ReadFile(outputsPath)
 		require.NoError(t, err)
 		outs := string(outBytes)
@@ -466,7 +466,7 @@ general {
 		require.NoError(t, os.MkdirAll(configDir, 0o755))
 		luaPath := filepath.Join(configDir, "hyprland.lua")
 		confPath := filepath.Join(configDir, "hyprland.conf")
-		require.NoError(t, os.WriteFile(luaPath, []byte(`require("dms.binds")`+"\n"), 0o644))
+		require.NoError(t, os.WriteFile(luaPath, []byte(`require("cyshell.binds")`+"\n"), 0o644))
 		require.NoError(t, os.Symlink(filepath.Join(configDir, "missing-legacy.conf"), confPath))
 
 		result, err := cd.deployHyprlandConfig(deps.TerminalKitty, true)
@@ -485,21 +485,21 @@ general {
 		defer os.RemoveAll(td)
 		os.Setenv("HOME", td)
 
-		dmsDir := filepath.Join(td, ".config", "hypr", "dms")
-		require.NoError(t, os.MkdirAll(dmsDir, 0o755))
-		require.NoError(t, os.WriteFile(filepath.Join(dmsDir, "binds.lua"), []byte("-- stale managed binds\n"), 0o644))
+		cyShellDir := filepath.Join(td, ".config", "hypr", "cyshell")
+		require.NoError(t, os.MkdirAll(cyShellDir, 0o755))
+		require.NoError(t, os.WriteFile(filepath.Join(cyShellDir, "binds.lua"), []byte("-- stale managed binds\n"), 0o644))
 		userBinds := "-- custom user binds\n"
-		require.NoError(t, os.WriteFile(filepath.Join(dmsDir, "binds-user.lua"), []byte(userBinds), 0o644))
+		require.NoError(t, os.WriteFile(filepath.Join(cyShellDir, "binds-user.lua"), []byte(userBinds), 0o644))
 
 		_, err = cd.deployHyprlandConfig(deps.TerminalKitty, true)
 		require.NoError(t, err)
 
-		managed, err := os.ReadFile(filepath.Join(dmsDir, "binds.lua"))
+		managed, err := os.ReadFile(filepath.Join(cyShellDir, "binds.lua"))
 		require.NoError(t, err)
 		assert.Contains(t, string(managed), `hl.bind("SUPER + F", hl.dsp.window.fullscreen({ mode = "maximized", action = "toggle" }))`)
 		assert.Contains(t, string(managed), `hl.bind("SUPER + minus", hl.dsp.window.resize({ x = -100, y = 0, relative = true }), { repeating = true })`)
 
-		user, err := os.ReadFile(filepath.Join(dmsDir, "binds-user.lua"))
+		user, err := os.ReadFile(filepath.Join(cyShellDir, "binds-user.lua"))
 		require.NoError(t, err)
 		assert.Equal(t, userBinds, string(user))
 	})
@@ -810,8 +810,8 @@ func TestShouldReplaceConfigDeployIfMissing(t *testing.T) {
 func TestBackupLegacyHyprlandConfFilesKeepsExistingBackups(t *testing.T) {
 	td := t.TempDir()
 	configDir := filepath.Join(td, ".config", "hypr")
-	dmsDir := filepath.Join(configDir, "dms")
-	require.NoError(t, os.MkdirAll(dmsDir, 0o755))
+	cyShellDir := filepath.Join(configDir, "cyshell")
+	require.NoError(t, os.MkdirAll(cyShellDir, 0o755))
 
 	userConfig := "# the config the user actually wrote\nmonitor = DP-1, 1920x1080@144, 0x0, 1\n"
 	backupDir := filepath.Join(configDir, hyprlandBackupDirName, "2026-01-02_03-04-05")
@@ -821,7 +821,7 @@ func TestBackupLegacyHyprlandConfFilesKeepsExistingBackups(t *testing.T) {
 	autogenerated := "autogenerated = 1\n$mainMod = SUPER\n"
 	require.NoError(t, os.WriteFile(filepath.Join(configDir, "hyprland.conf"), []byte(autogenerated), 0o644))
 
-	moved, mainConfBackup, err := backupLegacyHyprlandConfFiles(configDir, dmsDir, backupDir)
+	moved, mainConfBackup, err := backupLegacyHyprlandConfFiles(configDir, cyShellDir, backupDir)
 	require.NoError(t, err)
 	assert.Equal(t, 1, moved)
 	assert.Equal(t, filepath.Join(backupDir, "hyprland.conf.1"), mainConfBackup)

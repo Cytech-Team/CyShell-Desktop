@@ -4,10 +4,10 @@ import qs.Common
 import qs.Services
 import qs.Widgets
 
-DankPopout {
+CyPopout {
     id: root
 
-    layerNamespace: "dms:control-center"
+    layerNamespace: "cyshell:quick-panel"
     fullHeightSurface: true
     resizeCurve: Theme.expressiveCurves.standard
     resizeDuration: Theme.expressiveDurations.expressiveFastSpatial

@@ -1,4 +1,5 @@
 import QtQuick
+import Quickshell
 import Quickshell.Widgets
 import qs.Common
 import qs.Services
@@ -11,9 +12,9 @@ DockContextMenuBase {
     property bool hidePin: false
     property var desktopEntry: null
     property var dockApps: null
-    readonly property bool isDmsWindow: appData?.appId === "org.quickshell" || appData?.appId === "com.danklinux.dms"
+    readonly property bool isCyShellWindow: appData?.appId === "org.quickshell" || appData?.appId === "com.cytechteam.cyshell"
 
-    layerNamespace: "dms:dock-context-menu"
+    layerNamespace: "cyshell:dock-context-menu"
 
     function showForButton(button, data, dockHeight, hidePinOption, entry, dockScreen, parentDockApps) {
         appData = Qt.binding(() => button?.appData ?? null);
@@ -22,6 +23,78 @@ DockContextMenuBase {
         dockApps = parentDockApps || null;
         options = dockApps?.options ?? ({});
         show(button, dockHeight, dockScreen);
+    }
+
+    function endTaskPids() {
+        if (!root.appData || root.isCyShellWindow)
+            return [];
+
+        let toplevels = [];
+        if (root.appData.type === "window") {
+            if (root.appData.toplevel)
+                toplevels.push(root.appData.toplevel);
+        } else if (root.appData.type === "grouped") {
+            toplevels = (root.appData.allWindows || []).map(window => window?.toplevel).filter(toplevel => toplevel != null);
+        }
+
+        const seen = {};
+        const pids = [];
+        for (const toplevel of toplevels) {
+            const pid = Number(CompositorService.windowPid(toplevel) || 0);
+            // Avoid ever sending SIGKILL to low/system PIDs from a taskbar action.
+            if (pid <= 1000 || seen[pid])
+                continue;
+            seen[pid] = true;
+            pids.push(pid);
+        }
+        return pids;
+    }
+
+    function endTaskTitles() {
+        if (!root.appData || root.isCyShellWindow)
+            return [];
+
+        let toplevels = [];
+        if (root.appData.type === "window") {
+            if (root.appData.toplevel)
+                toplevels.push(root.appData.toplevel);
+        } else if (root.appData.type === "grouped") {
+            toplevels = (root.appData.allWindows || []).map(window => window?.toplevel).filter(toplevel => toplevel != null);
+        }
+
+        const seen = {};
+        const titles = [];
+        for (const toplevel of toplevels) {
+            const title = String(toplevel?.title || "").trim();
+            if (!title || seen[title])
+                continue;
+            seen[title] = true;
+            titles.push(title);
+        }
+        return titles;
+    }
+
+    function endTask() {
+        if (!root.appData || root.isCyShellWindow)
+            return;
+
+        // Labwc foreign-toplevel commonly exposes pid=0, so the resolver also
+        // receives app-id, desktop Exec and window title hints.
+        const args = [
+            "/usr/local/bin/cyshell-end-task",
+            "--app-id", String(root.appData.appId || ""),
+            "--exec", String(root.desktopEntry?.exec || "")
+        ];
+        for (const pid of endTaskPids()) {
+            args.push("--pid");
+            args.push(pid.toString());
+        }
+        for (const title of endTaskTitles()) {
+            args.push("--title");
+            args.push(title);
+        }
+        Quickshell.execDetached(args);
+        root.close();
     }
 
     Repeater {
@@ -66,7 +139,7 @@ DockContextMenuBase {
                 radius: Theme.cornerRadiusS
                 color: minimizeMouseArea.containsMouse ? BlurService.hoverColor(Theme.widgetBaseHoverColor) : "transparent"
 
-                DankIcon {
+                CyIcon {
                     anchors.centerIn: parent
                     name: modelData.minimized ? "expand_content" : "minimize"
                     size: 12
@@ -101,7 +174,7 @@ DockContextMenuBase {
                 radius: Theme.cornerRadiusS
                 color: closeMouseArea.containsMouse ? Theme.errorPressed : Theme.withAlpha(Theme.errorPressed, 0)
 
-                DankIcon {
+                CyIcon {
                     anchors.centerIn: parent
                     name: "close"
                     size: 12
@@ -122,7 +195,7 @@ DockContextMenuBase {
                 }
             }
 
-            DankRipple {
+            CyRipple {
                 id: windowRipple
                 rippleColor: Theme.surfaceText
                 cornerRadius: Theme.cornerRadius
@@ -199,7 +272,7 @@ DockContextMenuBase {
                 wrapMode: Text.NoWrap
             }
 
-            DankRipple {
+            CyRipple {
                 id: actionRipple
                 rippleColor: Theme.surfaceText
                 cornerRadius: Theme.cornerRadius
@@ -226,7 +299,7 @@ DockContextMenuBase {
             if (!root.desktopEntry?.actions || root.desktopEntry.actions.length === 0) {
                 return false;
             }
-            return !root.hidePin || (!root.isDmsWindow && root.desktopEntry && SessionService.nvidiaCommand);
+            return !root.hidePin || (!root.isCyShellWindow && root.desktopEntry && SessionService.nvidiaCommand);
         }
         width: parent.width
         height: 1
@@ -241,7 +314,7 @@ DockContextMenuBase {
         radius: Theme.cornerRadius
         color: pinArea.containsMouse ? BlurService.hoverColor(Theme.widgetBaseHoverColor) : Theme.withAlpha(BlurService.hoverColor(Theme.widgetBaseHoverColor), 0)
 
-        DankIcon {
+        CyIcon {
             id: pinIcon
             anchors.left: parent.left
             anchors.leftMargin: Theme.spacingS
@@ -267,7 +340,7 @@ DockContextMenuBase {
             wrapMode: Text.NoWrap
         }
 
-        DankRipple {
+        CyRipple {
             id: pinRipple
             rippleColor: Theme.surfaceText
             cornerRadius: Theme.cornerRadius
@@ -295,7 +368,7 @@ DockContextMenuBase {
 
     Rectangle {
         visible: {
-            const hasNvidia = !root.isDmsWindow && root.desktopEntry && SessionService.nvidiaCommand;
+            const hasNvidia = !root.isCyShellWindow && root.desktopEntry && SessionService.nvidiaCommand;
             const hasWindow = root.appData && (root.appData.type === "window" || (root.appData.type === "grouped" && root.appData.windowCount > 0));
             const hasPinOption = !root.hidePin;
             const hasContentAbove = hasPinOption || hasNvidia;
@@ -307,14 +380,14 @@ DockContextMenuBase {
     }
 
     Rectangle {
-        visible: !root.isDmsWindow && root.desktopEntry && SessionService.nvidiaCommand
+        visible: !root.isCyShellWindow && root.desktopEntry && SessionService.nvidiaCommand
         implicitWidth: Theme.spacingS * 2 + nvidiaIcon.width + Theme.spacingXS + nvidiaLabel.implicitWidth
         width: parent.width
         height: 28
         radius: Theme.cornerRadius
         color: nvidiaArea.containsMouse ? BlurService.hoverColor(Theme.widgetBaseHoverColor) : Theme.withAlpha(BlurService.hoverColor(Theme.widgetBaseHoverColor), 0)
 
-        DankIcon {
+        CyIcon {
             id: nvidiaIcon
             anchors.left: parent.left
             anchors.leftMargin: Theme.spacingS
@@ -340,7 +413,7 @@ DockContextMenuBase {
             wrapMode: Text.NoWrap
         }
 
-        DankRipple {
+        CyRipple {
             id: nvidiaRipple
             rippleColor: Theme.surfaceText
             cornerRadius: Theme.cornerRadius
@@ -369,7 +442,7 @@ DockContextMenuBase {
         radius: Theme.cornerRadius
         color: closeArea.containsMouse ? Theme.errorHover : Theme.withAlpha(Theme.errorHover, 0)
 
-        DankIcon {
+        CyIcon {
             id: closeIcon
             anchors.left: parent.left
             anchors.leftMargin: Theme.spacingS
@@ -395,7 +468,7 @@ DockContextMenuBase {
             wrapMode: Text.NoWrap
         }
 
-        DankRipple {
+        CyRipple {
             id: closeRipple
             rippleColor: Theme.error
             cornerRadius: Theme.cornerRadius
@@ -417,6 +490,56 @@ DockContextMenuBase {
             }
         }
     }
+    Rectangle {
+        visible: !root.isCyShellWindow && root.appData && (root.appData.type === "window" || (root.appData.type === "grouped" && root.appData.windowCount > 0))
+        implicitWidth: Theme.spacingS * 2 + endTaskIcon.width + Theme.spacingXS + endTaskLabel.implicitWidth
+        width: parent.width
+        height: 28
+        radius: Theme.cornerRadius
+        color: endTaskArea.containsMouse ? Theme.errorHover : Theme.withAlpha(Theme.errorHover, 0)
+
+        CyIcon {
+            id: endTaskIcon
+            anchors.left: parent.left
+            anchors.leftMargin: Theme.spacingS
+            anchors.verticalCenter: parent.verticalCenter
+            name: "dangerous"
+            size: 14
+            color: endTaskArea.containsMouse ? Theme.error : Theme.surfaceText
+            opacity: 0.8
+        }
+
+        StyledText {
+            id: endTaskLabel
+            anchors.left: endTaskIcon.right
+            anchors.leftMargin: Theme.spacingXS
+            anchors.right: parent.right
+            anchors.rightMargin: Theme.spacingS
+            anchors.verticalCenter: parent.verticalCenter
+            text: I18n.tr("End Task")
+            font.pixelSize: Theme.fontSizeSmall
+            color: endTaskArea.containsMouse ? Theme.error : Theme.surfaceText
+            font.weight: Theme.fontWeight
+            elide: Text.ElideRight
+            wrapMode: Text.NoWrap
+        }
+
+        CyRipple {
+            id: endTaskRipple
+            rippleColor: Theme.error
+            cornerRadius: Theme.cornerRadius
+        }
+
+        MouseArea {
+            id: endTaskArea
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onPressed: mouse => endTaskRipple.trigger(mouse.x, mouse.y)
+            onClicked: root.endTask()
+        }
+    }
+
     DockTrashMenuItem {
         visible: root.dockApps?.surfaceContext?.kind === "dock"
         width: parent.width

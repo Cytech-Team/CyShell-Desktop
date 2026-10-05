@@ -3,7 +3,7 @@ package extworkspace
 import (
 	"testing"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/proto/ext_workspace"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/proto/ext_workspace"
 )
 
 func TestWorkspaceCapabilityProjection(t *testing.T) {

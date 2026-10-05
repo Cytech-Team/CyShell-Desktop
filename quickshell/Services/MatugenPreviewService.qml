@@ -21,10 +21,10 @@ Singleton {
         const mode = SessionData.isLightMode ? "light" : "dark";
         const options = [];
         for (const option of Theme.availableMatugenSchemes) {
-            if (option.value === "scheme-smart" && !DMSService.matugenSmartSupported)
+            if (option.value === "scheme-smart" && !CyShellService.matugenSmartSupported)
                 continue;
             const colors = (previews[option.value] ?? previews["scheme-tonal-spot"])?.[mode];
-            // a dms binary older than the tri-color preview returns the primary hex as a plain string
+            // a cyshell binary older than the tri-color preview returns the primary hex as a plain string
             const primary = typeof colors === "string" ? colors : (colors?.primary ?? Theme.primary.toString());
             options.push({
                 "value": option.value,
@@ -46,7 +46,7 @@ Singleton {
         requestKey = wanted;
         failed = false;
 
-        const args = [Proc.dmsBin, "matugen", "preview", "--source-color", source, "--contrast", String(SettingsData.matugenContrast ?? 0)];
+        const args = [Proc.cyshellBin, "matugen", "preview", "--source-color", source, "--contrast", String(SettingsData.matugenContrast ?? 0)];
         if (image)
             args.push("--image", image);
         if (SettingsData.matugenSpec === "2025")

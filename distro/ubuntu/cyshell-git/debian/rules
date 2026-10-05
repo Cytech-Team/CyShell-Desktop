@@ -1,0 +1,80 @@
+#!/usr/bin/make -f
+
+export DH_VERBOSE = 1
+
+# Get git commit date for version
+GIT_DATE := $(shell date +%Y%m%d)
+GIT_COMMIT := HEAD
+
+# Go needs writable directories for its caches
+export HOME := $(CURDIR)/debian/tmp-home
+export GOCACHE := $(CURDIR)/debian/tmp-home/go-cache
+export GOMODCACHE := $(CURDIR)/debian/tmp-home/go-mod
+
+# Launchpad has no network access, so use local toolchain only
+export GOTOOLCHAIN := local
+
+%:
+	dh $@
+
+override_dh_installsystemd:
+	dh_installsystemd --name=cyshell
+
+override_dh_auto_build:
+	# Create Go cache directories (sbuild sets HOME to non-existent path)
+	mkdir -p $(HOME) $(GOCACHE) $(GOMODCACHE)
+
+	# Git source is already included in source package (cloned by ppa-build.sh)
+	# Launchpad build environment has no internet access
+	test -d cyshell-git-repo || (echo "ERROR: cyshell-git-repo directory not found!" && exit 1)
+
+	# Patch go.mod for Launchpad: align go directive w/latest Go toolchain
+	GO_VERSION=$$(go env GOVERSION | sed -E 's/^go([0-9]+\.[0-9]+).*/\1/'); \
+	if [ -n "$$GO_VERSION" ]; then \
+		sed -E -i "s/^go 1\.[0-9]+(\.[0-9]+)?/go $$GO_VERSION/" cyshell-git-repo/core/go.mod; \
+		if [ -f cyshell-git-repo/core/vendor/modules.txt ]; then \
+			sed -E -i "s/^(## explicit; go )1\.[0-9]+(\.[0-9]+)?$$/\1$$GO_VERSION/" cyshell-git-repo/core/vendor/modules.txt; \
+		fi; \
+	else \
+		echo "Warning: Could not detect Go version, leaving go.mod go directive unchanged"; \
+	fi
+	sed -E -i '/^toolchain go[0-9.]+$$/d' cyshell-git-repo/core/go.mod
+
+	# Build cyshell-cli from source
+	# Detect architecture
+	$(eval DEB_HOST_ARCH := $(shell dpkg-architecture -qDEB_HOST_ARCH))
+	@if [ -f cyshell-git-repo/.cyshell-version ]; then \
+		. cyshell-git-repo/.cyshell-version; \
+		echo "Building with VERSION=$$VERSION COMMIT=$$COMMIT ARCH=$(DEB_HOST_ARCH)"; \
+		cd cyshell-git-repo/core && $(MAKE) GOFLAGS="-mod=vendor" dist ARCH=$(DEB_HOST_ARCH) VERSION="$$VERSION" COMMIT="$$COMMIT"; \
+	else \
+		echo "Warning: .cyshell-version not found, building without version info"; \
+		cd cyshell-git-repo/core && $(MAKE) GOFLAGS="-mod=vendor" dist ARCH=$(DEB_HOST_ARCH); \
+	fi
+	cp cyshell-git-repo/core/bin/cyshell-linux-$(DEB_HOST_ARCH) cyshell
+	chmod +x cyshell
+
+override_dh_auto_install:
+	# Install binary
+	install -Dm755 cyshell debian/cyshell-git/usr/bin/cyshell
+
+	# Install distributed CyShell user services
+	for unit in cyshell-git-repo/assets/systemd/cyshell*.service; do install -Dm644 "$$unit" "debian/cyshell-git/usr/lib/systemd/user/$$(basename "$$unit")"; done
+
+	# Install desktop file and icon
+	install -Dm644 cyshell-git-repo/assets/cyshell-open.desktop \
+		debian/cyshell-git/usr/share/applications/cyshell-open.desktop
+	install -Dm644 cyshell-git-repo/assets/com.cytechteam.cyshell.desktop \
+		debian/cyshell-git/usr/share/applications/com.cytechteam.cyshell.desktop
+	install -Dm644 cyshell-git-repo/assets/com.cytechteam.cyshell.notepad.desktop \
+		debian/cyshell-git/usr/share/applications/com.cytechteam.cyshell.notepad.desktop
+	install -Dm644 cyshell-git-repo/assets/com.cytechteam.cyshell.png \
+		debian/cyshell-git/usr/share/icons/hicolor/512x512/apps/com.cytechteam.cyshell.png
+
+override_dh_auto_clean:
+	# Don't delete cyshell-git-repo directory - it's part of the source package (native format)
+	# Clean up build artifacts
+	rm -f cyshell
+	rm -rf cyshell-git-repo/core/bin
+	rm -rf debian/tmp-home
+	dh_auto_clean

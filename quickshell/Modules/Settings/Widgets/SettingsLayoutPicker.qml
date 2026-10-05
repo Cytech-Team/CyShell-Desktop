@@ -2,7 +2,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import qs.Common
-import qs.Modules.DankBar
+import qs.Modules.CyBar
 import qs.Widgets
 
 Row {

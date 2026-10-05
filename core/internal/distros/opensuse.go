@@ -9,8 +9,8 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/deps"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/privesc"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/deps"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/privesc"
 )
 
 func init() {
@@ -65,8 +65,8 @@ func (o *OpenSUSEDistribution) DetectDependencies(ctx context.Context, wm deps.W
 func (o *OpenSUSEDistribution) DetectDependenciesWithTerminal(ctx context.Context, wm deps.WindowManager, terminal deps.Terminal) ([]deps.Dependency, error) {
 	var dependencies []deps.Dependency
 
-	// DMS at the top (shell is prominent)
-	dependencies = append(dependencies, o.detectDMS())
+	// CyShell at the top (shell is prominent)
+	dependencies = append(dependencies, o.detectCyShell())
 
 	// Terminal with choice support
 	dependencies = append(dependencies, o.detectSpecificTerminal(terminal))
@@ -75,7 +75,7 @@ func (o *OpenSUSEDistribution) DetectDependenciesWithTerminal(ctx context.Contex
 	dependencies = append(dependencies, o.detectGit())
 	dependencies = append(dependencies, o.detectWindowManager(wm))
 	dependencies = append(dependencies, o.detectQuickshell())
-	dependencies = append(dependencies, o.detectDMSGreeter())
+	dependencies = append(dependencies, o.detectLegacyDMSGreeter())
 	dependencies = append(dependencies, o.detectXDGPortal())
 	dependencies = append(dependencies, o.detectAccountsService())
 
@@ -106,8 +106,8 @@ func (o *OpenSUSEDistribution) packageInstalled(pkg string) bool {
 	return err == nil
 }
 
-func (o *OpenSUSEDistribution) detectDMSGreeter() deps.Dependency {
-	return o.detectOptionalPackage("dms-greeter", "DankMaterialShell greetd greeter", o.packageInstalled("dms-greeter"))
+func (o *OpenSUSEDistribution) detectLegacyDMSGreeter() deps.Dependency {
+	return o.detectOptionalPackage("dms-greeter", "Legacy DMS greetd greeter (compatibility)", o.packageInstalled("dms-greeter"))
 }
 
 func (o *OpenSUSEDistribution) GetPackageMapping(wm deps.WindowManager) map[string]PackageMapping {
@@ -123,14 +123,14 @@ func (o *OpenSUSEDistribution) GetPackageMappingWithVariants(wm deps.WindowManag
 		"xdg-desktop-portal-gtk": {Name: "xdg-desktop-portal-gtk", Repository: RepoTypeSystem},
 		"accountsservice":        {Name: "accountsservice", Repository: RepoTypeSystem},
 
-		// DMS packages from OBS
-		"dms (DankMaterialShell)": o.getDmsMapping(variants["dms (DankMaterialShell)"]),
-		"quickshell":              o.getQuickshellMapping(variants["quickshell"]),
-		"dms-greeter":             {Name: "dms-greeter", Repository: RepoTypeOBS, RepoURL: "home:AvengeMedia:danklinux"},
-		"ghostty":                 {Name: "ghostty", Repository: RepoTypeOBS, RepoURL: "home:AvengeMedia:danklinux"},
-		"matugen":                 {Name: "matugen", Repository: RepoTypeOBS, RepoURL: "home:AvengeMedia:danklinux"},
-		"danksearch":              {Name: "danksearch", Repository: RepoTypeOBS, RepoURL: "home:AvengeMedia:danklinux"},
-		"dankcalendar":            {Name: "dankcalendar-git", Repository: RepoTypeOBS, RepoURL: "home:AvengeMedia:danklinux"},
+		// Legacy DMS compatibility packages from OBS
+		"CyShell":      o.getCyShellMapping(variants["CyShell"]),
+		"quickshell":   o.getQuickshellMapping(variants["quickshell"]),
+		"dms-greeter":  {Name: "dms-greeter", Repository: RepoTypeOBS, RepoURL: "home:AvengeMedia:danklinux"},
+		"ghostty":      {Name: "ghostty", Repository: RepoTypeOBS, RepoURL: "home:AvengeMedia:danklinux"},
+		"matugen":      {Name: "matugen", Repository: RepoTypeOBS, RepoURL: "home:AvengeMedia:danklinux"},
+		"danksearch":   {Name: "danksearch", Repository: RepoTypeOBS, RepoURL: "home:AvengeMedia:danklinux"},
+		"dankcalendar": {Name: "dankcalendar-git", Repository: RepoTypeOBS, RepoURL: "home:AvengeMedia:danklinux"},
 	}
 
 	switch wm {
@@ -148,11 +148,8 @@ func (o *OpenSUSEDistribution) GetPackageMappingWithVariants(wm deps.WindowManag
 	return packages
 }
 
-func (o *OpenSUSEDistribution) getDmsMapping(variant deps.PackageVariant) PackageMapping {
-	if variant == deps.VariantGit {
-		return PackageMapping{Name: "dms-git", Repository: RepoTypeOBS, RepoURL: "home:AvengeMedia:dms-git"}
-	}
-	return PackageMapping{Name: "dms", Repository: RepoTypeOBS, RepoURL: "home:AvengeMedia:dms"}
+func (o *OpenSUSEDistribution) getCyShellMapping(variant deps.PackageVariant) PackageMapping {
+	return PackageMapping{Name: "cyshell", Repository: RepoTypeManual, BuildFunc: "cyshell"}
 }
 
 func (o *OpenSUSEDistribution) getQuickshellMapping(variant deps.PackageVariant) PackageMapping {
@@ -361,8 +358,8 @@ func (o *OpenSUSEDistribution) InstallPackages(ctx context.Context, dependencies
 		o.log(fmt.Sprintf("Warning: failed to write window manager config: %v", err))
 	}
 
-	if err := o.EnableDMSService(ctx, wm); err != nil {
-		o.log(fmt.Sprintf("Warning: failed to enable dms service: %v", err))
+	if err := o.EnableCyShellService(ctx, wm); err != nil {
+		o.log(fmt.Sprintf("Warning: failed to enable cyshell service: %v", err))
 	}
 
 	// Complete
@@ -669,7 +666,7 @@ func (o *OpenSUSEDistribution) installQuickshell(ctx context.Context, variant de
 		return fmt.Errorf("HOME environment variable not set")
 	}
 
-	cacheDir := filepath.Join(homeDir, ".cache", "dankinstall")
+	cacheDir := filepath.Join(homeDir, ".cache", "cyshell-install")
 	if err := os.MkdirAll(cacheDir, 0o755); err != nil {
 		return fmt.Errorf("failed to create cache directory: %w", err)
 	}

@@ -1,6 +1,6 @@
 {
   lib,
-  dmsPkgs,
+  cyShellPkgs,
   pkgs,
   ...
 }:
@@ -8,10 +8,10 @@ let
   inherit (lib) types;
   path = [
     "programs"
-    "dank-material-shell"
+    "cyshell"
   ];
   jsonFormat = pkgs.formats.json { };
-  builtInRemovedMsg = "This is now built-in in DMS and doesn't need additional dependencies.";
+  builtInRemovedMsg = "This is now built into CyShell and doesn't need additional dependencies.";
 in
 {
   imports = [
@@ -21,21 +21,21 @@ in
     (lib.mkRemovedOptionModule (
       path ++ [ "enableSystemSound" ]
     ) "qtmultimedia is now included on dms-shell package.")
-    ./dms-rename.nix
+    ./legacy-options.nix
   ];
 
-  options.programs.dank-material-shell = {
-    enable = lib.mkEnableOption "DankMaterialShell";
-    package = lib.mkPackageOption dmsPkgs "dms-shell" {
-      extraDescription = "The DankMaterialShell package to use (defaults to be built from source)";
+  options.programs.cyshell = {
+    enable = lib.mkEnableOption "CyShell";
+    package = lib.mkPackageOption cyShellPkgs "cyshell" {
+      extraDescription = "The CyShell package to use (defaults to be built from source)";
     };
 
     systemd = {
-      enable = lib.mkEnableOption "DankMaterialShell systemd startup";
+      enable = lib.mkEnableOption "CyShell systemd startup";
       restartIfChanged = lib.mkOption {
         type = types.bool;
         default = true;
-        description = "Auto-restart dms.service when dank-material-shell changes";
+        description = "Auto-restart cyshell.service when dank-material-shell changes";
       };
     };
 
@@ -72,7 +72,7 @@ in
     enableClipboardPaste = lib.mkOption {
       type = types.bool;
       default = true;
-      description = "Deprecated: paste is built into dms; no extra dependencies needed. Kept as a no-op for compatibility.";
+      description = "Deprecated: paste is built into CyShell; no extra dependencies needed. Kept as a no-op for compatibility.";
     };
 
     quickshell = {
@@ -103,7 +103,7 @@ in
         }
       );
       default = { };
-      description = "DMS Plugins to install and enable";
+      description = "CyShell plugins to install and enable";
       example = lib.literalExpression ''
         {
           DockerManager = {

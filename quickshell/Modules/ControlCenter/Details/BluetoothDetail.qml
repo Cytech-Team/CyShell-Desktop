@@ -20,13 +20,14 @@ Item {
     readonly property var adapter: BluetoothService.adapter
     readonly property bool adapterEnabled: adapter?.enabled ?? false
     readonly property bool discovering: adapter?.discovering ?? false
+    property bool showAdapterToggle: true
     readonly property var pinnedDevices: QmlUtils.normalizePinList((CacheData.bluetoothDevicePins || {})["preferredDevice"])
     property var devicesBeingPaired: new Set()
 
     readonly property Item headerActions: Row {
         spacing: Theme.spacingS
 
-        DankDropdown {
+        CyDropdown {
             id: adapterDropdown
 
             function adapterLabel(adapter) {
@@ -49,7 +50,7 @@ Item {
             }
         }
 
-        DankButton {
+        CyButton {
             anchors.verticalCenter: parent.verticalCenter
             visible: root.adapterEnabled
             buttonHeight: Theme.buttonHeightXS
@@ -114,7 +115,7 @@ Item {
             device.forget();
             return;
         }
-        DMSService.bluetoothRemove(BluetoothService.getDevicePath(device), response => {
+        CyShellService.bluetoothRemove(BluetoothService.getDevicePath(device), response => {
             if (!response.error)
                 return;
             ToastService.showError(I18n.tr("Failed to remove device"), response.error);
@@ -193,7 +194,7 @@ Item {
         }
     }
 
-    DankFlickable {
+    CyFlickable {
         anchors.fill: parent
         contentHeight: column.height
         clip: true
@@ -204,6 +205,8 @@ Item {
             spacing: CcMetrics.detailContentGap
 
             CcGroup {
+                visible: root.showAdapterToggle
+
                 CcToggleRow {
                     iconName: "bluetooth"
                     iconColor: root.adapterEnabled ? Theme.primary : Theme.surfaceText
@@ -287,7 +290,7 @@ Item {
                             onToggled: root.togglePin(pairedRow.modelData.address)
                         }
 
-                        DankActionButton {
+                        CyActionButton {
                             id: optionsButton
                             anchors.verticalCenter: parent.verticalCenter
                             buttonSize: Theme.buttonHeightXS
@@ -351,6 +354,13 @@ Item {
             }
 
             CcEmptyState {
+                visible: !!root.adapter && !root.discovering && pairedRepeater.count === 0 && availableRepeater.count === 0
+                iconName: root.adapterEnabled ? "bluetooth_searching" : "bluetooth_disabled"
+                title: root.adapterEnabled ? I18n.tr("No paired devices") : I18n.tr("Bluetooth is off")
+                subtitle: root.adapterEnabled ? I18n.tr("Select Scan to find nearby devices") : I18n.tr("Turn on Bluetooth to find and connect devices")
+            }
+
+            CcEmptyState {
                 visible: !root.adapter
                 iconName: "bluetooth_disabled"
                 title: I18n.tr("No Bluetooth adapter found")
@@ -363,7 +373,7 @@ Item {
     }
 
     Connections {
-        target: DMSService
+        target: CyShellService
 
         function onBluetoothPairingRequest(data) {
             const modal = PopoutService.ensureBluetoothPairingModal();

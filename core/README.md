@@ -1,16 +1,16 @@
-# DMS Backend & CLI
+# CyShell Core & CLI
 
-Go-based backend for DankMaterialShell providing system integration, IPC, and installation tools.
+Go-based backend for CyShell providing system integration, IPC, agent services, and installation tools.
 
 **See [root README](../README.md) for project overview and installation.**
 
 ## Components
 
-**dms CLI**
+**cyshell CLI**
 Command-line interface and daemon for shell management and system control.
 
-**dankinstall**
-Distribution-aware installer for deploying DMS and compositor configurations on Arch, Fedora, Debian, Ubuntu, openSUSE, Gentoo, and Void. Supports both an interactive TUI and a headless (unattended) mode via CLI flags.
+**cyshell-install**
+Distribution-aware installer for deploying CyShell and its configuration on Arch, Fedora, Debian, Ubuntu, openSUSE, Gentoo, and Void. Supports both an interactive TUI and a headless (unattended) mode via CLI flags.
 
 ## System Integration
 
@@ -71,25 +71,25 @@ Custom IPC via unix socket (JSON API) for shell communication.
 
 ## CLI Commands
 
-- `dms run [-d]` - Start shell (optionally as daemon)
-- `dms restart` / `dms kill` - Manage running processes
-- `dms ipc <command>` - Send IPC commands (toggle launcher, notifications, etc.)
-- `dms plugins [install|browse|search|lock|restore]` - Plugin management and portable exact-revision lockfiles
-- `dms brightness [list|set]` - Control display/monitor brightness
-- `dms color pick` - Native color picker (see below)
-- `dms update` - Update DMS and dependencies (disabled in distro packages)
-- `dms greeter` - Deprecated; forwards to the standalone [dms-greeter](https://github.com/AvengeMedia/dank-greeter) binary
+- `cyshell run [-d]` - Start shell (optionally as daemon)
+- `cyshell restart` / `cyshell kill` - Manage running processes
+- `cyshell ipc <command>` - Send IPC commands (toggle launcher, notifications, etc.)
+- `cyshell plugins [install|browse|search|lock|restore]` - Plugin management and portable exact-revision lockfiles
+- `cyshell brightness [list|set]` - Control display/monitor brightness
+- `cyshell color pick` - Native color picker (see below)
+- `cyshell update` - Update CyShell and dependencies (disabled in distro packages)
+- `cyshell greeter` - Deprecated; forwards to the standalone [dms-greeter](https://github.com/AvengeMedia/dank-greeter) binary
 
 ### Color Picker
 
 Native Wayland color picker with magnifier, no external dependencies. Supports HiDPI and fractional scaling.
 
 ```bash
-dms color pick              # Pick color, output hex
-dms color pick --rgb        # Output as RGB (255 128 64)
-dms color pick --hsv        # Output as HSV (24 75% 100%)
-dms color pick --json       # Output all formats as JSON
-dms color pick -a           # Auto-copy to clipboard
+cyshell color pick              # Pick color, output hex
+cyshell color pick --rgb        # Output as RGB (255 128 64)
+cyshell color pick --hsv        # Output as HSV (24 75% 100%)
+cyshell color pick --json       # Output all formats as JSON
+cyshell color pick -a           # Auto-copy to clipboard
 ```
 
 The on-screen preview displays the selected format. JSON output includes hex, RGB, HSL, HSV, and CMYK values.
@@ -101,8 +101,8 @@ Requires Go 1.25+
 **Development build:**
 
 ```bash
-make              # Build dms CLI
-make dankinstall  # Build installer
+make              # Build cyshell CLI
+make cyshell-install  # Build installer
 make test         # Run tests
 ```
 
@@ -112,12 +112,12 @@ make test         # Run tests
 make dist         # Build without update features
 ```
 
-Produces `bin/dms-linux-amd64` and `bin/dms-linux-arm64`
+Produces `bin/cyshell-linux-amd64` and `bin/cyshell-linux-arm64`
 
 **Installation:**
 
 ```bash
-sudo make install  # Install to /usr/local/bin/dms
+sudo make install  # Install to /usr/local/bin/cyshell
 ```
 
 ## Development
@@ -142,17 +142,17 @@ go run github.com/AvengeMedia/dankgo/cmd/go-wayland-scanner@latest \
 
 **Module Structure:**
 
-- `cmd/` - Binary entrypoints (dms, dankinstall)
+- `cmd/` - Binary entrypoints (cyshell, cyshell-install)
 - `internal/distros/` - Distribution-specific installation logic
 - `internal/proto/` - Wayland protocol bindings
 - `pkg/` - Shared packages
 
-## Installation via dankinstall
+## Installation via cyshell-install
 
 **Interactive (TUI):**
 
 ```bash
-curl -fsSL https://install.danklinux.com | sh
+./core/install.sh
 ```
 
 **Headless (unattended):**
@@ -160,9 +160,9 @@ curl -fsSL https://install.danklinux.com | sh
 Headless mode requires cached credentials or a passwordless rule for your privilege escalation tool (sudo, doas, or run0). With sudo, run `sudo -v` first:
 
 ```bash
-sudo -v && curl -fsSL https://install.danklinux.com | sh -s -- -c niri -t ghostty -y
-sudo -v && curl -fsSL https://install.danklinux.com | sh -s -- -c hyprland -t kitty --dms-greeter -y
-sudo -v && curl -fsSL https://install.danklinux.com | sh -s -- -c niri -t ghostty --git-deps niri,quickshell --all-features -y
+sudo -v && ./core/install.sh -c niri -t ghostty -y
+sudo -v && ./core/install.sh -c hyprland -t kitty --dms-greeter -y
+sudo -v && ./core/install.sh -c niri -t ghostty --git-deps niri,quickshell --all-features -y
 ```
 
 | Flag | Short | Description |
@@ -186,7 +186,7 @@ Headless mode requires `--yes` to proceed; without it, the installer exits with 
 Configuration files are not replaced by default unless `--replace-configs` or `--replace-configs-all` is specified.
 Optional packages (`dms-greeter`, `danksearch`, `dankcalendar`) are disabled by default; enable them with their dedicated flags, `--include-deps`, or `--all-features`.
 
-When no flags are provided, `dankinstall` launches the interactive TUI.
+When no flags are provided, `cyshell-install` launches the interactive TUI.
 
 ### Headless mode validation rules
 
@@ -198,8 +198,8 @@ Headless mode activates when `--compositor` or `--term` is provided.
 
 ### Log file location
 
-`dankinstall` writes logs to `/tmp` by default.
-Set the `DANKINSTALL_LOG_DIR` environment variable to override the log directory.
+`cyshell-install` writes logs to `/tmp` by default.
+Set the `CYSHELL_INSTALL_LOG_DIR` environment variable to override the log directory.
 
 ## Supported Distributions
 
@@ -210,7 +210,7 @@ Uses `pacman` for system packages, builds AUR packages via `makepkg`, no AUR hel
 
 **Fedora**
 
-Uses COPR repositories (`avengemedia/danklinux`, `avengemedia/dms`).
+Some optional compatibility dependencies may still come from the external `avengemedia/danklinux`/`avengemedia/dms` repositories.
 
 **Ubuntu**
 Requires PPA support. Most packages built from source (slow first install).
@@ -225,6 +225,6 @@ Most packages available in standard repos. Minimal building required.
 Uses Portage with GURU overlay. Automatically configures USE flags. Variable success depending on system configuration.
 
 **Void Linux**
-Uses XBPS with the DMS and DankLinux self-hosted repositories.
+Some optional compatibility dependencies still use the legacy DMS/DankLinux XBPS repositories.
 
 See installer output for distribution-specific details during installation.

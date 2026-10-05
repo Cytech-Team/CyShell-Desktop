@@ -3,7 +3,7 @@ import qs.Common
 import qs.Widgets
 import qs.Modules.Settings.Widgets
 
-DankFloatingWindow {
+CyFloatingWindow {
     id: root
 
     property var widgets: []
@@ -155,8 +155,10 @@ DankFloatingWindow {
             anchors.fill: parent
             spacing: 0
 
-            DankWindowHeader {
+            CyWindowHeader {
                 id: titleBar
+                visible: !root.useServerSideTitlebar
+                height: visible ? implicitHeight : 0
                 width: parent.width
                 controls: windowControls
                 title: root.headerTitle
@@ -181,7 +183,7 @@ DankFloatingWindow {
                         wrapMode: Text.WordWrap
                     }
 
-                    DankSearchField {
+                    CySearchField {
                         id: searchField
                         width: parent.width
                         height: Theme.fieldHeightLarge
@@ -207,7 +209,7 @@ DankFloatingWindow {
                         }
                     }
 
-                    DankListView {
+                    CyListView {
                         id: widgetList
 
                         width: parent.width

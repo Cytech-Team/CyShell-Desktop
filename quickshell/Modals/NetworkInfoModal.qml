@@ -4,7 +4,7 @@ import qs.Modals.Common
 import qs.Services
 import qs.Widgets
 
-DankModal {
+CyModal {
     id: root
 
     property bool wired: false
@@ -13,7 +13,7 @@ DankModal {
     property var networkData: null
     readonly property string details: wired ? NetworkService.networkWiredInfoDetails : NetworkService.networkInfoDetails
 
-    layerNamespace: wired ? "dms:network-info-wired" : "dms:network-info"
+    layerNamespace: wired ? "cyshell:network-info-wired" : "cyshell:network-info"
     keepPopoutsOpen: true
 
     function showNetworkInfo(name, data) {
@@ -79,7 +79,7 @@ DankModal {
                         }
                     }
 
-                    DankActionButton {
+                    CyActionButton {
                         iconName: "close"
                         Accessible.name: I18n.tr("Close")
                         iconSize: Theme.iconSize - 4
@@ -99,7 +99,7 @@ DankModal {
                     border.width: 1
                     clip: true
 
-                    DankFlickable {
+                    CyFlickable {
                         anchors.fill: parent
                         anchors.margins: Theme.spacingM
                         contentHeight: detailsText.contentHeight

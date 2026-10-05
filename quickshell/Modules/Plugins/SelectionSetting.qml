@@ -68,7 +68,7 @@ Column {
         }
     }
 
-    DankDropdown {
+    CyDropdown {
         width: parent.width
         text: root.label
         description: root.description

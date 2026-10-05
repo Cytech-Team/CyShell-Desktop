@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/utils"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/utils"
 )
 
 const (
@@ -154,7 +154,7 @@ func dispatchWithClient(req rpcRequest, call ipcCallFunc, clientInfo mcpClientIn
 		if err != nil {
 			return nil, &rpcError{Code: -32001, Message: "CyShell Agent unavailable", Data: err.Error()}
 		}
-		return map[string]any{"tools": value}, nil
+		return map[string]any{"tools": addComputerUseCompatibilityAliases(value)}, nil
 
 	case "tools/call":
 		var params struct {
@@ -176,7 +176,7 @@ func dispatchWithClient(req rpcRequest, call ipcCallFunc, clientInfo mcpClientIn
 		}
 		clientInfo = normalizeMCPClientInfo(clientInfo)
 		value, err := call("cycom.tools.call", map[string]any{
-			"name":      params.Name,
+			"name":      canonicalComputerUseToolName(params.Name),
 			"reason":    reason,
 			"arguments": params.Arguments,
 			"origin": map[string]any{
@@ -201,6 +201,74 @@ func dispatchWithClient(req rpcRequest, call ipcCallFunc, clientInfo mcpClientIn
 	default:
 		return nil, &rpcError{Code: -32601, Message: "method not found: " + req.Method}
 	}
+}
+
+var computerUseCompatibilityAliases = map[string]string{
+	"list_windows":   "window_list",
+	"focused_window": "anyapp_focused_window",
+	"get_app_state":  "anyapp_get_app_state",
+	"screenshot":     "anyapp_screenshot",
+	"click":          "anyapp_click",
+	"drag":           "anyapp_drag",
+	"scroll":         "anyapp_scroll",
+	"press_key":      "anyapp_press_key",
+	"type_text":      "anyapp_type_text",
+	"set_value":      "anyapp_set_value",
+	"perform_action": "anyapp_perform_action",
+}
+
+func canonicalComputerUseToolName(name string) string {
+	if canonical, ok := computerUseCompatibilityAliases[name]; ok {
+		return canonical
+	}
+	return name
+}
+
+func addComputerUseCompatibilityAliases(value any) any {
+	items, ok := value.([]any)
+	if !ok {
+		return value
+	}
+
+	byName := make(map[string]map[string]any, len(items))
+	out := make([]any, 0, len(items)+len(computerUseCompatibilityAliases))
+	for _, item := range items {
+		out = append(out, item)
+		tool, ok := item.(map[string]any)
+		if !ok {
+			continue
+		}
+		name, _ := tool["name"].(string)
+		if name != "" {
+			byName[name] = tool
+		}
+	}
+
+	aliases := make([]string, 0, len(computerUseCompatibilityAliases))
+	for alias := range computerUseCompatibilityAliases {
+		aliases = append(aliases, alias)
+	}
+	sort.Strings(aliases)
+	for _, alias := range aliases {
+		if _, exists := byName[alias]; exists {
+			continue
+		}
+		canonical := computerUseCompatibilityAliases[alias]
+		source, exists := byName[canonical]
+		if !exists {
+			continue
+		}
+		clone := make(map[string]any, len(source))
+		for key, item := range source {
+			clone[key] = item
+		}
+		clone["name"] = alias
+		if description, ok := clone["description"].(string); ok && description != "" {
+			clone["description"] = description + " Compatibility alias for ChatGPT Computer Use clients."
+		}
+		out = append(out, clone)
+	}
+	return out
 }
 
 func parseMCPClientInfo(raw json.RawMessage) mcpClientInfo {

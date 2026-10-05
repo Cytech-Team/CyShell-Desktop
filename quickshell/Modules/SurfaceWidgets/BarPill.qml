@@ -2,7 +2,7 @@ import QtQuick
 import qs.Common
 import qs.Services
 import qs.Widgets
-import qs.Modules.DankBar
+import qs.Modules.CyBar
 
 Item {
     id: root
@@ -281,7 +281,7 @@ Item {
             }
         }
 
-        DankRipple {
+        CyRipple {
             id: rippleLayer
             rippleColor: Theme.surfaceText
             topLeftRadius: root.topLeftRadius

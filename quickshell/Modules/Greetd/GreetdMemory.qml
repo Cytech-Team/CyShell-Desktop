@@ -11,7 +11,7 @@ Singleton {
     id: root
     readonly property var log: Log.scoped("GreetdMemory")
 
-    readonly property string greetCfgDir: Quickshell.env("CYSHELL_GREET_CFG_DIR") || Quickshell.env("DMS_GREET_CFG_DIR") || "/var/cache/cyshell-greeter"
+    readonly property string greetCfgDir: Quickshell.env("CYSHELL_GREET_CFG_DIR") || "/var/cache/cyshell-greeter"
     readonly property string sessionConfigPath: greetCfgDir + "/session.json"
     readonly property string memoryFile: greetCfgDir + "/.local/state/memory.json"
     readonly property bool rememberLastSession: GreetdEnv.readBoolOverride(Quickshell.env, ["DMS_GREET_REMEMBER_LAST_SESSION", "DMS_SAVE_SESSION"], true)

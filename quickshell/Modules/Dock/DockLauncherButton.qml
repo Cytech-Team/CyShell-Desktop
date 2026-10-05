@@ -26,7 +26,7 @@ Item {
     }
 
     function activate() {
-        PopoutService.toggleDankLauncherV2();
+        PopoutService.toggleCyLauncherV2();
     }
 
     MouseArea {

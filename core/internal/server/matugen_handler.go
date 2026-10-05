@@ -4,9 +4,9 @@ import (
 	"context"
 	"time"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/matugen"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/models"
 	"github.com/AvengeMedia/dankgo/ipc"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/matugen"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/server/models"
 )
 
 type MatugenQueueResult struct {

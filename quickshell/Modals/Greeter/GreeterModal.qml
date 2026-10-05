@@ -4,7 +4,7 @@ import qs.Common
 import qs.Services
 import qs.Widgets
 
-DankFloatingWindow {
+CyFloatingWindow {
     id: root
     readonly property var log: Log.scoped("GreeterModal")
 
@@ -25,7 +25,7 @@ DankFloatingWindow {
     function loadCheatsheet() {
         const provider = KeybindsService.cheatsheetProvider;
         if (KeybindsService.cheatsheetAvailable && provider && !cheatsheetLoaded) {
-            cheatsheetProcess.command = ["dms", "keybinds", "show", provider];
+            cheatsheetProcess.command = [Proc.cyshellBin, "keybinds", "show", provider];
             cheatsheetProcess.running = true;
         }
     }
@@ -52,13 +52,20 @@ DankFloatingWindow {
         return "";
     }
 
+    function normalizePage(page) {
+        const parsed = Number(page);
+        if (!Number.isFinite(parsed))
+            return 0;
+        return Math.max(0, Math.min(totalPages - 1, Math.floor(parsed)));
+    }
+
     function show() {
-        currentPage = FirstLaunchService.requestedStartPage || 0;
+        currentPage = normalizePage(FirstLaunchService.requestedStartPage);
         visible = true;
     }
 
     function showAtPage(page) {
-        currentPage = page;
+        currentPage = normalizePage(page);
         visible = true;
     }
 
@@ -149,13 +156,14 @@ DankFloatingWindow {
             }
         }
 
-        DankWindowHeader {
+        CyWindowHeader {
             id: headerRow
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: parent.top
-            controls: windowControls
-            title: root.title
+            controls: root.useServerSideTitlebar ? null : windowControls
+            title: root.useServerSideTitlebar ? "" : root.title
+            showDivider: !root.useServerSideTitlebar
             closeTooltipText: I18n.tr("Skip setup", "greeter skip button tooltip")
             onCloseRequested: root.skip()
 
@@ -188,7 +196,7 @@ DankFloatingWindow {
                             color: dotColor.value
                             anchors.verticalCenter: parent.verticalCenter
 
-                            DankColorAnimation {
+                            CyColorAnimation {
                                 id: dotColor
                                 to: isActive ? Theme.primary : Theme.surfaceTextAlpha
                                 duration: Theme.shortDuration
@@ -244,7 +252,7 @@ DankFloatingWindow {
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: Theme.spacingM
 
-                DankButton {
+                CyButton {
                     visible: root.currentPage < root.totalPages - 1
                     text: I18n.tr("Skip", "greeter skip button")
                     backgroundColor: "transparent"
@@ -252,7 +260,7 @@ DankFloatingWindow {
                     onClicked: root.currentPage === 1 ? root.nextPage() : root.skip()
                 }
 
-                DankButton {
+                CyButton {
                     visible: root.currentPage > 0
                     text: I18n.tr("Back", "greeter back button")
                     iconName: "arrow_back"
@@ -261,7 +269,7 @@ DankFloatingWindow {
                     onClicked: root.prevPage()
                 }
 
-                DankButton {
+                CyButton {
                     visible: root.currentPage < root.totalPages - 1
                     enabled: !(root.currentPage === 1 && pageLoader.item && pageLoader.item.isRunning)
                     text: root.currentPage === 0 ? I18n.tr("Get Started", "greeter first page button") : I18n.tr("Next", "greeter next button")
@@ -271,7 +279,7 @@ DankFloatingWindow {
                     onClicked: root.nextPage()
                 }
 
-                DankButton {
+                CyButton {
                     visible: root.currentPage === root.totalPages - 1
                     text: I18n.tr("Finish", "greeter finish button")
                     iconName: "check"

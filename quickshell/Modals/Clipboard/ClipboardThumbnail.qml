@@ -138,7 +138,7 @@ ClippingRectangle {
             };
             thumbnailImage.activeEntryId = requestedId;
             thumbnailImage.activeRequest = request;
-            DMSService.sendRequest("clipboard.getEntry", {
+            CyShellService.sendRequest("clipboard.getEntry", {
                 "id": requestedId
             }, function (response) {
                 if (request.cancelled) {
@@ -240,7 +240,7 @@ ClippingRectangle {
         }
     }
 
-    DankIcon {
+    CyIcon {
         visible: !(entryType === "image" && thumbnailImage.status === Image.Ready && thumbnailImage.source != "")
         name: {
             switch (entryType) {

@@ -5,7 +5,7 @@ import qs.Modules.Settings.Widgets
 import qs.Services
 import qs.Widgets
 
-DankCard {
+CyCard {
     id: root
 
     property var plugin: ({})
@@ -57,7 +57,7 @@ DankCard {
                 visible: status === Image.Ready
             }
 
-            DankIcon {
+            CyIcon {
                 anchors.centerIn: parent
                 name: root.plugin.icon || root.fallbackIcon
                 size: Theme.avatarSize
@@ -65,14 +65,14 @@ DankCard {
                 visible: cardPreview.status !== Image.Ready
             }
 
-            DankSpinner {
+            CySpinner {
                 anchors.centerIn: parent
                 running: cardPreview.status === Image.Loading
                 visible: running
             }
         }
 
-        DankPaletteSwatch {
+        CyPaletteSwatch {
             anchors.top: parent.top
             anchors.right: parent.right
             anchors.margins: Theme.spacingXS
@@ -129,7 +129,7 @@ DankCard {
             width: parent.width
             spacing: Theme.spacingS
 
-            DankIcon {
+            CyIcon {
                 id: cardIcon
                 name: root.plugin.icon || root.fallbackIcon
                 size: Theme.iconSizeMedium
@@ -148,7 +148,7 @@ DankCard {
                 anchors.verticalCenter: parent.verticalCenter
             }
 
-            DankActionButton {
+            CyActionButton {
                 id: installAction
                 anchors.verticalCenter: parent.verticalCenter
                 enabled: !root.busy && (root.installed ? root.allowUninstall : root.compatible)

@@ -5,8 +5,8 @@ import qs.Common
 import qs.Services
 import qs.Widgets
 import qs.Modules.SurfaceWidgets
-import qs.Modules.DankBar
-import qs.Modules.DankBar.Widgets as BarWidgets
+import qs.Modules.CyBar
+import qs.Modules.CyBar.Widgets as BarWidgets
 import qs.Modules.ControlCenter.Widgets
 import "../../Common/settings/DockConfig.js" as DockConfig
 
@@ -26,6 +26,7 @@ FocusScope {
         closeExpansion();
         tooltipRevealDelay.stop();
         dockTooltip.hide();
+        dockWindowPreview.forceHide();
         forceActiveFocus();
     }
     function addWidget(widgetId) {
@@ -82,7 +83,7 @@ FocusScope {
     property var clockButtonRef: null
     property var controlCenterButtonRef: null
     property var systemUpdateButtonRef: null
-    readonly property bool interactionActive: editMode || expansionOwner !== null || widgetStrip.interactionActive || (appProvider.item?.interactionActive ?? false)
+    readonly property bool interactionActive: editMode || expansionOwner !== null || widgetStrip.interactionActive || (appProvider.item?.interactionActive ?? false) || dockWindowPreview.interactionActive
 
     function revealWidgetItem(item) {
         revealSticky = true;
@@ -457,11 +458,12 @@ FocusScope {
         if (!reveal) {
             tooltipRevealDelay.stop();
             dockTooltip.hide();
+            dockWindowPreview.forceHide();
         } else {
             tooltipRevealDelay.restart();
         }
     }
-    onHoveredButtonChanged: showTooltipForHoveredButton()
+    onHoveredButtonChanged: handleHoveredButtonChanged()
     onWidthChanged: dock._syncDockChromeState()
     onHeightChanged: dock._syncDockChromeState()
     onVisibleChanged: dock._syncDockChromeState()
@@ -579,9 +581,15 @@ FocusScope {
 
     readonly property var hoveredButton: widgetStrip.hoveredButton
 
-    DankTooltip {
+    CyTooltip {
         id: dockTooltip
         targetScreen: dock.screen
+    }
+
+    DockWindowPreview {
+        id: dockWindowPreview
+        targetScreen: dock.screen
+        options: dock.config
     }
 
     Timer {
@@ -591,9 +599,37 @@ FocusScope {
         onTriggered: dock.showTooltipForHoveredButton()
     }
 
+    function isPreviewableButton(button) {
+        if (!button?.getPreviewToplevels)
+            return false;
+        return button.getPreviewToplevels().length > 0;
+    }
+
+    function handleHoveredButtonChanged() {
+        const button = dock.hoveredButton;
+
+        if (dock.editMode || !dock.reveal || !button) {
+            dockWindowPreview.scheduleHide();
+            showTooltipForHoveredButton();
+            return;
+        }
+
+        if (isPreviewableButton(button)) {
+            tooltipRevealDelay.stop();
+            dockTooltip.hide();
+            dockWindowPreview.scheduleShow(button, dock.screen, dock.config);
+            return;
+        }
+
+        dockWindowPreview.scheduleHide();
+        showTooltipForHoveredButton();
+    }
+
     function showTooltipForHoveredButton() {
         dockTooltip.hide();
         if (dock.editMode || !dock.hoveredButton || !dock.reveal || slideXSpring.running || slideYSpring.running)
+            return;
+        if (isPreviewableButton(dock.hoveredButton))
             return;
 
         const buttonLocalPos = dock.hoveredButton.mapToItem(null, 0, 0);
@@ -687,8 +723,11 @@ FocusScope {
             x: !dock.isVertical ? Math.round((parent.width - width + dock.primaryStartInset - dock.primaryEndInset) / 2) : (dock.config.position === SettingsData.Position.Right ? parent.width - width : 0)
             y: dock.isVertical ? Math.round((parent.height - height + dock.primaryStartInset - dock.primaryEndInset) / 2) : (dock.config.position === SettingsData.Position.Bottom ? parent.height - height : 0)
             hoverEnabled: true
-            acceptedButtons: dock.config.editOnRightClick ? Qt.RightButton : Qt.NoButton
-            onClicked: dock.editMode = !dock.editMode
+            // Dock background intentionally ignores mouse buttons. App/widget
+            // delegates keep their own left/right-click behavior (including
+            // the app context menu / End Task), while blank Dock chrome never
+            // opens edit mode on right click.
+            acceptedButtons: Qt.NoButton
 
             Behavior on height {
                 enabled: !dock._switchingPosition

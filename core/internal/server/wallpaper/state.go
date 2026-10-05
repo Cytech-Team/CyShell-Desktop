@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/log"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/utils"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/log"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/utils"
 )
 
 type persistentState struct {
@@ -15,7 +15,7 @@ type persistentState struct {
 }
 
 func stateFilePath() string {
-	return filepath.Join(utils.XDGCacheHome(), "dms", "wallpaper-schedule.json")
+	return filepath.Join(utils.XDGCacheHome(), "cyshell", "wallpaper-schedule.json")
 }
 
 func loadLastFires() map[string]time.Time {

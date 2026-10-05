@@ -103,7 +103,7 @@ Column {
         title: I18n.tr("Popups", "notification settings card title, popup notifications")
         settingKey: "notificationPopups"
 
-        headerActions: DankButton {
+        headerActions: CyButton {
             text: I18n.tr("Preview")
             buttonHeight: Theme.buttonHeightXS
             onClicked: NotificationService.sendTestNotifications()
@@ -114,7 +114,7 @@ Column {
             tags: ["notification", "popup", "position", "screen", "location"]
             text: I18n.tr("Position")
             currentValue: {
-                if (SettingsData.notificationPopupPosition === -1)
+                if (SettingsData.notificationPopupPosition === SettingsData.Position.TopCenter || SettingsData.notificationPopupPosition === -1)
                     return I18n.tr("Top Center", "screen position option");
                 switch (SettingsData.notificationPopupPosition) {
                 case SettingsData.Position.Top:
@@ -141,7 +141,7 @@ Column {
                     SettingsData.set("notificationPopupPosition", SettingsData.Position.Left);
                     break;
                 case I18n.tr("Top Center", "screen position option"):
-                    SettingsData.set("notificationPopupPosition", -1);
+                    SettingsData.set("notificationPopupPosition", SettingsData.Position.TopCenter);
                     break;
                 case I18n.tr("Bottom Center", "screen position option"):
                     SettingsData.set("notificationPopupPosition", SettingsData.Position.BottomCenter);
@@ -318,7 +318,7 @@ Column {
                                 height: 1
                             }
 
-                            DankActionButton {
+                            CyActionButton {
                                 id: dndBypassRemoveBtn
                                 buttonSize: 28
                                 iconName: "delete"

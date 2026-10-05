@@ -1,7 +1,7 @@
-// Package shellembed carries the quickshell UI inside the dms binary and
+// Package shellembed carries the quickshell UI inside the cyshell binary and
 // materializes it at runtime via dankgo/shellapp/shellfs, since quickshell
 // needs a real filesystem path. Customization goes through -c /
-// DMS_SHELL_DIR instead of editing the extraction.
+// CYSHELL_SHELL_DIR instead of editing the extraction.
 package shellembed
 
 import (

@@ -128,7 +128,7 @@ Item {
     Component {
         id: analogClock
 
-        DankAnalogClock {
+        CyAnalogClock {
             hours: systemClock.date?.getHours() ?? 0
             minutes: systemClock.date?.getMinutes() ?? 0
             seconds: systemClock.date?.getSeconds() ?? 0

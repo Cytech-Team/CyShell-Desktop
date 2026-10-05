@@ -2,12 +2,12 @@ import QtQuick
 import "." as Center
 import Quickshell
 import qs.Modules.Notifications
-import qs.DankCommon.Common as DC
+import qs.CyCommon.Common as DC
 import qs.Common
 import qs.Services
 import qs.Widgets
 
-DankListView {
+CyListView {
     id: listView
 
     property var keyboardController: null

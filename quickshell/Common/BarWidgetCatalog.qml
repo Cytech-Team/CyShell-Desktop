@@ -45,9 +45,30 @@ Singleton {
         },
         {
             "id": "appsDock",
-            "text": I18n.tr("Apps dock"),
-            "description": I18n.tr("Pinned and running apps with drag-and-drop"),
+            "text": I18n.tr("Apps"),
+            "description": I18n.tr("Pinned and running apps shared by taskbar and standalone dock"),
             "icon": "dock_to_bottom",
+            "section": "left"
+        },
+        {
+            "id": "cyStart",
+            "text": I18n.tr("CyStart"),
+            "description": I18n.tr("Windows-style Start menu and application launcher"),
+            "icon": "apps",
+            "section": "left"
+        },
+        {
+            "id": "cytechSearch",
+            "text": I18n.tr("Cytech Search"),
+            "description": I18n.tr("Search apps, files, and system actions"),
+            "icon": "search",
+            "section": "left"
+        },
+        {
+            "id": "cytechTaskView",
+            "text": I18n.tr("Cytech Task View"),
+            "description": I18n.tr("Overview of open windows and tasks"),
+            "icon": "view_carousel",
             "section": "left"
         },
         {
@@ -237,6 +258,27 @@ Singleton {
             "text": I18n.tr("Power", "noun, power menu widget name, shutdown and reboot actions"),
             "description": I18n.tr("Display the power system menu"),
             "icon": "power_settings_new",
+            "section": "right"
+        },
+        {
+            "id": "cytechLanguage",
+            "text": I18n.tr("Language"),
+            "description": I18n.tr("Show and switch the active keyboard language"),
+            "icon": "keyboard",
+            "section": "right"
+        },
+        {
+            "id": "cytechClock",
+            "text": I18n.tr("Cytech Clock"),
+            "description": I18n.tr("Windows-style clock and date display"),
+            "icon": "schedule",
+            "section": "right"
+        },
+        {
+            "id": "cytechPeek",
+            "text": I18n.tr("Peek"),
+            "description": I18n.tr("Preview or show the desktop"),
+            "icon": "desktop_windows",
             "section": "right"
         }
     ]

@@ -22,7 +22,7 @@ Item {
         width: parent.width - Theme.spacingL * 2
         spacing: Theme.spacingS
 
-        DankSpinner {
+        CySpinner {
             anchors.horizontalCenter: parent.horizontalCenter
             size: CcMetrics.emptyStateIconSize
             strokeWidth: CcMetrics.spinnerStroke
@@ -31,7 +31,7 @@ Item {
             running: visible
         }
 
-        DankIcon {
+        CyIcon {
             anchors.horizontalCenter: parent.horizontalCenter
             name: root.iconName
             size: CcMetrics.emptyStateIconSize

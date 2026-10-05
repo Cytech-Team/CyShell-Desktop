@@ -24,7 +24,7 @@ function service({ enabled = true, type = "widget" } = {}) {
         log: { error() {}, warn() {} },
         Paths: { toFileUrl: path => path.startsWith("file://") ? path : "file://" + path },
         SettingsData: { getPluginSetting: () => enabled },
-        DMSService: { update: (id, callback) => requests.push(callback) },
+        CyShellService: { update: (id, callback) => requests.push(callback) },
         Component: { Error: 3, PreferSynchronous: 0 },
         I18n: { tr: text => ({ arg: value => text.replace("%1", value) }) },
         ToastService: { showError() {} },

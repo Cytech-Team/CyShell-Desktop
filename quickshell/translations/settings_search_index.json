@@ -31,7 +31,7 @@
       "wallpaper"
     ],
     "page": "personalization",
-    "description": "Layer namespace dms:blurwallpaper, needs a niri blur rule",
+    "description": "Layer namespace cyshell:blurwallpaper, needs a niri blur rule",
     "conditionKey": "isNiri"
   },
   {
@@ -140,7 +140,6 @@
     "page": "applications",
     "category": "Applications",
     "keywords": [
-      "active",
       "app",
       "applications",
       "apps",
@@ -148,41 +147,12 @@
       "default",
       "floating",
       "matching",
-      "open",
       "program",
       "programs",
       "rules",
-      "running",
-      "taskbar",
-      "window",
-      "windows"
+      "window"
     ],
     "icon": "apps"
-  },
-  {
-    "section": "aqueousCursor",
-    "label": "Aqueous cursor",
-    "tabIndex": -1,
-    "category": "Wallpaper & colors",
-    "keywords": [
-      "appearance",
-      "aqueous",
-      "background",
-      "bg",
-      "colors",
-      "colour",
-      "colours",
-      "cursor",
-      "desktop",
-      "hue",
-      "image",
-      "palette",
-      "picture",
-      "tint",
-      "wallpaper"
-    ],
-    "page": "personalization",
-    "conditionKey": "isAqueous"
   },
   {
     "section": "wallpaperCyclingEnabled",
@@ -235,27 +205,6 @@
       "while"
     ],
     "page": "notifications"
-  },
-  {
-    "section": "blurEnabled",
-    "label": "Background blur",
-    "tabIndex": -1,
-    "category": "Interface style",
-    "keywords": [
-      "background",
-      "blur",
-      "compositor",
-      "does",
-      "effect",
-      "frosted",
-      "glass",
-      "interface",
-      "style",
-      "support",
-      "transparency"
-    ],
-    "page": "theme_surfaces",
-    "description": "Your compositor does not support background blur (ext-background-effect-v1)"
   },
   {
     "section": "wallpaperBackgroundColorMode",
@@ -334,7 +283,7 @@
       "wallpaper"
     ],
     "page": "personalization",
-    "description": "Layer namespace dms:blurwallpaper, needs a niri blur rule",
+    "description": "Layer namespace cyshell:blurwallpaper, needs a niri blur rule",
     "conditionKey": "isNiri"
   },
   {
@@ -846,52 +795,21 @@
     "icon": "notifications_off"
   },
   {
-    "section": "_hub_dock",
-    "label": "Dock",
-    "tabIndex": -1,
-    "page": "dock",
-    "category": "Dock",
-    "keywords": [
-      "advanced",
-      "appearance",
-      "apps",
-      "auto-hide",
-      "autohide",
-      "components",
-      "dock",
-      "general",
-      "hidden",
-      "hide",
-      "launcher bar",
-      "modules",
-      "panel",
-      "pinned",
-      "position",
-      "show",
-      "taskbar",
-      "trash",
-      "visibility",
-      "visible",
-      "widgets"
-    ],
-    "icon": "dock_to_bottom"
-  },
-  {
     "section": "dockConfiguration",
     "label": "Docks",
     "tabIndex": -1,
-    "category": "Dock",
+    "category": "Standalone Dock",
     "keywords": [
       "add",
       "configuration",
       "dock",
       "docks",
       "enable",
-      "launcher bar",
       "name",
       "panel",
       "remove",
       "show",
+      "standalone",
       "taskbar"
     ],
     "page": "dock",
@@ -1333,15 +1251,15 @@
     "section": "dockPlacement",
     "label": "Layout",
     "tabIndex": -1,
-    "category": "Dock",
+    "category": "Standalone Dock",
     "keywords": [
       "dock",
       "edge",
-      "launcher bar",
       "layout",
       "panel",
       "placement",
       "position",
+      "standalone",
       "taskbar"
     ],
     "page": "dock",
@@ -1712,6 +1630,7 @@
       "charge",
       "charging",
       "hibernate",
+      "performance",
       "power",
       "reboot",
       "restart",
@@ -2005,6 +1924,32 @@
     "icon": "volume_up"
   },
   {
+    "section": "_hub_dock",
+    "label": "Standalone Dock",
+    "tabIndex": -1,
+    "page": "dock",
+    "category": "Standalone Dock",
+    "keywords": [
+      "advanced",
+      "appearance",
+      "apps",
+      "components",
+      "dock",
+      "general",
+      "modules",
+      "optional",
+      "panel",
+      "pins",
+      "shared",
+      "standalone",
+      "statusbar",
+      "taskbar",
+      "topbar",
+      "widgets"
+    ],
+    "icon": "dock_to_bottom"
+  },
+  {
     "section": "notificationSummaryFontSize",
     "label": "Summary font size",
     "tabIndex": -1,
@@ -2056,29 +2001,33 @@
     "keywords": [
       "background",
       "blur",
-      "compositor",
       "corner",
-      "does",
-      "effect",
       "elevation",
       "foreground",
       "frosted",
       "glass",
+      "higher",
+      "increase",
       "interface",
       "layers",
+      "lower",
+      "material",
       "modal",
       "opacity",
       "popup",
       "radius",
+      "reduce",
       "shadow",
+      "shapes",
       "style",
-      "support",
       "surface",
       "surfaces",
-      "transparency"
+      "transparency",
+      "uses",
+      "values"
     ],
     "page": "theme_surfaces",
-    "description": "Your compositor does not support background blur (ext-background-effect-v1)"
+    "description": "50 uses Material shapes. Lower values reduce rounding; higher values increase it."
   },
   {
     "section": "_hub_system",
@@ -2351,23 +2300,6 @@
       "window"
     ],
     "page": "theme_surfaces"
-  },
-  {
-    "section": "blurXrayLink",
-    "label": "Xray options are in Compositor → Layout",
-    "tabIndex": -1,
-    "category": "Interface style",
-    "keywords": [
-      "blur",
-      "compositor",
-      "interface",
-      "layout",
-      "options",
-      "style",
-      "xray"
-    ],
-    "page": "theme_surfaces",
-    "conditionKey": "isNiri"
   },
   {
     "section": "_hub_personalization",
@@ -3438,11 +3370,11 @@
       "general",
       "hide",
       "hover",
-      "launcher bar",
       "panel",
+      "standalone",
       "taskbar"
     ],
-    "parentLabel": "Dock"
+    "parentLabel": "Standalone Dock"
   },
   {
     "section": "dockDisplays",
@@ -3454,7 +3386,6 @@
       "displays",
       "dock",
       "general",
-      "launcher bar",
       "monitor",
       "monitors",
       "output",
@@ -3462,37 +3393,11 @@
       "panel",
       "screen",
       "screens",
+      "standalone",
       "taskbar"
     ],
-    "parentLabel": "Dock",
+    "parentLabel": "Standalone Dock",
     "icon": "display_settings"
-  },
-  {
-    "section": "_tab_5",
-    "label": "Dock: General",
-    "tabIndex": 5,
-    "category": "General",
-    "keywords": [
-      "auto",
-      "displays",
-      "dock",
-      "general",
-      "hide",
-      "launcher bar",
-      "monitor",
-      "monitors",
-      "output",
-      "outputs",
-      "panel",
-      "screen",
-      "screens",
-      "statusbar",
-      "taskbar",
-      "topbar"
-    ],
-    "icon": "tune",
-    "parentLabel": "Dock",
-    "description": "Displays, taskbar, auto-hide"
   },
   {
     "section": "dockEditMode",
@@ -3503,14 +3408,14 @@
       "dock",
       "edit",
       "general",
-      "launcher bar",
       "mode",
       "panel",
       "right-click",
+      "standalone",
       "taskbar",
       "widgets"
     ],
-    "parentLabel": "Dock",
+    "parentLabel": "Standalone Dock",
     "icon": "edit"
   },
   {
@@ -3523,12 +3428,12 @@
       "compact",
       "dock",
       "general",
-      "launcher bar",
       "layout",
       "panel",
+      "standalone",
       "taskbar"
     ],
-    "parentLabel": "Dock",
+    "parentLabel": "Standalone Dock",
     "icon": "view_compact"
   },
   {
@@ -3543,14 +3448,14 @@
       "edit",
       "empty",
       "general",
-      "launcher bar",
       "panel",
       "right",
       "right-click",
       "space",
+      "standalone",
       "taskbar"
     ],
-    "parentLabel": "Dock"
+    "parentLabel": "Standalone Dock"
   },
   {
     "section": "dockSmartAutoHide",
@@ -3565,15 +3470,41 @@
       "general",
       "hide",
       "intelligent",
-      "launcher bar",
       "overlap",
       "panel",
       "smart",
+      "standalone",
       "taskbar",
       "windows"
     ],
-    "parentLabel": "Dock",
+    "parentLabel": "Standalone Dock",
     "conditionKey": "smartDockCapable"
+  },
+  {
+    "section": "_tab_5",
+    "label": "Standalone Dock: General",
+    "tabIndex": 5,
+    "category": "General",
+    "keywords": [
+      "auto",
+      "displays",
+      "dock",
+      "general",
+      "hide",
+      "monitor",
+      "monitors",
+      "output",
+      "outputs",
+      "panel",
+      "position",
+      "screen",
+      "screens",
+      "standalone",
+      "taskbar"
+    ],
+    "icon": "tune",
+    "parentLabel": "Standalone Dock",
+    "description": "Displays, position, auto-hide"
   },
   {
     "section": "dockAutoHideCard",
@@ -3588,14 +3519,14 @@
       "hidden",
       "hide",
       "hover",
-      "launcher bar",
       "panel",
       "show",
+      "standalone",
       "taskbar",
       "visibility",
       "visible"
     ],
-    "parentLabel": "Dock",
+    "parentLabel": "Standalone Dock",
     "icon": "visibility_off"
   },
   {
@@ -3618,6 +3549,28 @@
       "zone"
     ],
     "parentLabel": "CyBar"
+  },
+  {
+    "section": "barAppsPresentation",
+    "label": "Apps presentation",
+    "tabIndex": 6,
+    "category": "Appearance",
+    "keywords": [
+      "appearance",
+      "apps",
+      "cybar",
+      "icons",
+      "indicator",
+      "overflow",
+      "panel",
+      "presentation",
+      "spacing",
+      "statusbar",
+      "taskbar",
+      "topbar"
+    ],
+    "parentLabel": "CyBar",
+    "icon": "apps"
   },
   {
     "section": "barNoBackground",
@@ -3805,7 +3758,6 @@
     "keywords": [
       "appearance",
       "background",
-      "corners",
       "cybar",
       "gap",
       "gaps",
@@ -3813,9 +3765,7 @@
       "margins",
       "padding",
       "panel",
-      "radius",
-      "round",
-      "rounded",
+      "presentation",
       "spacing",
       "statusbar",
       "style",
@@ -3825,7 +3775,7 @@
     ],
     "icon": "palette",
     "parentLabel": "CyBar",
-    "description": "Background, corners, spacing, widget style"
+    "description": "Background, spacing, widget style, app presentation"
   },
   {
     "section": "barExclusiveZone",
@@ -6193,24 +6143,6 @@
     "icon": "auto_awesome_motion"
   },
   {
-    "section": "aqueousTypography",
-    "label": "Aqueous typography",
-    "tabIndex": 14,
-    "category": "Fonts & motion",
-    "keywords": [
-      "animation",
-      "appearance",
-      "aqueous",
-      "font",
-      "fonts",
-      "motion",
-      "text",
-      "typeface",
-      "typography"
-    ],
-    "conditionKey": "isAqueous"
-  },
-  {
     "section": "displayFontFamily",
     "label": "Display family",
     "tabIndex": 14,
@@ -7338,67 +7270,6 @@
     ]
   },
   {
-    "section": "appIdSubstitutions",
-    "label": "App ID substitutions",
-    "tabIndex": 19,
-    "category": "Running apps",
-    "keywords": [
-      "active",
-      "app",
-      "applications",
-      "apps",
-      "class",
-      "floating",
-      "icon",
-      "matching",
-      "open",
-      "pattern",
-      "program",
-      "programs",
-      "regex",
-      "replacement",
-      "rules",
-      "running",
-      "substitution",
-      "substitutions",
-      "taskbar",
-      "tasks",
-      "window",
-      "windows"
-    ],
-    "parentLabel": "Applications",
-    "icon": "find_replace",
-    "conditionKey": "isHyprlandOrNiri"
-  },
-  {
-    "section": "_tab_19",
-    "label": "Running apps",
-    "tabIndex": 19,
-    "category": "Running apps",
-    "keywords": [
-      "active",
-      "app",
-      "applications",
-      "apps",
-      "floating",
-      "matching",
-      "open",
-      "program",
-      "programs",
-      "rules",
-      "running",
-      "substitutions",
-      "taskbar",
-      "tasks",
-      "window",
-      "windows"
-    ],
-    "icon": "app_registration",
-    "parentLabel": "Applications",
-    "description": "App ID substitutions",
-    "conditionKey": "isHyprlandOrNiri"
-  },
-  {
     "section": "systemUpdaterAdvanced",
     "label": "Advanced",
     "tabIndex": 20,
@@ -8089,14 +7960,6 @@
     "parentLabel": "Power & battery"
   },
   {
-    "section": "barWidgetOption:AppsDockOptions.qml:24",
-    "label": "Active color",
-    "tabIndex": 22,
-    "keywords": [],
-    "runtimeType": "barWidgetOption",
-    "optionFile": "AppsDockOptions.qml"
-  },
-  {
     "section": "barWidgetOption:MusicOptions.qml:2",
     "label": "Adaptive width",
     "tabIndex": 22,
@@ -8127,6 +7990,14 @@
     "keywords": [],
     "runtimeType": "barWidgetOption",
     "optionFile": "PrivacyOptions.qml"
+  },
+  {
+    "section": "barWidgetOption:AppsDockOptions.qml:1",
+    "label": "Apps behavior",
+    "tabIndex": 22,
+    "keywords": [],
+    "runtimeType": "barWidgetOption",
+    "optionFile": "AppsDockOptions.qml"
   },
   {
     "section": "barWidgetOption:SystemTrayOptions.qml:3",
@@ -8189,12 +8060,12 @@
     "optionFile": "BatteryOptions.qml"
   },
   {
-    "section": "barWidgetOption:AppsDockOptions.qml:15",
+    "section": "barWidgetOption:DockHostComponentsOptions.qml:7",
     "label": "Brightness",
     "tabIndex": 22,
     "keywords": [],
     "runtimeType": "barWidgetOption",
-    "optionFile": "AppsDockOptions.qml"
+    "optionFile": "DockHostComponentsOptions.qml"
   },
   {
     "section": "barWidgetOption:PrivacyOptions.qml:3",
@@ -8205,28 +8076,12 @@
     "optionFile": "PrivacyOptions.qml"
   },
   {
-    "section": "barWidgetOption:AppsDockOptions.qml:13",
+    "section": "barWidgetOption:DockHostComponentsOptions.qml:5",
     "label": "Color override",
     "tabIndex": 22,
     "keywords": [],
     "runtimeType": "barWidgetOption",
-    "optionFile": "AppsDockOptions.qml"
-  },
-  {
-    "section": "barWidgetOption:AppsDockOptions.qml:23",
-    "label": "Colorize active",
-    "tabIndex": 22,
-    "keywords": [],
-    "runtimeType": "barWidgetOption",
-    "optionFile": "AppsDockOptions.qml"
-  },
-  {
-    "section": "barWidgetOption:AppsDockOptions.qml:1",
-    "label": "Compact mode",
-    "tabIndex": 22,
-    "keywords": [],
-    "runtimeType": "barWidgetOption",
-    "optionFile": "AppsDockOptions.qml"
+    "optionFile": "DockHostComponentsOptions.qml"
   },
   {
     "section": "barWidgetOption:ClockOptions.qml:1",
@@ -8261,12 +8116,20 @@
     "optionFile": "RunningAppsOptions.qml"
   },
   {
-    "section": "barWidgetOption:AppsDockOptions.qml:16",
-    "label": "Contrast",
+    "section": "barWidgetOption:AppsDockOptions.qml:8",
+    "label": "Configured per surface",
     "tabIndex": 22,
     "keywords": [],
     "runtimeType": "barWidgetOption",
     "optionFile": "AppsDockOptions.qml"
+  },
+  {
+    "section": "barWidgetOption:DockHostComponentsOptions.qml:8",
+    "label": "Contrast",
+    "tabIndex": 22,
+    "keywords": [],
+    "runtimeType": "barWidgetOption",
+    "optionFile": "DockHostComponentsOptions.qml"
   },
   {
     "section": "barWidgetOption:RunningAppsOptions.qml:4",
@@ -8277,7 +8140,7 @@
     "optionFile": "RunningAppsOptions.qml"
   },
   {
-    "section": "barWidgetOption:AppsDockOptions.qml:2",
+    "section": "barWidgetOption:AppsDockOptions.qml:3",
     "label": "Current workspace",
     "tabIndex": 22,
     "keywords": [],
@@ -8293,20 +8156,20 @@
     "optionFile": "RunningAppsOptions.qml"
   },
   {
-    "section": "barWidgetOption:AppsDockOptions.qml:12",
+    "section": "barWidgetOption:DockHostComponentsOptions.qml:4",
     "label": "Custom",
     "tabIndex": 22,
     "keywords": [],
     "runtimeType": "barWidgetOption",
-    "optionFile": "AppsDockOptions.qml"
+    "optionFile": "DockHostComponentsOptions.qml"
   },
   {
-    "section": "barWidgetOption:AppsDockOptions.qml:19",
+    "section": "barWidgetOption:DockHostComponentsOptions.qml:11",
     "label": "Custom command",
     "tabIndex": 22,
     "keywords": [],
     "runtimeType": "barWidgetOption",
-    "optionFile": "AppsDockOptions.qml"
+    "optionFile": "DockHostComponentsOptions.qml"
   },
   {
     "section": "barWidgetOption:SystemMonitorOptions.qml:7",
@@ -8323,22 +8186,6 @@
     "keywords": [],
     "runtimeType": "barWidgetOption",
     "optionFile": "WorkspaceSwitcherOptions.qml"
-  },
-  {
-    "section": "barWidgetOption:AppsDockOptions.qml:25",
-    "label": "Enlarge on hover",
-    "tabIndex": 22,
-    "keywords": [],
-    "runtimeType": "barWidgetOption",
-    "optionFile": "AppsDockOptions.qml"
-  },
-  {
-    "section": "barWidgetOption:AppsDockOptions.qml:26",
-    "label": "Enlargement",
-    "tabIndex": 22,
-    "keywords": [],
-    "runtimeType": "barWidgetOption",
-    "optionFile": "AppsDockOptions.qml"
   },
   {
     "section": "barWidgetOption:WorkspaceSwitcherOptions.qml:16",
@@ -8381,7 +8228,7 @@
     "optionFile": "WorkspaceSwitcherOptions.qml"
   },
   {
-    "section": "barWidgetOption:AppsDockOptions.qml:3",
+    "section": "barWidgetOption:AppsDockOptions.qml:4",
     "label": "Group by app",
     "tabIndex": 22,
     "keywords": [],
@@ -8421,20 +8268,12 @@
     "optionFile": "WorkspaceSwitcherOptions.qml"
   },
   {
-    "section": "barWidgetOption:AppsDockOptions.qml:11",
+    "section": "barWidgetOption:DockHostComponentsOptions.qml:3",
     "label": "Icon",
     "tabIndex": 22,
     "keywords": [],
     "runtimeType": "barWidgetOption",
-    "optionFile": "AppsDockOptions.qml"
-  },
-  {
-    "section": "barWidgetOption:AppsDockOptions.qml:27",
-    "label": "Icon size",
-    "tabIndex": 22,
-    "keywords": [],
-    "runtimeType": "barWidgetOption",
-    "optionFile": "AppsDockOptions.qml"
+    "optionFile": "DockHostComponentsOptions.qml"
   },
   {
     "section": "barWidgetOption:WorkspaceSwitcherOptions.qml:7",
@@ -8461,22 +8300,6 @@
     "optionFile": "WorkspaceSwitcherOptions.qml"
   },
   {
-    "section": "barWidgetOption:AppsDockOptions.qml:22",
-    "label": "Indicator style",
-    "tabIndex": 22,
-    "keywords": [],
-    "runtimeType": "barWidgetOption",
-    "optionFile": "AppsDockOptions.qml"
-  },
-  {
-    "section": "barWidgetOption:AppsDockOptions.qml:21",
-    "label": "Indicators",
-    "tabIndex": 22,
-    "keywords": [],
-    "runtimeType": "barWidgetOption",
-    "optionFile": "AppsDockOptions.qml"
-  },
-  {
     "section": "barWidgetOption:ControlCenterOptions.qml:1",
     "label": "Indicators",
     "tabIndex": 22,
@@ -8493,12 +8316,12 @@
     "optionFile": "KeyboardLayoutOptions.qml"
   },
   {
-    "section": "barWidgetOption:AppsDockOptions.qml:9",
+    "section": "barWidgetOption:DockHostComponentsOptions.qml:1",
     "label": "Launcher button",
     "tabIndex": 22,
     "keywords": [],
     "runtimeType": "barWidgetOption",
-    "optionFile": "AppsDockOptions.qml"
+    "optionFile": "DockHostComponentsOptions.qml"
   },
   {
     "section": "barWidgetOption:WorkspaceSwitcherOptions.qml:6",
@@ -8507,22 +8330,6 @@
     "keywords": [],
     "runtimeType": "barWidgetOption",
     "optionFile": "WorkspaceSwitcherOptions.qml"
-  },
-  {
-    "section": "barWidgetOption:AppsDockOptions.qml:6",
-    "label": "Max pinned apps",
-    "tabIndex": 22,
-    "keywords": [],
-    "runtimeType": "barWidgetOption",
-    "optionFile": "AppsDockOptions.qml"
-  },
-  {
-    "section": "barWidgetOption:AppsDockOptions.qml:7",
-    "label": "Max running apps",
-    "tabIndex": 22,
-    "keywords": [],
-    "runtimeType": "barWidgetOption",
-    "optionFile": "AppsDockOptions.qml"
   },
   {
     "section": "barWidgetOption:SystemTrayOptions.qml:4",
@@ -8589,12 +8396,12 @@
     "optionFile": "BatteryOptions.qml"
   },
   {
-    "section": "barWidgetOption:AppsDockOptions.qml:18",
+    "section": "barWidgetOption:DockHostComponentsOptions.qml:10",
     "label": "Open with",
     "tabIndex": 22,
     "keywords": [],
     "runtimeType": "barWidgetOption",
-    "optionFile": "AppsDockOptions.qml"
+    "optionFile": "DockHostComponentsOptions.qml"
   },
   {
     "section": "barWidgetOption:ClockOptions.qml:2",
@@ -8605,8 +8412,8 @@
     "optionFile": "ClockOptions.qml"
   },
   {
-    "section": "barWidgetOption:AppsDockOptions.qml:5",
-    "label": "Overflow",
+    "section": "barWidgetOption:AppsDockOptions.qml:6",
+    "label": "Restore special workspace",
     "tabIndex": 22,
     "keywords": [],
     "runtimeType": "barWidgetOption",
@@ -8637,7 +8444,7 @@
     "optionFile": "MusicOptions.qml"
   },
   {
-    "section": "barWidgetOption:AppsDockOptions.qml:4",
+    "section": "barWidgetOption:AppsDockOptions.qml:5",
     "label": "Separate pinned and running apps",
     "tabIndex": 22,
     "keywords": [],
@@ -8645,12 +8452,20 @@
     "optionFile": "AppsDockOptions.qml"
   },
   {
-    "section": "barWidgetOption:AppsDockOptions.qml:10",
-    "label": "Show",
+    "section": "barWidgetOption:AppsDockOptions.qml:2",
+    "label": "Shared Apps system",
     "tabIndex": 22,
     "keywords": [],
     "runtimeType": "barWidgetOption",
     "optionFile": "AppsDockOptions.qml"
+  },
+  {
+    "section": "barWidgetOption:DockHostComponentsOptions.qml:2",
+    "label": "Show",
+    "tabIndex": 22,
+    "keywords": [],
+    "runtimeType": "barWidgetOption",
+    "optionFile": "DockHostComponentsOptions.qml"
   },
   {
     "section": "barWidgetOption:WorkspaceSwitcherOptions.qml:19",
@@ -8667,14 +8482,6 @@
     "keywords": [],
     "runtimeType": "barWidgetOption",
     "optionFile": "WorkspaceSwitcherOptions.qml"
-  },
-  {
-    "section": "barWidgetOption:AppsDockOptions.qml:8",
-    "label": "Show badge",
-    "tabIndex": 22,
-    "keywords": [],
-    "runtimeType": "barWidgetOption",
-    "optionFile": "AppsDockOptions.qml"
   },
   {
     "section": "barWidgetOption:BatteryOptions.qml:4",
@@ -8789,20 +8596,12 @@
     "optionFile": "MusicOptions.qml"
   },
   {
-    "section": "barWidgetOption:AppsDockOptions.qml:14",
+    "section": "barWidgetOption:DockHostComponentsOptions.qml:6",
     "label": "Size offset",
     "tabIndex": 22,
     "keywords": [],
     "runtimeType": "barWidgetOption",
-    "optionFile": "AppsDockOptions.qml"
-  },
-  {
-    "section": "barWidgetOption:AppsDockOptions.qml:28",
-    "label": "Spacing",
-    "tabIndex": 22,
-    "keywords": [],
-    "runtimeType": "barWidgetOption",
-    "optionFile": "AppsDockOptions.qml"
+    "optionFile": "DockHostComponentsOptions.qml"
   },
   {
     "section": "barWidgetOption:WorkspaceSwitcherOptions.qml:2",
@@ -8813,6 +8612,14 @@
     "optionFile": "WorkspaceSwitcherOptions.qml"
   },
   {
+    "section": "barWidgetOption:AppsDockOptions.qml:7",
+    "label": "Surface appearance",
+    "tabIndex": 22,
+    "keywords": [],
+    "runtimeType": "barWidgetOption",
+    "optionFile": "AppsDockOptions.qml"
+  },
+  {
     "section": "barWidgetOption:ClockOptions.qml:3",
     "label": "Time & weather",
     "tabIndex": 22,
@@ -8821,12 +8628,12 @@
     "optionFile": "ClockOptions.qml"
   },
   {
-    "section": "barWidgetOption:AppsDockOptions.qml:17",
+    "section": "barWidgetOption:DockHostComponentsOptions.qml:9",
     "label": "Trash",
     "tabIndex": 22,
     "keywords": [],
     "runtimeType": "barWidgetOption",
-    "optionFile": "AppsDockOptions.qml"
+    "optionFile": "DockHostComponentsOptions.qml"
   },
   {
     "section": "barWidgetOption:SystemTrayOptions.qml:1",
@@ -8835,14 +8642,6 @@
     "keywords": [],
     "runtimeType": "barWidgetOption",
     "optionFile": "SystemTrayOptions.qml"
-  },
-  {
-    "section": "barWidgetOption:AppsDockOptions.qml:20",
-    "label": "Visual effects",
-    "tabIndex": 22,
-    "keywords": [],
-    "runtimeType": "barWidgetOption",
-    "optionFile": "AppsDockOptions.qml"
   },
   {
     "section": "barWidgetOption:WorkspaceSwitcherOptions.qml:12",
@@ -9145,44 +8944,24 @@
     "conditionKey": "dmsConnected"
   },
   {
-    "section": "displaySnapToEdge",
-    "label": "Arrangement",
-    "tabIndex": 24,
-    "category": "Configuration",
-    "keywords": [
-      "arrangement",
-      "config",
-      "configuration",
-      "configure",
-      "displays",
-      "monitor",
-      "monitors",
-      "output",
-      "outputs",
-      "resolution",
-      "screen",
-      "screens",
-      "setup"
-    ],
-    "parentLabel": "Displays",
-    "icon": "monitor"
-  },
-  {
     "section": "_tab_24",
-    "label": "Configuration",
+    "label": "Display configuration",
     "tabIndex": 24,
-    "category": "Configuration",
+    "category": "Display configuration",
     "keywords": [
-      "arrangement",
       "config",
       "configuration",
       "configure",
+      "display",
       "displays",
+      "layout",
+      "main",
       "monitor",
       "monitors",
       "output",
       "outputs",
-      "profiles",
+      "rate",
+      "refresh",
       "resolution",
       "scale",
       "screen",
@@ -9191,56 +8970,101 @@
     ],
     "icon": "display_settings",
     "parentLabel": "Displays",
-    "description": "Arrangement, resolution, scale, profiles"
+    "description": "Main display, layout, resolution, scale and refresh rate"
   },
   {
-    "section": "displayNameMode",
-    "label": "Name format",
+    "section": "displaySnapToEdge",
+    "label": "Display layout",
     "tabIndex": 24,
-    "category": "Configuration",
+    "category": "Display configuration",
     "keywords": [
+      "actions",
       "config",
       "configuration",
       "configure",
+      "cyshell",
+      "default",
+      "desktop",
+      "display",
       "displays",
-      "format",
+      "global",
+      "layout",
       "monitor",
       "monitors",
-      "name",
       "output",
       "outputs",
       "resolution",
       "screen",
       "screens",
-      "setup"
+      "setup",
+      "shell",
+      "surfaces"
     ],
     "parentLabel": "Displays",
-    "conditionKey": "isMango"
+    "icon": "monitor",
+    "description": "Default screen for CyShell desktop surfaces and global shell actions"
   },
   {
-    "section": "displayProfileAutoSelect",
-    "label": "Profiles",
+    "section": "displayAutoPrimaryOnLidClose",
+    "label": "Move main display when laptop lid closes",
     "tabIndex": 24,
-    "category": "Configuration",
+    "category": "Display configuration",
+    "keywords": [
+      "closes",
+      "config",
+      "configuration",
+      "configure",
+      "cyshell",
+      "display",
+      "displays",
+      "enabled",
+      "external",
+      "internal",
+      "laptop",
+      "lid",
+      "main",
+      "monitor",
+      "monitors",
+      "move",
+      "opens",
+      "output",
+      "outputs",
+      "panel",
+      "resolution",
+      "restore",
+      "screen",
+      "screens",
+      "setup",
+      "switches"
+    ],
+    "parentLabel": "Displays",
+    "description": "If the internal panel is the main display, CyShell switches to an enabled external display and can restore the laptop panel when the lid opens"
+  },
+  {
+    "section": "displayRestorePrimaryOnLidOpen",
+    "label": "Restore laptop display when lid opens",
+    "tabIndex": 24,
+    "category": "Display configuration",
     "keywords": [
       "config",
       "configuration",
       "configure",
-      "connected",
+      "display",
       "displays",
+      "laptop",
+      "lid",
       "monitor",
       "monitors",
+      "opens",
       "output",
       "outputs",
-      "profiles",
       "resolution",
+      "restore",
       "screen",
       "screens",
       "setup"
     ],
-    "parentLabel": "Displays",
-    "icon": "tune",
-    "description": "Connected"
+    "parentLabel": "Displays"
   },
   {
     "section": "displayContrast",
@@ -9717,17 +9541,26 @@
     "category": "Greeter",
     "keywords": [
       "appearance",
+      "authentication",
+      "center",
       "display manager",
       "greetd",
       "greeter",
+      "left",
       "login",
+      "panel",
+      "place",
+      "right",
+      "screen",
       "security",
+      "side",
       "sync",
       "theme",
       "wallpaper"
     ],
     "parentLabel": "Security",
     "icon": "palette",
+    "description": "Place the authentication panel on the left, center, or right side of the screen.",
     "conditionKey": "greeterAvailable"
   },
   {
@@ -9840,6 +9673,48 @@
     "conditionKey": "greeterAvailable"
   },
   {
+    "section": "greeterLayoutHorizontal",
+    "label": "Login panel position",
+    "tabIndex": 31,
+    "category": "Greeter",
+    "keywords": [
+      "authentication",
+      "center",
+      "display manager",
+      "greetd",
+      "greeter",
+      "left",
+      "login",
+      "panel",
+      "place",
+      "position",
+      "right",
+      "screen",
+      "security",
+      "side"
+    ],
+    "parentLabel": "Security",
+    "description": "Place the authentication panel on the left, center, or right side of the screen.",
+    "conditionKey": "greeterAvailable"
+  },
+  {
+    "section": "greeterPanelWidth",
+    "label": "Login panel width",
+    "tabIndex": 31,
+    "category": "Greeter",
+    "keywords": [
+      "display manager",
+      "greetd",
+      "greeter",
+      "login",
+      "panel",
+      "security",
+      "width"
+    ],
+    "parentLabel": "Security",
+    "conditionKey": "greeterAvailable"
+  },
+  {
     "section": "greeterRememberLastSession",
     "label": "Remember last session",
     "tabIndex": 31,
@@ -9891,6 +9766,29 @@
     ],
     "parentLabel": "Security",
     "icon": "info",
+    "conditionKey": "greeterAvailable"
+  },
+  {
+    "section": "greeterVerticalOffset",
+    "label": "Vertical position",
+    "tabIndex": 31,
+    "category": "Greeter",
+    "keywords": [
+      "above",
+      "below",
+      "center",
+      "display manager",
+      "greetd",
+      "greeter",
+      "login",
+      "move",
+      "panel",
+      "position",
+      "security",
+      "vertical"
+    ],
+    "parentLabel": "Security",
+    "description": "Move the login panel above or below the vertical center.",
     "conditionKey": "greeterAvailable"
   },
   {
@@ -10081,30 +9979,6 @@
     ],
     "parentLabel": "CyBar",
     "icon": "tune",
-    "conditionKey": "frameEnabled"
-  },
-  {
-    "section": "frameBlurEnabled",
-    "label": "Blur",
-    "tabIndex": 33,
-    "category": "Frame",
-    "keywords": [
-      "background",
-      "blur",
-      "border",
-      "cybar",
-      "decoration",
-      "frame",
-      "frosted",
-      "glass",
-      "panel",
-      "statusbar",
-      "taskbar",
-      "topbar",
-      "transparency",
-      "window"
-    ],
-    "parentLabel": "CyBar",
     "conditionKey": "frameEnabled"
   },
   {
@@ -10650,823 +10524,6 @@
     ],
     "parentLabel": "Applications",
     "icon": "handyman"
-  },
-  {
-    "section": "hyprlandLayoutBorderSize",
-    "label": "Border size",
-    "tabIndex": 37,
-    "category": "System & integrations",
-    "keywords": [
-      "border",
-      "border_size",
-      "hyprland",
-      "integrations",
-      "override",
-      "size",
-      "system"
-    ],
-    "conditionKey": "layoutCapable"
-  },
-  {
-    "section": "mangoLayoutBorderSize",
-    "label": "Border size",
-    "tabIndex": 37,
-    "category": "System & integrations",
-    "keywords": [
-      "border",
-      "borderpx",
-      "integrations",
-      "mango",
-      "mangowc",
-      "override",
-      "size",
-      "system"
-    ],
-    "conditionKey": "layoutCapable"
-  },
-  {
-    "section": "niriLayoutBorderSize",
-    "label": "Border size",
-    "tabIndex": 37,
-    "category": "System & integrations",
-    "keywords": [
-      "border",
-      "focus-ring",
-      "integrations",
-      "niri",
-      "override",
-      "size",
-      "system"
-    ],
-    "conditionKey": "layoutCapable"
-  },
-  {
-    "section": "closeNiriOverviewOnWindowFocus",
-    "label": "Close on window focus",
-    "tabIndex": 37,
-    "category": "System & integrations",
-    "keywords": [
-      "close",
-      "dock",
-      "focus",
-      "integrations",
-      "launch",
-      "launcher",
-      "niri",
-      "overview",
-      "settings",
-      "system",
-      "window"
-    ],
-    "conditionKey": "layoutCapable"
-  },
-  {
-    "section": "hyprlandScrollingColumnWidth",
-    "label": "Column Width",
-    "tabIndex": 37,
-    "category": "System & integrations",
-    "keywords": [
-      "column",
-      "hyprland",
-      "integrations",
-      "scrolling",
-      "system",
-      "width"
-    ],
-    "conditionKey": "layoutCapable"
-  },
-  {
-    "section": "hyprlandScrollingDirection",
-    "label": "Direction",
-    "tabIndex": 37,
-    "category": "System & integrations",
-    "keywords": [
-      "direction",
-      "hyprland",
-      "integrations",
-      "scrolling",
-      "system"
-    ],
-    "conditionKey": "layoutCapable"
-  },
-  {
-    "section": "hyprlandScrollingFollowFocus",
-    "label": "Follow focus",
-    "tabIndex": 37,
-    "category": "System & integrations",
-    "keywords": [
-      "focus",
-      "follow",
-      "hyprland",
-      "integrations",
-      "scroll",
-      "scrolling",
-      "system"
-    ],
-    "conditionKey": "layoutCapable"
-  },
-  {
-    "section": "hyprlandDwindleForceSplit",
-    "label": "Force split",
-    "tabIndex": 37,
-    "category": "System & integrations",
-    "keywords": [
-      "direction",
-      "dwindle",
-      "force",
-      "hyprland",
-      "integrations",
-      "split",
-      "system"
-    ],
-    "conditionKey": "layoutCapable"
-  },
-  {
-    "section": "hyprlandLayoutBarXrayEnabled",
-    "label": "Frame xray",
-    "tabIndex": 37,
-    "category": "System & integrations",
-    "keywords": [
-      "against",
-      "background",
-      "bar",
-      "bg",
-      "blur",
-      "desktop",
-      "even",
-      "frame",
-      "hyprland",
-      "image",
-      "integrations",
-      "performance",
-      "picture",
-      "system",
-      "wallpaper",
-      "xray"
-    ],
-    "description": "Blur against the wallpaper even with xray off",
-    "conditionKey": "isHyprland"
-  },
-  {
-    "section": "niriLayoutBarXrayEnabled",
-    "label": "Frame xray",
-    "tabIndex": 37,
-    "category": "System & integrations",
-    "keywords": [
-      "against",
-      "background",
-      "bar",
-      "bg",
-      "blur",
-      "desktop",
-      "even",
-      "frame",
-      "image",
-      "integrations",
-      "niri",
-      "performance",
-      "picture",
-      "system",
-      "wallpaper",
-      "xray"
-    ],
-    "description": "Blur against the wallpaper even with xray off",
-    "conditionKey": "isNiri"
-  },
-  {
-    "section": "hyprlandScrollingFullscreenOneColumn",
-    "label": "Fullscreen single column",
-    "tabIndex": 37,
-    "category": "System & integrations",
-    "keywords": [
-      "column",
-      "fullscreen",
-      "hyprland",
-      "integrations",
-      "scrolling",
-      "single",
-      "system"
-    ],
-    "conditionKey": "layoutCapable"
-  },
-  {
-    "section": "hyprlandLayoutGapsMode",
-    "label": "Gaps",
-    "tabIndex": 37,
-    "category": "System & integrations",
-    "keywords": [
-      "gaps",
-      "hyprland",
-      "inner",
-      "integrations",
-      "outer",
-      "override",
-      "system",
-      "unmanaged"
-    ],
-    "conditionKey": "layoutCapable"
-  },
-  {
-    "section": "mangoLayoutGapsMode",
-    "label": "Gaps",
-    "tabIndex": 37,
-    "category": "System & integrations",
-    "keywords": [
-      "auto",
-      "config",
-      "follows",
-      "gap",
-      "gaps",
-      "inner",
-      "integrations",
-      "keeps",
-      "mango",
-      "mangowc",
-      "margin",
-      "margins",
-      "outer",
-      "override",
-      "padding",
-      "panel",
-      "spacing",
-      "statusbar",
-      "system",
-      "taskbar",
-      "topbar",
-      "unmanaged"
-    ],
-    "description": "Auto follows bar spacing, Off keeps your %1 config",
-    "conditionKey": "layoutCapable"
-  },
-  {
-    "section": "niriLayoutGapsMode",
-    "label": "Gaps",
-    "tabIndex": 37,
-    "category": "System & integrations",
-    "keywords": [
-      "auto",
-      "config",
-      "follows",
-      "gap",
-      "gaps",
-      "integrations",
-      "keeps",
-      "margin",
-      "margins",
-      "niri",
-      "override",
-      "padding",
-      "panel",
-      "spacing",
-      "statusbar",
-      "system",
-      "taskbar",
-      "topbar",
-      "unmanaged"
-    ],
-    "description": "Auto follows bar spacing, Off keeps your %1 config",
-    "conditionKey": "layoutCapable"
-  },
-  {
-    "section": "hyprlandLayoutGapsOverride",
-    "label": "Inner gaps",
-    "tabIndex": 37,
-    "category": "System & integrations",
-    "keywords": [
-      "gaps",
-      "gaps_in",
-      "hyprland",
-      "inner",
-      "integrations",
-      "override",
-      "system"
-    ],
-    "conditionKey": "layoutCapable"
-  },
-  {
-    "section": "mangoLayoutGapsOverride",
-    "label": "Inner gaps",
-    "tabIndex": 37,
-    "category": "System & integrations",
-    "keywords": [
-      "gappih",
-      "gappiv",
-      "gaps",
-      "inner",
-      "integrations",
-      "mango",
-      "mangowc",
-      "override",
-      "system"
-    ],
-    "conditionKey": "layoutCapable"
-  },
-  {
-    "section": "hyprlandLayout",
-    "label": "Layout overrides",
-    "tabIndex": 37,
-    "category": "System & integrations",
-    "keywords": [
-      "background",
-      "beneath",
-      "bg",
-      "blurred",
-      "border",
-      "desktop",
-      "gaps",
-      "hyprland",
-      "image",
-      "integrations",
-      "layout",
-      "overrides",
-      "picture",
-      "radius",
-      "rounding",
-      "show",
-      "surfaces",
-      "system",
-      "wallpaper",
-      "window",
-      "windows"
-    ],
-    "icon": "crop_square",
-    "description": "Blurred surfaces show the wallpaper, not the windows beneath",
-    "conditionKey": "isHyprland"
-  },
-  {
-    "section": "mangoLayout",
-    "label": "Layout overrides",
-    "tabIndex": 37,
-    "category": "System & integrations",
-    "keywords": [
-      "auto",
-      "border",
-      "config",
-      "dwl",
-      "follows",
-      "gap",
-      "gaps",
-      "integrations",
-      "keeps",
-      "layout",
-      "mango",
-      "mangowc",
-      "margin",
-      "margins",
-      "overrides",
-      "padding",
-      "panel",
-      "radius",
-      "spacing",
-      "statusbar",
-      "system",
-      "taskbar",
-      "topbar",
-      "window"
-    ],
-    "icon": "crop_square",
-    "description": "Auto follows bar spacing, Off keeps your %1 config",
-    "conditionKey": "isMango"
-  },
-  {
-    "section": "niriLayout",
-    "label": "Layout overrides",
-    "tabIndex": 37,
-    "category": "System & integrations",
-    "keywords": [
-      "auto",
-      "border",
-      "config",
-      "follows",
-      "gap",
-      "gaps",
-      "integrations",
-      "keeps",
-      "layout",
-      "margin",
-      "margins",
-      "niri",
-      "overrides",
-      "padding",
-      "panel",
-      "radius",
-      "spacing",
-      "statusbar",
-      "system",
-      "taskbar",
-      "topbar",
-      "window"
-    ],
-    "icon": "layers",
-    "description": "Auto follows bar spacing, Off keeps your %1 config",
-    "conditionKey": "isNiri"
-  },
-  {
-    "section": "hyprlandMasterOrientation",
-    "label": "Master position",
-    "tabIndex": 37,
-    "category": "System & integrations",
-    "keywords": [
-      "hyprland",
-      "integrations",
-      "master",
-      "orientation",
-      "position",
-      "system"
-    ],
-    "conditionKey": "layoutCapable"
-  },
-  {
-    "section": "hyprlandMasterSize",
-    "label": "Master size",
-    "tabIndex": 37,
-    "category": "System & integrations",
-    "keywords": [
-      "hyprland",
-      "integrations",
-      "master",
-      "mfact",
-      "ratio",
-      "size",
-      "system"
-    ],
-    "conditionKey": "layoutCapable"
-  },
-  {
-    "section": "hyprlandMasterNewStatus",
-    "label": "New windows",
-    "tabIndex": 37,
-    "category": "System & integrations",
-    "keywords": [
-      "hyprland",
-      "integrations",
-      "master",
-      "new",
-      "slave",
-      "status",
-      "system",
-      "window",
-      "windows"
-    ],
-    "conditionKey": "layoutCapable"
-  },
-  {
-    "section": "hyprlandMasterNewOnTop",
-    "label": "New windows on top of the stack",
-    "tabIndex": 37,
-    "category": "System & integrations",
-    "keywords": [
-      "hyprland",
-      "integrations",
-      "master",
-      "new",
-      "stack",
-      "system",
-      "top",
-      "windows"
-    ],
-    "conditionKey": "layoutCapable"
-  },
-  {
-    "section": "compositorNotifications",
-    "label": "Notifications",
-    "tabIndex": 37,
-    "category": "System & integrations",
-    "keywords": [
-      "alert",
-      "alerts",
-      "compositor",
-      "integrations",
-      "notif",
-      "notifications",
-      "notifs",
-      "system",
-      "toast"
-    ],
-    "icon": "notifications",
-    "conditionKey": "isNiri"
-  },
-  {
-    "section": "hyprlandLayoutGapsOutOverride",
-    "label": "Outer gaps",
-    "tabIndex": 37,
-    "category": "System & integrations",
-    "keywords": [
-      "edge",
-      "gaps",
-      "gaps_out",
-      "hyprland",
-      "integrations",
-      "outer",
-      "override",
-      "system"
-    ],
-    "conditionKey": "layoutCapable"
-  },
-  {
-    "section": "mangoLayoutGapsOutOverride",
-    "label": "Outer gaps",
-    "tabIndex": 37,
-    "category": "System & integrations",
-    "keywords": [
-      "edge",
-      "gappoh",
-      "gappov",
-      "gaps",
-      "integrations",
-      "mango",
-      "mangowc",
-      "outer",
-      "override",
-      "system"
-    ],
-    "conditionKey": "layoutCapable"
-  },
-  {
-    "section": "hyprlandLayoutBorderSizeEnabled",
-    "label": "Override border size",
-    "tabIndex": 37,
-    "category": "System & integrations",
-    "keywords": [
-      "border",
-      "hyprland",
-      "integrations",
-      "override",
-      "size",
-      "system"
-    ],
-    "conditionKey": "layoutCapable"
-  },
-  {
-    "section": "mangoLayoutBorderSizeEnabled",
-    "label": "Override border size",
-    "tabIndex": 37,
-    "category": "System & integrations",
-    "keywords": [
-      "border",
-      "integrations",
-      "mango",
-      "mangowc",
-      "override",
-      "size",
-      "system"
-    ],
-    "conditionKey": "layoutCapable"
-  },
-  {
-    "section": "niriLayoutBorderSizeEnabled",
-    "label": "Override border size",
-    "tabIndex": 37,
-    "category": "System & integrations",
-    "keywords": [
-      "border",
-      "focus-ring",
-      "integrations",
-      "niri",
-      "override",
-      "size",
-      "system"
-    ],
-    "conditionKey": "layoutCapable"
-  },
-  {
-    "section": "niriOverview",
-    "label": "Overview",
-    "tabIndex": 37,
-    "category": "System & integrations",
-    "keywords": [
-      "dock",
-      "focus",
-      "integrations",
-      "launch",
-      "launcher",
-      "niri",
-      "overview",
-      "settings",
-      "system",
-      "window"
-    ],
-    "icon": "overview",
-    "conditionKey": "isNiri"
-  },
-  {
-    "section": "hyprlandDwindlePreserveSplit",
-    "label": "Preserve split",
-    "tabIndex": 37,
-    "category": "System & integrations",
-    "keywords": [
-      "container",
-      "direction",
-      "dwindle",
-      "fixed",
-      "hyprland",
-      "integrations",
-      "preserve",
-      "resizes",
-      "split",
-      "stays",
-      "system"
-    ],
-    "description": "Split direction stays fixed when the container resizes",
-    "conditionKey": "layoutCapable"
-  },
-  {
-    "section": "hyprlandResizeOnBorder",
-    "label": "Resize on border",
-    "tabIndex": 37,
-    "category": "System & integrations",
-    "keywords": [
-      "border",
-      "drag",
-      "hyprland",
-      "integrations",
-      "mouse",
-      "resize",
-      "system"
-    ],
-    "conditionKey": "layoutCapable"
-  },
-  {
-    "section": "showConfigReloadToast",
-    "label": "Show \\",
-    "tabIndex": 37,
-    "category": "System & integrations",
-    "keywords": [
-      "compositor",
-      "integrations",
-      "reload",
-      "show",
-      "system",
-      "toast"
-    ],
-    "conditionKey": "layoutCapable"
-  },
-  {
-    "section": "hyprlandDwindleSmartSplit",
-    "label": "Smart split",
-    "tabIndex": 37,
-    "category": "System & integrations",
-    "keywords": [
-      "cursor",
-      "direction",
-      "dwindle",
-      "follows",
-      "hyprland",
-      "integrations",
-      "position",
-      "smart",
-      "split",
-      "system",
-      "window"
-    ],
-    "description": "Split direction follows the cursor position in the window",
-    "conditionKey": "layoutCapable"
-  },
-  {
-    "section": "hyprlandTilingLayout",
-    "label": "Tiling layout",
-    "tabIndex": 37,
-    "category": "System & integrations",
-    "keywords": [
-      "container",
-      "direction",
-      "dwindle",
-      "fixed",
-      "general:layout",
-      "hyprland",
-      "integrations",
-      "layout",
-      "master",
-      "resizes",
-      "scrolling",
-      "split",
-      "stays",
-      "system",
-      "tiling"
-    ],
-    "icon": "view_quilt",
-    "description": "Split direction stays fixed when the container resizes",
-    "conditionKey": "isHyprland"
-  },
-  {
-    "section": "niriLayoutGapsOverride",
-    "label": "Window gaps",
-    "tabIndex": 37,
-    "category": "System & integrations",
-    "keywords": [
-      "gaps",
-      "integrations",
-      "niri",
-      "override",
-      "system",
-      "window"
-    ],
-    "conditionKey": "layoutCapable"
-  },
-  {
-    "section": "hyprlandLayoutXrayEnabled",
-    "label": "Xray blur",
-    "tabIndex": 37,
-    "category": "System & integrations",
-    "keywords": [
-      "background",
-      "background-effect",
-      "beneath",
-      "bg",
-      "blur",
-      "blurred",
-      "desktop",
-      "hyprland",
-      "image",
-      "integrations",
-      "performance",
-      "picture",
-      "show",
-      "surfaces",
-      "system",
-      "wallpaper",
-      "windows",
-      "xray"
-    ],
-    "description": "Blurred surfaces show the wallpaper, not the windows beneath",
-    "conditionKey": "isHyprland"
-  },
-  {
-    "section": "niriLayoutXrayEnabled",
-    "label": "Xray blur",
-    "tabIndex": 37,
-    "category": "System & integrations",
-    "keywords": [
-      "background",
-      "background-effect",
-      "beneath",
-      "bg",
-      "blur",
-      "blurred",
-      "desktop",
-      "image",
-      "integrations",
-      "niri",
-      "performance",
-      "picture",
-      "show",
-      "surfaces",
-      "system",
-      "wallpaper",
-      "windows",
-      "xray"
-    ],
-    "description": "Blurred surfaces show the wallpaper, not the windows beneath",
-    "conditionKey": "isNiri"
-  },
-  {
-    "section": "windowRules",
-    "label": "Window Rules",
-    "tabIndex": 38,
-    "category": "Window rules",
-    "parentLabel": "Applications",
-    "keywords": [
-      "app",
-      "applications",
-      "apps",
-      "behavior",
-      "compositor",
-      "define",
-      "floating",
-      "fullscreen",
-      "matching",
-      "opacity",
-      "program",
-      "programs",
-      "rules",
-      "window"
-    ],
-    "icon": "select_window",
-    "description": "Define compositor rules for window behavior",
-    "conditionKey": "windowRulesCapable"
-  },
-  {
-    "section": "_tab_38",
-    "label": "Window rules",
-    "tabIndex": 38,
-    "category": "Window rules",
-    "keywords": [
-      "app",
-      "applications",
-      "apps",
-      "floating",
-      "matching",
-      "opacity",
-      "placement",
-      "program",
-      "programs",
-      "rules",
-      "window"
-    ],
-    "icon": "select_window",
-    "parentLabel": "Applications",
-    "description": "Floating, opacity and placement rules per app",
-    "conditionKey": "windowRulesCapable"
   },
   {
     "section": "_tab_39",
@@ -13677,7 +12734,6 @@
       "colours",
       "cyshell",
       "desktop",
-      "dms",
       "hue",
       "image",
       "matugen",
@@ -15059,16 +14115,37 @@
       "apps",
       "components",
       "dock",
-      "launcher bar",
       "modules",
       "order",
       "panel",
       "remove",
+      "standalone",
       "taskbar",
       "widgets"
     ],
-    "parentLabel": "Dock",
+    "parentLabel": "Standalone Dock",
     "icon": "widgets"
+  },
+  {
+    "section": "dockAppsPresentation",
+    "label": "Apps presentation",
+    "tabIndex": 58,
+    "category": "Appearance",
+    "keywords": [
+      "appearance",
+      "apps",
+      "dock",
+      "hover",
+      "icons",
+      "indicator",
+      "overflow",
+      "panel",
+      "presentation",
+      "standalone",
+      "taskbar"
+    ],
+    "parentLabel": "Standalone Dock",
+    "icon": "apps"
   },
   {
     "section": "dockBorder",
@@ -15079,33 +14156,13 @@
       "appearance",
       "border",
       "dock",
-      "launcher bar",
       "outline",
       "panel",
+      "standalone",
       "taskbar"
     ],
-    "parentLabel": "Dock",
+    "parentLabel": "Standalone Dock",
     "icon": "border_style"
-  },
-  {
-    "section": "_tab_58",
-    "label": "Dock: Appearance",
-    "tabIndex": 58,
-    "category": "Appearance",
-    "keywords": [
-      "appearance",
-      "borders",
-      "dock",
-      "launcher bar",
-      "opacity",
-      "padding",
-      "panel",
-      "size",
-      "taskbar"
-    ],
-    "icon": "palette",
-    "parentLabel": "Dock",
-    "description": "Size, padding, opacity, borders"
   },
   {
     "section": "dockIconSize",
@@ -15116,13 +14173,13 @@
       "appearance",
       "dock",
       "icon",
-      "launcher bar",
       "panel",
       "scale",
       "size",
+      "standalone",
       "taskbar"
     ],
-    "parentLabel": "Dock"
+    "parentLabel": "Standalone Dock"
   },
   {
     "section": "dockMargin",
@@ -15134,12 +14191,12 @@
       "dock",
       "edge",
       "gap",
-      "launcher bar",
       "margin",
       "panel",
+      "standalone",
       "taskbar"
     ],
-    "parentLabel": "Dock"
+    "parentLabel": "Standalone Dock"
   },
   {
     "section": "dockSpacing",
@@ -15149,13 +14206,13 @@
     "keywords": [
       "appearance",
       "dock",
-      "launcher bar",
       "padding",
       "panel",
       "spacing",
+      "standalone",
       "taskbar"
     ],
-    "parentLabel": "Dock"
+    "parentLabel": "Standalone Dock"
   },
   {
     "section": "dockSizing",
@@ -15166,16 +14223,16 @@
       "appearance",
       "dock",
       "icon",
-      "launcher bar",
       "margin",
       "padding",
       "panel",
       "size",
       "spacing",
+      "standalone",
       "taskbar",
       "thickness"
     ],
-    "parentLabel": "Dock",
+    "parentLabel": "Standalone Dock",
     "icon": "photo_size_select_large"
   },
   {
@@ -15189,16 +14246,42 @@
       "gap",
       "gaps",
       "icon",
-      "launcher bar",
       "margin",
       "margins",
       "padding",
       "panel",
       "spacing",
+      "standalone",
       "taskbar",
       "widget"
     ],
-    "parentLabel": "Dock"
+    "parentLabel": "Standalone Dock"
+  },
+  {
+    "section": "_tab_58",
+    "label": "Standalone Dock: Appearance",
+    "tabIndex": 58,
+    "category": "Appearance",
+    "keywords": [
+      "appearance",
+      "borders",
+      "dock",
+      "gap",
+      "gaps",
+      "margin",
+      "margins",
+      "opacity",
+      "padding",
+      "panel",
+      "presentation",
+      "size",
+      "spacing",
+      "standalone",
+      "taskbar"
+    ],
+    "icon": "palette",
+    "parentLabel": "Standalone Dock",
+    "description": "Size, spacing, app presentation, opacity, borders"
   },
   {
     "section": "_tab_59",
@@ -15210,14 +14293,14 @@
       "dock",
       "exclusive",
       "fullscreen",
-      "launcher bar",
       "layers",
       "panel",
+      "standalone",
       "taskbar",
       "zone"
     ],
     "icon": "settings",
-    "parentLabel": "Dock",
+    "parentLabel": "Standalone Dock",
     "description": "Layers, fullscreen, exclusive zone"
   },
   {
@@ -15230,7 +14313,6 @@
       "displays",
       "dock",
       "isolate",
-      "launcher bar",
       "monitor",
       "monitors",
       "multi-monitor",
@@ -15239,9 +14321,10 @@
       "panel",
       "screen",
       "screens",
+      "standalone",
       "taskbar"
     ],
-    "parentLabel": "Dock",
+    "parentLabel": "Standalone Dock",
     "icon": "monitor"
   },
   {
@@ -15253,14 +14336,14 @@
       "advanced",
       "dock",
       "exclusive",
-      "launcher bar",
       "offset",
       "panel",
       "reserved",
+      "standalone",
       "taskbar",
       "zone"
     ],
-    "parentLabel": "Dock"
+    "parentLabel": "Standalone Dock"
   },
   {
     "section": "dockIsolateDisplays",
@@ -15272,7 +14355,6 @@
       "displays",
       "dock",
       "isolate",
-      "launcher bar",
       "monitor",
       "monitors",
       "multi-monitor",
@@ -15281,9 +14363,10 @@
       "panel",
       "screen",
       "screens",
+      "standalone",
       "taskbar"
     ],
-    "parentLabel": "Dock"
+    "parentLabel": "Standalone Dock"
   },
   {
     "section": "dockAdvanced",
@@ -15295,14 +14378,14 @@
       "dock",
       "exclusive",
       "fullscreen",
-      "launcher bar",
       "layers",
       "overlay",
       "overview",
       "panel",
+      "standalone",
       "taskbar"
     ],
-    "parentLabel": "Dock",
+    "parentLabel": "Standalone Dock",
     "icon": "layers"
   },
   {
@@ -15314,36 +14397,15 @@
       "advanced",
       "dock",
       "fullscreen",
-      "launcher bar",
       "over",
       "overlay",
       "panel",
       "show",
+      "standalone",
       "taskbar",
       "visibility"
     ],
-    "parentLabel": "Dock"
-  },
-  {
-    "section": "dockRestoreSpecialWorkspaceOnClick",
-    "label": "Restore special workspace",
-    "tabIndex": 59,
-    "category": "Advanced",
-    "keywords": [
-      "advanced",
-      "desktop",
-      "dock",
-      "hyprland",
-      "launcher bar",
-      "panel",
-      "restore",
-      "special",
-      "taskbar",
-      "virtual",
-      "workspace"
-    ],
-    "parentLabel": "Dock",
-    "conditionKey": "isHyprland"
+    "parentLabel": "Standalone Dock"
   },
   {
     "section": "dockOpenOnOverview",
@@ -15353,14 +14415,14 @@
     "keywords": [
       "advanced",
       "dock",
-      "launcher bar",
       "niri",
       "overview",
       "panel",
       "show",
+      "standalone",
       "taskbar"
     ],
-    "parentLabel": "Dock",
+    "parentLabel": "Standalone Dock",
     "conditionKey": "isNiri"
   },
   {
@@ -15372,13 +14434,13 @@
       "advanced",
       "dock",
       "fullscreen",
-      "launcher bar",
       "layer",
       "overlay",
       "panel",
+      "standalone",
       "taskbar"
     ],
-    "parentLabel": "Dock"
+    "parentLabel": "Standalone Dock"
   },
   {
     "section": "userProfile",
@@ -15433,6 +14495,7 @@
       "adds",
       "allow",
       "create",
+      "cyshell",
       "greeter",
       "group",
       "login",
@@ -15443,7 +14506,7 @@
       "users"
     ],
     "parentLabel": "Users & accounts",
-    "description": "Adds them to the %1 group so they can run dms-greeter sync --profile"
+    "description": "Adds them to the %1 group so they can run cyshell-greeter sync --profile"
   },
   {
     "section": "createUser",
@@ -15451,16 +14514,19 @@
     "tabIndex": 61,
     "category": "Create user",
     "keywords": [
+      "account",
       "accounts",
       "adds",
-      "admin",
+      "avatar",
       "create",
       "group",
+      "image",
+      "picture",
+      "profile",
       "sudo",
       "they",
       "user",
-      "users",
-      "wheel"
+      "users"
     ],
     "parentLabel": "Users & accounts",
     "icon": "person_add",
@@ -15488,6 +14554,25 @@
     ],
     "parentLabel": "Users & accounts",
     "description": "Adds them to the %1 group so they can use sudo"
+  },
+  {
+    "section": "createUserAvatar",
+    "label": "Profile picture",
+    "tabIndex": 61,
+    "category": "Create user",
+    "keywords": [
+      "account",
+      "accounts",
+      "avatar",
+      "create",
+      "image",
+      "picture",
+      "profile",
+      "user",
+      "users"
+    ],
+    "parentLabel": "Users & accounts",
+    "icon": "image"
   },
   {
     "section": "greeterAuth",
@@ -15593,6 +14678,56 @@
     "description": "Embedded AI runtime, semantic desktop access, permissions"
   },
   {
+    "section": "agentWorkspace",
+    "label": "Agent Workspace",
+    "tabIndex": 63,
+    "category": "Agent",
+    "keywords": [
+      "agent",
+      "available",
+      "control",
+      "desktop",
+      "display",
+      "isolated",
+      "keep",
+      "login",
+      "remote",
+      "screen",
+      "start",
+      "virtual",
+      "workspace"
+    ],
+    "icon": "developer_board",
+    "description": "Start the isolated Agent desktop at login and keep it available for AI control"
+  },
+  {
+    "section": "agentConnections",
+    "label": "Agent connections",
+    "tabIndex": 63,
+    "category": "Agent",
+    "keywords": [
+      "agent",
+      "api",
+      "chatgpt",
+      "connections",
+      "cycom",
+      "cyshell",
+      "exposes",
+      "fallback",
+      "http",
+      "inside",
+      "keeps",
+      "local",
+      "loopback",
+      "mcp",
+      "secure",
+      "tunnel",
+      "uses"
+    ],
+    "icon": "lan",
+    "description": "Local keeps CyCom inside CyShell. ChatGPT Tunnel uses Secure MCP Tunnel. Local API exposes loopback HTTP."
+  },
+  {
     "section": "agentPermissions",
     "label": "Agent permissions",
     "tabIndex": 63,
@@ -15614,18 +14749,32 @@
     "tabIndex": 63,
     "category": "Agent",
     "keywords": [
+      "actions",
       "agent",
-      "allow once",
+      "allow",
       "always allow",
       "app",
       "application",
       "approval",
+      "approve",
+      "automatically",
+      "custom",
       "deny",
+      "every",
+      "everything",
+      "full access",
+      "model",
       "per app",
       "permissions",
-      "program"
+      "program",
+      "risk",
+      "rules",
+      "same",
+      "session",
+      "time"
     ],
-    "icon": "app_registration"
+    "icon": "app_registration",
+    "description": "Same model as ChatGPT: ask every time, approve low-risk actions automatically, allow everything, or use your custom rules."
   },
   {
     "section": "agentProvider",
@@ -15752,5 +14901,264 @@
       "undoable"
     ],
     "icon": "undo"
+  },
+  {
+    "section": "screenEdgeBottomAction",
+    "label": "Bottom edge",
+    "tabIndex": 64,
+    "category": "Desktop",
+    "keywords": [
+      "bottom",
+      "desktop",
+      "edge"
+    ]
+  },
+  {
+    "section": "screenEdgesEnabled",
+    "label": "CyShell LabWC integration",
+    "tabIndex": 64,
+    "category": "Desktop",
+    "keywords": [
+      "corner",
+      "cyshell",
+      "desktop",
+      "edge",
+      "hot",
+      "independent",
+      "integration",
+      "labwc",
+      "main",
+      "process",
+      "restart",
+      "screen",
+      "shell",
+      "surfaces",
+      "survive",
+      "switcher",
+      "they",
+      "triggers",
+      "window"
+    ],
+    "icon": "desktop_windows",
+    "description": "Run CyShell edge triggers in the independent UI-surfaces process so they survive a main shell restart."
+  },
+  {
+    "section": "_tab_64",
+    "label": "Desktop",
+    "tabIndex": 64,
+    "category": "Desktop",
+    "keywords": [
+      "desktop",
+      "icons",
+      "layout",
+      "placement"
+    ],
+    "icon": "desktop_windows",
+    "description": "Desktop icons, layout and placement"
+  },
+  {
+    "section": "desktopIconLayoutMode",
+    "label": "Desktop icons",
+    "tabIndex": 64,
+    "category": "Desktop",
+    "keywords": [
+      "aligns",
+      "arrange",
+      "cells",
+      "desktop",
+      "drag",
+      "exact",
+      "fixed",
+      "free",
+      "grid",
+      "icons",
+      "keeps",
+      "layout",
+      "overlaps",
+      "positions",
+      "prevents"
+    ],
+    "icon": "grid_view",
+    "description": "Grid aligns icons to fixed cells and prevents overlaps. Free keeps exact drag positions."
+  },
+  {
+    "section": "screenEdgeThickness",
+    "label": "Edge activation width",
+    "tabIndex": 64,
+    "category": "Desktop",
+    "keywords": [
+      "activation",
+      "desktop",
+      "edge",
+      "width"
+    ]
+  },
+  {
+    "section": "screenEdgeLeftAction",
+    "label": "Left edge",
+    "tabIndex": 64,
+    "category": "Desktop",
+    "keywords": [
+      "desktop",
+      "edge",
+      "left"
+    ]
+  },
+  {
+    "section": "screenEdgeRightAction",
+    "label": "Right edge",
+    "tabIndex": 64,
+    "category": "Desktop",
+    "keywords": [
+      "desktop",
+      "edge",
+      "right"
+    ]
+  },
+  {
+    "section": "screenEdgeTopAction",
+    "label": "Top edge",
+    "tabIndex": 64,
+    "category": "Desktop",
+    "keywords": [
+      "desktop",
+      "edge",
+      "top"
+    ]
+  },
+  {
+    "section": "_tab_65",
+    "label": "Bluetooth",
+    "tabIndex": 65,
+    "category": "Bluetooth",
+    "keywords": [
+      "bluetooth",
+      "bt"
+    ],
+    "icon": "bluetooth"
+  },
+  {
+    "section": "_tab_66",
+    "label": "Performance",
+    "tabIndex": 66,
+    "category": "Performance",
+    "keywords": [
+      "battery",
+      "charge",
+      "charging",
+      "hibernate",
+      "performance",
+      "power",
+      "profiles",
+      "reboot",
+      "restart",
+      "shutdown",
+      "sleep",
+      "suspend"
+    ],
+    "icon": "speed",
+    "parentLabel": "Power & battery",
+    "description": "Power profiles"
+  },
+  {
+    "section": "powerProfileCard",
+    "label": "Power Mode",
+    "tabIndex": 66,
+    "category": "Performance",
+    "keywords": [
+      "balanced",
+      "battery",
+      "charge",
+      "charging",
+      "choose",
+      "hibernate",
+      "mode",
+      "performance",
+      "power",
+      "power profile",
+      "power profiles",
+      "power saver",
+      "profile",
+      "reboot",
+      "restart",
+      "shutdown",
+      "sleep",
+      "suspend"
+    ],
+    "parentLabel": "Power & battery",
+    "description": "Choose a power profile"
+  },
+  {
+    "section": "currentPowerProfile",
+    "label": "Power profile",
+    "tabIndex": 66,
+    "category": "Performance",
+    "keywords": [
+      "battery",
+      "charge",
+      "charging",
+      "hibernate",
+      "performance",
+      "power",
+      "profile",
+      "reboot",
+      "restart",
+      "shutdown",
+      "sleep",
+      "suspend"
+    ],
+    "parentLabel": "Power & battery"
+  },
+  {
+    "section": "powerProfileSelection",
+    "label": "Power profile",
+    "tabIndex": 66,
+    "category": "Performance",
+    "keywords": [
+      "balanced",
+      "battery",
+      "charge",
+      "charging",
+      "choose",
+      "hibernate",
+      "performance",
+      "performance mode",
+      "power",
+      "power profile",
+      "power profiles",
+      "power saver",
+      "profile",
+      "reboot",
+      "restart",
+      "shutdown",
+      "sleep",
+      "suspend"
+    ],
+    "parentLabel": "Power & battery",
+    "description": "Choose a power profile"
+  },
+  {
+    "section": "powerProfileUnavailable",
+    "label": "power-profiles-daemon not available",
+    "tabIndex": 66,
+    "category": "Performance",
+    "keywords": [
+      "available",
+      "battery",
+      "charge",
+      "charging",
+      "daemon",
+      "hibernate",
+      "not",
+      "performance",
+      "power",
+      "profiles",
+      "reboot",
+      "restart",
+      "shutdown",
+      "sleep",
+      "suspend"
+    ],
+    "parentLabel": "Power & battery"
   }
 ]

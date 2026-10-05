@@ -20,7 +20,7 @@ Item {
     function refresh() {
         isLoading = true;
         loadError = "";
-        DMSService.listPlugins(response => {
+        CyShellService.listPlugins(response => {
             isLoading = false;
             if (response.error) {
                 loadError = response.error;
@@ -28,8 +28,8 @@ Item {
             }
             curatedPlugins = curate(response.result || []);
         });
-        if (DMSService.apiVersion >= 8)
-            DMSService.listInstalled();
+        if (CyShellService.apiVersion >= 8)
+            CyShellService.listInstalled();
     }
 
     function curate(registry) {
@@ -62,19 +62,19 @@ Item {
     Component.onCompleted: refresh()
 
     Connections {
-        target: DMSService
+        target: CyShellService
 
         function onInstalledPluginsReceived(plugins) {
             root.markInstalled(plugins);
         }
 
         function onIsConnectedChanged() {
-            if (DMSService.isConnected && root.curatedPlugins.length === 0 && !root.isLoading)
+            if (CyShellService.isConnected && root.curatedPlugins.length === 0 && !root.isLoading)
                 root.refresh();
         }
     }
 
-    DankFlickable {
+    CyFlickable {
         anchors.fill: parent
         clip: true
         contentHeight: mainColumn.height + Theme.spacingL * 2
@@ -98,7 +98,7 @@ Item {
                     color: Theme.primaryContainer
                     anchors.verticalCenter: parent.verticalCenter
 
-                    DankIcon {
+                    CyIcon {
                         anchors.centerIn: parent
                         name: "extension"
                         size: Theme.iconSize + 4
@@ -129,7 +129,7 @@ Item {
                 height: Math.round(Theme.fontSizeMedium * 8)
                 visible: root.isLoading
 
-                DankSpinner {
+                CySpinner {
                     anchors.centerIn: parent
                     running: root.isLoading
                 }
@@ -140,7 +140,7 @@ Item {
                 spacing: Theme.spacingS
                 visible: !root.isLoading && root.loadError !== ""
 
-                DankIcon {
+                CyIcon {
                     anchors.horizontalCenter: parent.horizontalCenter
                     name: "cloud_off"
                     size: Theme.iconSize + 16
@@ -161,7 +161,7 @@ Item {
                     color: Theme.outline
                 }
 
-                DankButton {
+                CyButton {
                     anchors.horizontalCenter: parent.horizontalCenter
                     text: I18n.tr("Retry", "retry failed action button")
                     iconName: "refresh"

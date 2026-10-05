@@ -3,8 +3,8 @@ package tui
 import (
 	"testing"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/deps"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/distros"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/deps"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/distros"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -122,14 +122,14 @@ func TestMoveIndexClamps(t *testing.T) {
 func TestToggleSelectedDependency(t *testing.T) {
 	m := archModel()
 	m.dependencies = []deps.Dependency{
-		{Name: dmsDepName, Required: true, Status: deps.StatusMissing},
+		{Name: cyShellDepName, Required: true, Status: deps.StatusMissing},
 		{Name: "quickshell", Required: true, Status: deps.StatusInstalled},
 		{Name: "matugen", Required: true, Status: deps.StatusMissing},
 	}
 
 	m.selectedDep = 0
 	m.toggleSelectedDependency()
-	if m.disabledItems[dmsDepName] || m.reinstallItems[dmsDepName] {
+	if m.disabledItems[cyShellDepName] || m.reinstallItems[cyShellDepName] {
 		t.Fatal("dms must not be toggleable")
 	}
 

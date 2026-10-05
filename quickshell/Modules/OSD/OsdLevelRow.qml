@@ -73,7 +73,7 @@ Item {
         width: Math.max(0, root.vertical ? parent.width - root.effectiveHorizontalPadding * 2 : parent.width - root.endPadding * 2 - icon.width - root.itemSpacing - root.valueExtent)
         height: Math.max(0, root.vertical ? parent.height - y - root.endPadding - root.valueExtent : parent.height)
 
-        DankSlider {
+        CySlider {
             id: levelSlider
 
             anchors.centerIn: parent
@@ -126,7 +126,7 @@ Item {
             visible: root.showValueColumn
         }
 
-        DankIcon {
+        CyIcon {
             anchors.centerIn: parent
             name: root.endIconName
             size: Theme.iconSize

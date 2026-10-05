@@ -36,7 +36,7 @@ ListSetting {
             Repeater {
                 model: root.fields
 
-                DankTextField {
+                CyTextField {
                     width: modelData.width || 200
                     placeholderText: modelData.placeholder || ""
 
@@ -46,7 +46,7 @@ ListSetting {
                 }
             }
 
-            DankButton {
+            CyButton {
                 id: addButton
                 width: 50
                 height: 36

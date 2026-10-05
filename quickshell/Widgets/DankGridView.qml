@@ -1,3 +1,2 @@
-import qs.DankCommon.Widgets as DankCommon
-
-DankCommon.DankGridView {}
+import QtQuick
+CyGridView {}

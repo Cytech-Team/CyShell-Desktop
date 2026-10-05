@@ -209,7 +209,7 @@ FocusScope {
         id: updateLayout
         onTriggered: root.layoutRevision++
     }
-    DankFlickable {
+    CyFlickable {
         id: scroll
         x: root.vertical ? -root.crossOverflow : 0
         y: root.vertical ? 0 : -root.crossOverflow
@@ -386,7 +386,7 @@ FocusScope {
                     onCanceled: root.cancelDrag()
                     onWheel: wheel => wheel.accepted = false
                 }
-                DankActionButton {
+                CyActionButton {
                     visible: root.surfaceContext.editMode && slot.modelData.widgetId !== "application" && (root.participating[slot.index] ?? false)
                     z: 2
                     anchors.top: parent.top

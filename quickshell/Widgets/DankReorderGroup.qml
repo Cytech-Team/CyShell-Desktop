@@ -1,3 +1,2 @@
-import qs.DankCommon.Widgets as DankCommon
-
-DankCommon.DankReorderGroup {}
+import QtQuick
+CyReorderGroup {}

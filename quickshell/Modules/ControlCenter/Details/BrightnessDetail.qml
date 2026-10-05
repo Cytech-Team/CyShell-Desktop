@@ -41,10 +41,11 @@ Item {
     function resolveCurrentDevice() {
         if (!BrightnessService.brightnessAvailable || devices.length === 0)
             return "";
-        const pinKey = getScreenPinKey();
-        const pinnedDevice = pinKey ? (CacheData.brightnessDevicePins || {})[pinKey] : "";
-        if (pinnedDevice && devices.find(d => d.name === pinnedDevice))
-            return pinnedDevice;
+        if (screenName) {
+            const screenDevice = BrightnessService.getDeviceForScreen(screenName);
+            if (screenDevice)
+                return screenDevice;
+        }
         if (instanceId) {
             const widget = (SettingsData.controlCenterWidgets || []).find(w => w.id === "brightnessSlider" && w.instanceId === instanceId);
             if (widget?.deviceName && devices.find(d => d.name === widget.deviceName))
@@ -124,7 +125,7 @@ Item {
 
     Component.onCompleted: currentDeviceName = resolveCurrentDevice()
 
-    DankFlickable {
+    CyFlickable {
         anchors.fill: parent
         contentHeight: column.height
         clip: true
@@ -202,7 +203,7 @@ Item {
                             spacing: Theme.spacingM
                             visible: deviceRow.active
 
-                            DankToggle {
+                            CyToggle {
                                 anchors.verticalCenter: parent.verticalCenter
                                 width: parent.width - stepper.width - parent.spacing
                                 text: I18n.tr("Exponential", "adjective, toggle for an exponential brightness curve per device")
@@ -210,7 +211,7 @@ Item {
                                 onToggled: checked => SessionData.setBrightnessExponential(deviceRow.deviceName, checked)
                             }
 
-                            DankNumberStepper {
+                            CyNumberStepper {
                                 id: stepper
                                 anchors.verticalCenter: parent.verticalCenter
                                 visible: deviceRow.exponential

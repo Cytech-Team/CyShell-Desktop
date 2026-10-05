@@ -9,10 +9,10 @@ import qs.Common
 import qs.Services
 import qs.Widgets
 
-DankModal {
+CyModal {
     id: root
     visible: false
-    layerNamespace: "dms:wifi-qrcode"
+    layerNamespace: "cyshell:wifi-qrcode"
 
     property bool disablePopupTransparency: true
     property string wifiSSID: ""
@@ -48,7 +48,7 @@ DankModal {
     function fetchNetworkQRCode(ssid) {
         // TODO: Add loading UI?
 
-        DMSService.sendRequest("network.qrcode", {
+        CyShellService.sendRequest("network.qrcode", {
             ssid: ssid
         }, response => {
             if (response.error) {
@@ -62,7 +62,7 @@ DankModal {
     }
 
     function deleteQRCodeFile(path) {
-        DMSService.sendRequest("network.delete-qrcode", {
+        CyShellService.sendRequest("network.delete-qrcode", {
             path: path
         }, response => {
             if (response.error) {
@@ -128,7 +128,7 @@ DankModal {
                         Layout.alignment: Qt.AlignLeft
                     }
 
-                    DankActionButton {
+                    CyActionButton {
                         iconName: "save"
                         Accessible.name: I18n.tr("Save QR Code")
                         iconSize: Theme.iconSize - 4
@@ -142,7 +142,7 @@ DankModal {
                         Layout.alignment: Qt.AlignRight
                     }
 
-                    DankActionButton {
+                    CyActionButton {
                         iconName: "close"
                         Accessible.name: I18n.tr("Close")
                         iconSize: Theme.iconSize - 4

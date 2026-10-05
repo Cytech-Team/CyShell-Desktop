@@ -19,6 +19,7 @@ Item {
             "processlist": "Task Manager",
             "settings": "Settings",
             "notifications": "Notifications",
+            "control-center": "Control Center",
             "notepad": "Notepad",
             "hotkeys": "Keybinds",
             "lock": "Lock Screen",
@@ -26,13 +27,43 @@ Item {
         })
 
     function getFeatureDesc(action) {
-        const match = action.match(/dms\s+ipc\s+call\s+(\w+)/);
+        const value = String(action || "");
+        if (value.includes("cyshell-cystart-toggle"))
+            return "App Launcher";
+        if (/\bcyshell\s+agent\s+open\b/.test(value))
+            return "CyShell Agent";
+        if (/\bcyshell\s+agent\s+stop\b/.test(value))
+            return "Stop Agent Control";
+        if (value.includes("cyshell-bar-rescue"))
+            return "Rescue CyBar";
+        if (/(?:^|\s)qterminal(?:\s|$)/.test(value))
+            return "Terminal";
+
+        const match = value.match(/\bcyshell\s+ipc\s+call\s+([\w-]+)/);
         if (match && featureNames[match[1]])
             return featureNames[match[1]];
         return null;
     }
 
-    readonly property var dmsKeybinds: {
+    function displayKeyParts(key) {
+        return String(key || "").split("+").map(part => {
+            switch (part) {
+            case "Super_L":
+            case "Super_R":
+                return "Super";
+            case "Return":
+                return "Enter";
+            case "Escape":
+                return "Esc";
+            case "space":
+                return "Space";
+            default:
+                return part;
+            }
+        });
+    }
+
+    readonly property var cyShellKeybinds: {
         if (!greeterRoot || !greeterRoot.cheatsheetLoaded || !greeterRoot.cheatsheetData || !greeterRoot.cheatsheetData.binds)
             return [];
         const seen = new Set();
@@ -44,7 +75,7 @@ Item {
                 const bind = categoryBinds[i];
                 if (!bind.key || !bind.action)
                     continue;
-                if (!bind.action.includes("dms"))
+                if (!(bind.action.includes("cyshell") || /(?:^|\s)qterminal(?:\s|$)/.test(bind.action)))
                     continue;
                 if (!(bind.action.includes("spawn") || bind.action.includes("exec")))
                     continue;
@@ -63,13 +94,22 @@ Item {
         return binds;
     }
 
-    readonly property bool hasKeybinds: dmsKeybinds.length > 0
+    readonly property bool hasKeybinds: cyShellKeybinds.length > 0
 
-    DankFlickable {
+    CyFlickable {
+        id: completeFlickable
         anchors.fill: parent
         clip: true
         contentHeight: mainColumn.height + Theme.spacingL * 2
         contentWidth: width
+
+        Component.onCompleted: contentY = 0
+        onVisibleChanged: {
+            if (!visible)
+                return;
+            stopMomentum();
+            contentY = 0;
+        }
 
         Column {
             id: mainColumn
@@ -89,7 +129,7 @@ Item {
                     color: Theme.withAlpha(Theme.success, 0.15)
                     anchors.verticalCenter: parent.verticalCenter
 
-                    DankIcon {
+                    CyIcon {
                         anchors.centerIn: parent
                         name: "check_circle"
                         size: Theme.iconSize + 4
@@ -113,7 +153,7 @@ Item {
                     width: parent.width
                     spacing: Theme.spacingS
 
-                    DankIcon {
+                    CyIcon {
                         name: "toolbar"
                         size: root.sectionIconSize
                         color: Theme.primary
@@ -150,7 +190,7 @@ Item {
                     width: parent.width
                     spacing: Theme.spacingS
 
-                    DankIcon {
+                    CyIcon {
                         name: "keyboard"
                         size: root.sectionIconSize
                         color: Theme.primary
@@ -189,7 +229,7 @@ Item {
                         columnSpacing: Theme.spacingM
 
                         Repeater {
-                            model: root.dmsKeybinds
+                            model: root.cyShellKeybinds
 
                             Row {
                                 width: keybindsRect.itemWidth
@@ -223,9 +263,9 @@ Item {
                                         }
 
                                         Repeater {
-                                            model: (modelData.key || "").split("+")
+                                            model: root.displayKeyParts(modelData.key)
 
-                                            DankKeycap {
+                                            CyKeycap {
                                                 text: modelData
                                             }
                                         }
@@ -264,7 +304,7 @@ Item {
                     Row {
                         spacing: Theme.spacingS
 
-                        DankIcon {
+                        CyIcon {
                             name: "keyboard"
                             size: root.sectionIconSize
                             color: Theme.surfaceVariantText
@@ -296,7 +336,7 @@ Item {
                             anchors.centerIn: parent
                             spacing: Theme.spacingS
 
-                            DankIcon {
+                            CyIcon {
                                 name: "menu_book"
                                 size: root.sectionIconSize
                                 color: Theme.primary
@@ -311,8 +351,8 @@ Item {
                                 anchors.verticalCenter: parent.verticalCenter
                             }
 
-                            DankIcon {
-                                name: "open_in_new"
+                            CyIcon {
+                                name: "arrow_forward"
                                 size: Theme.iconSizeSmall - 2
                                 color: Theme.surfaceVariantText
                                 anchors.verticalCenter: parent.verticalCenter
@@ -324,16 +364,7 @@ Item {
                             anchors.fill: parent
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
-                            onClicked: {
-                                let url = "https://danklinux.com/docs/dankmaterialshell/keybinds-ipc";
-                                if (CompositorService.isNiri)
-                                    url = "https://danklinux.com/docs/dankmaterialshell/compositors#dms-keybindings";
-                                else if (CompositorService.isHyprland)
-                                    url = "https://danklinux.com/docs/dankmaterialshell/compositors#dms-keybindings-1";
-                                else if (CompositorService.isMango)
-                                    url = "https://danklinux.com/docs/dankmaterialshell/compositors#dms-keybindings-2";
-                                Qt.openUrlExternally(url);
-                            }
+                            onClicked: PopoutService.openSettingsWithTab("keybinds")
                         }
                     }
                 }
@@ -355,7 +386,7 @@ Item {
                     width: parent.width
                     spacing: Theme.spacingS
 
-                    DankIcon {
+                    CyIcon {
                         name: "settings"
                         size: root.sectionIconSize
                         color: Theme.primary
@@ -421,7 +452,7 @@ Item {
                         width: (parent.width - Theme.spacingS) / 2
                         iconName: "keyboard"
                         title: I18n.tr("Keybinds", "greeter settings link")
-                        description: I18n.tr("niri shortcuts config", "greeter keybinds niri description")
+                        description: I18n.tr("Labwc shortcuts config", "greeter keybinds labwc description")
                         visible: KeybindsService.available
                         onClicked: PopoutService.openSettingsWithTab("keybinds")
                     }
@@ -452,7 +483,7 @@ Item {
                     width: parent.width
                     spacing: Theme.spacingS
 
-                    DankIcon {
+                    CyIcon {
                         name: "explore"
                         size: root.sectionIconSize
                         color: Theme.primary
@@ -477,15 +508,15 @@ Item {
                         iconName: "menu_book"
                         title: I18n.tr("Docs", "greeter documentation link")
                         isExternal: true
-                        onClicked: Qt.openUrlExternally("https://danklinux.com/docs")
+                        onClicked: Qt.openUrlExternally("https://github.com/Cytech-Team/CyShell-Desktop/blob/cyshell-dev/CYSHELL.md")
                     }
 
                     GreeterQuickLink {
                         width: (parent.width - Theme.spacingS) / 2
                         iconName: "palette"
                         title: I18n.tr("Themes", "greeter themes link")
-                        isExternal: true
-                        onClicked: Qt.openUrlExternally("https://danklinux.com/plugins?tab=themes")
+                        isExternal: false
+                        onClicked: PopoutService.openSettingsWithTab("theme")
                     }
                 }
             }

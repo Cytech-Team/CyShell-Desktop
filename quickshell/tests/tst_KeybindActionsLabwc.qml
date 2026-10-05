@@ -21,10 +21,12 @@ TestCase {
         compare(Actions.buildCompositorAction("labwc", parsed.base, parsed.args), "GoToDesktop right wrap=yes");
     }
 
-    function test_agentCliCommandsAreFirstClassDmsActions() {
-        compare(Actions.getActionType("spawn dms agent open"), "dms");
-        compare(Actions.getActionType("spawn dms agent review"), "dms");
-        compare(Actions.getActionType("spawn dms agent stop"), "dms");
-        compare(Actions.getActionLabel("spawn dms agent stop", "labwc"), "Agent: Emergency Stop");
+    function test_agentCliCommandsAreFirstClassCyShellActions() {
+        compare(Actions.getActionType("spawn cyshell agent open"), "cyshell");
+        compare(Actions.getActionType("spawn cyshell agent review"), "cyshell");
+        compare(Actions.getActionType("spawn cyshell agent stop"), "cyshell");
+        compare(Actions.getActionLabel("spawn cyshell agent stop", "labwc"), "Agent: Emergency Stop");
+        verify(Actions.actionsEquivalent("spawn cyshell agent open", "spawn cyshell agent open"));
+        verify(Actions.actionsEquivalent("spawn /usr/local/bin/cyshell agent open", "spawn cyshell agent open"));
     }
 }

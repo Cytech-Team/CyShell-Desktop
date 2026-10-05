@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/log"
 	"github.com/AvengeMedia/dankgo/dbusutil"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/log"
 	"github.com/godbus/dbus/v5"
 )
 

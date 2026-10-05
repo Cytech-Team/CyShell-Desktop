@@ -16,14 +16,14 @@ Singleton {
     signal stateChanged
 
     Connections {
-        target: DMSService
+        target: CyShellService
 
         function onCapabilitiesReceived() {
             root.checkCapabilities();
         }
 
         function onConnectionStateChanged() {
-            if (DMSService.isConnected) {
+            if (CyShellService.isConnected) {
                 root.checkCapabilities();
                 return;
             }
@@ -39,12 +39,12 @@ Singleton {
     }
 
     Component.onCompleted: {
-        if (DMSService.dmsAvailable)
+        if (CyShellService.backendAvailable)
             checkCapabilities();
     }
 
     function checkCapabilities() {
-        const caps = DMSService.capabilities || [];
+        const caps = CyShellService.capabilities || [];
         if (!Array.isArray(caps) || !caps.includes("workspace")) {
             available = false;
             return;
@@ -53,9 +53,9 @@ Singleton {
     }
 
     function requestState() {
-        if (!DMSService.isConnected)
+        if (!CyShellService.isConnected)
             return;
-        DMSService.sendRequest("workspace.getState", null, response => {
+        CyShellService.sendRequest("workspace.getState", null, response => {
             if (response.error || !response.result) {
                 log.debug("workspace.getState unavailable:", response.error || "empty result");
                 return;
@@ -91,12 +91,12 @@ Singleton {
     }
 
     function activate(selector, callback) {
-        if (!DMSService.isConnected || !available) {
+        if (!CyShellService.isConnected || !available) {
             if (callback)
                 callback(false, "Workspace API unavailable");
             return;
         }
-        DMSService.sendRequest("workspace.activate", {
+        CyShellService.sendRequest("workspace.activate", {
             workspace: String(selector)
         }, response => {
             const success = !response.error && response.result?.success === true;

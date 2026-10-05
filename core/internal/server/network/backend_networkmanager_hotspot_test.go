@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	mock_gonetworkmanager "github.com/AvengeMedia/DankMaterialShell/core/internal/mocks/github.com/Wifx/gonetworkmanager/v2"
+	mock_gonetworkmanager "github.com/Cytech-Team/CyShell-Desktop/core/internal/mocks/github.com/Wifx/gonetworkmanager/v2"
 	"github.com/Wifx/gonetworkmanager/v2"
 	"github.com/godbus/dbus/v5"
 	"github.com/stretchr/testify/assert"
@@ -23,10 +23,10 @@ func TestBuildHotspotSettings(t *testing.T) {
 		},
 	})
 
-	assert.Equal(t, dmsHotspotConnectionID, settings["connection"]["id"])
+	assert.Equal(t, cyShellHotspotConnectionID, settings["connection"]["id"])
 	assert.Equal(t, "802-11-wireless", settings["connection"]["type"])
 	assert.Equal(t, false, settings["connection"]["autoconnect"])
-	assert.Equal(t, dmsHotspotStableID, settings["connection"]["stable-id"])
+	assert.Equal(t, cyShellHotspotStableID, settings["connection"]["stable-id"])
 	assert.Equal(t, "existing-uuid", settings["connection"]["uuid"])
 	assert.Equal(t, "wlan0", settings["connection"]["interface-name"])
 
@@ -63,7 +63,7 @@ func TestIsDMSHotspotConnection(t *testing.T) {
 			settings: gonetworkmanager.ConnectionSettings{
 				"connection": {
 					"type":      "802-11-wireless",
-					"stable-id": dmsHotspotStableID,
+					"stable-id": cyShellHotspotStableID,
 				},
 				"802-11-wireless": {
 					"mode": "ap",
@@ -76,7 +76,7 @@ func TestIsDMSHotspotConnection(t *testing.T) {
 			settings: gonetworkmanager.ConnectionSettings{
 				"connection": {
 					"type": "802-11-wireless",
-					"id":   dmsHotspotConnectionID,
+					"id":   cyShellHotspotConnectionID,
 				},
 				"802-11-wireless": {
 					"mode": "ap",
@@ -89,7 +89,7 @@ func TestIsDMSHotspotConnection(t *testing.T) {
 			settings: gonetworkmanager.ConnectionSettings{
 				"connection": {
 					"type": "802-11-wireless",
-					"id":   dmsHotspotConnectionID,
+					"id":   cyShellHotspotConnectionID,
 				},
 				"802-11-wireless": {
 					"mode": "infrastructure",
@@ -628,7 +628,7 @@ func TestFindActiveDMSHotspotConnectionIgnoresUserAPProfiles(t *testing.T) {
 	userSettings := gonetworkmanager.ConnectionSettings{
 		"connection": {
 			"type": "802-11-wireless",
-			"id":   dmsHotspotConnectionID,
+			"id":   cyShellHotspotConnectionID,
 		},
 		"802-11-wireless": {
 			"mode": "ap",

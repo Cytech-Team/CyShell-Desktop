@@ -35,7 +35,7 @@ Item {
             }
         }
 
-        DankIcon {
+        CyIcon {
             id: arrowIcon
             anchors.centerIn: parent
             size: actualIconSize * 0.6

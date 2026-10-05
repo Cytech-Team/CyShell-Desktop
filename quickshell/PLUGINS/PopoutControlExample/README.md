@@ -42,11 +42,11 @@ popoutService.closeProcessList()
 popoutService.toggleProcessList()
 ```
 
-#### DankDash
+#### CyDash
 ```qml
-popoutService.openDankDash(tabIndex)    // tabIndex: 0=Calendar, 1=Media, 2=Weather
-popoutService.closeDankDash()
-popoutService.toggleDankDash(tabIndex)
+popoutService.openCyDash(tabIndex)    // tabIndex: 0=Calendar, 1=Media, 2=Weather
+popoutService.closeCyDash()
+popoutService.toggleCyDash(tabIndex)
 ```
 
 #### Battery Popout
@@ -86,9 +86,9 @@ popoutService.closeClipboardHistory()
 
 #### Launcher Modal
 ```qml
-popoutService.openDankLauncherV2()
-popoutService.closeDankLauncherV2()
-popoutService.toggleDankLauncherV2()
+popoutService.openCyLauncherV2()
+popoutService.closeCyLauncherV2()
+popoutService.toggleCyLauncherV2()
 ```
 
 #### Power Menu Modal
@@ -194,11 +194,11 @@ Error: Cannot assign to non-existent property "popoutService"
 
 ## Installation
 
-1. Copy the plugin directory to `~/.config/DankMaterialShell/plugins/`
+1. Copy the plugin directory to `~/.config/CyShell/plugins/`
 2. Open Settings → Plugins
 3. Click "Scan for Plugins"
 4. Enable "Popout Control Example"
-5. Add `popoutControlExample` to your DankBar widget list
+5. Add `popoutControlExample` to your CyBar widget list
 
 ## Notes
 

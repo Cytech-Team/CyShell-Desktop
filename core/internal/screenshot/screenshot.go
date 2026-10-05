@@ -5,12 +5,12 @@ import (
 	"math"
 	"sync"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/log"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/proto/wlr_screencopy"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/proto/wp_color_management"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/utils"
-	wlhelpers "github.com/AvengeMedia/DankMaterialShell/core/internal/wayland/client"
 	"github.com/AvengeMedia/dankgo/wayland/client"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/log"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/proto/wlr_screencopy"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/proto/wp_color_management"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/utils"
+	wlhelpers "github.com/Cytech-Team/CyShell-Desktop/core/internal/wayland/client"
 )
 
 type WaylandOutput struct {

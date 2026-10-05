@@ -2,8 +2,8 @@ import QtQuick
 import qs.Common
 import qs.Widgets
 import qs.Modules.Plugins
-import qs.Modules.DankDash
-import qs.Modules.DankDash.Overview
+import qs.Modules.CyDash
+import qs.Modules.CyDash.Overview
 
 DashTabComponent {
     id: root
@@ -143,7 +143,7 @@ DashTabComponent {
             anchors.horizontalCenter: parent.horizontalCenter
             spacing: Theme.spacingS
 
-            DankButton {
+            CyButton {
                 text: root.running ? I18n.trFor("dashTabExample", "Lap") : I18n.trFor("dashTabExample", "Reset")
                 reserveText: I18n.trFor("dashTabExample", "Reset")
                 iconName: root.running ? "flag" : "restart_alt"
@@ -153,7 +153,7 @@ DashTabComponent {
                 onClicked: root.running ? root.lap() : root.reset()
             }
 
-            DankButton {
+            CyButton {
                 id: startButton
                 text: root.running ? I18n.trFor("dashTabExample", "Pause") : root.elapsed > 0 ? I18n.trFor("dashTabExample", "Resume") : I18n.trFor("dashTabExample", "Start")
                 reserveText: I18n.trFor("dashTabExample", "Resume")

@@ -3,8 +3,8 @@ package clipboard
 import (
 	"fmt"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/wayland/keymap"
 	wlclient "github.com/AvengeMedia/dankgo/wayland/client"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/wayland/keymap"
 	"golang.org/x/sys/unix"
 )
 

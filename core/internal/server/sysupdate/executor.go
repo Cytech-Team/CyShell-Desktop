@@ -10,7 +10,7 @@ import (
 	"sync"
 	"syscall"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/privesc"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/privesc"
 )
 
 type RunOptions struct {
@@ -112,7 +112,7 @@ func findTerminal(override string) string {
 	if t := os.Getenv("TERMINAL"); t != "" && commandExists(t) {
 		return t
 	}
-	for _, t := range []string{"ghostty", "kitty", "foot", "alacritty", "wezterm", "konsole", "gnome-terminal", "xterm"} {
+	for _, t := range []string{"qterminal", "ghostty", "kitty", "foot", "alacritty", "wezterm", "konsole", "gnome-terminal", "xterm"} {
 		if commandExists(t) {
 			return t
 		}
@@ -121,7 +121,7 @@ func findTerminal(override string) string {
 }
 
 func wrapInTerminal(term, title, shellCmd string, extraArgs []string) []string {
-	const appID = "com.danklinux.dms"
+	const appID = "com.cytechteam.cyshell"
 	banner := fmt.Sprintf(
 		`printf '\033[1;36m=== %s ===\033[0m\n'; printf '\033[2m$ %s\033[0m\n'; printf '\033[33mYou may be prompted for your sudo password to apply system updates.\033[0m\n\n'`,
 		title, shellCmd,
@@ -134,7 +134,7 @@ else
 fi
 read -r dms_update_reply
 exit "$dms_update_status"`
-	export := `export SUDO_PROMPT="[DMS] sudo password for %u: "; `
+	export := `export SUDO_PROMPT="[CyShell] sudo password for %u: "; `
 	full := export + banner + "; " + shellCmd + "; " + closer
 
 	var argv []string

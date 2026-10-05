@@ -22,7 +22,7 @@ Rectangle {
         anchors.centerIn: parent
         spacing: Theme.spacingXXS
 
-        DankIcon {
+        CyIcon {
             name: root.iconName
             size: Theme.iconSizeSmall
             color: root.tone

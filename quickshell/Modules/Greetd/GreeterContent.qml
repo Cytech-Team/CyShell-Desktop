@@ -9,7 +9,7 @@ import qs.Common
 import qs.Modules.Lock
 import qs.Services
 import qs.Widgets
-import qs.DankCommon.Session
+import qs.CyCommon.Session
 import "../../Common/PamStack.js" as PamStack
 
 Item {
@@ -529,7 +529,7 @@ Item {
 
     Process {
         id: greeterAutoLoginPendingProcess
-        command: ["sh", "-c", "mkdir -p $(dirname " + JSON.stringify((Quickshell.env("CYSHELL_GREET_CFG_DIR") || Quickshell.env("DMS_GREET_CFG_DIR") || "/var/cache/cyshell-greeter") + "/.local/state/auto-login-sync-pending") + ") && touch " + JSON.stringify((Quickshell.env("CYSHELL_GREET_CFG_DIR") || Quickshell.env("DMS_GREET_CFG_DIR") || "/var/cache/cyshell-greeter") + "/.local/state/auto-login-sync-pending")]
+        command: ["sh", "-c", "mkdir -p $(dirname " + JSON.stringify((Quickshell.env("CYSHELL_GREET_CFG_DIR") || "/var/cache/cyshell-greeter") + "/.local/state/auto-login-sync-pending") + ") && touch " + JSON.stringify((Quickshell.env("CYSHELL_GREET_CFG_DIR") || "/var/cache/cyshell-greeter") + "/.local/state/auto-login-sync-pending")]
         running: false
     }
 
@@ -624,7 +624,7 @@ Item {
         return hasCustomWallpaper ? "Fill" : SessionData.getMonitorWallpaperFillMode(screenName);
     }
 
-    DankBackdrop {
+    CyBackdrop {
         anchors.fill: parent
         screenName: root.screenName
         visible: root.wallpaperSource === "" || wallpaperBackground.status === Image.Error
@@ -683,10 +683,16 @@ Item {
         Column {
             id: greeterMainColumn
 
-            anchors.horizontalCenter: parent.horizontalCenter
+            readonly property string horizontalLayout: ["left", "center", "right"].includes(SettingsData.greeterLayoutHorizontal) ? SettingsData.greeterLayoutHorizontal : "center"
+            anchors.left: horizontalLayout === "left" ? parent.left : undefined
+            anchors.right: horizontalLayout === "right" ? parent.right : undefined
+            anchors.horizontalCenter: horizontalLayout === "center" ? parent.horizontalCenter : undefined
+            anchors.leftMargin: horizontalLayout === "left" ? 64 : 0
+            anchors.rightMargin: horizontalLayout === "right" ? 64 : 0
             anchors.verticalCenter: parent.verticalCenter
+            anchors.verticalCenterOffset: Math.max(-280, Math.min(280, SettingsData.greeterVerticalOffset))
             spacing: Theme.spacingM
-            width: 380
+            width: Math.max(300, Math.min(560, SettingsData.greeterPanelWidth))
 
             Item {
                 id: clockContainer
@@ -831,7 +837,7 @@ Item {
                         Layout.preferredHeight: 60
                         visible: SettingsData.lockScreenShowProfileImage || root.pickerAvailable
 
-                        DankCircularImage {
+                        CyCircularImage {
                             anchors.fill: parent
                             imageSource: {
                                 const displayUser = GreeterState.username || root.pickerThemeUsername;
@@ -879,7 +885,7 @@ Item {
                                 }
                             }
 
-                            DankIcon {
+                            CyIcon {
                                 anchors.centerIn: parent
                                 name: "switch_account"
                                 size: 24
@@ -937,7 +943,7 @@ Item {
                             onManualEntryRequested: root.enterManualUsernameEntry()
                         }
 
-                        DankIcon {
+                        CyIcon {
                             id: lockIcon
 
                             anchors.left: parent.left
@@ -1091,7 +1097,7 @@ Item {
                             }
                         }
 
-                        DankActionButton {
+                        CyActionButton {
                             id: revealButton
 
                             anchors.right: externalAuthButton.visible ? externalAuthButton.left : (virtualKeyboardButton.visible ? virtualKeyboardButton.left : (enterButton.visible ? enterButton.left : parent.right))
@@ -1104,7 +1110,7 @@ Item {
                             enabled: visible
                             onClicked: parent.showPassword = !parent.showPassword
                         }
-                        DankActionButton {
+                        CyActionButton {
                             id: externalAuthButton
 
                             anchors.right: virtualKeyboardButton.visible ? virtualKeyboardButton.left : (enterButton.visible ? enterButton.left : parent.right)
@@ -1117,7 +1123,7 @@ Item {
                             enabled: visible
                             onClicked: root.startAuthSession(false)
                         }
-                        DankActionButton {
+                        CyActionButton {
                             id: virtualKeyboardButton
 
                             anchors.right: enterButton.visible ? enterButton.left : parent.right
@@ -1137,7 +1143,7 @@ Item {
                             }
                         }
 
-                        DankActionButton {
+                        CyActionButton {
                             id: enterButton
 
                             anchors.right: parent.right
@@ -1239,7 +1245,7 @@ Item {
             useFahrenheit: SettingsData.useFahrenheit
         }
 
-        DankActionButton {
+        CyActionButton {
             anchors.bottom: parent.bottom
             anchors.left: parent.left
             anchors.margins: Theme.spacingXL
@@ -1282,7 +1288,7 @@ Item {
                 }
             }
 
-            DankDropdown {
+            CyDropdown {
                 id: sessionDropdown
                 anchors.fill: parent
                 text: ""

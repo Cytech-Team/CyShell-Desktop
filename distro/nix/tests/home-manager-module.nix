@@ -12,7 +12,7 @@ let
     + "/nixos";
 in
 pkgs.testers.runNixOSTest {
-  name = "dms-home-manager-module";
+  name = "cyshell-home-manager-module";
 
   nodes.machine = {
     ...
@@ -36,14 +36,14 @@ pkgs.testers.runNixOSTest {
       ...
     }: {
       imports = [
-        self.homeModules.dank-material-shell
+        self.homeModules.cyshell
       ];
 
       home.username = "danklinux";
       home.homeDirectory = "/home/danklinux";
       home.stateVersion = "25.11";
 
-      programs.dank-material-shell = {
+      programs.cyshell = {
         enable = true;
         systemd = {
           enable = true;
@@ -64,7 +64,7 @@ pkgs.testers.runNixOSTest {
 
         plugins.TestPlugin = {
           enable = true;
-          src = pkgs.runCommand "dms-test-plugin" { } ''
+          src = pkgs.runCommand "cyshell-test-plugin" { } ''
             mkdir -p "$out"
             echo plugin > "$out/plugin.txt"
           '';
@@ -84,18 +84,18 @@ pkgs.testers.runNixOSTest {
 
     machine.wait_for_unit("multi-user.target")
 
-    machine.succeed("su -- danklinux -c 'command -v dms'")
-    machine.succeed("su -- danklinux -c 'test -f ~/.config/DankMaterialShell/settings.json'")
-    machine.succeed("su -- danklinux -c 'test -f ~/.config/DankMaterialShell/clsettings.json'")
-    machine.succeed("su -- danklinux -c 'test -f ~/.config/DankMaterialShell/plugin_settings.json'")
-    machine.succeed("su -- danklinux -c 'test -e ~/.config/DankMaterialShell/plugins/TestPlugin'")
-    machine.succeed("su -- danklinux -c 'test -f ~/.local/state/DankMaterialShell/session.json'")
+    machine.succeed("su -- danklinux -c 'command -v cyshell'")
+    machine.succeed("su -- danklinux -c 'test -f ~/.config/CyShell/settings.json'")
+    machine.succeed("su -- danklinux -c 'test -f ~/.config/CyShell/clsettings.json'")
+    machine.succeed("su -- danklinux -c 'test -f ~/.config/CyShell/plugin_settings.json'")
+    machine.succeed("su -- danklinux -c 'test -e ~/.config/CyShell/plugins/TestPlugin'")
+    machine.succeed("su -- danklinux -c 'test -f ~/.local/state/CyShell/session.json'")
 
-    settings = json.loads(machine.succeed("su -- danklinux -c 'cat ~/.config/DankMaterialShell/settings.json'"))
-    clipboard = json.loads(machine.succeed("su -- danklinux -c 'cat ~/.config/DankMaterialShell/clsettings.json'"))
-    session = json.loads(machine.succeed("su -- danklinux -c 'cat ~/.local/state/DankMaterialShell/session.json'"))
-    plugins = json.loads(machine.succeed("su -- danklinux -c 'cat ~/.config/DankMaterialShell/plugin_settings.json'"))
-    doctor = json.loads(machine.succeed("su -- danklinux -c 'dms doctor --json'"))
+    settings = json.loads(machine.succeed("su -- danklinux -c 'cat ~/.config/CyShell/settings.json'"))
+    clipboard = json.loads(machine.succeed("su -- danklinux -c 'cat ~/.config/CyShell/clsettings.json'"))
+    session = json.loads(machine.succeed("su -- danklinux -c 'cat ~/.local/state/CyShell/session.json'"))
+    plugins = json.loads(machine.succeed("su -- danklinux -c 'cat ~/.config/CyShell/plugin_settings.json'"))
+    doctor = json.loads(machine.succeed("su -- danklinux -c 'cyshell doctor --json'"))
 
     t.assertEqual(settings["theme"], "integration-test")
     t.assertEqual(clipboard["maxItems"], 10)

@@ -38,7 +38,7 @@ SettingsRow {
     }
 
     leading: [
-        DankDragHandle {
+        CyDragHandle {
             id: handle
 
             coordinateItem: root.reorderList

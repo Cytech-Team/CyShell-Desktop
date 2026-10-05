@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/log"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/utils"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/log"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/utils"
 )
 
 type ThemeColors struct {
@@ -79,7 +79,7 @@ func getColorsFilePath() string {
 		log.Error("Failed to get user cache dir", "err", err)
 		return ""
 	}
-	return filepath.Join(cacheDir, "DankMaterialShell", "dms-colors.json")
+	return filepath.Join(cacheDir, "CyShell", "cyshell-colors.json")
 }
 
 func isLightMode() bool {

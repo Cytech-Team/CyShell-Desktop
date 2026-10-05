@@ -2,7 +2,7 @@ package providers
 
 import (
 	"fmt"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/configfrag"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/configfrag"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -12,7 +12,7 @@ import (
 	"github.com/sblinch/kdl-go"
 	"github.com/sblinch/kdl-go/document"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/windowrules"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/windowrules"
 )
 
 type NiriMatch struct {

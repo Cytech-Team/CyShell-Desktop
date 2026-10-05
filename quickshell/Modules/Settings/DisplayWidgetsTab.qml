@@ -133,7 +133,7 @@ Item {
                     width: parent.width
                     spacing: Theme.spacingM
 
-                    DankIcon {
+                    CyIcon {
                         name: "monitor"
                         size: Theme.iconSize
                         color: Theme.primary
@@ -193,7 +193,7 @@ Item {
                                     anchors.horizontalCenter: parent.horizontalCenter
                                 }
 
-                                DankButtonGroup {
+                                CyButtonGroup {
                                     id: displayModeGroup
                                     model: [I18n.tr("Name"), I18n.tr("Model")]
                                     currentIndex: SettingsData.displayNameMode === "model" ? 1 : 0
@@ -233,7 +233,7 @@ Item {
                                 anchors.margins: Theme.spacingS
                                 spacing: Theme.spacingM
 
-                                DankIcon {
+                                CyIcon {
                                     name: "desktop_windows"
                                     size: Theme.iconSizeMedium
                                     color: Theme.primary
@@ -318,7 +318,7 @@ Item {
                             width: parent.width
                             spacing: Theme.spacingM
 
-                            DankIcon {
+                            CyIcon {
                                 name: modelData.icon
                                 size: Theme.iconSize
                                 color: Theme.primary
@@ -391,7 +391,7 @@ Item {
                                 width: parent.width
                                 spacing: Theme.spacingXS
 
-                                DankToggle {
+                                CyToggle {
                                     width: parent.width
                                     text: I18n.tr("All displays")
                                     checked: {
@@ -411,7 +411,7 @@ Item {
                                     }
                                 }
 
-                                DankToggle {
+                                CyToggle {
                                     width: parent.width
                                     text: I18n.tr("Focused display only")
                                     visible: parent.componentId === "notifications"
@@ -419,7 +419,7 @@ Item {
                                     onToggled: checked => SettingsData.set("notificationFocusedMonitor", checked)
                                 }
 
-                                DankToggle {
+                                CyToggle {
                                     width: parent.width
                                     text: I18n.tr("Show on last display")
                                     checked: root.getShowOnLastDisplay(parent.componentId)
@@ -457,7 +457,7 @@ Item {
                                     Repeater {
                                         model: Quickshell.screens
 
-                                        delegate: DankToggle {
+                                        delegate: CyToggle {
                                             property var screenData: modelData
                                             property string componentId: parent.parent.componentId
 

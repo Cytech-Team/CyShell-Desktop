@@ -1,1 +1,1 @@
--- Cursor theme overrides. Deploy writes ~/.config/hypr/dms/cursor.lua
+-- Cursor theme overrides. Deploy writes ~/.config/hypr/cyshell/cursor.lua

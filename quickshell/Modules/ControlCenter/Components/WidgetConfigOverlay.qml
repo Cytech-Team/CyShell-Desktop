@@ -2,7 +2,7 @@ import QtQuick
 import qs.Common
 import qs.Modules.ControlCenter
 import qs.Modules.ControlCenter.Widgets
-import qs.Modules.DankBar.Widgets
+import qs.Modules.CyBar.Widgets
 import qs.Services
 import qs.Widgets
 
@@ -138,7 +138,7 @@ Item {
                 visible: root.isIdleInhibitor
                 iconName: "timer"
                 title: I18n.tr("Duration")
-                body: DankDropdown {
+                body: CyDropdown {
                     readonly property var presets: IdleInhibitPresets.presetOptions
 
                     compactMode: true

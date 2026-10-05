@@ -4,10 +4,10 @@ import qs.Modules.Notifications
 import qs.Services
 import qs.Widgets
 
-DankPopout {
+CyPopout {
     id: root
 
-    layerNamespace: "dms:notification-center-popout"
+    layerNamespace: "cyshell:notification-center-popout"
     fullHeightSurface: true
     contentHandlesKeys: true
     onOpened: contentFocusTimer.restart()
@@ -62,8 +62,9 @@ DankPopout {
         }
     }
 
-    popupWidth: NotificationMetrics.popupWidth + Theme.spacingL
+    popupWidth: NotificationMetrics.popupMinWidth + Theme.spacingL
     popupHeight: stablePopupHeight
+    popupEdgeGap: Theme.spacingM
     positioning: ""
     suspendShadowWhileResizing: false
 

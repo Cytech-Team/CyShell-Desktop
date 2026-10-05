@@ -2,7 +2,7 @@ import QtQuick
 import qs.Widgets
 import "../../../Common/QmlUtils.js" as QmlUtils
 
-DankReorderList {
+CyReorderList {
     id: root
 
     readonly property bool isSettingsRow: true

@@ -71,7 +71,7 @@ Item {
                 enabled: root.enabled
                 onClicked: root.edit(isStart)
 
-                DankIcon {
+                CyIcon {
                     name: "schedule"
                     size: Theme.iconSize
                     color: Theme.surfaceVariantText
@@ -85,7 +85,7 @@ Item {
         id: pickerLoader
         active: false
 
-        sourceComponent: DankTimePicker {
+        sourceComponent: CyTimePicker {
             parent: root.Window.contentItem
             is24Hour: root.is24Hour
             onAccepted: (hour, minute) => {

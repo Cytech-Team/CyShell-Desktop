@@ -157,6 +157,120 @@ func TestPermissionStatePersists(t *testing.T) {
 	}
 }
 
+func TestAgentWorkspaceUsePersists(t *testing.T) {
+	stateHome := t.TempDir()
+	t.Setenv("XDG_STATE_HOME", stateHome)
+	t.Setenv("CYCOM_AGENT_WORKSPACE_AUTO", "1")
+
+	manager, err := NewManager()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !manager.State().UseAgentWorkspace || !manager.State().AgentWorkspaceEnabled {
+		t.Fatalf("new manager should preserve the existing workspace-on defaults: %#v", manager.State())
+	}
+	if err := manager.SetUseAgentWorkspace(false); err != nil {
+		t.Fatal(err)
+	}
+	if manager.State().UseAgentWorkspace {
+		t.Fatal("Use Agent Workspace should be disabled")
+	}
+	if got := os.Getenv("CYCOM_AGENT_WORKSPACE_AUTO"); got != "0" {
+		t.Fatalf("runtime workspace routing env = %q, want 0", got)
+	}
+
+	reloaded, err := NewManager()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if reloaded.State().UseAgentWorkspace {
+		t.Fatal("Use Agent Workspace should remain disabled after reload")
+	}
+	if !reloaded.State().AgentWorkspaceEnabled {
+		t.Fatal("workspace enabled preference should remain independent")
+	}
+}
+
+func TestAgentWorkspaceUseChangeDoesNotCancelActiveCalls(t *testing.T) {
+	stateHome := t.TempDir()
+	t.Setenv("XDG_STATE_HOME", stateHome)
+
+	manager, err := NewManager()
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	manager.activeMu.Lock()
+	manager.activeCalls[999] = cancel
+	manager.activeMu.Unlock()
+
+	if err := manager.SetUseAgentWorkspace(false); err != nil {
+		t.Fatal(err)
+	}
+	select {
+	case <-ctx.Done():
+		t.Fatal("changing Agent Workspace routing must not cancel calls already in flight")
+	default:
+	}
+
+	manager.activeMu.Lock()
+	delete(manager.activeCalls, 999)
+	manager.activeMu.Unlock()
+}
+
+func TestAgentWorkspaceDisplayConfigPersists(t *testing.T) {
+	stateHome := t.TempDir()
+	t.Setenv("XDG_STATE_HOME", stateHome)
+	t.Setenv("CYCOM_AI_DESKTOP_STATE", filepath.Join(t.TempDir(), "missing-workspace"))
+
+	manager, err := NewManager()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := manager.SetAgentWorkspaceDisplayConfig(1920, 1080, 75, 1.25); err != nil {
+		t.Fatal(err)
+	}
+	state := manager.State()
+	if state.AgentWorkspaceWidth != 1920 || state.AgentWorkspaceHeight != 1080 || state.AgentWorkspaceRefresh != 75 || state.AgentWorkspaceScale != 1.25 {
+		t.Fatalf("unexpected workspace config: %#v", state)
+	}
+	if err := manager.SetAgentWorkspaceDisplayConfig(320, 200, 10, 9); err == nil {
+		t.Fatal("invalid workspace display config should fail")
+	}
+
+	reloaded, err := NewManager()
+	if err != nil {
+		t.Fatal(err)
+	}
+	state = reloaded.State()
+	if state.AgentWorkspaceWidth != 1920 || state.AgentWorkspaceHeight != 1080 || state.AgentWorkspaceRefresh != 75 || state.AgentWorkspaceScale != 1.25 {
+		t.Fatalf("workspace display config did not persist: %#v", state)
+	}
+}
+
+func TestAgentWorkspaceV4MigrationKeepsExistingBehavior(t *testing.T) {
+	stateHome := t.TempDir()
+	t.Setenv("XDG_STATE_HOME", stateHome)
+	path := filepath.Join(stateHome, "cycomagent", "cyshell-agent-control.json")
+	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	legacy := `{"version":4,"enabled":true,"controlEnabled":true,"approvalMode":"ask"}`
+	if err := os.WriteFile(path, []byte(legacy), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	manager, err := NewManager()
+	if err != nil {
+		t.Fatal(err)
+	}
+	state := manager.State()
+	if !state.AgentWorkspaceEnabled || !state.UseAgentWorkspace {
+		t.Fatalf("v4 migration should preserve legacy isolated-by-default behavior: %#v", state)
+	}
+}
+
 func TestEmergencyStopPersists(t *testing.T) {
 	stateHome := t.TempDir()
 	t.Setenv("XDG_STATE_HOME", stateHome)

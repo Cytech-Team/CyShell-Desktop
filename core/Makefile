@@ -1,9 +1,9 @@
-BINARY_NAME=dms
+BINARY_NAME=cyshell
 PRIMARY_COMMAND=cyshell
-BINARY_NAME_INSTALL=dankinstall
+BINARY_NAME_INSTALL=cyshell-install
 BINARY_NAME_MCP=cyshell-mcp
-SOURCE_DIR=cmd/dms
-SOURCE_DIR_INSTALL=cmd/dankinstall
+SOURCE_DIR=cmd/cyshell
+SOURCE_DIR_INSTALL=cmd/cyshell-install
 SOURCE_DIR_MCP=cmd/cyshell-mcp
 BUILD_DIR=bin
 SHELL_SRC=../quickshell
@@ -35,13 +35,13 @@ else
 DIST_ARCHS = $(ARCH)
 endif
 
-.PHONY: all build sync-shell dankinstall cyshell-mcp dist clean install install-all install-dankinstall install-cyshell-mcp uninstall uninstall-all uninstall-dankinstall uninstall-cyshell-mcp install-config uninstall-config test fmt vet deps print-version help
+.PHONY: all build sync-shell cyshell-install cyshell-mcp dist clean install install-all install-cyshell-install install-cyshell-mcp uninstall uninstall-all uninstall-cyshell-install uninstall-cyshell-mcp install-config uninstall-config test fmt vet deps print-version help
 
 # Default target
 all: build
 
 sync-shell:
-	@test -e $(SHELL_SRC)/DankCommon/Widgets/DankIcon.qml || { echo "DankCommon missing: run git submodule update --init"; exit 1; }
+	@test -e $(SHELL_SRC)/CyCommon/Widgets/CyIcon.qml || { echo "CyCommon missing: run git submodule update --init"; exit 1; }
 	@rm -rf $(EMBED_DIR)
 	@mkdir -p $(EMBED_DIR)
 	@tar -C $(SHELL_SRC) --exclude=.qmlls.ini --exclude-from=../scripts/shell-test-excludes.txt -chf - . | tar -C $(EMBED_DIR) -xf -
@@ -52,16 +52,16 @@ sync-shell:
 	@rm -f $(EMBED_DIR)/scripts/i18nsync.py $(EMBED_DIR)/scripts/build-vscode-vsix.sh $(EMBED_DIR)/scripts/qmllint-entrypoints.sh
 	@rm -f $(EMBED_DIR)/scripts/spam-notifications.sh $(EMBED_DIR)/scripts/verify-notifications.sh
 	@rm -f $(EMBED_DIR)/translations/*.py $(EMBED_DIR)/translations/WORKFLOW.md
-	@cd $(EMBED_DIR) && find . -type f -print0 | LC_ALL=C sort -z | xargs -0 sha256sum | sha256sum | cut -c1-16 > .dankrev
+	@cd $(EMBED_DIR) && find . -type f -print0 | LC_ALL=C sort -z | xargs -0 sha256sum | sha256sum | cut -c1-16 > .cyshellrev
 
-# Build the main binary (dms)
+# Build the main CyShell binary
 build: sync-shell
 	@echo "Building $(BINARY_NAME)..."
 	@mkdir -p $(BUILD_DIR)
 	CGO_ENABLED=0 $(GO) build -tags withshell $(BUILD_LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME) ./$(SOURCE_DIR)
 	@echo "Build complete: $(BUILD_DIR)/$(BINARY_NAME)"
 
-dankinstall:
+cyshell-install:
 	@echo "Building $(BINARY_NAME_INSTALL)..."
 	@mkdir -p $(BUILD_DIR)
 	CGO_ENABLED=0 $(GO) build $(BUILD_LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME_INSTALL) ./$(SOURCE_DIR_INSTALL)
@@ -86,13 +86,14 @@ dist: sync-shell
 	done
 	@echo "Distribution builds complete"
 
-build-all: build dankinstall cyshell-mcp
+build-all: build cyshell-install cyshell-mcp
 
 install:
 	@echo "Installing $(BINARY_NAME) to $(INSTALL_DIR)..."
 	@install -D -m 755 $(BUILD_DIR)/$(BINARY_NAME) $(INSTALL_DIR)/$(PRIMARY_COMMAND)
-	@ln -sfn $(PRIMARY_COMMAND) $(INSTALL_DIR)/$(BINARY_NAME)
-	@echo "CyShell installed (dms compatibility alias included)"
+	@ln -sfn $(PRIMARY_COMMAND) $(INSTALL_DIR)/dms
+	@echo "CyShell installed"
+	@echo "Legacy dms CLI alias -> cyshell installed for compatibility"
 
 install-all:
 	@echo "Installing $(BINARY_NAME) to $(INSTALL_DIR)..."
@@ -103,7 +104,7 @@ install-all:
 	@install -D -m 755 $(BUILD_DIR)/$(BINARY_NAME_MCP) $(INSTALL_DIR)/$(BINARY_NAME_MCP)
 	@echo "Installation complete"
 
-install-dankinstall:
+install-cyshell-install:
 	@echo "Installing $(BINARY_NAME_INSTALL) to $(INSTALL_DIR)..."
 	@install -D -m 755 $(BUILD_DIR)/$(BINARY_NAME_INSTALL) $(INSTALL_DIR)/$(BINARY_NAME_INSTALL)
 	@echo "Installation complete"
@@ -115,7 +116,7 @@ install-cyshell-mcp: cyshell-mcp
 
 uninstall:
 	@echo "Uninstalling $(BINARY_NAME) from $(INSTALL_DIR)..."
-	@rm -f $(INSTALL_DIR)/$(BINARY_NAME)
+	@rm -f $(INSTALL_DIR)/$(BINARY_NAME) $(INSTALL_DIR)/dms
 	@echo "Uninstall complete"
 
 uninstall-all:
@@ -127,7 +128,7 @@ uninstall-all:
 	@rm -f $(INSTALL_DIR)/$(BINARY_NAME_MCP)
 	@echo "Uninstall complete"
 
-uninstall-dankinstall:
+uninstall-cyshell-install:
 	@echo "Uninstalling $(BINARY_NAME_INSTALL) from $(INSTALL_DIR)..."
 	@rm -f $(INSTALL_DIR)/$(BINARY_NAME_INSTALL)
 	@echo "Uninstall complete"
@@ -181,21 +182,21 @@ print-version:
 
 help:
 	@echo "Available targets:"
-	@echo "  all                 - Build the main binary (dms) (default)"
-	@echo "  build               - Build the main binary (dms) with the embedded UI"
+	@echo "  all                 - Build the main CyShell binary (default)"
+	@echo "  build               - Build the main CyShell binary with the embedded UI"
 	@echo "  sync-shell          - Copy quickshell/ into the embed dir (runs before tagged builds)"
-	@echo "  dankinstall         - Build dankinstall binary"
+	@echo "  cyshell-install         - Build cyshell-install binary"
 	@echo "  cyshell-mcp         - Build thin stdio MCP transport for the embedded CyCom runtime"
-	@echo "  dist                - Build dms for linux/freebsd amd64/arm64 (no update/greeter)"
+	@echo "  dist                - Build cyshell for linux/freebsd amd64/arm64 (no update/greeter)"
 	@echo "                        Use ARCH=amd64 or ARCH=arm64 and/or DIST_OSES=linux to narrow"
-	@echo "  build-all           - Build dms, dankinstall, and cyshell-mcp"
-	@echo "  install             - Install dms to $(INSTALL_DIR)"
-	@echo "  install-all         - Install dms, dankinstall, and cyshell-mcp to $(INSTALL_DIR)"
-	@echo "  install-dankinstall - Install only dankinstall to $(INSTALL_DIR)"
+	@echo "  build-all           - Build cyshell, cyshell-install, and cyshell-mcp"
+	@echo "  install             - Install cyshell to $(INSTALL_DIR)"
+	@echo "  install-all         - Install cyshell, cyshell-install, and cyshell-mcp to $(INSTALL_DIR)"
+	@echo "  install-cyshell-install - Install only cyshell-install to $(INSTALL_DIR)"
 	@echo "  install-cyshell-mcp - Install only cyshell-mcp to $(INSTALL_DIR)"
-	@echo "  uninstall           - Remove dms from $(INSTALL_DIR)"
-	@echo "  uninstall-all       - Remove dms, dankinstall, and cyshell-mcp from $(INSTALL_DIR)"
-	@echo "  uninstall-dankinstall - Remove only dankinstall from $(INSTALL_DIR)"
+	@echo "  uninstall           - Remove cyshell from $(INSTALL_DIR)"
+	@echo "  uninstall-all       - Remove cyshell, cyshell-install, and cyshell-mcp from $(INSTALL_DIR)"
+	@echo "  uninstall-cyshell-install - Remove only cyshell-install from $(INSTALL_DIR)"
 	@echo "  uninstall-cyshell-mcp - Remove only cyshell-mcp from $(INSTALL_DIR)"
 	@echo "  clean               - Clean build artifacts"
 	@echo "  test                - Run tests"

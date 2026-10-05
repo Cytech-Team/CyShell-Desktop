@@ -7,9 +7,9 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/proto/wlr_output_management"
-	wlhelpers "github.com/AvengeMedia/DankMaterialShell/core/internal/wayland/client"
 	"github.com/AvengeMedia/dankgo/wayland/client"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/proto/wlr_output_management"
+	wlhelpers "github.com/Cytech-Team/CyShell-Desktop/core/internal/wayland/client"
 )
 
 type Compositor int

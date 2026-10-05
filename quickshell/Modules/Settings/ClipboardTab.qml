@@ -217,7 +217,7 @@ Item {
     function loadConfig() {
         configLoaded = false;
         configError = false;
-        DMSService.sendRequest("clipboard.getConfig", null, response => {
+        CyShellService.sendRequest("clipboard.getConfig", null, response => {
             if (response.error) {
                 configError = true;
                 return;
@@ -231,7 +231,7 @@ Item {
         const params = {};
         params[key] = value;
         saving = true;
-        DMSService.sendRequest("clipboard.setConfig", params, response => {
+        CyShellService.sendRequest("clipboard.setConfig", params, response => {
             saving = false;
             if (response.error) {
                 ToastService.showError(I18n.tr("Failed to save clipboard setting"), response.error);
@@ -244,14 +244,14 @@ Item {
     }
 
     Component.onCompleted: {
-        if (DMSService.isConnected)
+        if (CyShellService.isConnected)
             loadConfig();
     }
 
     Connections {
-        target: DMSService
+        target: CyShellService
         function onIsConnectedChanged() {
-            if (DMSService.isConnected)
+            if (CyShellService.isConnected)
                 loadConfig();
         }
     }
@@ -264,7 +264,7 @@ Item {
             height: warningContent.implicitHeight + Theme.spacingM * 2
             radius: Theme.cornerRadius
             color: Theme.warningHover
-            visible: !DMSService.isConnected || configError
+            visible: !CyShellService.isConnected || configError
 
             Row {
                 id: warningContent
@@ -272,7 +272,7 @@ Item {
                 anchors.margins: Theme.spacingM
                 spacing: Theme.spacingM
 
-                DankIcon {
+                CyIcon {
                     name: "info"
                     size: Theme.iconSizeSmall
                     color: Theme.warning
@@ -281,7 +281,7 @@ Item {
 
                 StyledText {
                     font.pixelSize: Theme.fontSizeSmall
-                    text: !DMSService.isConnected ? I18n.tr("CyShell backend is not connected. Clipboard settings are unavailable.") : I18n.tr("Failed to load clipboard configuration.")
+                    text: !CyShellService.isConnected ? I18n.tr("CyShell backend is not connected. Clipboard settings are unavailable.") : I18n.tr("Failed to load clipboard configuration.")
                     wrapMode: Text.WordWrap
                     width: parent.width - Theme.iconSizeSmall - Theme.spacingM
                     anchors.verticalCenter: parent.verticalCenter

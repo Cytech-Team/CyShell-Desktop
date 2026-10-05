@@ -560,7 +560,7 @@
   {
     "term": "%1: %2",
     "context": "%1: %2",
-    "reference": "Services/DMSNetworkService.qml:472",
+    "reference": "Services/CyNetworkService.qml:472",
     "comment": "vpn error toast, %1 is the vpn name, %2 is the error",
     "tags": [
       "shell"
@@ -951,7 +951,7 @@
   {
     "term": "Active VPN",
     "context": "Active VPN",
-    "reference": "Services/DMSNetworkService.qml:144",
+    "reference": "Services/CyNetworkService.qml:144",
     "comment": "",
     "tags": [
       "shell"
@@ -2740,7 +2740,7 @@
   {
     "term": "Autoconnect disabled",
     "context": "Autoconnect disabled",
-    "reference": "Services/DMSNetworkService.qml:1186",
+    "reference": "Services/CyNetworkService.qml:1186",
     "comment": "",
     "tags": [
       "shell"
@@ -2749,7 +2749,7 @@
   {
     "term": "Autoconnect enabled",
     "context": "Autoconnect enabled",
-    "reference": "Services/DMSNetworkService.qml:1186",
+    "reference": "Services/CyNetworkService.qml:1186",
     "comment": "",
     "tags": [
       "shell"
@@ -4049,7 +4049,7 @@
   {
     "term": "Cellular disabled",
     "context": "Cellular disabled",
-    "reference": "Services/DMSNetworkService.qml:800",
+    "reference": "Services/CyNetworkService.qml:800",
     "comment": "",
     "tags": [
       "shell"
@@ -4058,7 +4058,7 @@
   {
     "term": "Cellular enabled",
     "context": "Cellular enabled",
-    "reference": "Services/DMSNetworkService.qml:800",
+    "reference": "Services/CyNetworkService.qml:800",
     "comment": "",
     "tags": [
       "shell"
@@ -5138,7 +5138,7 @@
   {
     "term": "Configuration activated",
     "context": "Configuration activated",
-    "reference": "Services/DMSNetworkService.qml:539, Services/DMSNetworkService.qml:562, Services/DMSNetworkService.qml:586",
+    "reference": "Services/CyNetworkService.qml:539, Services/CyNetworkService.qml:562, Services/CyNetworkService.qml:586",
     "comment": "",
     "tags": [
       "shell"
@@ -5348,7 +5348,7 @@
   {
     "term": "Connected to %1",
     "context": "Connected to %1",
-    "reference": "Services/DMSNetworkService.qml:486",
+    "reference": "Services/CyNetworkService.qml:486",
     "comment": "wifi toast, %1 is the network name",
     "tags": [
       "shell"
@@ -6267,7 +6267,7 @@
   {
     "term": "CyShell backend is outdated (API v%1, expected v%2)",
     "context": "CyShell backend is outdated (API v%1, expected v%2)",
-    "reference": "Services/DMSService.qml:346",
+    "reference": "Services/CyShellService.qml:346",
     "comment": "error toast, %1 is current api version, %2 is required version",
     "tags": [
       "shell"
@@ -6303,7 +6303,7 @@
   {
     "term": "CyShell out of date",
     "context": "CyShell out of date",
-    "reference": "Services/DMSService.qml:324",
+    "reference": "Services/CyShellService.qml:324",
     "comment": "",
     "tags": [
       "shell"
@@ -7238,7 +7238,7 @@
   {
     "term": "Disconnected from WiFi",
     "context": "Disconnected from WiFi",
-    "reference": "Services/DMSNetworkService.qml:686",
+    "reference": "Services/CyNetworkService.qml:686",
     "comment": "",
     "tags": [
       "shell"
@@ -8705,7 +8705,7 @@
   {
     "term": "Failed to activate configuration",
     "context": "Failed to activate configuration",
-    "reference": "Services/DMSNetworkService.qml:535, Services/DMSNetworkService.qml:558, Services/DMSNetworkService.qml:582",
+    "reference": "Services/CyNetworkService.qml:535, Services/CyNetworkService.qml:558, Services/CyNetworkService.qml:582",
     "comment": "",
     "tags": [
       "shell"
@@ -8804,7 +8804,7 @@
   {
     "term": "Failed to configure hotspot",
     "context": "Failed to configure hotspot",
-    "reference": "Services/DMSNetworkService.qml:1213",
+    "reference": "Services/CyNetworkService.qml:1213",
     "comment": "hotspot configuration error title",
     "tags": [
       "shell"
@@ -8813,7 +8813,7 @@
   {
     "term": "Failed to connect VPN",
     "context": "Failed to connect VPN",
-    "reference": "Services/DMSNetworkService.qml:1081",
+    "reference": "Services/CyNetworkService.qml:1081",
     "comment": "",
     "tags": [
       "shell"
@@ -8822,7 +8822,7 @@
   {
     "term": "Failed to connect to %1",
     "context": "Failed to connect to %1",
-    "reference": "Services/DMSNetworkService.qml:506",
+    "reference": "Services/CyNetworkService.qml:506",
     "comment": "wifi error toast, %1 is the network name",
     "tags": [
       "shell"
@@ -8903,7 +8903,7 @@
   {
     "term": "Failed to disconnect VPN",
     "context": "Failed to disconnect VPN",
-    "reference": "Services/DMSNetworkService.qml:1105",
+    "reference": "Services/CyNetworkService.qml:1105",
     "comment": "",
     "tags": [
       "shell"
@@ -8912,7 +8912,7 @@
   {
     "term": "Failed to disconnect VPNs",
     "context": "Failed to disconnect VPNs",
-    "reference": "Services/DMSNetworkService.qml:1123",
+    "reference": "Services/CyNetworkService.qml:1123",
     "comment": "",
     "tags": [
       "shell"
@@ -8921,7 +8921,7 @@
   {
     "term": "Failed to disconnect WiFi",
     "context": "Failed to disconnect WiFi",
-    "reference": "Services/DMSNetworkService.qml:684",
+    "reference": "Services/CyNetworkService.qml:684",
     "comment": "",
     "tags": [
       "shell"
@@ -8948,7 +8948,7 @@
   {
     "term": "Failed to enable WiFi",
     "context": "Failed to enable WiFi",
-    "reference": "Services/DMSNetworkService.qml:810",
+    "reference": "Services/CyNetworkService.qml:810",
     "comment": "",
     "tags": [
       "shell"
@@ -9355,7 +9355,7 @@
   {
     "term": "Failed to start connection to %1",
     "context": "Failed to start connection to %1",
-    "reference": "Services/DMSNetworkService.qml:671",
+    "reference": "Services/CyNetworkService.qml:671",
     "comment": "wifi error toast, %1 is the network name",
     "tags": [
       "shell"
@@ -9364,7 +9364,7 @@
   {
     "term": "Failed to start hotspot",
     "context": "Failed to start hotspot",
-    "reference": "Services/DMSNetworkService.qml:384, Services/DMSNetworkService.qml:1235",
+    "reference": "Services/CyNetworkService.qml:384, Services/CyNetworkService.qml:1235",
     "comment": "hotspot start error title",
     "tags": [
       "shell"
@@ -9373,7 +9373,7 @@
   {
     "term": "Failed to stop hotspot",
     "context": "Failed to stop hotspot",
-    "reference": "Services/DMSNetworkService.qml:1257",
+    "reference": "Services/CyNetworkService.qml:1257",
     "comment": "hotspot stop error title",
     "tags": [
       "shell"
@@ -9409,7 +9409,7 @@
   {
     "term": "Failed to toggle cellular",
     "context": "Failed to toggle cellular",
-    "reference": "Services/DMSNetworkService.qml:797",
+    "reference": "Services/CyNetworkService.qml:797",
     "comment": "",
     "tags": [
       "shell"
@@ -9472,7 +9472,7 @@
   {
     "term": "Failed to update autoconnect",
     "context": "Failed to update autoconnect",
-    "reference": "Services/DMSNetworkService.qml:1184",
+    "reference": "Services/CyNetworkService.qml:1184",
     "comment": "",
     "tags": [
       "shell"
@@ -10346,7 +10346,7 @@
   {
     "term": "Forgot network %1",
     "context": "Forgot network %1",
-    "reference": "Services/DMSNetworkService.qml:750",
+    "reference": "Services/CyNetworkService.qml:750",
     "comment": "toast after removing a saved wifi network, %1 is its name",
     "tags": [
       "shell"
@@ -11432,7 +11432,7 @@
   {
     "term": "Hotspot activation failed.",
     "context": "Hotspot activation failed.",
-    "reference": "Services/DMSNetworkService.qml:1319",
+    "reference": "Services/CyNetworkService.qml:1319",
     "comment": "generic hotspot activation failure message",
     "tags": [
       "shell"
@@ -11459,7 +11459,7 @@
   {
     "term": "Hotspot started",
     "context": "Hotspot started",
-    "reference": "Services/DMSNetworkService.qml:381",
+    "reference": "Services/CyNetworkService.qml:381",
     "comment": "hotspot start success message",
     "tags": [
       "shell"
@@ -11640,7 +11640,7 @@
   {
     "term": "IP sharing setup failed. Check that dnsmasq is installed.",
     "context": "IP sharing setup failed. Check that dnsmasq is installed.",
-    "reference": "Services/DMSNetworkService.qml:1315",
+    "reference": "Services/CyNetworkService.qml:1315",
     "comment": "hotspot IP configuration failure message",
     "tags": [
       "shell"
@@ -23580,7 +23580,7 @@
   {
     "term": "The WiFi adapter could not start access point mode.",
     "context": "The WiFi adapter could not start access point mode.",
-    "reference": "Services/DMSNetworkService.qml:1317",
+    "reference": "Services/CyNetworkService.qml:1317",
     "comment": "hotspot adapter failure message",
     "tags": [
       "shell"
@@ -24224,7 +24224,7 @@
   {
     "term": "To update, run the following command:",
     "context": "To update, run the following command:",
-    "reference": "Services/DMSService.qml:324",
+    "reference": "Services/CyShellService.qml:324",
     "comment": "",
     "tags": [
       "shell"
@@ -25511,7 +25511,7 @@
   {
     "term": "VPN",
     "context": "VPN",
-    "reference": "Common/SettingsTabs.qml:370, Common/BarWidgetCatalog.qml:167, Services/AppSearchService.qml:250, Services/AppSearchService.qml:427, Services/DMSNetworkService.qml:471, Modules/Settings/BarWidgetOptions/ControlCenterOptions.qml:22, Modules/ControlCenter/BuiltinPlugins/VpnWidget.qml:19, Modules/ControlCenter/Details/VpnDetailContent.qml:23, Modules/ControlCenter/Models/WidgetModel.qml:299",
+    "reference": "Common/SettingsTabs.qml:370, Common/BarWidgetCatalog.qml:167, Services/AppSearchService.qml:250, Services/AppSearchService.qml:427, Services/CyNetworkService.qml:471, Modules/Settings/BarWidgetOptions/ControlCenterOptions.qml:22, Modules/ControlCenter/BuiltinPlugins/VpnWidget.qml:19, Modules/ControlCenter/Details/VpnDetailContent.qml:23, Modules/ControlCenter/Models/WidgetModel.qml:299",
     "comment": "virtual private network, widget and page title",
     "tags": [
       "settings",
@@ -26189,7 +26189,7 @@
   {
     "term": "WiFi disabled",
     "context": "WiFi disabled",
-    "reference": "Services/DMSNetworkService.qml:784, Modules/ControlCenter/Details/NetworkDetail.qml:355",
+    "reference": "Services/CyNetworkService.qml:784, Modules/ControlCenter/Details/NetworkDetail.qml:355",
     "comment": "hotspot unavailable status",
     "tags": [
       "shell"
@@ -26198,7 +26198,7 @@
   {
     "term": "WiFi enabled",
     "context": "WiFi enabled",
-    "reference": "Services/DMSNetworkService.qml:784, Services/DMSNetworkService.qml:812",
+    "reference": "Services/CyNetworkService.qml:784, Services/CyNetworkService.qml:812",
     "comment": "",
     "tags": [
       "shell"

@@ -1,3 +1,2 @@
-import qs.DankCommon.Widgets as DankCommon
-
-DankCommon.DankTextCursor {}
+import QtQuick
+CyTextCursor {}

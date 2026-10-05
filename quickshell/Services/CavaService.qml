@@ -13,7 +13,7 @@ Singleton {
     property list<int> values: Array(6)
     property int refCount: 0
     property bool cavaAvailable: false
-    readonly property string _confPath: `${Paths.strip(StandardPaths.writableLocation(StandardPaths.TempLocation))}/dms-cava-${Date.now()}-${Math.floor(Math.random() * 1000000)}.conf`
+    readonly property string _confPath: `${Paths.strip(StandardPaths.writableLocation(StandardPaths.TempLocation))}/cyshell-cava-${Date.now()}-${Math.floor(Math.random() * 1000000)}.conf`
 
     Process {
         id: cavaCheck
@@ -21,7 +21,7 @@ Singleton {
         command: ["sh", "-c", "command -v cava"]
         running: false
         onExited: exitCode => {
-            root.cavaAvailable = exitCode === 0 && Quickshell.env("DMS_DISABLE_CAVA") !== "1";
+            root.cavaAvailable = exitCode === 0 && Quickshell.env("CYSHELL_DISABLE_CAVA") !== "1";
         }
     }
 

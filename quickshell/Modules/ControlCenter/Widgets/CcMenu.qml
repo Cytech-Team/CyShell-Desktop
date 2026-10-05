@@ -198,7 +198,7 @@ Item {
                         anchors.verticalCenter: parent.verticalCenter
                         spacing: Theme.spacingM
 
-                        DankIcon {
+                        CyIcon {
                             name: row.modelData.iconName || ""
                             size: Theme.iconSizeMedium
                             color: row.contentColor

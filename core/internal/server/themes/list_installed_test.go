@@ -3,7 +3,7 @@ package themes
 import (
 	"testing"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/themes"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/themes"
 	"github.com/stretchr/testify/require"
 )
 

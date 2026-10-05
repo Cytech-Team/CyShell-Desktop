@@ -7,7 +7,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/windowrules"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/windowrules"
 )
 
 // Mango window rules are flat `windowrule=key:value,...` lines. DMS-managed rules

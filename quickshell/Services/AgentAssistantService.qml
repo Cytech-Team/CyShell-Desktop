@@ -30,12 +30,12 @@ Singleton {
     signal historyChanged
 
     Connections {
-        target: DMSService
+        target: CyShellService
         function onCapabilitiesReceived() {
             root.refreshState();
         }
         function onConnectionStateChanged() {
-            if (DMSService.isConnected) {
+            if (CyShellService.isConnected) {
                 root.refreshState();
                 root.loadHistory();
             } else {
@@ -52,13 +52,13 @@ Singleton {
     }
 
     function refreshState(callback) {
-        if (!DMSService.isConnected || !(DMSService.capabilities || []).includes("cycom")) {
+        if (!CyShellService.isConnected || !(CyShellService.capabilities || []).includes("cycom")) {
             available = false;
             if (callback)
                 callback(false, I18n.tr("CyCom runtime unavailable"));
             return;
         }
-        DMSService.sendRequest("cycom.assistant.getState", null, response => {
+        CyShellService.sendRequest("cycom.assistant.getState", null, response => {
             if (response.error || !response.result) {
                 available = false;
                 lastError = response.error || I18n.tr("Assistant state unavailable");
@@ -106,7 +106,7 @@ Singleton {
         if (configBusy)
             return;
         configBusy = true;
-        DMSService.sendRequest("cycom.assistant.configure", {
+        CyShellService.sendRequest("cycom.assistant.configure", {
             provider: String(providerValue || provider || "openai-compatible"),
             endpoint: String(endpointValue || "").trim(),
             model: String(modelValue || "").trim(),
@@ -139,7 +139,7 @@ Singleton {
         if (configBusy)
             return;
         configBusy = true;
-        DMSService.sendRequest("cycom.assistant.models", null, response => {
+        CyShellService.sendRequest("cycom.assistant.models", null, response => {
             configBusy = false;
             if (response.error) {
                 lastError = response.error;
@@ -155,12 +155,12 @@ Singleton {
     }
 
     function loadHistory(callback) {
-        if (!DMSService.isConnected || !(DMSService.capabilities || []).includes("cycom")) {
+        if (!CyShellService.isConnected || !(CyShellService.capabilities || []).includes("cycom")) {
             if (callback)
                 callback(false, I18n.tr("CyCom runtime unavailable"));
             return;
         }
-        DMSService.sendRequest("cycom.chat.history", null, response => {
+        CyShellService.sendRequest("cycom.chat.history", null, response => {
             if (response.error) {
                 lastError = response.error;
                 if (callback)
@@ -182,6 +182,10 @@ Singleton {
             lastError = I18n.tr("Agent runtime is disabled");
             return false;
         }
+        if (!configured) {
+            lastError = I18n.tr("Assistant provider is not configured. Choose a provider in Settings → Agent.");
+            return false;
+        }
 
         busy = true;
         pendingMessage = text;
@@ -191,7 +195,7 @@ Singleton {
         messages = optimistic;
         historyChanged();
 
-        DMSService.sendRequest("cycom.chat", { message: text }, response => {
+        CyShellService.sendRequest("cycom.chat", { message: text }, response => {
             busy = false;
             pendingMessage = "";
             if (response.error || !response.result) {
@@ -218,7 +222,7 @@ Singleton {
     function clear() {
         if (busy)
             return;
-        DMSService.sendRequest("cycom.chat.clear", null, response => {
+        CyShellService.sendRequest("cycom.chat.clear", null, response => {
             if (response.error) {
                 lastError = response.error;
                 return;

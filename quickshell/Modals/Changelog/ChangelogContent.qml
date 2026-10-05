@@ -221,7 +221,7 @@ Column {
         Row {
             spacing: Theme.spacingS
 
-            DankIcon {
+            CyIcon {
                 name: "warning"
                 size: Theme.iconSizeSmall
                 color: Theme.warning
@@ -255,7 +255,7 @@ Column {
 
                 ChangelogUpgradeNote {
                     width: parent.width
-                    text: "The shell is embedded in the dms binary. ~/.config/quickshell/dms is no longer auto-discovered, pass -c or set DMS_SHELL_DIR to override it"
+                    text: "The shell is embedded in the cyshell binary. ~/.config/quickshell/cyshell is the primary shell path; pass -c or set CYSHELL_SHELL_DIR to override it"
                 }
 
                 ChangelogUpgradeNote {

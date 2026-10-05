@@ -3,7 +3,7 @@ import qs.Common
 import qs.Services
 import qs.Widgets
 
-DankFloatingWindow {
+CyFloatingWindow {
     id: root
     readonly property var log: Log.scoped("WorkspaceRenameModal")
 
@@ -86,7 +86,7 @@ DankFloatingWindow {
         renaming = false;
     }
 
-    DankDialog {
+    CyDialog {
         id: renameDialog
 
         anchors.fill: parent
@@ -97,7 +97,7 @@ DankFloatingWindow {
         onAccepted: root.submitAndClose()
         onRejected: root.hide()
 
-        DankTextField {
+        CyTextField {
             id: nameInput
 
             width: parent.width
@@ -110,7 +110,7 @@ DankFloatingWindow {
         }
 
         actions: [
-            DankButton {
+            CyButton {
                 maximumWidth: renameDialog.actionWidth
                 wrapText: true
                 text: I18n.tr("Cancel")
@@ -118,7 +118,7 @@ DankFloatingWindow {
                 textColor: Theme.primary
                 onClicked: root.hide()
             },
-            DankButton {
+            CyButton {
                 maximumWidth: renameDialog.actionWidth
                 wrapText: true
                 text: I18n.tr("Rename", "verb, rename button")

@@ -9,17 +9,17 @@ import (
 	"testing"
 	"time"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/bluez"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/models"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/network"
 	"github.com/AvengeMedia/dankgo/ipc"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/server/bluez"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/server/models"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/server/network"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestGetSocketPath(t *testing.T) {
 	path := GetSocketPath()
-	assert.Contains(t, path, "danklinux-")
+	assert.Contains(t, path, "cyshell-")
 	assert.Contains(t, path, ".sock")
 	assert.Contains(t, path, fmt.Sprintf("%d", os.Getpid()))
 }

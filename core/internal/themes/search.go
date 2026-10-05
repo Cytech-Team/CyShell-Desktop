@@ -3,7 +3,7 @@ package themes
 import (
 	"strings"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/utils"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/utils"
 )
 
 func FuzzySearch(query string, themes []Theme) []Theme {

@@ -4,10 +4,10 @@ import qs.Common
 import qs.Modals.Common
 import qs.Modules.ColorPicker
 
-DankModal {
+CyModal {
     id: root
 
-    layerNamespace: "dms:color-picker"
+    layerNamespace: "cyshell:color-picker"
 
     property string pickerTitle: I18n.tr("Choose color", "color picker title")
     property color selectedColor: SessionData.recentColors.length > 0 ? SessionData.recentColors[0] : Theme.primary

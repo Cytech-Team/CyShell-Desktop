@@ -27,9 +27,7 @@ type response struct {
 	Error  string          `json:"error"`
 }
 
-type input struct {
-	Reason string `json:"reason"`
-}
+type input struct{}
 
 type desktopState struct {
 	SchemaVersion int            `json:"schema_version"`
@@ -38,6 +36,7 @@ type desktopState struct {
 	Server        any            `json:"server"`
 	Services      map[string]any `json:"services"`
 	Errors        map[string]any `json:"errors,omitempty"`
+	ComputerUse   map[string]any `json:"computer_use"`
 }
 
 func main() {
@@ -48,10 +47,6 @@ func main() {
 	if err := json.NewDecoder(os.Stdin).Decode(&in); err != nil {
 		fail(fmt.Errorf("decode input: %w", err))
 	}
-	if strings.TrimSpace(in.Reason) == "" {
-		fail(errors.New("reason is required"))
-	}
-
 	socketPath, err := locateSocket()
 	if err != nil {
 		fail(err)
@@ -125,17 +120,65 @@ func readDesktopState(socketPath string) (desktopState, error) {
 		services[item.name] = value
 	}
 
+	computerUse, computerUseErr := readComputerUseState(socketPath)
+	if computerUseErr != nil {
+		errs["computer_use"] = computerUseErr.Error()
+		computerUse = map[string]any{
+			"backend": "cyshell-built-in",
+			"ready":   false,
+			"error":   computerUseErr.Error(),
+			"legacy_anyapp_doctor_authoritative": false,
+		}
+	}
+
 	state := desktopState{
 		SchemaVersion: 1,
 		Shell:         "CyShell Desktop",
 		CapturedAt:    time.Now().UTC().Format(time.RFC3339Nano),
 		Server:        serverInfo,
 		Services:      services,
+		ComputerUse:   computerUse,
 	}
 	if len(errs) > 0 {
 		state.Errors = errs
 	}
 	return state, nil
+}
+
+func readComputerUseState(socketPath string) (map[string]any, error) {
+	reason := "read CyShell Built-in native window readiness"
+	value, err := call(socketPath, "cycom.tools.call", map[string]any{
+		"name":   "window_list",
+		"reason": reason,
+		"arguments": map[string]any{
+			"reason": reason,
+		},
+		"origin": map[string]any{
+			"kind":    "plugin",
+			"name":    "cyshell_desktop_state",
+			"version": "1",
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	windows, ok := value.([]any)
+	if !ok {
+		return nil, fmt.Errorf("CyShell window_list returned %T, expected a list", value)
+	}
+	return map[string]any{
+		"backend": "cyshell-built-in",
+		"ready": true,
+		"window_count": len(windows),
+		"authoritative_window_backend": "CyShell window_list/window_control",
+		"legacy_anyapp_doctor_authoritative": false,
+		"readiness": map[string]any{
+			"can_query_windows": true,
+			"can_focus_windows": true,
+			"can_focus_apps": true,
+		},
+		"note": "CyShell owns native window targeting. Legacy Any App doctor windowing fields describe only the transitional accessibility helper and are not authoritative for CyShell Built-in readiness.",
+	}, nil
 }
 
 func capabilitySet(serverInfo any) map[string]bool {
@@ -214,5 +257,6 @@ func readLineLimited(reader *bufio.Reader, limit int) ([]byte, error) {
 
 func fail(err error) {
 	_ = json.NewEncoder(os.Stdout).Encode(map[string]any{"error": err.Error()})
+	fmt.Fprintln(os.Stderr, err.Error())
 	os.Exit(1)
 }

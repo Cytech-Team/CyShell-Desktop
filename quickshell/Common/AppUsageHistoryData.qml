@@ -117,7 +117,7 @@ Singleton {
     FileView {
         id: settingsFile
 
-        path: StandardPaths.writableLocation(StandardPaths.GenericStateLocation) + "/DankMaterialShell/appusage.json"
+        path: StandardPaths.writableLocation(StandardPaths.GenericStateLocation) + "/CyShell/appusage.json"
         blockLoading: true
         blockWrites: true
         watchChanges: true

@@ -239,9 +239,9 @@ func TestWrapInTerminal(t *testing.T) {
 		term       string
 		wantPrefix []string
 	}{
-		{"kitty", []string{"kitty", "--class", "com.danklinux.dms", "-T", "Title"}},
+		{"kitty", []string{"kitty", "--class", "com.cytechteam.cyshell", "-T", "Title"}},
 		{"gnome-terminal", []string{"gnome-terminal", "--wait", "--title=Title"}},
-		{"foot", []string{"foot", "--app-id=com.danklinux.dms", "--title=Title"}},
+		{"foot", []string{"foot", "--app-id=com.cytechteam.cyshell", "--title=Title"}},
 	}
 	for _, tt := range tests {
 		got := wrapInTerminal(tt.term, "Title", "echo hi", nil)

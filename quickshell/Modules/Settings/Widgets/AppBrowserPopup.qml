@@ -2,7 +2,7 @@ import QtQuick
 import qs.Common
 import qs.Widgets
 
-DankFloatingWindow {
+CyFloatingWindow {
     id: root
 
     property string searchQuery: ""
@@ -58,8 +58,10 @@ DankFloatingWindow {
             anchors.fill: parent
             spacing: 0
 
-            DankWindowHeader {
+            CyWindowHeader {
                 id: titleBar
+                visible: !root.useServerSideTitlebar
+                height: visible ? implicitHeight : 0
                 width: parent.width
                 controls: windowControls
                 title: I18n.tr("Select Application")
@@ -75,7 +77,7 @@ DankFloatingWindow {
                     anchors.margins: Theme.spacingL
                     spacing: Theme.spacingM
 
-                    DankSearchField {
+                    CySearchField {
                         id: searchField
                         width: parent.width
                         height: Theme.fieldHeightLarge
@@ -89,7 +91,7 @@ DankFloatingWindow {
                         }
                     }
 
-                    DankListView {
+                    CyListView {
                         id: appList
                         width: parent.width
                         height: parent.height - searchField.height - Theme.spacingM
@@ -158,7 +160,7 @@ DankFloatingWindow {
                                     }
                                 }
 
-                                DankIcon {
+                                CyIcon {
                                     name: "add"
                                     size: Theme.iconSizeMedium
                                     color: Theme.primary

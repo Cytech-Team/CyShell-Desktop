@@ -3,7 +3,7 @@ package wayland
 import (
 	"math"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/icc"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/icc"
 )
 
 type GammaRamp struct {

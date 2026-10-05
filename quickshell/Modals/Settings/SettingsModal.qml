@@ -6,19 +6,42 @@ import qs.Services
 import qs.Widgets
 import qs.Modules.Settings.Widgets
 
-DankFloatingWindow {
+CyFloatingWindow {
     id: settingsModal
 
     property var profileBrowser: profileBrowserLoader.item
     property var wallpaperBrowser: wallpaperBrowserLoader.item
+    property var profileImageSelectionHandler: null
+
+    function _showProfileBrowser(allowStacking) {
+        profileBrowserLoader.active = true;
+        Qt.callLater(() => {
+            const browser = profileBrowserLoader.item;
+            if (!browser)
+                return;
+            if (allowStacking !== undefined)
+                browser.allowStacking = allowStacking;
+            browser.open();
+        });
+    }
 
     function openProfileBrowser(allowStacking) {
-        profileBrowserLoader.active = true;
-        if (!profileBrowserLoader.item)
-            return;
-        if (allowStacking !== undefined)
-            profileBrowserLoader.item.allowStacking = allowStacking;
-        profileBrowserLoader.item.open();
+        profileImageSelectionHandler = null;
+        _showProfileBrowser(allowStacking);
+    }
+
+    function openProfileBrowserFor(handler, allowStacking) {
+        profileImageSelectionHandler = handler;
+        _showProfileBrowser(allowStacking);
+    }
+
+    function _applyProfileImageSelection(path) {
+        const handler = profileImageSelectionHandler;
+        profileImageSelectionHandler = null;
+        if (typeof handler === "function")
+            handler(path);
+        else
+            PortalService.setProfileImage(path);
     }
 
     function openWallpaperBrowser(allowStacking) {
@@ -44,6 +67,7 @@ DankFloatingWindow {
     property bool isCompactMode: width < SettingsMetrics.compactBreakpoint
     property bool menuVisible: !isCompactMode
     property string keybindSearchQuery: ""
+    property string keybindRequestedAction: ""
 
     signal closingModal
 
@@ -123,7 +147,14 @@ DankFloatingWindow {
     }
 
     function showKeybindsSearch(query: string) {
+        keybindRequestedAction = "";
         keybindSearchQuery = query || "";
+        showWithTabName("keybinds");
+    }
+
+    function showKeybindAction(action: string, query: string) {
+        keybindSearchQuery = query || "";
+        keybindRequestedAction = action || "";
         showWithTabName("keybinds");
     }
 
@@ -246,10 +277,11 @@ DankFloatingWindow {
             showHiddenFiles: true
             fileExtensions: ["*.jpg", "*.jpeg", "*.png", "*.bmp", "*.gif", "*.webp", "*.jxl", "*.avif", "*.heif", "*.exr", "*.svg"]
             onFileSelected: path => {
-                PortalService.setProfileImage(path);
+                settingsModal._applyProfileImageSelection(path);
                 close();
             }
             onDialogClosed: () => {
+                settingsModal.profileImageSelectionHandler = null;
                 allowStacking = true;
                 Qt.callLater(() => profileBrowserLoader.active = false);
             }
@@ -307,8 +339,10 @@ DankFloatingWindow {
             anchors.fill: parent
             spacing: 0
 
-            DankWindowHeader {
+            CyWindowHeader {
                 id: titleBar
+                visible: !settingsModal.useServerSideTitlebar
+                height: visible ? implicitHeight : 0
                 width: parent.width
                 z: 10
                 controls: windowControls
@@ -345,7 +379,7 @@ DankFloatingWindow {
                     anchors.rightMargin: Theme.spacingM
                     spacing: Theme.spacingM
 
-                    DankIcon {
+                    CyIcon {
                         name: "info"
                         size: Theme.iconSize
                         color: Theme.warning
@@ -363,7 +397,7 @@ DankFloatingWindow {
                         wrapMode: Text.WordWrap
                     }
 
-                    DankButton {
+                    CyButton {
                         id: copySettingsButton
 
                         visible: SettingsData._isReadOnly && SettingsData._hasUnsavedChanges
@@ -375,12 +409,12 @@ DankFloatingWindow {
                         horizontalPadding: Theme.spacingM
                         anchors.verticalCenter: parent.verticalCenter
                         onClicked: {
-                            Quickshell.execDetached(["dms", "cl", "copy", SettingsData.getCurrentSettingsJson()]);
+                            Quickshell.execDetached(["cyshell", "cl", "copy", SettingsData.getCurrentSettingsJson()]);
                             ToastService.showInfo(I18n.tr("Copied to clipboard"));
                         }
                     }
 
-                    DankButton {
+                    CyButton {
                         id: copySessionButton
 
                         visible: SessionData._isReadOnly && SessionData._hasUnsavedChanges
@@ -392,7 +426,7 @@ DankFloatingWindow {
                         horizontalPadding: Theme.spacingM
                         anchors.verticalCenter: parent.verticalCenter
                         onClicked: {
-                            Quickshell.execDetached(["dms", "cl", "copy", SessionData.getCurrentSessionJson()]);
+                            Quickshell.execDetached(["cyshell", "cl", "copy", SessionData.getCurrentSessionJson()]);
                             ToastService.showInfo(I18n.tr("Copied to clipboard"));
                         }
                     }

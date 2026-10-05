@@ -22,6 +22,7 @@ Item {
             root.statusIsError = !success;
             if (success) {
                 root.statusText = message + (username ? (" · " + username) : "");
+                GreeterUsersService.refresh();
             } else {
                 root.statusText = (username ? (username + ": ") : "") + message;
             }
@@ -80,16 +81,22 @@ Item {
 
                     settingKey: "userAccount_" + modelData.username
                     tags: ["user", "account", "admin", "login"]
-                    iconName: "account_circle"
                     title: modelData.username
                     subtitle: [modelData.gecos || "", "UID " + modelData.uid].filter(Boolean).join(" · ")
                     trailingBadge: [modelData.isAdmin ? I18n.tr("admin", "noun, lowercase badge on a user account with admin rights") : "", modelData.isGreeter ? I18n.tr("Greeter") : ""].filter(Boolean).join(" · ")
+
+                    leading: CyCircularImage {
+                        width: SettingsMetrics.avatarSize
+                        height: width
+                        imageSource: GreeterUsersService.profileImagePath(userRow.modelData.username)
+                        fallbackIcon: "person"
+                    }
 
                     Row {
                         id: actionButtons
                         spacing: Theme.spacingS
 
-                        DankActionButton {
+                        CyActionButton {
                             id: greeterToggleBtn
                             readonly property bool actionBlocked: root.operationPending
                             buttonSize: Theme.iconButtonSize
@@ -117,7 +124,7 @@ Item {
                             }
                         }
 
-                        DankActionButton {
+                        CyActionButton {
                             id: adminToggleBtn
                             readonly property bool actionBlocked: root.operationPending || (userRow.isLastAdmin && userRow.modelData.isAdmin)
                             buttonSize: Theme.iconButtonSize
@@ -145,7 +152,7 @@ Item {
                             }
                         }
 
-                        DankActionButton {
+                        CyActionButton {
                             id: deleteBtn
                             readonly property bool actionBlocked: root.operationPending || !UsersService.canDelete(userRow.modelData.username)
                             buttonSize: Theme.iconButtonSize

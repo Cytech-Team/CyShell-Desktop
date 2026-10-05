@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	mocks_cups "github.com/AvengeMedia/DankMaterialShell/core/internal/mocks/cups"
-	"github.com/AvengeMedia/DankMaterialShell/core/pkg/ipp"
+	mocks_cups "github.com/Cytech-Team/CyShell-Desktop/core/internal/mocks/cups"
+	"github.com/Cytech-Team/CyShell-Desktop/core/pkg/ipp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )

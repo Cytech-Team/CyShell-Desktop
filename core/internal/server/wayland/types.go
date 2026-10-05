@@ -11,13 +11,13 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/errdefs"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/geolocation"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/icc"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/screenshot"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/utils"
 	"github.com/AvengeMedia/dankgo/syncmap"
 	wlclient "github.com/AvengeMedia/dankgo/wayland/client"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/errdefs"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/geolocation"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/icc"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/screenshot"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/utils"
 	"github.com/godbus/dbus/v5"
 )
 
@@ -183,19 +183,19 @@ func DefaultConfig() Config {
 	}
 }
 
-// DMSConfigDir returns the compositor-specific DMS config directory, matching
-// the layout used by the shell and `dms setup` (niri/dms, hypr/dms, mango/dms).
-func DMSConfigDir() string {
-	return filepath.Join(utils.XDGConfigHome(), compositorConfigDirName(), "dms")
+// CyShellConfigDir returns the compositor-specific CyShell config directory, matching
+// the layout used by the shell and `cyshell setup` (niri/cyshell, hypr/cyshell, mango/cyshell).
+func CyShellConfigDir() string {
+	return filepath.Join(utils.XDGConfigHome(), compositorConfigDirName(), "cyshell")
 }
 
 // ICCProfilesDir returns the directory scanned for ICC profile files.
 func ICCProfilesDir() string {
-	return filepath.Join(DMSConfigDir(), "icc")
+	return filepath.Join(CyShellConfigDir(), "icc")
 }
 
-// compositorConfigDirName maps the running compositor to its DMS config
-// directory name. Compositors without a DMS config layout fall back to niri.
+// compositorConfigDirName maps the running compositor to its CyShell config
+// directory name. Compositors without a CyShell config layout fall back to niri.
 func compositorConfigDirName() string {
 	switch screenshot.DetectCompositor() {
 	case screenshot.CompositorHyprland:
@@ -209,9 +209,9 @@ func compositorConfigDirName() string {
 
 // getConfigPath returns the path to the wayland config file.
 func getConfigPath() (string, error) {
-	dir := DMSConfigDir()
+	dir := CyShellConfigDir()
 	if !filepath.IsAbs(dir) {
-		return "", fmt.Errorf("could not determine DMS config directory")
+		return "", fmt.Errorf("could not determine CyShell config directory")
 	}
 	return filepath.Join(dir, "wayland.json"), nil
 }

@@ -50,7 +50,7 @@ Item {
                 }
 
                 StyledText {
-                    text: I18n.tr("A modern desktop shell for Wayland compositors", "greeter welcome page tagline")
+                    text: I18n.tr("A modern desktop shell built for Labwc", "greeter welcome page tagline")
                     font.pixelSize: Theme.fontSizeMedium
                     color: Theme.surfaceVariantText
                     anchors.horizontalCenter: parent.horizontalCenter

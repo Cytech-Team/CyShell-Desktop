@@ -7,7 +7,7 @@ import Quickshell.I3
 import Quickshell.Wayland
 import Quickshell.Hyprland
 import qs.Common
-import qs.DankCommon.Common as DankCommon
+import qs.CyCommon.Common as CyCommon
 import qs.Services
 import "../Common/WorkspaceModel.js" as WorkspaceModel
 import "../Common/WindowModel.js" as WindowModel
@@ -37,23 +37,23 @@ Singleton {
         if (!genericPowerBackend)
             return;
         const backend = compositor;
-        Proc.runCommand("output-power-probe", [Proc.dmsBin, "dpms", "list"], (output, code) => {
+        Proc.runCommand("output-power-probe", [Proc.cyshellBin, "dpms", "list"], (output, code) => {
             if (root.compositor === backend && root.genericPowerBackend)
                 root.outputPowerAvailable = code === 0;
         }, 0, 5000);
     }
 
     function setOutputPower(on) {
-        Proc.runCommand("output-power-action", [Proc.dmsBin, "dpms", on ? "on" : "off"], (output, code) => {
+        Proc.runCommand("output-power-action", [Proc.cyshellBin, "dpms", on ? "on" : "off"], (output, code) => {
             if (code !== 0)
                 ToastService.showError(I18n.tr("Error"), I18n.tr("Failed to change display power", "Error shown when changing monitor power fails"));
         }, 0, 12000);
     }
 
     Connections {
-        target: DMSService
+        target: CyShellService
         function onConnectionStateChanged() {
-            if (DMSService.isConnected)
+            if (CyShellService.isConnected)
                 root.probeOutputPower();
             else
                 root.outputPowerAvailable = false;
@@ -106,7 +106,7 @@ Singleton {
             right: SettingsData.Position.Right
         })
 
-    readonly property bool supportsMinimize: isAqueous && AqueousService.available ? AqueousService.capabilities.commands && !AqueousService.locked : DankCommon.Compositor.supportsMinimize
+    readonly property bool supportsMinimize: isAqueous && AqueousService.available ? AqueousService.capabilities.commands && !AqueousService.locked : CyCommon.Compositor.supportsMinimize
 
     readonly property bool hasWorkspaceIpc: {
         switch (compositor) {
@@ -142,7 +142,9 @@ Singleton {
     readonly property bool supportsWindowRules: false
     readonly property bool supportsLayoutConfig: false
     readonly property bool supportsCursorConfig: false
-    readonly property bool supportsDisplayConfig: false
+    readonly property bool supportsDisplayConfig: WlrOutputService.wlrOutputAvailable
+    readonly property bool laptopLidPresent: LaptopLidService.lidPresent
+    readonly property bool laptopLidClosed: LaptopLidService.lidClosed
     readonly property bool supportsBarAutoHideReveal: false
     readonly property bool supportsWorkspaces: ExtWorkspaceService.available
     // compositors where a workspace that does not exist yet is still a valid switch target
@@ -252,7 +254,7 @@ Singleton {
     }
 
     function fetchRandrData() {
-        Proc.runCommand("randr", [Proc.dmsBin, "randr", "--json"], (output, exitCode) => {
+        Proc.runCommand("randr", [Proc.cyshellBin, "randr", "--json"], (output, exitCode) => {
             if (exitCode === 0 && output) {
                 try {
                     const data = JSON.parse(output.trim());
@@ -353,6 +355,40 @@ Singleton {
         return false;
     }
 
+    function getPrimaryScreenName() {
+        const configured = String(SettingsData.primaryDisplayName || "");
+        if (_screenExists(configured))
+            return configured;
+
+        const screens = Quickshell.screens || [];
+        const physical = screens.filter(screen => screen?.name && !String(screen.name).startsWith("HEADLESS-"));
+        const candidates = physical.length > 0 ? physical : screens;
+        if (candidates.length === 0)
+            return "";
+
+        if (WlrOutputService.wlrOutputAvailable) {
+            const enabled = candidates.filter(screen => WlrOutputService.getOutput(screen.name)?.enabled !== false);
+            const source = enabled.length > 0 ? enabled : candidates;
+            source.sort((a, b) => {
+                const ao = WlrOutputService.getOutput(a.name);
+                const bo = WlrOutputService.getOutput(b.name);
+                const ax = ao?.x ?? 0;
+                const bx = bo?.x ?? 0;
+                if (ax !== bx)
+                    return ax - bx;
+                return (ao?.y ?? 0) - (bo?.y ?? 0);
+            });
+            return source[0]?.name || "";
+        }
+
+        return candidates[0]?.name || "";
+    }
+
+    function getPrimaryScreen() {
+        const name = getPrimaryScreenName();
+        return (Quickshell.screens || []).find(screen => screen?.name === name) || null;
+    }
+
     function noteScreenInteraction(screenOrName) {
         const name = typeof screenOrName === "string" ? screenOrName : (screenOrName?.name || "");
         if (!_screenExists(name))
@@ -430,14 +466,11 @@ Singleton {
 
     function getFocusedScreen() {
         const screenName = getFocusedScreenName();
-        let first = null;
         for (const screen of (Quickshell.screens || [])) {
-            if (!first)
-                first = screen;
             if (screenName && screen?.name === screenName)
                 return screen;
         }
-        return first;
+        return getPrimaryScreen();
     }
 
     Timer {
@@ -520,13 +553,7 @@ Singleton {
 
     Component.onCompleted: {
         fetchRandrData();
-        detectCompositor();
-        updateHyprlandVisibleSpecialWorkspaces(null);
         scheduleSort();
-        Qt.callLater(() => {
-            NiriService.generateNiriLayoutConfig();
-            HyprlandService.generateLayoutConfig();
-        });
     }
 
     Connections {
@@ -1368,11 +1395,11 @@ Singleton {
     }
 
     function powerOffMonitors() {
-        Quickshell.execDetached([Proc.dmsBin, "dpms", "off"]);
+        Quickshell.execDetached([Proc.cyshellBin, "dpms", "off"]);
     }
 
     function powerOnMonitors() {
-        Quickshell.execDetached([Proc.dmsBin, "dpms", "on"]);
+        Quickshell.execDetached([Proc.cyshellBin, "dpms", "on"]);
     }
 
     function escapeSwayWorkspaceName(name) {
@@ -1837,6 +1864,16 @@ Singleton {
         target: SettingsData
         property: "activeCompositor"
         value: root.compositor
+    }
+
+    function applyDmsWindowFloatingRule() {
+        // LabWC is CyShell's compositor and already uses floating windows by
+        // default. The setting still exists for shared Settings UI, but there
+        // is no compositor rule to regenerate here. Other compositor-specific
+        // include providers own their own rule files/reloads.
+        if (root.isLabwc)
+            return true;
+        return false;
     }
 
     Connections {

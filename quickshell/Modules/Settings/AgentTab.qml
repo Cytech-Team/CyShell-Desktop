@@ -1,5 +1,7 @@
 import QtQuick
+import Quickshell
 import qs.Common
+import qs.Modals
 import qs.Services
 import qs.Widgets
 import qs.Modules.Settings.Widgets
@@ -21,13 +23,99 @@ Item {
         return keys.join(", ");
     }
 
-    function openKeybindsSearch(query) {
+    readonly property string agentOpenAction: "spawn cyshell agent open"
+    readonly property string agentReviewAction: "spawn cyshell agent review"
+    readonly property string agentStopAction: "spawn cyshell agent stop"
+
+    function openKeybindAction(action) {
         if (!root.parentModal)
             return;
-        if (typeof root.parentModal.showKeybindsSearch === "function")
-            root.parentModal.showKeybindsSearch(query);
+        if (typeof root.parentModal.showKeybindAction === "function")
+            root.parentModal.showKeybindAction(action, "");
+        else if (typeof root.parentModal.showKeybindsSearch === "function")
+            root.parentModal.showKeybindsSearch(action);
         else
             root.parentModal.navigateTo("keybinds");
+    }
+
+    function saveIntegration(modeValue, fallbackValue, appValue, tunnelId, tunnelKey, clearCredentials, callback) {
+        AgentIntegrationService.configure(
+            modeValue,
+            fallbackValue,
+            appValue,
+            tunnelId || "",
+            tunnelKey || "",
+            clearCredentials === true,
+            (success, message) => {
+                if (!success) {
+                    ToastService.showError(I18n.tr("Agent connection setup failed"), message);
+                    if (callback)
+                        callback(false);
+                    return;
+                }
+                if (message)
+                    ToastService.showWarning(I18n.tr("Agent connection saved"), message);
+                else
+                    ToastService.showInfo(I18n.tr("Agent connection saved"));
+                if (callback)
+                    callback(true);
+            }
+        );
+    }
+
+    function agentClientName(clientId) {
+        switch (String(clientId || "")) {
+        case "codex": return I18n.tr("Codex CLI");
+        case "opencode": return I18n.tr("OpenCode");
+        case "vscode": return I18n.tr("Visual Studio Code");
+        default: return I18n.tr("Agent app");
+        }
+    }
+
+    function agentClientReason(client) {
+        switch (String(client?.reason || "")) {
+        case "server_missing": return I18n.tr("CyShell MCP executable is not installed");
+        case "config_invalid": return I18n.tr("The client config cannot be read or parsed safely");
+        case "config_conflict": return I18n.tr("The reserved CyShell server ID belongs to a different config");
+        case "multiple_configs": return I18n.tr("Both OpenCode config files exist, so the active file is ambiguous");
+        case "config_override": return I18n.tr("OpenCode uses a custom config path or directory that cannot be confirmed here");
+        case "profile_override": return I18n.tr("VS Code uses a portable user profile that cannot be confirmed here");
+        case "multiple_user_configs": return I18n.tr("More than one VS Code user config location exists");
+        case "profile_selection_unknown": return I18n.tr("A VS Code profile is active, but its user config cannot be confirmed");
+        case "config_unavailable": return I18n.tr("The client user config location is unavailable");
+        default: return I18n.tr("This client config cannot be updated safely");
+        }
+    }
+
+    function agentClientSubtitle(client) {
+        if (!client?.installed)
+            return I18n.tr("Not installed");
+        if (!client?.supported || client?.reason === "server_missing")
+            return agentClientReason(client);
+        return String(client?.configPath || "");
+    }
+
+    function agentClientStatus(client) {
+        if (!client?.installed)
+            return I18n.tr("Not installed");
+        if (!client?.supported)
+            return I18n.tr("Unavailable");
+        if (client?.connected)
+            return client?.reason ? I18n.tr("Configured") : I18n.tr("Connected");
+        return client?.canConnect ? I18n.tr("Available") : I18n.tr("Unavailable");
+    }
+
+    function setAgentClientConnected(client, connected) {
+        AgentIntegrationService.setClientConnected(client.id, connected, (success, message) => {
+            if (!success) {
+                ToastService.showError(I18n.tr("Agent app connection failed"), message);
+                return;
+            }
+            const appName = agentClientName(client.id);
+            ToastService.showInfo(connected
+                ? I18n.tr("Connected %1", "Connected an Agent app to CyShell MCP").arg(appName)
+                : I18n.tr("Disconnected %1", "Disconnected an Agent app from CyShell MCP").arg(appName));
+        });
     }
 
     function receiptTitle(receipt) {
@@ -102,6 +190,7 @@ Item {
         AgentControlService.refresh();
         AgentApprovalService.refreshPolicies();
         AgentApprovalService.refresh();
+        AgentIntegrationService.refresh();
         if (KeybindsService.available)
             KeybindsService.loadBinds(false);
     }
@@ -144,7 +233,7 @@ Item {
                 subtitle: AgentAssistantService.model ? `${AgentAssistantService.provider} · ${AgentAssistantService.model}` : I18n.tr("Built into CyShell; model is discovered from the configured provider")
                 iconName: "chat"
 
-                DankButton {
+                CyButton {
                     text: I18n.tr("Open Assistant")
                     iconName: "smart_toy"
                     enabled: AgentControlService.available
@@ -178,6 +267,368 @@ Item {
         }
 
 
+        SettingsCard {
+            width: parent.width
+            title: I18n.tr("Agent connections")
+            iconName: "lan"
+            settingKey: "agentConnections"
+            tags: ["agent", "mcp", "tunnel", "chatgpt", "api", "cycom", "fallback"]
+
+            SettingsRow {
+                title: I18n.tr("Connection status")
+                subtitle: {
+                    const parts = [AgentIntegrationService.modeLabel()];
+                    if (AgentIntegrationService.mode === "chatgpt-tunnel")
+                        parts.push(AgentIntegrationService.tunnelActive ? I18n.tr("Tunnel connected") : I18n.tr("Tunnel stopped"));
+                    if (AgentIntegrationService.bridgeActive)
+                        parts.push(I18n.tr("API bridge active"));
+                    if (AgentIntegrationService.companionActive)
+                        parts.push(I18n.tr("CyCom fallback active"));
+                    return parts.join(" · ");
+                }
+                iconName: AgentIntegrationService.lastError ? "error" : "hub"
+                iconColor: AgentIntegrationService.lastError ? Theme.error : Theme.primary
+                trailingBadge: AgentIntegrationService.available ? I18n.tr("Ready") : I18n.tr("Unavailable")
+                trailingBadgeColor: AgentIntegrationService.available ? Theme.primary : Theme.error
+            }
+
+            SettingsDropdownRow {
+                id: agentConnectionMode
+                text: I18n.tr("Connection mode")
+                description: I18n.tr("Local keeps CyCom inside CyShell. ChatGPT Tunnel uses Secure MCP Tunnel. Local API exposes loopback HTTP.")
+                options: [I18n.tr("Local only"), I18n.tr("ChatGPT Tunnel"), I18n.tr("Local API")]
+                currentValue: AgentIntegrationService.modeLabel()
+                enabled: AgentIntegrationService.available && !AgentIntegrationService.busy
+                onValueChanged: value => root.saveIntegration(
+                    AgentIntegrationService.modeFromLabel(value),
+                    AgentIntegrationService.externalFallback,
+                    AgentIntegrationService.agentAppEnabled,
+                    "", "", false
+                )
+            }
+
+            SettingsToggleRow {
+                text: I18n.tr("CyCom companion fallback")
+                description: I18n.tr("Prefer embedded CyShell Agent; keep standalone CyCom on loopback as fallback for API and ChatGPT Tunnel")
+                checked: AgentIntegrationService.externalFallback
+                enabled: AgentIntegrationService.available && !AgentIntegrationService.busy
+                toggling: AgentIntegrationService.busy
+                onToggled: checked => root.saveIntegration(
+                    AgentIntegrationService.mode,
+                    checked,
+                    AgentIntegrationService.agentAppEnabled,
+                    "", "", false
+                )
+            }
+
+            SettingsRow {
+                visible: AgentIntegrationService.externalFallback
+                title: I18n.tr("CyCom companion")
+                subtitle: AgentIntegrationService.companionInstalled
+                    ? (AgentIntegrationService.companionActive
+                        ? I18n.tr("Installed and running as fallback")
+                        : I18n.tr("Installed; starts automatically when the selected mode needs HTTP fallback"))
+                    : I18n.tr("Optional standalone CyCom runtime is not installed")
+                iconName: AgentIntegrationService.companionInstalled ? "check_circle" : "download"
+                iconColor: AgentIntegrationService.companionInstalled ? Theme.success : Theme.warning
+                trailingBadge: AgentIntegrationService.companionInstalled ? I18n.tr("Installed") : I18n.tr("Missing")
+                trailingBadgeColor: AgentIntegrationService.companionInstalled ? Theme.success : Theme.warning
+
+                CyButton {
+                    visible: !AgentIntegrationService.companionInstalled
+                    text: I18n.tr("Install CyCom")
+                    iconName: "download"
+                    onClicked: AgentIntegrationService.openCompanionInstaller()
+                }
+
+                CyButton {
+                    visible: AgentIntegrationService.companionInstalled
+                    text: I18n.tr("Refresh")
+                    iconName: "refresh"
+                    onClicked: AgentIntegrationService.refresh()
+                }
+            }
+
+            SettingsRow {
+                visible: AgentIntegrationService.mode === "api" || AgentIntegrationService.mode === "chatgpt-tunnel"
+                title: I18n.tr("MCP API")
+                subtitle: AgentIntegrationService.apiUrl
+                iconName: "api"
+                trailingBadge: AgentIntegrationService.bridgeActive ? I18n.tr("Listening") : I18n.tr("Stopped")
+                trailingBadgeColor: AgentIntegrationService.bridgeActive ? Theme.success : Theme.surfaceVariantText
+
+                CyButton {
+                    text: I18n.tr("Copy URL")
+                    iconName: "content_copy"
+                    onClicked: {
+                        Quickshell.clipboardText = AgentIntegrationService.apiUrl;
+                        ToastService.showInfo(I18n.tr("MCP API URL copied"));
+                    }
+                }
+            }
+
+            SettingsRow {
+                visible: AgentIntegrationService.mode === "chatgpt-tunnel"
+                title: I18n.tr("ChatGPT Tunnel")
+                subtitle: AgentIntegrationService.tunnelConfigured
+                    ? I18n.tr("Tunnel credentials are saved; leave the fields blank to keep them")
+                    : I18n.tr("Add the Secure MCP Tunnel ID and control-plane API key")
+                iconName: "cloud_sync"
+                trailingBadge: !AgentIntegrationService.tunnelClientInstalled
+                    ? I18n.tr("Client missing")
+                    : (AgentIntegrationService.tunnelActive ? I18n.tr("Connected") : I18n.tr("Configured"))
+                trailingBadgeColor: AgentIntegrationService.tunnelActive
+                    ? Theme.success
+                    : (AgentIntegrationService.tunnelClientInstalled ? Theme.primary : Theme.warning)
+            }
+
+            SettingsTextFieldRow {
+                id: tunnelIdField
+                visible: AgentIntegrationService.mode === "chatgpt-tunnel"
+                text: I18n.tr("Tunnel ID")
+                description: AgentIntegrationService.tunnelConfigured
+                    ? I18n.tr("Leave blank to keep the saved Tunnel ID")
+                    : I18n.tr("Starts with tunnel_")
+                placeholderText: AgentIntegrationService.tunnelConfigured ? I18n.tr("Already saved") : "tunnel_..."
+                enabled: !AgentIntegrationService.busy
+            }
+
+            SettingsRow {
+                visible: AgentIntegrationService.mode === "chatgpt-tunnel"
+                title: I18n.tr("Control-plane API key")
+                subtitle: AgentIntegrationService.tunnelConfigured
+                    ? I18n.tr("Stored in a 0600 environment file and never returned to the UI")
+                    : I18n.tr("Required by Secure MCP Tunnel")
+                iconName: "key"
+
+                CyTextField {
+                    id: tunnelKeyField
+                    width: Math.min(320, parent.width * 0.48)
+                    placeholderText: AgentIntegrationService.tunnelConfigured ? I18n.tr("Key already saved") : I18n.tr("Paste API key")
+                    echoMode: TextInput.Password
+                    enabled: !AgentIntegrationService.busy
+                }
+            }
+
+            SettingsRow {
+                visible: AgentIntegrationService.mode === "chatgpt-tunnel"
+                title: I18n.tr("Tunnel actions")
+                subtitle: !AgentIntegrationService.tunnelClientInstalled
+                    ? I18n.tr("Install tunnel-client before starting ChatGPT Tunnel")
+                    : AgentIntegrationService.lastError
+                iconName: AgentIntegrationService.lastError ? "error" : "settings_suggest"
+                iconColor: AgentIntegrationService.lastError ? Theme.error : Theme.primary
+
+                Row {
+                    spacing: Theme.spacingS
+
+                    CyButton {
+                        text: AgentIntegrationService.busy ? I18n.tr("Saving…") : I18n.tr("Save & start")
+                        iconName: "save"
+                        enabled: !AgentIntegrationService.busy
+                            && (AgentIntegrationService.tunnelConfigured
+                                || (tunnelIdField.value.trim().length > 0 && tunnelKeyField.text.trim().length > 0))
+                        onClicked: root.saveIntegration(
+                            "chatgpt-tunnel",
+                            AgentIntegrationService.externalFallback,
+                            AgentIntegrationService.agentAppEnabled,
+                            tunnelIdField.value,
+                            tunnelKeyField.text,
+                            false,
+                            success => {
+                                if (!success)
+                                    return;
+                                tunnelIdField.value = "";
+                                tunnelKeyField.text = "";
+                            }
+                        )
+                    }
+
+                    CyButton {
+                        visible: AgentIntegrationService.tunnelConfigured
+                        text: I18n.tr("Forget credentials")
+                        iconName: "key_off"
+                        backgroundColor: "transparent"
+                        textColor: Theme.error
+                        onClicked: root.saveIntegration(
+                            AgentIntegrationService.mode,
+                            AgentIntegrationService.externalFallback,
+                            AgentIntegrationService.agentAppEnabled,
+                            "", "", true
+                        )
+                    }
+                }
+            }
+
+        }
+
+        SettingsCard {
+            width: parent.width
+            title: I18n.tr("External Agent apps")
+            iconName: "extension"
+            settingKey: "externalAgentApps"
+            tags: ["agent", "mcp", "codex", "opencode", "vscode", "integration"]
+
+            SettingsRow {
+                title: I18n.tr("Installed apps are detected automatically")
+                subtitle: I18n.tr("Choose Connect for each app. CyShell changes only that app's user MCP config.")
+                iconName: "info"
+            }
+
+            Repeater {
+                model: AgentIntegrationService.agentClients
+
+                delegate: SettingsRow {
+                    required property var modelData
+
+                    title: root.agentClientName(modelData.id)
+                    subtitle: root.agentClientSubtitle(modelData)
+                    iconName: "smart_toy"
+                    iconColor: modelData.connected ? Theme.success : Theme.primary
+                    trailingBadge: root.agentClientStatus(modelData)
+                    trailingBadgeColor: !modelData.installed
+                        ? Theme.surfaceVariantText
+                        : (!modelData.supported || modelData.reason ? Theme.warning : (modelData.connected ? Theme.success : Theme.primary))
+
+                    CyButton {
+                        visible: modelData.canConnect || modelData.canDisconnect
+                        text: modelData.connected ? I18n.tr("Disconnect") : I18n.tr("Connect")
+                        iconName: modelData.connected ? "link_off" : "link"
+                        enabled: AgentIntegrationService.available && !AgentIntegrationService.busy
+                        onClicked: root.setAgentClientConnected(modelData, !modelData.connected)
+                    }
+                }
+            }
+        }
+
+        SettingsCard {
+            width: parent.width
+            title: I18n.tr("Agent Workspace")
+            iconName: "developer_board"
+            settingKey: "agentWorkspace"
+            tags: ["agent", "workspace", "virtual", "display", "isolated", "remote", "screen"]
+
+            SettingsRow {
+                title: AgentControlService.agentWorkspaceActive
+                    ? I18n.tr("Agent Workspace is running")
+                    : I18n.tr("Agent Workspace is stopped")
+                subtitle: AgentControlService.agentWorkspaceActive
+                    ? I18n.tr("Isolated Wayland desktop with its own virtual pointer and keyboard. Your physical mouse is not shared.")
+                    : I18n.tr("Optional isolated desktop for AI computer control. The normal desktop continues to work when this is off.")
+                iconName: AgentControlService.agentWorkspaceActive ? "desktop_windows" : "desktop_access_disabled"
+                iconColor: AgentControlService.agentWorkspaceActive ? Theme.success : Theme.surfaceVariantText
+                trailingBadge: AgentControlService.agentWorkspaceActive
+                    ? (AgentControlService.agentWorkspaceDisplay || I18n.tr("Active"))
+                    : I18n.tr("Off")
+                trailingBadgeColor: AgentControlService.agentWorkspaceActive ? Theme.success : Theme.surfaceVariantText
+            }
+
+            SettingsToggleRow {
+                text: I18n.tr("Enable Agent Workspace")
+                description: I18n.tr("Start the isolated Agent desktop at login and keep it available for AI control")
+                checked: AgentControlService.agentWorkspaceEnabled
+                enabled: AgentControlService.available && !AgentControlService.workspaceBusy
+                toggling: AgentControlService.workspaceBusy
+                onToggled: checked => AgentControlService.setAgentWorkspaceEnabled(checked, (success, error) => {
+                    if (!success)
+                        ToastService.showError(I18n.tr("Agent Workspace failed"), error);
+                })
+            }
+
+            SettingsToggleRow {
+                text: I18n.tr("Use Agent Workspace automatically")
+                description: I18n.tr("When available, Agent screenshots, Any App and generic computer input use the isolated workspace. Turn this off to use the current desktop instead.")
+                checked: AgentControlService.useAgentWorkspace
+                enabled: AgentControlService.available && !AgentControlService.workspaceBusy
+                toggling: AgentControlService.workspaceBusy
+                onToggled: checked => AgentControlService.setUseAgentWorkspace(checked, (success, error) => {
+                    if (!success)
+                        ToastService.showError(I18n.tr("Agent Workspace routing failed"), error);
+                })
+            }
+
+            SettingsRow {
+                visible: AgentControlService.useAgentWorkspace && !AgentControlService.agentWorkspaceActive
+                title: I18n.tr("Workspace unavailable")
+                subtitle: AgentControlService.agentWorkspaceEnabled
+                    ? I18n.tr("The workspace is enabled but not running yet. Automatic tools use the current desktop until it becomes available.")
+                    : I18n.tr("Automatic tools use the current desktop while Agent Workspace is disabled.")
+                iconName: "info"
+                iconColor: Theme.warning
+            }
+
+            SettingsTextFieldRow {
+                id: workspaceWidthField
+                text: I18n.tr("Width")
+                description: I18n.tr("Agent Workspace width in pixels (640–7680)")
+                value: String(AgentControlService.agentWorkspaceWidth)
+                enabled: !AgentControlService.workspaceBusy
+            }
+
+            SettingsTextFieldRow {
+                id: workspaceHeightField
+                text: I18n.tr("Height")
+                description: I18n.tr("Agent Workspace height in pixels (480–4320)")
+                value: String(AgentControlService.agentWorkspaceHeight)
+                enabled: !AgentControlService.workspaceBusy
+            }
+
+            SettingsTextFieldRow {
+                id: workspaceRefreshField
+                text: I18n.tr("Refresh rate")
+                description: I18n.tr("Virtual display refresh rate in Hz (24–240)")
+                value: String(AgentControlService.agentWorkspaceRefresh)
+                enabled: !AgentControlService.workspaceBusy
+            }
+
+            SettingsTextFieldRow {
+                id: workspaceScaleField
+                text: I18n.tr("Scale")
+                description: I18n.tr("Logical display scale (0.5–4.0)")
+                value: String(AgentControlService.agentWorkspaceScale)
+                enabled: !AgentControlService.workspaceBusy
+            }
+
+            SettingsRow {
+                title: I18n.tr("Workspace display settings")
+                subtitle: I18n.tr("The isolated workspace uses one virtual output at position 0,0. Changes apply live when it is running and are remembered for the next start.")
+                iconName: "display_settings"
+
+                CyButton {
+                    text: AgentControlService.workspaceBusy ? I18n.tr("Applying…") : I18n.tr("Apply")
+                    iconName: "check"
+                    enabled: {
+                        if (AgentControlService.workspaceBusy)
+                            return false;
+                        const width = Number(workspaceWidthField.value);
+                        const height = Number(workspaceHeightField.value);
+                        const refresh = Number(workspaceRefreshField.value);
+                        const scale = Number(workspaceScaleField.value);
+                        return Number.isFinite(width) && width >= 640 && width <= 7680
+                            && Number.isFinite(height) && height >= 480 && height <= 4320
+                            && Number.isFinite(refresh) && refresh >= 24 && refresh <= 240
+                            && Number.isFinite(scale) && scale >= 0.5 && scale <= 4;
+                    }
+                    onClicked: AgentControlService.configureAgentWorkspace(
+                        Number(workspaceWidthField.value),
+                        Number(workspaceHeightField.value),
+                        Number(workspaceRefreshField.value),
+                        Number(workspaceScaleField.value),
+                        (success, error) => {
+                            if (!success) {
+                                ToastService.showError(I18n.tr("Agent Workspace configuration failed"), error);
+                                return;
+                            }
+                            workspaceWidthField.value = String(AgentControlService.agentWorkspaceWidth);
+                            workspaceHeightField.value = String(AgentControlService.agentWorkspaceHeight);
+                            workspaceRefreshField.value = String(AgentControlService.agentWorkspaceRefresh);
+                            workspaceScaleField.value = String(AgentControlService.agentWorkspaceScale);
+                            ToastService.showInfo(I18n.tr("Agent Workspace display settings applied"));
+                        }
+                    )
+                }
+            }
+        }
 
         SettingsCard {
             width: parent.width
@@ -188,36 +639,36 @@ Item {
 
             SettingsRow {
                 title: I18n.tr("Open Assistant")
-                subtitle: root.keybindsAvailable ? I18n.tr("Open or focus the native CyShell Assistant") : I18n.tr("Bind `dms agent open` in your compositor config")
+                subtitle: root.keybindsAvailable ? I18n.tr("Open or focus the native CyShell Assistant") : I18n.tr("Bind `cyshell agent open` in your compositor config")
                 iconName: "smart_toy"
-                trailingBadge: root.keysLabel("spawn dms agent open")
+                trailingBadge: root.keysLabel(root.agentOpenAction)
                 trailingBadgeColor: Theme.primary
                 showChevron: root.keybindsAvailable
                 clickable: root.keybindsAvailable
-                onClicked: root.openKeybindsSearch("dms agent open")
+                onClicked: root.openKeybindAction(root.agentOpenAction)
             }
 
             SettingsRow {
                 title: I18n.tr("Review permissions")
-                subtitle: root.keybindsAvailable ? I18n.tr("Jump directly to a waiting one-shot Agent approval") : I18n.tr("Bind `dms agent review` in your compositor config")
+                subtitle: root.keybindsAvailable ? I18n.tr("Jump directly to a waiting one-shot Agent approval") : I18n.tr("Bind `cyshell agent review` in your compositor config")
                 iconName: "shield_question"
-                trailingBadge: root.keysLabel("spawn dms agent review")
+                trailingBadge: root.keysLabel(root.agentReviewAction)
                 trailingBadgeColor: AgentApprovalService.pendingCount > 0 ? Theme.warning : Theme.primary
                 showChevron: root.keybindsAvailable
                 clickable: root.keybindsAvailable
-                onClicked: root.openKeybindsSearch("dms agent review")
+                onClicked: root.openKeybindAction(root.agentReviewAction)
             }
 
             SettingsRow {
                 title: I18n.tr("Emergency stop")
-                subtitle: root.keybindsAvailable ? I18n.tr("Revoke computer control and cancel active Agent calls immediately") : I18n.tr("Bind `dms agent stop` in your compositor config")
+                subtitle: root.keybindsAvailable ? I18n.tr("Revoke computer control and cancel active Agent calls immediately") : I18n.tr("Bind `cyshell agent stop` in your compositor config")
                 iconName: "front_hand"
                 iconColor: Theme.error
-                trailingBadge: root.keysLabel("spawn dms agent stop")
+                trailingBadge: root.keysLabel(root.agentStopAction)
                 trailingBadgeColor: Theme.error
                 showChevron: root.keybindsAvailable
                 clickable: root.keybindsAvailable
-                onClicked: root.openKeybindsSearch("dms agent stop")
+                onClicked: root.openKeybindAction(root.agentStopAction)
             }
         }
 
@@ -265,17 +716,72 @@ Item {
             title: I18n.tr("Application permissions")
             iconName: "app_registration"
             settingKey: "agentAppPermissions"
-            tags: ["agent", "application", "per app", "approval", "allow once", "always allow", "deny"]
+            tags: ["agent", "application", "per app", "approval", "session", "always allow", "deny", "full access", "custom"]
+
+            SettingsDropdownRow {
+                text: I18n.tr("How should Agent actions be approved?")
+                description: I18n.tr("Same model as ChatGPT: ask every time, approve low-risk actions automatically, allow everything, or use your custom rules.")
+                options: [
+                    I18n.tr("Ask for approval"),
+                    I18n.tr("Approve for me"),
+                    I18n.tr("Full access"),
+                    I18n.tr("Custom")
+                ]
+                currentValue: AgentApprovalService.approvalModeLabel()
+                enabled: !AgentApprovalService.modeBusy
+                onValueChanged: value => {
+                    const mode = AgentApprovalService.approvalModeFromLabel(value);
+                    AgentApprovalService.setApprovalMode(mode, (success, error) => {
+                        if (!success)
+                            ToastService.showError(I18n.tr("Failed to update approval behavior"), error);
+                    });
+                }
+            }
+
+            SettingsRow {
+                visible: AgentApprovalService.approvalMode === "ask"
+                title: I18n.tr("Ask for approval")
+                subtitle: I18n.tr("The Agent asks before app reading, screen capture, or computer control unless you already remembered an Allow rule.")
+                iconName: "pan_tool"
+            }
+
+            SettingsRow {
+                visible: AgentApprovalService.approvalMode === "auto"
+                title: I18n.tr("Approve for me")
+                subtitle: I18n.tr("Routine reads, screen capture, settings, window/device actions and network access can proceed automatically. Direct app control plus consequential file, system, remote and power changes still ask first.")
+                iconName: "verified_user"
+                iconColor: Theme.primary
+            }
+
+            SettingsRow {
+                visible: AgentApprovalService.approvalMode === "full"
+                title: I18n.tr("Full access")
+                subtitle: I18n.tr("Unrestricted Agent tool access while the Agent is enabled. Scope toggles, the master control switch, and per-app prompts are bypassed.")
+                iconName: "warning"
+                iconColor: Theme.warning
+                trailingBadge: I18n.tr("Unrestricted")
+                trailingBadgeColor: Theme.warning
+            }
+
+            SettingsRow {
+                visible: AgentApprovalService.approvalMode === "custom"
+                title: I18n.tr("Custom")
+                subtitle: I18n.tr("Use the capability toggles and remembered per-app Ask / Allow / Deny rules below.")
+                iconName: "tune"
+                iconColor: Theme.primary
+            }
 
             SettingsRow {
                 title: I18n.tr("Pending approvals")
-                subtitle: AgentApprovalService.pendingCount > 0 ? I18n.tr("The Agent is paused until you review the request") : I18n.tr("No Agent permission requests are waiting")
+                subtitle: AgentApprovalService.pendingCount > 0
+                    ? I18n.tr("The Agent is paused until you review the current capability request")
+                    : I18n.tr("No Agent permission requests are waiting")
                 iconName: AgentApprovalService.pendingCount > 0 ? "shield_question" : "verified_user"
                 iconColor: AgentApprovalService.pendingCount > 0 ? Theme.warning : Theme.primary
                 trailingBadge: String(AgentApprovalService.pendingCount)
                 trailingBadgeColor: AgentApprovalService.pendingCount > 0 ? Theme.warning : Theme.surfaceVariantText
 
-                DankButton {
+                CyButton {
                     visible: AgentApprovalService.pendingCount > 0
                     text: I18n.tr("Review")
                     iconName: "visibility"
@@ -285,37 +791,69 @@ Item {
 
             SettingsRow {
                 visible: AgentApprovalService.appPolicies.length === 0
-                title: I18n.tr("Ask by default")
-                subtitle: I18n.tr("Third-party app reading, control, and screenshots ask for consent until you choose Always allow or Always deny")
+                title: I18n.tr("No remembered application rules")
+                subtitle: I18n.tr("When you choose Always allow, or set a rule manually, it appears here and can be changed later.")
                 iconName: "privacy_tip"
             }
 
             Repeater {
                 model: AgentApprovalService.appPolicies
 
-                delegate: SettingsRow {
+                delegate: Column {
+                    id: appPolicyEditor
                     required property var modelData
 
-                    title: String(modelData?.appName || modelData?.appKey || I18n.tr("Application"))
-                    subtitle: {
-                        const permissions = modelData?.permissions || {};
-                        const parts = [];
-                        for (const scope of Object.keys(permissions)) {
-                            const mode = String(permissions[scope] || "ask");
-                            const modeLabel = mode === "allow" ? I18n.tr("Always allow") : I18n.tr("Always deny");
-                            parts.push(`${AgentApprovalService.scopeLabel(scope)}: ${modeLabel}`);
-                        }
-                        return parts.length > 0 ? parts.join(" · ") : I18n.tr("Ask every time");
-                    }
-                    iconName: "apps"
+                    width: parent.width
+                    spacing: Theme.spacingXS
+                    readonly property var editableScopes: ["app.read", "app.control", "screen.capture"]
+                    readonly property var permissions: modelData?.permissions || {}
 
-                    DankButton {
-                        text: I18n.tr("Reset")
-                        iconName: "restart_alt"
-                        onClicked: AgentApprovalService.clearPolicy(String(modelData.appKey || ""), (success, error) => {
-                            if (!success)
-                                ToastService.showError(I18n.tr("Failed to reset application permission"), error);
-                        })
+                    SettingsRow {
+                        width: parent.width
+                        title: String(appPolicyEditor.modelData?.appName || appPolicyEditor.modelData?.appKey || I18n.tr("Application"))
+                        subtitle: String(appPolicyEditor.modelData?.appKey || "")
+                        iconName: "apps"
+
+                        CyButton {
+                            text: I18n.tr("Reset")
+                            iconName: "restart_alt"
+                            onClicked: AgentApprovalService.clearPolicy(String(appPolicyEditor.modelData?.appKey || ""), (success, error) => {
+                                if (!success)
+                                    ToastService.showError(I18n.tr("Failed to reset application permission"), error);
+                            })
+                        }
+                    }
+
+                    Repeater {
+                        model: appPolicyEditor.editableScopes
+
+                        delegate: SettingsDropdownRow {
+                            required property string modelData
+
+                            width: appPolicyEditor.width
+                            text: AgentApprovalService.scopeLabel(modelData)
+                            description: modelData === "app.read"
+                                ? I18n.tr("Read semantic UI and accessibility state")
+                                : modelData === "app.control"
+                                    ? I18n.tr("Click, type, scroll and operate the application")
+                                    : I18n.tr("Capture screenshots of the application or desktop")
+                            options: [I18n.tr("Ask"), I18n.tr("Allow"), I18n.tr("Deny")]
+                            currentValue: AgentApprovalService.policyModeLabel(appPolicyEditor.permissions[modelData] || "ask")
+                            enabled: !AgentApprovalService.responding
+                            onValueChanged: value => {
+                                const mode = AgentApprovalService.policyModeFromLabel(value);
+                                AgentApprovalService.setPolicy(
+                                    String(appPolicyEditor.modelData?.appKey || ""),
+                                    String(appPolicyEditor.modelData?.appName || ""),
+                                    String(modelData),
+                                    mode,
+                                    (success, error) => {
+                                        if (!success)
+                                            ToastService.showError(I18n.tr("Failed to update application permission"), error);
+                                    }
+                                );
+                            }
+                        }
                     }
                 }
             }
@@ -372,7 +910,7 @@ Item {
                 subtitle: AgentAssistantService.keySource === "environment" ? I18n.tr("Managed by the CyShell process environment") : I18n.tr("Saved securely in the desktop keyring, never in the CyShell config file")
                 iconName: "key"
 
-                DankTextField {
+                CyTextField {
                     id: apiKeyField
                     width: Math.min(300, parent.width * 0.46)
                     placeholderText: AgentAssistantService.hasApiKey ? I18n.tr("Key already saved") : I18n.tr("Optional for local providers")
@@ -390,7 +928,7 @@ Item {
                 Row {
                     spacing: Theme.spacingS
 
-                    DankButton {
+                    CyButton {
                         text: AgentAssistantService.configBusy ? I18n.tr("Saving...") : I18n.tr("Save")
                         iconName: "save"
                         enabled: !AgentAssistantService.configBusy && endpointField.value.trim().length > 0
@@ -404,7 +942,7 @@ Item {
                         })
                     }
 
-                    DankButton {
+                    CyButton {
                         text: I18n.tr("Discover models")
                         iconName: "manage_search"
                         enabled: !AgentAssistantService.configBusy && AgentAssistantService.configured
@@ -423,7 +961,7 @@ Item {
                         })
                     }
 
-                    DankButton {
+                    CyButton {
                         visible: AgentAssistantService.hasApiKey && AgentAssistantService.keySource !== "environment"
                         text: I18n.tr("Clear key")
                         iconName: "key_off"
@@ -502,7 +1040,7 @@ Item {
                     iconName: "settings_backup_restore"
                     iconColor: Theme.primary
 
-                    DankButton {
+                    CyButton {
                         text: I18n.tr("Undo")
                         iconName: "undo"
                         enabled: AgentControlService.controlEnabled && !AgentControlService.busy
@@ -533,7 +1071,7 @@ Item {
                 trailingBadge: I18n.tr("%1 recent", "recent Agent activity count").arg(AgentControlService.recentActivity.length)
                 trailingBadgeColor: Theme.primary
 
-                DankButton {
+                CyButton {
                     visible: AgentControlService.recentActivity.length > 0
                     text: I18n.tr("Clear")
                     iconName: "delete_sweep"
@@ -580,7 +1118,7 @@ Item {
                 iconName: "front_hand"
                 iconColor: Theme.error
 
-                DankButton {
+                CyButton {
                     text: I18n.tr("Stop control")
                     iconName: "stop_circle"
                     enabled: AgentControlService.available && !AgentControlService.busy
@@ -594,4 +1132,5 @@ Item {
             }
         }
     }
+
 }

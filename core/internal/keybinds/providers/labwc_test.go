@@ -53,14 +53,14 @@ func TestLabwcCheatSheetUsesEffectiveManagedOverride(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if sheet.Provider != "labwc" || !sheet.DMSBindsIncluded {
+	if sheet.Provider != "labwc" || !sheet.CyShellBindsIncluded {
 		t.Fatalf("unexpected sheet metadata: %#v", sheet)
 	}
 	var foundAgent, foundWorkspace bool
 	for _, bind := range sheet.Binds["Execute"] {
 		if bind.Key == "Super+A" {
 			foundAgent = true
-			if bind.Action != "spawn dms agent open" || bind.Description != "Open the native Agent" || bind.Source != "dms" {
+			if bind.Action != "spawn dms agent open" || bind.Description != "Open the native Agent" || bind.Source != "cyshell" {
 				t.Fatalf("unexpected managed bind: %#v", bind)
 			}
 		}
@@ -258,4 +258,101 @@ func TestLabwcRefusesToRewriteMalformedConfig(t *testing.T) {
 	if string(after) != string(before) {
 		t.Fatalf("malformed config was modified:\nbefore=%s\nafter=%s", before, after)
 	}
+}
+
+func TestLabwcSetBindPreservesExistingMultiAction(t *testing.T) {
+	path := writeLabwcFixture(t, `<?xml version="1.0"?>
+<labwc_config><keyboard>
+  <keybind key="W-s"><action name="Focus" /><action name="Execute" command="cyshell ipc call launcher toggle" /></keybind>
+</keyboard></labwc_config>
+`)
+	provider := NewLabwcProvider(path)
+	action := "Focus ; spawn cyshell ipc call launcher toggle"
+	if err := provider.SetBind("Super+S", action, "Start menu", nil); err != nil {
+		t.Fatal(err)
+	}
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var doc labwcDocument
+	if err := xml.Unmarshal(data, &doc); err != nil {
+		t.Fatal(err)
+	}
+	var found *labwcXMLKeybind
+	for i := range doc.Keyboard.Keybinds {
+		bind := &doc.Keyboard.Keybinds[i]
+		if bind.Key == "W-s" {
+			found = bind
+		}
+	}
+	if found == nil || len(found.Actions) != 2 || found.Actions[0].Name != "Focus" || found.Actions[1].Name != "Execute" {
+		t.Fatalf("multi-action override was not preserved: %#v\n%s", found, data)
+	}
+	sheet, err := provider.GetCheatSheet()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, bind := range sheet.Binds["Window"] {
+		if bind.Key == "Super+S" {
+			if bind.Action != action || bind.Source != "cyshell" || !bind.HasDefault {
+				t.Fatalf("unexpected effective multi-action bind: %#v", bind)
+			}
+			return
+		}
+	}
+	t.Fatalf("multi-action bind missing: %#v", sheet.Binds)
+}
+
+func TestLabwcActionListKeepsQuotedShellSemicolon(t *testing.T) {
+	actions, err := labwcActionsFromString(`spawn sh -c "notify-send one ; notify-send two"`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(actions) != 1 || actions[0].Name != "Execute" || !strings.Contains(actions[0].Command, "one ; notify") {
+		t.Fatalf("quoted shell semicolon was split as multiple actions: %#v", actions)
+	}
+}
+
+func TestLabwcRemoveBaseMasksAndResetRestores(t *testing.T) {
+	path := writeLabwcFixture(t, `<?xml version="1.0"?>
+<labwc_config><keyboard>
+  <keybind key="W-a"><action name="Close" /></keybind>
+</keyboard></labwc_config>
+`)
+	provider := NewLabwcProvider(path)
+	if err := provider.RemoveBind("Super+A"); err != nil {
+		t.Fatal(err)
+	}
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(data), `name="None"`) {
+		t.Fatalf("base shortcut was not masked with None:\n%s", data)
+	}
+	sheet, err := provider.GetCheatSheet()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, binds := range sheet.Binds {
+		for _, bind := range binds {
+			if bind.Key == "Super+A" {
+				t.Fatalf("masked base shortcut is still effective: %#v", bind)
+			}
+		}
+	}
+	if err := provider.ResetBind("Super+A"); err != nil {
+		t.Fatal(err)
+	}
+	sheet, err = provider.GetCheatSheet()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, bind := range sheet.Binds["Window"] {
+		if bind.Key == "Super+A" && bind.Action == "Close" && bind.Source == "config" {
+			return
+		}
+	}
+	t.Fatalf("reset did not restore base shortcut: %#v", sheet.Binds)
 }

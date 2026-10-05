@@ -6,7 +6,7 @@ import qs.Modules.Plugins
 PluginComponent {
     id: root
     horizontalBarPill: Component {
-        DankIcon {
+        CyIcon {
             name: "sticky_note_2"
             size: root.iconSize
         }
@@ -22,12 +22,12 @@ PluginComponent {
                 color: Theme.surfaceText
                 font.pixelSize: Theme.fontSizeLarge
             }
-            DankTextField {
+            CyTextField {
                 width: parent.width - Theme.spacingM * 2
                 placeholderText: I18n.trFor("attachedPanelExample", "Type here…")
                 Accessible.name: I18n.trFor("attachedPanelExample", "Notes")
             }
-            DankButton {
+            CyButton {
                 text: I18n.trFor("attachedPanelExample", "Close")
                 onClicked: root.surfaceContext.dismissExpansion()
             }

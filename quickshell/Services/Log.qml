@@ -16,11 +16,11 @@ Singleton {
         Fatal
     }
 
-    readonly property int level: _parseLevel(Quickshell.env("DMS_LOG_LEVEL"))
+    readonly property int level: _parseLevel(Quickshell.env("CYSHELL_LOG_LEVEL"))
     readonly property string levelName: _levelName(level)
 
-    readonly property string _logFilePath: Quickshell.env("DMS_LOG_FILE") || ""
-    readonly property bool _useColor: !Quickshell.env("NO_COLOR") && Quickshell.env("DMS_LOG_NO_COLOR") !== "1"
+    readonly property string _logFilePath: Quickshell.env("CYSHELL_LOG_FILE") || ""
+    readonly property bool _useColor: !Quickshell.env("NO_COLOR") && Quickshell.env("CYSHELL_LOG_NO_COLOR") !== "1"
 
     function scoped(module) {
         return {

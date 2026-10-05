@@ -1,4 +1,4 @@
-module github.com/AvengeMedia/DankMaterialShell/core
+module github.com/Cytech-Team/CyShell-Desktop/core
 
 go 1.26.5
 

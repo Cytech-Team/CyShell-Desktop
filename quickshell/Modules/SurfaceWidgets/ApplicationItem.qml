@@ -15,6 +15,10 @@ Item {
             dockButton?.activate();
     }
     readonly property var hoveredButton: dockButton?.showTooltip ? dockButton : null
+    onHoveredButtonChanged: {
+        if (strip?.handleButtonHover)
+            strip.handleButtonHover(hoveredButton);
+    }
     readonly property bool interactionActive: isDragging
     required property var modelData
     required property int index

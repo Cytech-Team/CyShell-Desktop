@@ -1,4 +1,4 @@
-/* DMS Matugen Zen Browser Theme */
+/* CyShell Matugen Zen Browser Theme */
 :root {
   --zen-primary-color: {{colors.primary_container.default.hex}} !important;
   --toolbarbutton-icon-fill: {{colors.primary.default.hex}} !important;

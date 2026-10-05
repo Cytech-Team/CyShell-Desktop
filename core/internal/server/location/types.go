@@ -3,8 +3,8 @@ package location
 import (
 	"sync"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/geolocation"
 	"github.com/AvengeMedia/dankgo/syncmap"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/geolocation"
 )
 
 type State struct {

@@ -3,7 +3,7 @@ import qs.Common
 import qs.Services
 import qs.Widgets
 
-DankOSD {
+CyOSD {
     id: root
 
     osdWidth: Theme.osdHeight
@@ -14,25 +14,25 @@ DankOSD {
     property bool lastCapsLockState: false
 
     Connections {
-        target: DMSService
+        target: CyShellService
 
         function onCapsLockStateChanged() {
-            if (lastCapsLockState !== DMSService.capsLockState && SettingsData.osdCapsLockEnabled) {
+            if (lastCapsLockState !== CyShellService.capsLockState && SettingsData.osdCapsLockEnabled) {
                 root.show();
             }
-            lastCapsLockState = DMSService.capsLockState;
+            lastCapsLockState = CyShellService.capsLockState;
         }
     }
 
     Component.onCompleted: {
-        lastCapsLockState = DMSService.capsLockState;
+        lastCapsLockState = CyShellService.capsLockState;
     }
 
     content: Item {
         OsdIcon {
             tonal: false
             anchors.centerIn: parent
-            iconName: DMSService.capsLockState ? "shift_lock" : "shift_lock_off"
+            iconName: CyShellService.capsLockState ? "shift_lock" : "shift_lock_off"
             iconColor: Theme.primary
         }
     }

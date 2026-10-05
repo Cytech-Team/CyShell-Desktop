@@ -4,7 +4,7 @@ import qs.Modals.Common
 import qs.Widgets
 import qs.Modules.Settings.Widgets
 
-DankFloatingWindow {
+CyFloatingWindow {
     id: root
 
     property var parentModal: null
@@ -158,16 +158,17 @@ DankFloatingWindow {
             }
         }
 
-        DankWindowHeader {
+        CyWindowHeader {
             id: headerArea
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: parent.top
-            controls: windowControls
-            title: root.headerTitle
+            controls: root.useServerSideTitlebar ? null : windowControls
+            title: root.useServerSideTitlebar ? "" : root.headerTitle
+            showDivider: !root.useServerSideTitlebar
             onCloseRequested: root.hide()
 
-            DankRefreshButton {
+            CyRefreshButton {
                 buttonSize: Theme.buttonHeightXXS
                 iconSize: Theme.iconSizeSmall
                 iconColor: Theme.surfaceText
@@ -197,7 +198,7 @@ DankFloatingWindow {
                 spacing: Theme.spacingS
             }
 
-            DankSearchField {
+            CySearchField {
                 id: browserSearchField
                 anchors.left: parent.left
                 anchors.right: parent.right
@@ -238,7 +239,7 @@ DankFloatingWindow {
                     anchors.fill: parent
                     visible: root.isLoading
 
-                    DankSpinner {
+                    CySpinner {
                         anchors.centerIn: parent
                         running: root.isLoading
                     }

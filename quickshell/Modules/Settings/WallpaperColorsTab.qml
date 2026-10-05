@@ -52,8 +52,8 @@ Column {
             "tertiary": palette.tertiary
         };
     })
-    readonly property string themesDir: Quickshell.env("HOME") + "/.config/DankMaterialShell/themes"
-    readonly property var installedRegistryThemes: DMSService.installedThemes
+    readonly property string themesDir: Quickshell.env("HOME") + "/.config/CyShell/themes"
+    readonly property var installedRegistryThemes: CyShellService.installedThemes
     readonly property var registryOptions: {
         const mode = Theme.isLightMode ? "light" : "dark";
         return installedRegistryThemes.map(theme => {
@@ -77,7 +77,7 @@ Column {
         return "";
     }
     readonly property bool registryGridShown: !dynamicTheme && !genericTheme && registryOptions.length > 0
-    readonly property bool registryPending: !dynamicTheme && !genericTheme && DMSService.dmsAvailable && !DMSService.installedThemesLoaded
+    readonly property bool registryPending: !dynamicTheme && !genericTheme && CyShellService.backendAvailable && !CyShellService.installedThemesLoaded
     readonly property string matugenPreviewKey: MatugenPreviewService.key
     readonly property bool matugenAvailable: Theme.matugenAvailable
     onMatugenPreviewKeyChanged: refreshPreviews()
@@ -103,8 +103,8 @@ Column {
         SettingsData.detectAvailableIconThemes();
         SettingsData.detectAvailableCursorThemes();
         refreshPreviews();
-        if (DMSService.dmsAvailable)
-            DMSService.listInstalledThemes();
+        if (CyShellService.backendAvailable)
+            CyShellService.listInstalledThemes();
     }
 
     function refreshPreviews() {
@@ -268,7 +268,7 @@ Column {
                         width: parent.width
                         spacing: Theme.spacingS
 
-                        DankButtonGroup {
+                        CyButtonGroup {
                             width: parent.width - scheduleButton.width - parent.spacing
                             fillWidth: true
                             checkEnabled: false
@@ -296,7 +296,7 @@ Column {
                             }
                         }
 
-                        DankActionButton {
+                        CyActionButton {
                             id: scheduleButton
                             iconName: "schedule"
                             anchors.verticalCenter: parent.verticalCenter
@@ -363,7 +363,7 @@ Column {
 
                         FocusRing {}
 
-                        DankPaletteSwatch {
+                        CyPaletteSwatch {
                             id: themeSwatch
                             width: Theme.avatarSize
                             height: Theme.avatarSize
@@ -401,7 +401,7 @@ Column {
                             }
                         }
 
-                        DankIcon {
+                        CyIcon {
                             id: themeChevron
                             name: "chevron_right"
                             size: Theme.iconSize
@@ -628,7 +628,7 @@ Column {
                     color: Theme.surfaceText
                 }
 
-                DankFilterChips {
+                CyFilterChips {
                     width: parent.width
                     multiSelect: true
                     model: SessionData.availableWallpaperTransitions.filter(t => t !== "none").map(t => ({
@@ -746,17 +746,6 @@ Column {
                 SettingsData.setIconThemeForMode(value, true);
                 root.warnIfMissingQtTheme();
             }
-        }
-    }
-
-    Loader {
-        width: parent.width
-        active: CompositorService.isAqueous
-        sourceComponent: AqueousAppearanceSettings {
-            cursor: true
-            settingKey: "aqueousCursor"
-            title: I18n.tr("Aqueous cursor", "Aqueous compositor cursor synchronization settings")
-            visible: CompositorService.isAqueous
         }
     }
 
@@ -890,7 +879,7 @@ Column {
             settingKey: "blurredWallpaperLayer"
             visible: CompositorService.isNiri
             text: I18n.tr("Blur layer")
-            description: I18n.tr("Layer namespace dms:blurwallpaper, needs a niri blur rule")
+            description: I18n.tr("Layer namespace cyshell:blurwallpaper, needs a niri blur rule")
             checked: SettingsData.blurredWallpaperLayer
             onToggled: checked => SettingsData.set("blurredWallpaperLayer", checked)
         }

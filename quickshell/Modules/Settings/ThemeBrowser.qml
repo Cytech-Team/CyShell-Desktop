@@ -154,7 +154,7 @@ RegistryBrowserWindow {
         });
         operationFailed = false;
         operationMessage = I18n.tr("Installing: %1", "installation progress").arg(themeName);
-        DMSService.installTheme(themeId, response => {
+        CyShellService.installTheme(themeId, response => {
             if (response.error) {
                 finishOperation(themeId, I18n.tr("Install failed: %1", "installation error").arg(response.error), true);
                 return;
@@ -171,7 +171,7 @@ RegistryBrowserWindow {
             var theme = installedThemes[i];
             if (theme.id === themeId) {
                 var sourceDir = theme.sourceDir || theme.id;
-                var themePath = Quickshell.env("HOME") + "/.config/DankMaterialShell/themes/" + sourceDir + "/theme.json";
+                var themePath = Quickshell.env("HOME") + "/.config/CyShell/themes/" + sourceDir + "/theme.json";
                 SettingsData.set("customThemeFile", themePath);
                 Theme.switchThemeCategory("registry", "custom");
                 Theme.switchTheme("custom", true, true);
@@ -189,7 +189,7 @@ RegistryBrowserWindow {
         });
         operationFailed = false;
         operationMessage = I18n.tr("Uninstalling: %1", "uninstallation progress").arg(themeName);
-        DMSService.uninstallTheme(themeId, response => {
+        CyShellService.uninstallTheme(themeId, response => {
             if (response.error) {
                 finishOperation(themeId, I18n.tr("Uninstall failed: %1", "uninstallation error").arg(response.error), true);
                 return;
@@ -202,7 +202,7 @@ RegistryBrowserWindow {
     function refreshThemes() {
         isLoading = true;
         loadError = "";
-        DMSService.listThemes(response => {
+        CyShellService.listThemes(response => {
             isLoading = false;
             if (!visible)
                 return;
@@ -213,7 +213,7 @@ RegistryBrowserWindow {
             allThemes = response.result || [];
             updateFilteredThemes();
         });
-        DMSService.listInstalledThemes(response => {
+        CyShellService.listInstalledThemes(response => {
             if (!response.error)
                 return;
             pendingApplyThemeId = "";
@@ -270,7 +270,7 @@ RegistryBrowserWindow {
     }
 
     Connections {
-        target: DMSService
+        target: CyShellService
         function onThemesListReceived(themes) {
             if (!root.visible)
                 return;
@@ -307,7 +307,7 @@ RegistryBrowserWindow {
             anchors.right: parent.right
             spacing: Theme.spacingS
 
-            DankFilterChips {
+            CyFilterChips {
                 width: parent.width
                 model: [I18n.tr("All"), I18n.tr("Installed"), I18n.tr("Available")]
                 currentIndex: root.filterIndex
@@ -330,7 +330,7 @@ RegistryBrowserWindow {
                 color: Theme.error
                 wrapMode: Text.Wrap
             }
-            DankButton {
+            CyButton {
                 visible: root.loadError !== ""
                 text: I18n.tr("Retry", "retry failed action button")
                 iconName: "refresh"
@@ -340,7 +340,7 @@ RegistryBrowserWindow {
     ]
 
     listContent: [
-        DankGridView {
+        CyGridView {
             id: themeGrid
 
             property int columns: Math.max(1, Math.floor(width / (Theme.smallBreakpoint / 2 + Theme.spacingXL * 2)))

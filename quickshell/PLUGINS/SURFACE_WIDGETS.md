@@ -25,7 +25,7 @@ the context does not change their existing persistence contract.
 
 Define both `horizontalBarPill` and `verticalBarPill`. Components must fit the supplied
 cross-axis thickness and expose a useful implicit primary-axis size. Avoid assuming
-that the parent is a DankBar or that the widget is the only instance. Actions and
+that the parent is a CyBar or that the widget is the only instance. Actions and
 popouts use the invoking instance's display; dock Popout mode resolves the matching bar location. The existing public
 `BarWidgetService.getWidget(type, screen)` lookup selects deterministically by owner
 ID (bars before docks), then screen name. Its optional third argument selects an

@@ -5,11 +5,12 @@ import (
 	"fmt"
 	"math"
 	"os"
+	"path/filepath"
 	"strings"
 	"syscall"
 	"time"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/log"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/log"
 	"golang.org/x/sys/unix"
 )
 
@@ -144,6 +145,26 @@ func (b *DDCBackend) probeDDCDevice(bus int) (*ddcDevice, error) {
 	return dev, nil
 }
 
+func connectorForI2CBus(bus int) string {
+	paths, err := filepath.Glob("/sys/class/drm/card*-*/ddc")
+	if err != nil {
+		return ""
+	}
+	targetBus := fmt.Sprintf("i2c-%d", bus)
+	for _, ddcPath := range paths {
+		resolved, err := filepath.EvalSymlinks(ddcPath)
+		if err != nil || filepath.Base(resolved) != targetBus {
+			continue
+		}
+		connector := filepath.Base(filepath.Dir(ddcPath))
+		if dash := strings.Index(connector, "-"); dash >= 0 && dash+1 < len(connector) {
+			connector = connector[dash+1:]
+		}
+		return connector
+	}
+	return ""
+}
+
 func (b *DDCBackend) getDDCName(bus int) string {
 	sysfsPath := fmt.Sprintf("/sys/class/i2c-adapter/i2c-%d/name", bus)
 	data, err := os.ReadFile(sysfsPath)
@@ -192,6 +213,7 @@ func (b *DDCBackend) GetDevices() ([]Device, error) {
 			Max:            dev.max,
 			CurrentPercent: dev.lastBrightness,
 			Backend:        "ddc",
+			Connector:      connectorForI2CBus(dev.bus),
 		})
 		return true
 	})

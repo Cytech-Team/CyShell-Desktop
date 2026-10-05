@@ -35,11 +35,15 @@ SettingsRow {
         dropdown.closeDropdownMenu();
     }
 
+    function syncCurrentValue() {
+        dropdown.currentValue = currentValue;
+    }
+
     title: text
     subtitle: description
     onCurrentValueChanged: dropdown.currentValue = currentValue
 
-    DankDropdown {
+    CyDropdown {
         id: dropdown
         enabled: root.enabled
         Accessible.name: root.text

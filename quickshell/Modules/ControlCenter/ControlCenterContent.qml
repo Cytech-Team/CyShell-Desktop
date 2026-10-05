@@ -21,6 +21,8 @@ FocusScope {
     readonly property real bodyHeight: detailPage.shownSection !== "" ? Math.max(gridHeight, detailPage.preferredHeight) : gridHeight
     readonly property real targetImplicitHeight: {
         let total = CcMetrics.sheetPadding * 2 + headerPane.height + Theme.spacingS + bodyHeight;
+        if (quickFooter.visible)
+            total += Theme.spacingS + quickFooter.height;
         if (host.editMode)
             total += Theme.spacingS + editControls.height;
         return total;
@@ -34,7 +36,7 @@ FocusScope {
     readonly property int gridColumns: host.gridColumns ?? Math.min(CcMetrics.gridColumns, gridColumnCap)
     readonly property real availableGridHeight: (host.availableHeight ?? (host.triggerScreen?.height ?? CcMetrics.fallbackScreenHeight) - CcMetrics.maxHeightInset) - CcMetrics.sheetPadding * 2 - CcMetrics.headerHeight - Theme.spacingS * 2 - editControls.height
     readonly property real editGutter: host.editGutter ?? 0
-    readonly property DankPanelResizer panelResizer: DankPanelResizer {
+    readonly property CyPanelResizer panelResizer: CyPanelResizer {
         popout: root.host
         gutter: root.editGutter
         stepWidth: CcMetrics.columnWidth + CcMetrics.gridGap
@@ -181,7 +183,7 @@ FocusScope {
         forceActiveFocus();
     }
 
-    DankGridEditChrome {
+    CyGridEditChrome {
         id: panelChrome
 
         anchors.fill: parent
@@ -231,7 +233,7 @@ FocusScope {
         }
     }
 
-    DankFlickable {
+    CyFlickable {
         id: contentFlickable
 
         anchors.fill: parent
@@ -323,6 +325,62 @@ FocusScope {
                     onPortSelectorRequested: node => root.showPortSelector(node)
                     onBackRequested: root.goBack()
                     onCollapseRequested: root.host.collapseAll()
+                }
+            }
+
+            Rectangle {
+                id: quickFooter
+                width: parent.width
+                height: 72
+                radius: Theme.cornerRadiusL
+                color: Theme.withAlpha(Theme.surfaceContainer, 0.32)
+                visible: !root.host.editMode && !root.pageOpen
+
+                Rectangle {
+                    anchors.top: parent.top
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    height: 1
+                    color: Theme.withAlpha(Theme.outline, 0.5)
+                }
+
+                Row {
+                    anchors.centerIn: parent
+                    spacing: 56
+
+                    CyActionButton {
+                        buttonSize: 44
+                        iconSize: Theme.iconSizeLarge
+                        iconName: "power_settings_new"
+                        backgroundColor: Theme.withAlpha(Theme.surfaceContainerHigh, 0.85)
+                        onClicked: {
+                            const loader = root.host.powerMenuModalLoader;
+                            if (!loader) return;
+                            loader.active = true;
+                            if (!loader.item) return;
+                            const bounds = Qt.rect(root.host.alignedX, root.host.alignedY, root.host.popupWidth, root.host.popupHeight);
+                            loader.item.openFromControlCenter(bounds, root.host.screen);
+                        }
+                    }
+
+                    CyActionButton {
+                        buttonSize: 44
+                        iconSize: Theme.iconSizeLarge
+                        iconName: "settings"
+                        backgroundColor: Theme.withAlpha(Theme.surfaceContainerHigh, 0.85)
+                        onClicked: root.host.openSettings()
+                    }
+
+                    CyActionButton {
+                        buttonSize: 44
+                        iconSize: Theme.iconSizeLarge
+                        iconName: "lock"
+                        backgroundColor: Theme.withAlpha(Theme.surfaceContainerHigh, 0.85)
+                        onClicked: {
+                            root.host.close();
+                            root.host.lockRequested();
+                        }
+                    }
                 }
             }
 

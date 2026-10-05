@@ -7,8 +7,8 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/deps"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/privesc"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/deps"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/privesc"
 )
 
 var GentooGlobalUseFlags = []string{
@@ -93,7 +93,7 @@ func (g *GentooDistribution) DetectDependencies(ctx context.Context, wm deps.Win
 func (g *GentooDistribution) DetectDependenciesWithTerminal(ctx context.Context, wm deps.WindowManager, terminal deps.Terminal) ([]deps.Dependency, error) {
 	var dependencies []deps.Dependency
 
-	dependencies = append(dependencies, g.detectDMS())
+	dependencies = append(dependencies, g.detectCyShell())
 
 	dependencies = append(dependencies, g.detectSpecificTerminal(terminal))
 
@@ -126,18 +126,12 @@ func (g *GentooDistribution) detectXDGPortal() deps.Dependency {
 	return g.detectPackage("xdg-desktop-portal-gtk", "Desktop integration portal for GTK", g.packageInstalled("sys-apps/xdg-desktop-portal-gtk"))
 }
 
-func (g *GentooDistribution) detectDMS() deps.Dependency {
-	dep := deps.Dependency{
-		Name:        "dms (DankMaterialShell)",
-		Status:      deps.StatusMissing,
-		Description: "Desktop Management System configuration",
-		Required:    true,
-		CanToggle:   false,
+func (g *GentooDistribution) detectCyShell() deps.Dependency {
+	status := deps.StatusMissing
+	if g.commandExists("cyshell") {
+		status = deps.StatusInstalled
 	}
-	if g.packageInstalled("gui-apps/dankmaterialshell") {
-		dep.Status = deps.StatusInstalled
-	}
-	return dep
+	return deps.Dependency{Name: "CyShell", Status: status, Description: "CyShell desktop shell and configuration", Required: true, CanToggle: false}
 }
 
 func (g *GentooDistribution) detectXwaylandSatellite() deps.Dependency {
@@ -172,10 +166,10 @@ func (g *GentooDistribution) GetPackageMappingWithVariants(wm deps.WindowManager
 		"qtwayland":     {Name: "dev-qt/qtwayland", Repository: RepoTypeSystem},
 		"mesa":          {Name: "media-libs/mesa", Repository: RepoTypeSystem, UseFlags: "opengl vulkan"},
 
-		"quickshell":              g.getQuickshellMapping(variants["quickshell"]),
-		"matugen":                 {Name: "x11-misc/matugen", Repository: RepoTypeGURU, AcceptKeywords: archKeyword},
-		"dms (DankMaterialShell)": g.getDmsMapping(),
-		"danksearch":              {Name: "gui-apps/danksearch", Repository: RepoTypeGURU, AcceptKeywords: archKeyword},
+		"quickshell": g.getQuickshellMapping(variants["quickshell"]),
+		"matugen":    {Name: "x11-misc/matugen", Repository: RepoTypeGURU, AcceptKeywords: archKeyword},
+		"CyShell":    g.getCyShellMapping(),
+		"danksearch": {Name: "gui-apps/danksearch", Repository: RepoTypeGURU, AcceptKeywords: archKeyword},
 	}
 
 	switch wm {
@@ -199,8 +193,8 @@ func (g *GentooDistribution) getQuickshellMapping(_ deps.PackageVariant) Package
 	return PackageMapping{Name: "gui-apps/quickshell", Repository: RepoTypeGURU, UseFlags: "breakpad jemalloc sockets wayland layer-shell session-lock toplevel-management screencopy X pipewire tray mpris pam hyprland hyprland-global-shortcuts hyprland-focus-grab i3 i3-ipc bluetooth", AcceptKeywords: "**"}
 }
 
-func (g *GentooDistribution) getDmsMapping() PackageMapping {
-	return PackageMapping{Name: "gui-apps/dankmaterialshell", Repository: RepoTypeGURU, AcceptKeywords: g.getArchKeyword()}
+func (g *GentooDistribution) getCyShellMapping() PackageMapping {
+	return PackageMapping{Name: "cyshell", Repository: RepoTypeManual, BuildFunc: "cyshell"}
 }
 
 func (g *GentooDistribution) getHyprlandMapping(_ deps.PackageVariant) PackageMapping {
@@ -439,8 +433,8 @@ func (g *GentooDistribution) InstallPackages(ctx context.Context, dependencies [
 		g.log(fmt.Sprintf("Warning: failed to write window manager config: %v", err))
 	}
 
-	if err := g.EnableDMSService(ctx, wm); err != nil {
-		g.log(fmt.Sprintf("Warning: failed to enable dms service: %v", err))
+	if err := g.EnableCyShellService(ctx, wm); err != nil {
+		g.log(fmt.Sprintf("Warning: failed to enable cyshell service: %v", err))
 	}
 
 	progressChan <- InstallProgressMsg{

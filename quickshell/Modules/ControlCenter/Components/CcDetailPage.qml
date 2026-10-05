@@ -127,7 +127,7 @@ Item {
             anchors.top: parent.top
             height: CcMetrics.pageHeaderHeight
 
-            DankActionButton {
+            CyActionButton {
                 id: backButton
                 anchors.left: parent.left
                 anchors.verticalCenter: parent.verticalCenter

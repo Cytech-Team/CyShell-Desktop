@@ -1,7 +1,7 @@
 .pragma library
 .import "./SettingsSpec.js" as SpecModule
-.import "../../DankCommon/Common/settings/SpecUtil.js" as Util
-.import "../../DankCommon/Common/Shape.js" as Shape
+.import "../../CyCommon/Common/settings/SpecUtil.js" as Util
+.import "../../CyCommon/Common/Shape.js" as Shape
 .import "./BarWidgetDefaults.js" as WidgetDefaults
 .import "./DockConfig.js" as DockConfig
 
@@ -237,35 +237,35 @@ function migrateToVersion(obj, targetVersion) {
 
             var defaultConfig = {
                 id: "default",
-                name: "CyBar",
+                name: "CyBar Taskbar",
                 enabled: true,
                 position: position,
                 screenPreferences: ["all"],
                 showOnLastDisplay: true,
-                leftWidgets: settings.dankBarLeftWidgets || ["launcherButton", "appsDock"],
+                leftWidgets: settings.dankBarLeftWidgets || [{ id: "cyStart", enabled: true }, { id: "appsDock", enabled: true, appsDockHideIndicators: false, appsDockColorizeActive: true, appsDockEnlargePercentage: 100, appsDockIconSizePercentage: 120, appsDockIndicatorStyle: "taskbar", appsDockEnlargeOnHover: false, appsDockSpacing: 2, runningAppsCompactMode: true }],
                 centerWidgets: settings.dankBarCenterWidgets || [],
-                rightWidgets: settings.dankBarRightWidgets || ["systemTray", "controlCenterButton", "battery", "clock", "notificationButton"],
-                spacing: settings.dankBarSpacing !== undefined ? settings.dankBarSpacing : 4,
-                innerPadding: settings.dankBarInnerPadding !== undefined ? settings.dankBarInnerPadding : 4,
+                rightWidgets: settings.dankBarRightWidgets || ["systemTray", "controlCenterButton", "cytechLanguage", "cytechClock", "notificationButton", "cytechPeek"],
+                spacing: settings.dankBarSpacing !== undefined ? settings.dankBarSpacing : 0,
+                innerPadding: settings.dankBarInnerPadding !== undefined ? settings.dankBarInnerPadding : 6,
                 bottomGap: settings.dankBarBottomGap !== undefined ? settings.dankBarBottomGap : 0,
                 transparency: settings.dankBarTransparency !== undefined ? settings.dankBarTransparency : 1.0,
                 widgetTransparency: settings.dankBarWidgetTransparency !== undefined ? settings.dankBarWidgetTransparency : 1.0,
-                squareCorners: settings.dankBarSquareCorners !== undefined ? settings.dankBarSquareCorners : false,
+                squareCorners: settings.dankBarSquareCorners !== undefined ? settings.dankBarSquareCorners : true,
                 noBackground: settings.dankBarNoBackground !== undefined ? settings.dankBarNoBackground : false,
                 gothCornersEnabled: settings.dankBarGothCornersEnabled !== undefined ? settings.dankBarGothCornersEnabled : false,
                 gothCornerRadiusOverride: settings.dankBarGothCornerRadiusOverride !== undefined ? settings.dankBarGothCornerRadiusOverride : false,
-                gothCornerRadiusValue: settings.dankBarGothCornerRadiusValue !== undefined ? settings.dankBarGothCornerRadiusValue : 12,
+                gothCornerRadiusValue: settings.dankBarGothCornerRadiusValue !== undefined ? settings.dankBarGothCornerRadiusValue : 16,
                 borderEnabled: settings.dankBarBorderEnabled !== undefined ? settings.dankBarBorderEnabled : false,
-                borderColor: settings.dankBarBorderColor || "surfaceText",
-                borderOpacity: settings.dankBarBorderOpacity !== undefined ? settings.dankBarBorderOpacity : 1.0,
+                borderColor: settings.dankBarBorderColor || "outline",
+                borderOpacity: settings.dankBarBorderOpacity !== undefined ? settings.dankBarBorderOpacity : 0.24,
                 borderThickness: settings.dankBarBorderThickness !== undefined ? settings.dankBarBorderThickness : 1,
-                fontScale: settings.dankBarFontScale !== undefined ? settings.dankBarFontScale : 1.0,
+                fontScale: settings.dankBarFontScale !== undefined ? settings.dankBarFontScale : 0.95,
                 autoHide: settings.dankBarAutoHide !== undefined ? settings.dankBarAutoHide : false,
                 autoHideDelay: settings.dankBarAutoHideDelay !== undefined ? settings.dankBarAutoHideDelay : 250,
                 openOnOverview: settings.dankBarOpenOnOverview !== undefined ? settings.dankBarOpenOnOverview : false,
                 visible: settings.dankBarVisible !== undefined ? settings.dankBarVisible : true,
-                popupGapsAuto: settings.popupGapsAuto !== undefined ? settings.popupGapsAuto : true,
-                popupGapsManual: settings.popupGapsManual !== undefined ? settings.popupGapsManual : 4
+                popupGapsAuto: settings.popupGapsAuto !== undefined ? settings.popupGapsAuto : false,
+                popupGapsManual: settings.popupGapsManual !== undefined ? settings.popupGapsManual : 0
             };
 
             settings.barConfigs = [defaultConfig];

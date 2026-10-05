@@ -15,7 +15,7 @@ SettingsRow {
     rowColor: CcMetrics.rowColor
     iconColor: active ? Theme.primary : Theme.surfaceText
 
-    DankIcon {
+    CyIcon {
         name: "check"
         size: Theme.iconSize
         color: Theme.primary

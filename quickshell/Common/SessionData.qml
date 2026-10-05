@@ -9,7 +9,7 @@ import qs.Common
 import qs.Services
 import "settings/SessionSpec.js" as Spec
 import "settings/SessionStore.js" as Store
-import "../DankCommon/Common/settings/SpecUtil.js" as SpecUtil
+import "../CyCommon/Common/settings/SpecUtil.js" as SpecUtil
 
 Singleton {
     id: root
@@ -17,7 +17,7 @@ Singleton {
 
     readonly property int sessionConfigVersion: 6
 
-    readonly property bool isGreeterMode: Quickshell.env("DMS_RUN_GREETER") === "1" || Quickshell.env("DMS_RUN_GREETER") === "true"
+    readonly property bool isGreeterMode: Quickshell.env("CYSHELL_RUN_GREETER") === "1" || Quickshell.env("CYSHELL_RUN_GREETER") === "true"
 
     signal loaded
     signal brightnessDisplayHintChanged(string deviceName)
@@ -28,6 +28,8 @@ Singleton {
     property bool _isReadOnly: false
     property bool _hasUnsavedChanges: false
     property var _loadedSessionSnapshot: null
+    property string _pendingSessionWrite: ""
+    property bool _sessionWriteInFlight: false
     readonly property var _hooks: ({
             "updateLocale": updateLocale
         })
@@ -46,7 +48,7 @@ Singleton {
     property bool isSwitchingMode: false
     property bool suppressOSD: true
 
-    readonly property var terminalOptions: ["ghostty", "kitty", "foot", "alacritty", "wezterm", "konsole", "gnome-terminal", "xterm"]
+    readonly property var terminalOptions: ["qterminal", "ghostty", "kitty", "foot", "alacritty", "wezterm", "konsole", "gnome-terminal", "xterm"]
     property var installedTerminals: []
 
     function resolveTerminal() {
@@ -63,7 +65,7 @@ Singleton {
     Process {
         id: terminalProbe
         running: true
-        command: ["sh", "-c", "for t in ghostty kitty foot alacritty wezterm konsole gnome-terminal xterm; do command -v \"$t\" >/dev/null 2>&1 && echo \"$t\"; done"]
+        command: ["sh", "-c", "for t in qterminal ghostty kitty foot alacritty wezterm konsole gnome-terminal xterm; do command -v \"$t\" >/dev/null 2>&1 && echo \"$t\"; done"]
         stdout: StdioCollector {
             onStreamFinished: {
                 const found = text.trim().split("\n").filter(line => line.length > 0);
@@ -129,6 +131,12 @@ Singleton {
         target: typeof SettingsData !== "undefined" ? SettingsData : null
         function onNotificationDndWhileScreenSharingChanged() {
             root.syncScreenShareDnd();
+        }
+        function onDockConfigsChanged() {
+            root._migrateDockPins();
+        }
+        function onHasLoadedChanged() {
+            root._migrateDockPins();
         }
     }
 
@@ -240,6 +248,8 @@ Singleton {
     property string pinnedPlayerIdentity: ""
 
     property var deviceMaxVolumes: ({})
+    property string lockedAudioOutputName: ""
+    property string lockedAudioInputName: ""
     property var hiddenOutputDeviceNames: []
     property var hiddenInputDeviceNames: []
 
@@ -319,6 +329,7 @@ Singleton {
 
             _loadedSessionSnapshot = getCurrentSessionJson();
             _hasLoaded = true;
+            _migrateDockPins();
 
             if (!isGreeterMode && typeof Theme !== "undefined")
                 Theme.generateSystemThemesFromCurrentTheme();
@@ -347,8 +358,10 @@ Singleton {
         } else {
             _loadedSessionSnapshot = getCurrentSessionJson();
             _hasUnsavedChanges = false;
-            if (wasReadOnly && _pendingMigration)
-                settingsFile.setText(JSON.stringify(_pendingMigration, null, 2));
+            if (wasReadOnly && _pendingMigration) {
+                _pendingSessionWrite = JSON.stringify(_pendingMigration, null, 2);
+                _flushSessionWrite();
+            }
         }
         _pendingMigration = null;
     }
@@ -435,10 +448,39 @@ Singleton {
         }
     }
 
+    function _coreSettingsBrokerReady() {
+        return CyShellService.isConnected && Array.isArray(CyShellService.capabilities) && CyShellService.capabilities.includes("settings");
+    }
+
+    function _flushSessionWrite() {
+        if (isGreeterMode || _sessionWriteInFlight || !_pendingSessionWrite || !_coreSettingsBrokerReady())
+            return;
+        const json = _pendingSessionWrite;
+        _pendingSessionWrite = "";
+        _sessionWriteInFlight = true;
+        CyShellService.sendRequest("settings.replace", {
+            "kind": "session",
+            "json": json
+        }, response => {
+            _sessionWriteInFlight = false;
+            if (response?.error) {
+                log.error("Core session write failed:", response.error);
+                if (!_pendingSessionWrite)
+                    _pendingSessionWrite = json;
+                sessionWriteRetry.restart();
+                return;
+            }
+            if (_pendingSessionWrite)
+                Qt.callLater(root._flushSessionWrite);
+        }, 5000);
+    }
+
     function saveSettings() {
         if (isGreeterMode || _parseError || !_hasLoaded)
             return;
-        settingsFile.setText(getCurrentSessionJson());
+        const json = getCurrentSessionJson();
+        _pendingSessionWrite = json;
+        _flushSessionWrite();
         if (_isReadOnly)
             _checkSessionWritable();
     }
@@ -1167,17 +1209,65 @@ Singleton {
         saveSettings();
     }
 
+    readonly property string _dockPinsMigrationKey: "__cyshellDockPinsMigrationVersion"
+
+    function _migrateDockPins() {
+        const currentPins = dockPins && typeof dockPins === "object" && !Array.isArray(dockPins) ? dockPins : {};
+        if (isGreeterMode || !_hasLoaded || !SettingsData._hasLoaded || (currentPins[_dockPinsMigrationKey] ?? 0) >= 1)
+            return;
+
+        const next = Object.assign({}, currentPins);
+        let barPins = [...new Set(Array.isArray(barPinnedApps) ? barPinnedApps : [])];
+
+        // Recover the previous shared list when the old per-dock state was all we had.
+        if (barPins.length === 0) {
+            for (const id in next) {
+                if (id === _dockPinsMigrationKey || !Array.isArray(next[id]) || next[id].length === 0)
+                    continue;
+                barPins = [...new Set(next[id])];
+                break;
+            }
+        }
+
+        let changed = JSON.stringify(barPins) !== JSON.stringify(barPinnedApps || []);
+        const dockConfigs = Array.isArray(SettingsData.dockConfigs) ? SettingsData.dockConfigs : [];
+        for (const config of dockConfigs) {
+            if (!config?.id || Array.isArray(next[config.id]))
+                continue;
+            next[config.id] = barPins.slice();
+            changed = true;
+        }
+
+        next[_dockPinsMigrationKey] = 1;
+        changed = changed || currentPins[_dockPinsMigrationKey] !== 1;
+        if (!changed)
+            return;
+
+        barPinnedApps = barPins;
+        dockPins = next;
+        saveSettings();
+    }
+
     function getDockPins(id) {
-        return dockPins[id] ?? [];
+        const pins = dockPins && typeof dockPins === "object" ? dockPins[id] : null;
+        return id && Array.isArray(pins) ? pins : [];
     }
     function setDockPins(id, apps) {
-        dockPins = Object.assign({}, dockPins, {
-            [id]: [...new Set(apps)]
+        if (!id || id === _dockPinsMigrationKey)
+            return;
+        const pins = [...new Set(Array.isArray(apps) ? apps : [])];
+        if (JSON.stringify(getDockPins(id)) === JSON.stringify(pins))
+            return;
+        dockPins = Object.assign({}, dockPins && typeof dockPins === "object" ? dockPins : {}, {
+            [id]: pins
         });
         saveSettings();
     }
     function removeDockPins(id) {
-        const next = Object.assign({}, dockPins);
+        const currentPins = dockPins && typeof dockPins === "object" ? dockPins : {};
+        if (!id || id === _dockPinsMigrationKey || !Object.prototype.hasOwnProperty.call(currentPins, id))
+            return;
+        const next = Object.assign({}, currentPins);
         delete next[id];
         dockPins = next;
         saveSettings();
@@ -1185,14 +1275,22 @@ Singleton {
     function removePinnedApp(appId) {
         if (!appId)
             return;
-        const next = {};
-        for (const id in dockPins)
-            next[id] = dockPins[id].filter(pin => pin !== appId);
+        const next = Object.assign({}, dockPins && typeof dockPins === "object" ? dockPins : {});
+        let changed = false;
+        for (const id in next) {
+            if (id === _dockPinsMigrationKey || !Array.isArray(next[id]) || !next[id].includes(appId))
+                continue;
+            next[id] = next[id].filter(pin => pin !== appId);
+            changed = true;
+        }
+        if (!changed)
+            return;
         dockPins = next;
         saveSettings();
     }
     function setBarPinnedApps(apps) {
-        barPinnedApps = apps;
+        const canonical = [...new Set(Array.isArray(apps) ? apps : [])];
+        barPinnedApps = canonical;
         saveSettings();
     }
 
@@ -1416,6 +1514,14 @@ Singleton {
         saveSettings();
     }
 
+    function setLockedAudioDevice(isInput, nodeName) {
+        if (isInput)
+            lockedAudioInputName = nodeName || "";
+        else
+            lockedAudioOutputName = nodeName || "";
+        saveSettings();
+    }
+
     function setHiddenOutputDeviceNames(deviceNames) {
         if (!Array.isArray(deviceNames))
             return;
@@ -1602,14 +1708,47 @@ Singleton {
         return Object.assign({}, defaults, value !== undefined ? value : {});
     }
 
+    Connections {
+        target: CyShellService
+
+        function onConnectionStateChanged() {
+            if (CyShellService.isConnected)
+                root._flushSessionWrite();
+        }
+
+        function onCapabilitiesReceived() {
+            root._flushSessionWrite();
+        }
+    }
+
+    Timer {
+        id: sessionWriteRetry
+        interval: 750
+        repeat: false
+        onTriggered: root._flushSessionWrite()
+    }
+
+    Timer {
+        id: sessionFileReloadDebounce
+        interval: 50
+        repeat: false
+        onTriggered: settingsFile.reload()
+    }
+
     FileView {
         id: settingsFile
 
-        path: isGreeterMode ? "" : StandardPaths.writableLocation(StandardPaths.GenericStateLocation) + "/DankMaterialShell/session.json"
+        path: isGreeterMode ? "" : StandardPaths.writableLocation(StandardPaths.GenericStateLocation) + "/CyShell/session.json"
         blockLoading: true
         blockWrites: true
         atomicWrites: true
         watchChanges: !isGreeterMode
+        onFileChanged: {
+            // The core owns atomic session.json replacement. FileView's change
+            // notification does not imply its cached contents were re-read, so
+            // every isolated UI role must explicitly reload its local replica.
+            sessionFileReloadDebounce.restart();
+        }
         onLoaded: {
             if (isGreeterMode)
                 return;
@@ -1622,7 +1761,7 @@ Singleton {
         }
     }
 
-    readonly property string _greeterCacheDir: Quickshell.env("CYSHELL_GREET_CFG_DIR") || Quickshell.env("DMS_GREET_CFG_DIR") || "/var/cache/cyshell-greeter"
+    readonly property string _greeterCacheDir: Quickshell.env("CYSHELL_GREET_CFG_DIR") || "/var/cache/cyshell-greeter"
 
     property string greeterSessionBaseDir: root._greeterCacheDir
 

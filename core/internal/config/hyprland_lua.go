@@ -11,8 +11,8 @@ import (
 )
 
 const (
-	hyprlandStartupBegin = "-- DMS_STARTUP_BEGIN"
-	hyprlandStartupEnd   = "-- DMS_STARTUP_END"
+	hyprlandStartupBegin = "-- CyShell_STARTUP_BEGIN"
+	hyprlandStartupEnd   = "-- CyShell_STARTUP_END"
 )
 
 func extractHyprlangMonitorLines(hyprlang string) []string {
@@ -116,7 +116,7 @@ func transformHyprlandLuaForNonSystemd(config, terminalCommand string) string {
 		`hl.env("QT_QPA_PLATFORMTHEME_QT6", "gtk3")` + "\n" +
 		fmt.Sprintf(`hl.env("TERMINAL", %s)`, strconv.Quote(terminalCommand)) + "\n\n" +
 		`hl.on("hyprland.start", function()` + "\n" +
-		`	hl.exec_cmd("dms run")` + "\n" +
+		`	hl.exec_cmd("cyshell run")` + "\n" +
 		`end)` + "\n" +
 		hyprlandStartupEnd
 	return config[:start] + replacement + config[endClose:]
@@ -139,7 +139,7 @@ func readExistingHyprlandConfig(configDir string) (data string, sourcePath strin
 }
 
 // CleanupStrayHyprlandConfFile moves stray ~/.config/hypr/hyprland.conf and
-// top-level ~/.config/hypr/dms/*.conf files into .dms-backups/<timestamp>/ only
+// top-level ~/.config/hypr/cyshell/*.conf files into .cyshell-backups/<timestamp>/ only
 // when hyprland.lua also exists as the live config.
 func CleanupStrayHyprlandConfFile(logFn func(format string, v ...any)) {
 	if os.Getenv("HYPRLAND_INSTANCE_SIGNATURE") == "" {
@@ -160,9 +160,9 @@ func CleanupStrayHyprlandConfFile(logFn func(format string, v ...any)) {
 	if info, err := os.Lstat(confPath); err == nil && !info.IsDir() {
 		strayPaths = append(strayPaths, confPath)
 	}
-	dmsConfPaths, err := filepath.Glob(filepath.Join(configDir, "dms", "*.conf"))
+	cyShellConfPaths, err := filepath.Glob(filepath.Join(configDir, "cyshell", "*.conf"))
 	if err == nil {
-		for _, p := range dmsConfPaths {
+		for _, p := range cyShellConfPaths {
 			if info, err := os.Lstat(p); err == nil && !info.IsDir() {
 				strayPaths = append(strayPaths, p)
 			}

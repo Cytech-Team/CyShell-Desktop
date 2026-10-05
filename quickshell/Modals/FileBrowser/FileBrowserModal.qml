@@ -1,3 +1,3 @@
-import qs.DankCommon.Modals.FileBrowser as DankCommon
+import qs.CyCommon.Modals.FileBrowser as CyCommon
 
-DankCommon.FileBrowserModal {}
+CyCommon.FileBrowserModal {}

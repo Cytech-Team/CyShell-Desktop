@@ -7,7 +7,7 @@ import (
 type Logger = danklog.Logger
 
 func init() {
-	danklog.SetEnvPrefix("DMS")
+	danklog.SetEnvPrefix("CYSHELL")
 }
 
 func GetLogger() *Logger { return danklog.GetLogger() }

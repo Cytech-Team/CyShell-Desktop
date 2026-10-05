@@ -21,15 +21,15 @@ Item {
     onMatugenAvailableChanged: MatugenPreviewService.refresh()
     property var installedRegistryThemes: []
     Component.onCompleted: {
-        if (DMSService.dmsAvailable)
-            DMSService.listInstalledThemes();
+        if (CyShellService.backendAvailable)
+            CyShellService.listInstalledThemes();
         if (PopoutService.pendingThemeInstall)
             Qt.callLater(() => showThemeBrowser());
         MatugenPreviewService.refresh();
     }
 
     Connections {
-        target: DMSService
+        target: CyShellService
         function onInstalledThemesReceived(themes) {
             themeColorsTab.installedRegistryThemes = themes;
         }
@@ -112,7 +112,7 @@ Item {
                         height: themeCategoryGroup.implicitHeight
                         clip: true
 
-                        DankButtonGroup {
+                        CyButtonGroup {
                             id: themeCategoryGroup
                             anchors.horizontalCenter: parent.horizontalCenter
                             buttonPadding: parent.width < 420 ? Theme.spacingS : Theme.spacingL
@@ -130,7 +130,7 @@ Item {
                                 return 0;
                             }
 
-                            model: DMSService.dmsAvailable ? [I18n.tr("Generic", "theme category option"), I18n.tr("Auto", "theme category option"), I18n.tr("Custom", "theme category option"), I18n.tr("Browse", "theme category option")] : [I18n.tr("Generic", "theme category option"), I18n.tr("Auto", "theme category option"), I18n.tr("Custom", "theme category option")]
+                            model: CyShellService.backendAvailable ? [I18n.tr("Generic", "theme category option"), I18n.tr("Auto", "theme category option"), I18n.tr("Custom", "theme category option"), I18n.tr("Browse", "theme category option")] : [I18n.tr("Generic", "theme category option"), I18n.tr("Auto", "theme category option"), I18n.tr("Custom", "theme category option")]
                             currentIndex: pendingIndex >= 0 ? pendingIndex : computedIndex
                             selectionMode: "single"
                             onSelectionChanged: (index, selected) => {
@@ -228,7 +228,7 @@ Item {
                                 visible: Theme.wallpaperPath && Theme.wallpaperPath.startsWith("#")
                             }
 
-                            DankIcon {
+                            CyIcon {
                                 anchors.centerIn: parent
                                 name: (ToastService.wallpaperErrorStatus === "error" || ToastService.wallpaperErrorStatus === "matugen_missing") ? "error" : "palette"
                                 size: Theme.iconSizeLarge
@@ -279,7 +279,7 @@ Item {
                             }
                         }
 
-                        DankActionButton {
+                        CyActionButton {
                             buttonSize: 36
                             iconName: "download"
                             iconSize: Theme.iconSize
@@ -323,7 +323,7 @@ Item {
                                 }
                             }
 
-                            DankSpinner {
+                            CySpinner {
                                 anchors.centerIn: parent
                                 running: !MatugenPreviewService.ready
                                 visible: running
@@ -441,7 +441,7 @@ Item {
                             width: parent.width
                             spacing: Theme.spacingM
 
-                            DankActionButton {
+                            CyActionButton {
                                 buttonSize: Theme.minimumTouchTargetSize
                                 iconName: "folder_open"
                                 Accessible.name: I18n.tr("Browse Files")
@@ -451,7 +451,7 @@ Item {
                                 onClicked: fileBrowserModal.open()
                             }
 
-                            DankPaletteSwatch {
+                            CyPaletteSwatch {
                                 id: customSwatch
                                 width: Theme.minimumTouchTargetSize
                                 height: Theme.minimumTouchTargetSize
@@ -513,7 +513,7 @@ Item {
                                     property var variants: modelData.variants || null
                                     property string selectedVariant: hasVariants ? SettingsData.getRegistryThemeVariant(modelData.id, variants?.default || "") : ""
                                     property string previewPath: {
-                                        const baseDir = Quickshell.env("HOME") + "/.config/DankMaterialShell/themes/" + (modelData.sourceDir || modelData.id);
+                                        const baseDir = Quickshell.env("HOME") + "/.config/CyShell/themes/" + (modelData.sourceDir || modelData.id);
                                         const mode = Theme.isLightMode ? "light" : "dark";
                                         if (hasVariants && selectedVariant)
                                             return baseDir + "/preview-" + selectedVariant + "-" + mode + ".svg";
@@ -544,7 +544,7 @@ Item {
                                         mipmap: true
                                     }
 
-                                    DankIcon {
+                                    CyIcon {
                                         anchors.centerIn: parent
                                         name: "palette"
                                         size: themeGrid.cardWidth < 120 ? 24 : 32
@@ -552,7 +552,7 @@ Item {
                                         visible: previewImage.status === Image.Error || previewImage.status === Image.Null
                                     }
 
-                                    DankPaletteSwatch {
+                                    CyPaletteSwatch {
                                         readonly property var palette: ThemePalette.pick((Theme.isLightMode ? themeCard.modelData.light : themeCard.modelData.dark) ?? themeCard.modelData.dark)
                                         anchors.top: parent.top
                                         anchors.left: parent.left
@@ -595,7 +595,7 @@ Item {
                                         color: Theme.primary
                                         visible: themeCard.isActive
 
-                                        DankIcon {
+                                        CyIcon {
                                             anchors.centerIn: parent
                                             name: "check"
                                             size: themeGrid.cardWidth < 120 ? 10 : 14
@@ -632,7 +632,7 @@ Item {
                                         hoverEnabled: true
                                         cursorShape: Qt.PointingHandCursor
                                         onClicked: {
-                                            const themesDir = Quickshell.env("HOME") + "/.config/DankMaterialShell/themes";
+                                            const themesDir = Quickshell.env("HOME") + "/.config/CyShell/themes";
                                             const themePath = themesDir + "/" + (modelData.sourceDir || modelData.id) + "/theme.json";
                                             SettingsData.set("customThemeFile", themePath);
                                             Theme.switchTheme("custom", true, true);
@@ -659,7 +659,7 @@ Item {
                                             }
                                         }
 
-                                        DankIcon {
+                                        CyIcon {
                                             anchors.centerIn: parent
                                             name: "close"
                                             size: themeGrid.cardWidth < 120 ? 10 : 14
@@ -673,13 +673,13 @@ Item {
                                             cursorShape: Qt.PointingHandCursor
                                             onClicked: {
                                                 ToastService.showInfo(I18n.tr("Uninstalling: %1", "uninstallation progress").arg(modelData.name));
-                                                DMSService.uninstallTheme(modelData.id, response => {
+                                                CyShellService.uninstallTheme(modelData.id, response => {
                                                     if (response.error) {
                                                         ToastService.showError(I18n.tr("Uninstall failed: %1", "uninstallation error").arg(response.error));
                                                         return;
                                                     }
                                                     ToastService.showInfo(I18n.tr("Uninstalled: %1", "uninstallation success").arg(modelData.name));
-                                                    DMSService.listInstalledThemes();
+                                                    CyShellService.listInstalledThemes();
                                                 });
                                             }
                                         }
@@ -698,7 +698,7 @@ Item {
                             horizontalAlignment: Text.AlignHCenter
                         }
 
-                        DankButton {
+                        CyButton {
                             text: I18n.tr("Browse Themes", "browse themes button")
                             iconName: "store"
                             anchors.horizontalCenter: parent.horizontalCenter
@@ -804,7 +804,7 @@ Item {
                             clip: true
                             visible: variantSelector.isMultiVariant && variantSelector.flavorOptions.length > 1
 
-                            DankButtonGroup {
+                            CyButtonGroup {
                                 id: flavorButtonGroup
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 property int _count: variantSelector.flavorNames.length
@@ -915,7 +915,7 @@ Item {
                             clip: true
                             visible: !variantSelector.isMultiVariant && variantSelector.variantNames.length > 0
 
-                            DankButtonGroup {
+                            CyButtonGroup {
                                 id: variantButtonGroup
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 property int _count: variantSelector.variantNames.length
@@ -983,7 +983,7 @@ Item {
             fileExtensions: ["*.json"]
             allowStacking: true
             saveMode: true
-            defaultFileName: "dms-extracted-theme.json"
+            defaultFileName: "cyshell-extracted-theme.json"
 
             onFileSelected: path => {
                 saveExtractedTheme(pendingExtractJson, Paths.strip(path));

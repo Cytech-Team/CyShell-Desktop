@@ -2,6 +2,7 @@ pragma Singleton
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import QtCore
 import Qt.labs.folderlistmodel
 import Quickshell
 import Quickshell.Io
@@ -11,6 +12,9 @@ import qs.Services
 Singleton {
     id: root
     readonly property var log: Log.scoped("PluginService")
+    readonly property string uiRole: Quickshell.env("CYSHELL_UI_ROLE") || ""
+    readonly property bool globalOwner: Quickshell.env("CYSHELL_GLOBAL_OWNER") === "1" || uiRole.length === 0
+    readonly property bool secondaryUiProcess: !globalOwner
 
     property var availablePlugins: ({})
     property var loadedPlugins: ({})
@@ -22,9 +26,12 @@ Singleton {
     property var pluginDashCardComponents: ({})
     property var availablePluginsList: []
     readonly property string pluginDirectory: Paths.strip(Paths.config) + "/plugins"
+    readonly property string dmsPluginDirectory: Paths.strip(StandardPaths.standardLocations(StandardPaths.GenericConfigLocation)[0]) + "/DankMaterialShell/plugins"
+    readonly property string noctaliaPluginDirectory: Paths.strip(StandardPaths.standardLocations(StandardPaths.GenericConfigLocation)[0]) + "/noctalia/plugins"
 
     property bool pluginDirectoryExists: false
-    property string systemPluginDirectory: "/etc/xdg/quickshell/dms-plugins"
+    property string systemPluginDirectory: "/etc/xdg/quickshell/cyshell-plugins"
+    readonly property string legacySystemPluginDirectory: "/etc/xdg/quickshell/dms-plugins"
     readonly property string previewApiBase: "https://api.danklinux.com/previews/"
 
     property var knownManifests: ({})
@@ -36,6 +43,7 @@ Singleton {
     property var pluginLoadErrors: ({})
     property var _componentRevisions: ({})
     property var directoryModifiedTimes: ({})
+    property var _manifestDirectoryWatchers: ({})
     property string pendingSettingsRevealPluginId: ""
 
     property var _translationLoaders: ({})
@@ -93,14 +101,45 @@ Singleton {
     }
 
     Component.onCompleted: {
+        Quickshell.execDetached(["mkdir", "-p", root.pluginDirectory, root.dmsPluginDirectory, root.noctaliaPluginDirectory]);
         userWatcher.folder = Paths.toFileUrl(root.pluginDirectory);
+        dmsWatcher.folder = Paths.toFileUrl(root.dmsPluginDirectory);
+        noctaliaWatcher.folder = Paths.toFileUrl(root.noctaliaPluginDirectory);
         systemWatcher.folder = Paths.toFileUrl(root.systemPluginDirectory);
+        legacySystemWatcher.folder = Paths.toFileUrl(root.legacySystemPluginDirectory);
         Qt.callLater(resyncAll);
         Qt.callLater(checkPluginDirectoryExists);
     }
 
     FolderListModel {
         id: userWatcher
+        showDirs: true
+        showFiles: false
+        showDotAndDotDot: false
+
+        onCountChanged: resyncDebounce.restart()
+        onStatusChanged: {
+            if (status === FolderListModel.Ready)
+                resyncDebounce.restart();
+        }
+    }
+
+
+    FolderListModel {
+        id: dmsWatcher
+        showDirs: true
+        showFiles: false
+        showDotAndDotDot: false
+
+        onCountChanged: resyncDebounce.restart()
+        onStatusChanged: {
+            if (status === FolderListModel.Ready)
+                resyncDebounce.restart();
+        }
+    }
+
+    FolderListModel {
+        id: noctaliaWatcher
         showDirs: true
         showFiles: false
         showDotAndDotDot: false
@@ -125,21 +164,137 @@ Singleton {
         }
     }
 
+    // Read-only compatibility host for system-wide DMS plugins.
+    FolderListModel {
+        id: legacySystemWatcher
+        showDirs: true
+        showFiles: false
+        showDotAndDotDot: false
+
+        onCountChanged: resyncDebounce.restart()
+        onStatusChanged: {
+            if (status === FolderListModel.Ready)
+                resyncDebounce.restart();
+        }
+    }
+
+    Component {
+        id: manifestDirectoryWatcherComponent
+
+        FolderListModel {
+            property string pluginDirectory: ""
+            property string sourceTag: ""
+
+            folder: Paths.toFileUrl(pluginDirectory)
+            nameFilters: [root.manifestNameForSource(sourceTag)]
+            showDirs: false
+            showFiles: true
+
+            onCountChanged: resyncDebounce.restart()
+            onStatusChanged: {
+                if (status === FolderListModel.Ready)
+                    resyncDebounce.restart();
+            }
+        }
+    }
+
+    function _syncManifestDirectoryWatchers(entries) {
+        const current = Object.assign({}, _manifestDirectoryWatchers || {});
+        const next = ({});
+        for (const entry of entries) {
+            const key = entry.source + ":" + entry.directory;
+            if (current[key]) {
+                next[key] = current[key];
+                delete current[key];
+                continue;
+            }
+            const watcher = manifestDirectoryWatcherComponent.createObject(root, {
+                "pluginDirectory": entry.directory,
+                "sourceTag": entry.source
+            });
+            if (watcher)
+                next[key] = watcher;
+        }
+        for (const key in current)
+            current[key].destroy();
+        _manifestDirectoryWatchers = next;
+    }
+
+    function _manifestWatcherKey(entry) {
+        return entry.source + ":" + entry.directory;
+    }
+
+    function sourceDirectory(sourceTag) {
+        switch (sourceTag) {
+        case "user": return pluginDirectory;
+        case "dms": return dmsPluginDirectory;
+        case "noctalia": return noctaliaPluginDirectory;
+        case "legacy-system": return legacySystemPluginDirectory;
+        default: return systemPluginDirectory;
+        }
+    }
+
+    function manifestNameForSource(sourceTag) {
+        return sourceTag === "noctalia" ? "manifest.json" : "plugin.json";
+    }
+
+    function pluginSourceGroup(sourceTag) {
+        switch (sourceTag) {
+        case "user":
+        case "system":
+            return "cyshell";
+        case "dms":
+        case "legacy-system":
+            return "dms";
+        case "noctalia":
+            return "noctalia";
+        default:
+            return "";
+        }
+    }
+
+    function pluginSourceLabel(sourceTag) {
+        switch (sourceTag) {
+        case "user":
+            return I18n.tr("CyShell") + " · " + I18n.tr("User");
+        case "system":
+            return I18n.tr("CyShell") + " · " + I18n.tr("System");
+        case "dms":
+            return I18n.tr("DMS");
+        case "legacy-system":
+            return I18n.tr("DMS") + " · " + I18n.tr("System");
+        case "noctalia":
+            return I18n.tr("Noctalia");
+        default:
+            return "";
+        }
+    }
+
+    function sourcePriority(sourceTag) {
+        switch (sourceTag) {
+        case "user": return 40;
+        case "dms": return 30;
+        case "noctalia": return 20;
+        case "system": return 10;
+        case "legacy-system": return 5;
+        default: return 0;
+        }
+    }
+
     function snapshotModel(model, sourceTag) {
         const out = [];
         const n = model.count;
-        const baseDir = sourceTag === "user" ? pluginDirectory : systemPluginDirectory;
+        const baseDir = sourceDirectory(sourceTag);
         for (let i = 0; i < n; i++) {
-            let dirPath = model.get(i, "filePath");
-            if (dirPath.startsWith("file://")) {
-                dirPath = dirPath.substring(7);
-            }
-            if (!dirPath.startsWith(baseDir)) {
+            if (!model.get(i, "fileIsDir"))
                 continue;
-            }
-            const manifestPath = dirPath + "/plugin.json";
+            let dirPath = model.get(i, "filePath");
+            if (dirPath.startsWith("file://"))
+                dirPath = dirPath.substring(7);
+            if (!dirPath.startsWith(baseDir))
+                continue;
             out.push({
-                path: manifestPath,
+                path: dirPath + "/" + manifestNameForSource(sourceTag),
                 source: sourceTag,
                 directory: dirPath,
                 modifiedAt: new Date(model.get(i, "fileModified")).getTime() || 0
@@ -150,10 +305,22 @@ Singleton {
 
     function resyncAll() {
         const userList = snapshotModel(userWatcher, "user");
+        const dmsList = snapshotModel(dmsWatcher, "dms");
+        const noctaliaList = snapshotModel(noctaliaWatcher, "noctalia");
         const sysList = snapshotModel(systemWatcher, "system");
+        const legacySysList = snapshotModel(legacySystemWatcher, "legacy-system");
+        const directories = userList.concat(dmsList, noctaliaList, sysList, legacySysList);
+        _syncManifestDirectoryWatchers(directories);
+        const manifestEntries = directories.filter(entry => {
+            const watcher = _manifestDirectoryWatchers[_manifestWatcherKey(entry)];
+            // During initial watcher setup, let the existing FileView path make
+            // the first attempt. Once ready, only keep directories with a
+            // manifest so count=0 removes a deleted manifest from the registry.
+            return !watcher || watcher.status !== FolderListModel.Ready || watcher.count > 0;
+        });
         const seenPaths = {};
         const modifiedTimes = {};
-        for (const entry of userList.concat(sysList))
+        for (const entry of directories)
             modifiedTimes[entry.directory] = entry.modifiedAt;
         directoryModifiedTimes = modifiedTimes;
 
@@ -165,10 +332,8 @@ Singleton {
                 loadPluginManifestFile(entry.path, entry.source, Date.now());
             }
         }
-        for (let i = 0; i < userList.length; i++)
-            consider(userList[i]);
-        for (let i = 0; i < sysList.length; i++)
-            consider(sysList[i]);
+        for (let i = 0; i < manifestEntries.length; i++)
+            consider(manifestEntries[i]);
 
         const removed = [];
         for (const path in knownManifests) {
@@ -347,7 +512,39 @@ Singleton {
         return paths;
     }
 
+    function _normalizeCompatManifest(manifest, sourceTag) {
+        if (sourceTag !== "noctalia")
+            return manifest;
+
+        const m = Object.assign({}, manifest);
+        const ep = manifest.entryPoints || {};
+        const components = {};
+        if (ep.barWidget)
+            components.widget = ep.barWidget;
+        if (ep.desktopWidget)
+            components.desktop = ep.desktopWidget;
+        if (ep.main)
+            components.daemon = ep.main;
+        // CyShell has no separate Noctalia panel surface; expose it as a Dash page.
+        if (ep.panel)
+            components.dash = ep.panel;
+        if (ep.launcher)
+            components.launcher = ep.launcher;
+        if (Object.keys(components).length)
+            m.components = components;
+        if (ep.settings)
+            m.settings = ep.settings;
+        m.type = Object.keys(components).length > 1 ? "composite" : (components.desktop ? "desktop" : (components.daemon ? "daemon" : "widget"));
+        m.compatKind = "noctalia-v4";
+        m.requires_noctalia = manifest.minNoctaliaVersion || null;
+        // Legacy Noctalia plugins do not declare DMS-style permissions.
+        if (!m.permissions)
+            m.permissions = ["settings_read", "settings_write"];
+        return m;
+    }
+
     function _onManifestParsed(absPath, manifest, sourceTag, mtimeEpochMs) {
+        manifest = _normalizeCompatManifest(manifest, sourceTag);
         if (!manifest || !manifest.id || !manifest.name || (!manifest.component && !manifest.components)) {
             log.error("invalid manifest fields:", absPath);
             knownManifests[absPath] = {
@@ -401,10 +598,12 @@ Singleton {
         info.loaded = isPluginLoaded(manifest.id);
         info.type = manifest.type || (manifest.components ? "composite" : "widget");
         info.source = sourceTag;
+        info.compatKind = manifest.compatKind || ((sourceTag === "dms" || sourceTag === "legacy-system") ? "dms" : "cyshell");
         info.requires_dms = manifest.requires_dms || null;
+        info.requires_noctalia = manifest.requires_noctalia || null;
 
         const existing = availablePlugins[manifest.id];
-        const shouldReplace = (!existing) || (existing && existing.source === "system" && sourceTag === "user");
+        const shouldReplace = (!existing) || sourcePriority(sourceTag) > sourcePriority(existing.source);
 
         if (shouldReplace) {
             if (existing && existing.loaded && existing.source !== sourceTag) {
@@ -447,6 +646,52 @@ Singleton {
         }
     }
 
+    function compatPluginApi(pluginId) {
+        const plugin = availablePlugins[pluginId];
+        if (!plugin || plugin.compatKind !== "noctalia-v4")
+            return null;
+
+        const settings = SettingsData.getPluginSettingsForPlugin(pluginId);
+        const defaults = plugin.metadata?.defaultSettings ?? {};
+        for (const key in defaults) {
+            if (settings[key] === undefined)
+                settings[key] = defaults[key];
+        }
+
+        return {
+            "manifest": plugin,
+            "pluginSettings": settings,
+            "mainInstance": daemonInstances[pluginId] ?? null,
+            "tr": function(key) {
+                const translated = I18n.trFor(pluginId, String(key ?? ""));
+                return translated || String(key ?? "");
+            },
+            "saveSettings": function() {
+                for (const key in settings)
+                    SettingsData.setPluginSetting(pluginId, key, settings[key]);
+                root.pluginDataChanged(pluginId);
+            },
+            "openPanel": function(screen, anchor) {
+                if (plugin.componentPaths?.dash)
+                    PopoutService.openCyDash("plugin_" + pluginId);
+            },
+            "closePanel": function() { PopoutService.closeCyDash(); },
+            "togglePanel": function(screen, anchor) {
+                if (plugin.componentPaths?.dash)
+                    PopoutService.toggleCyDash("plugin_" + pluginId);
+            },
+            "pluginId": pluginId
+        };
+    }
+
+    function injectCompatApi(item, pluginId) {
+        if (!item || !("pluginApi" in item))
+            return;
+        const api = compatPluginApi(pluginId);
+        if (api)
+            item.pluginApi = api;
+    }
+
     function pluginComponentUrl(pluginId, path) {
         if (!path)
             return "";
@@ -468,13 +713,23 @@ Singleton {
         return true;
     }
 
-    function updatePlugin(pluginId, callback) {
-        DMSService.update(pluginId, response => {
+    function updatePlugin(pluginId, callback, refreshInventory = true) {
+        const source = availablePlugins[pluginId]?.source;
+        if (source && source !== "user") {
+            if (callback) {
+                callback({
+                    "error": I18n.tr("Updates for %1 plugins must be applied by their source manager.", "plugin update error, %1 is the plugin source").arg(pluginSourceLabel(source))
+                });
+            }
+            return;
+        }
+
+        CyShellService.update(pluginId, response => {
             if (!response.error)
                 forceRescanPlugin(pluginId);
             if (callback)
                 callback(response);
-        });
+        }, refreshInventory);
     }
 
     function loadPlugin(pluginId, bustCache) {
@@ -587,16 +842,18 @@ Singleton {
     }
 
     function _createDaemonInstance(pluginId, comp) {
-        const instance = comp.createObject(root, {
-            "pluginId": pluginId,
-            "pluginService": root
-        });
+        const instance = comp.createObject(root);
         if (!instance) {
             log.error("failed to instantiate daemon surface:", pluginId, comp.errorString());
             return null;
         }
+        if (instance.pluginId !== undefined)
+            instance.pluginId = pluginId;
+        if (instance.pluginService !== undefined)
+            instance.pluginService = root;
         if (instance.popoutService !== undefined)
             instance.popoutService = PopoutService;
+        injectCompatApi(instance, pluginId);
         log.info("Daemon plugin loaded:", pluginId);
         return instance;
     }
@@ -604,6 +861,11 @@ Singleton {
     function _drainDaemonSpawnQueue() {
         const queue = _daemonSpawnQueue;
         _daemonSpawnQueue = [];
+        if (secondaryUiProcess) {
+            if (queue.length)
+                log.info("Skipping plugin daemon surfaces in secondary UI process:", Quickshell.env("CYSHELL_UI_ROLE"));
+            return;
+        }
         const newDaemonInstances = Object.assign({}, pluginDaemonInstances);
         for (const pluginId of queue) {
             const comp = pluginDaemonComponents[pluginId];
@@ -791,12 +1053,12 @@ Singleton {
         SettingsData.setPluginSetting(pluginId, "variants", newVariants);
 
         const fullId = pluginId + ":" + variantId;
-        removeWidgetFromDankBar(fullId);
+        removeWidgetFromCyBar(fullId);
 
         pluginDataChanged(pluginId);
     }
 
-    function removeWidgetFromDankBar(widgetId) {
+    function removeWidgetFromCyBar(widgetId) {
         function filterWidget(widget) {
             const id = typeof widget === "string" ? widget : widget.id;
             return id !== widgetId;
@@ -814,13 +1076,13 @@ Singleton {
         const newRight = rightWidgets.filter(filterWidget);
 
         if (newLeft.length !== leftWidgets.length) {
-            SettingsData.setDankBarLeftWidgets(newLeft);
+            SettingsData.setCyBarLeftWidgets(newLeft);
         }
         if (newCenter.length !== centerWidgets.length) {
-            SettingsData.setDankBarCenterWidgets(newCenter);
+            SettingsData.setCyBarCenterWidgets(newCenter);
         }
         if (newRight.length !== rightWidgets.length) {
-            SettingsData.setDankBarRightWidgets(newRight);
+            SettingsData.setCyBarRightWidgets(newRight);
         }
     }
 
@@ -1054,6 +1316,8 @@ Singleton {
     }
 
     function clearPluginState(pluginId) {
+        if (!_stateLoaded[pluginId])
+            _loadStateFromDisk(pluginId);
         _stateCache[pluginId] = {};
         _stateLoaded[pluginId] = true;
         _flushStateToDisk(pluginId);
@@ -1076,6 +1340,31 @@ Singleton {
         Paths.mkdir(Paths.state + "/plugins");
     }
 
+    function _readStateFile(pluginId, fv, emitChanged) {
+        try {
+            const raw = fv ? String(fv.text() || "") : "";
+            _stateCache[pluginId] = raw && raw.trim() ? JSON.parse(raw) : {};
+            if (emitChanged)
+                pluginStateChanged(pluginId);
+        } catch (e) {
+            log.warn("Failed to reload state for", pluginId, e.message);
+        }
+    }
+
+    function _watchStateFile(pluginId, fv) {
+        if (!fv)
+            return;
+        fv.fileChanged.connect(function () {
+            // Daemon plugins are owned by cyshell-runtime-ui while their widgets
+            // live in panel/desktop processes. Atomic state replacement must be
+            // explicitly re-read in every process-local PluginService replica.
+            fv.reload();
+        });
+        fv.loaded.connect(function () {
+            root._readStateFile(pluginId, fv, true);
+        });
+    }
+
     function _loadStateFromDisk(pluginId) {
         _stateLoaded[pluginId] = true;
         _ensureStateDir();
@@ -1084,13 +1373,12 @@ Singleton {
             const fv = stateLoadFvComp.createObject(root, {
                 path: path
             });
-            const raw = fv.text();
-            if (raw && raw.trim()) {
-                _stateCache[pluginId] = JSON.parse(raw);
-            } else {
-                _stateCache[pluginId] = {};
-            }
             _stateWriters[pluginId] = fv;
+            _watchStateFile(pluginId, fv);
+            // text() on a blockLoading FileView performs the synchronous initial
+            // read. Do not reload before this read: reload briefly invalidates the
+            // cached text and made synchronous loadPluginState() observe {}.
+            _readStateFile(pluginId, fv, false);
         } catch (e) {
             _stateCache[pluginId] = {};
         }
@@ -1126,6 +1414,8 @@ Singleton {
             blockLoading: true
             blockWrites: true
             atomicWrites: true
+            preload: false
+            watchChanges: true
         }
     }
 
@@ -1154,10 +1444,13 @@ Singleton {
     function scanPlugins() {
         const userUrl = Paths.toFileUrl(root.pluginDirectory);
         const systemUrl = Paths.toFileUrl(root.systemPluginDirectory);
+        const legacySystemUrl = Paths.toFileUrl(root.legacySystemPluginDirectory);
         userWatcher.folder = "";
         userWatcher.folder = userUrl;
         systemWatcher.folder = "";
         systemWatcher.folder = systemUrl;
+        legacySystemWatcher.folder = "";
+        legacySystemWatcher.folder = legacySystemUrl;
         resyncDebounce.restart();
         checkPluginDirectoryExists();
     }
@@ -1440,7 +1733,7 @@ Singleton {
             if (!success)
                 ToastService.showError(error);
         };
-        DMSService.install(pluginId, response => {
+        CyShellService.install(pluginId, response => {
             if (response.error) {
                 finish(false, I18n.tr("Install failed: %1", "installation error").arg(response.error));
                 return;

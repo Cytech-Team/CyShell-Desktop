@@ -14,7 +14,7 @@ Item {
         width: parent.width
         spacing: Theme.spacingM
 
-        DankIcon {
+        CyIcon {
             anchors.horizontalCenter: parent.horizontalCenter
             name: "emoji_events"
             size: Theme.iconSizeLarge + Theme.spacingL

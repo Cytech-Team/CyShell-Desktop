@@ -2,7 +2,7 @@ import QtQuick
 import Quickshell
 import qs.Common
 import qs.Modules.Plugins
-import qs.DankCommon.Common as DC
+import qs.CyCommon.Common as DC
 
 ShellRoot {
     id: root
@@ -166,8 +166,8 @@ ShellRoot {
                 root.snapshot("edited");
                 check(JSON.stringify(plain.items) === JSON.stringify(["beta", "gamma"]), "plain add/remove");
                 check(JSON.stringify(host.saves) === JSON.stringify(["plain=[\"alpha\",\"beta\",\"gamma\"]", "plain=[\"beta\",\"gamma\"]"]), "plain saves " + JSON.stringify(host.saves));
-                const inputs = root.findAll(rows, item => item.placeholderText !== undefined && item.text !== undefined && root.typeName(item) === "DankTextField", []);
-                const button = root.findAll(rows, item => root.typeName(item) === "DankButton", [])[0];
+                const inputs = root.findAll(rows, item => item.placeholderText !== undefined && item.text !== undefined && root.typeName(item) === "CyTextField", []);
+                const button = root.findAll(rows, item => root.typeName(item) === "CyButton", [])[0];
                 check(inputs.length === 2 && !!button, "row input fields and add button present");
                 inputs[1].text = "https://x";
                 button.clicked();
@@ -187,7 +187,7 @@ ShellRoot {
                         "url": "https://x"
                     }
                 ]), "row add " + JSON.stringify(rows.items));
-                const fields = root.findAll(rows, item => item.placeholderText !== undefined && item.text !== undefined && root.typeName(item) === "DankTextField", []);
+                const fields = root.findAll(rows, item => item.placeholderText !== undefined && item.text !== undefined && root.typeName(item) === "CyTextField", []);
                 check(fields.every(field => field.text === ""), "inputs cleared after add");
                 rows.removeItem(0);
                 plain.removeItem(0);

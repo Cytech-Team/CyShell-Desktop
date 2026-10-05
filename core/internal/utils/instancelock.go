@@ -9,19 +9,19 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/log"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/log"
 )
 
 const (
 	// Shared by the screenshot region selector and the color picker: one grabbing overlay at a time.
-	SelectionOverlayLock = "dms-selection-overlay"
+	SelectionOverlayLock = "cyshell-selection-overlay"
 	// Matches what the wayland client dials when WAYLAND_DISPLAY is unset.
 	defaultWaylandDisplay = "wayland-0"
 )
 
 var (
 	ErrLockHeld      = errors.New("lock is held by another process")
-	ErrOverlayActive = errors.New("another dms selection overlay is already open")
+	ErrOverlayActive = errors.New("another CyShell selection overlay is already open")
 )
 
 type FileLock struct {

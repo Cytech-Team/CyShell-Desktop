@@ -2,9 +2,9 @@ import QtQuick
 import Quickshell
 import qs.Common
 import qs.Widgets
-import qs.DankCommon.Common as DC
-import qs.DankCommon.Widgets as DW
-import qs.DankCommon.Modals.FileBrowser as FB
+import qs.CyCommon.Common as DC
+import qs.CyCommon.Widgets as DW
+import qs.CyCommon.Modals.FileBrowser as FB
 
 ShellRoot {
     id: root
@@ -56,7 +56,7 @@ ShellRoot {
             title: column.children[0],
             column: column,
             buttons: buttons,
-            icon: findFirst(column, "DankIcon", 0)
+            icon: findFirst(column, "CyIcon", 0)
         };
     }
 
@@ -100,7 +100,7 @@ ShellRoot {
                 height: plain.height
                 color: Theme.floatingWindowSurface
 
-                DankWindowHeader {
+                CyWindowHeader {
                     id: plain
                     width: parent.width
                     controls: root.stubControls
@@ -113,7 +113,7 @@ ShellRoot {
                 height: actions.height
                 color: Theme.floatingWindowSurface
 
-                DankWindowHeader {
+                CyWindowHeader {
                     id: actions
                     width: parent.width
                     controls: root.stubControls
@@ -121,7 +121,7 @@ ShellRoot {
 
                     Repeater {
                         model: ["visibility", "grid_view", "photo_size_select_large", "info"]
-                        DankActionButton {
+                        CyActionButton {
                             required property string modelData
                             circular: false
                             buttonSize: Theme.buttonHeightXXS
@@ -137,13 +137,13 @@ ShellRoot {
                 height: longTitle.height
                 color: Theme.floatingWindowSurface
 
-                DankWindowHeader {
+                CyWindowHeader {
                     id: longTitle
                     width: parent.width
                     controls: root.stubControls
                     title: "A very long window title that keeps going well past the space the header leaves between its symmetric button reserves"
 
-                    DankActionButton {
+                    CyActionButton {
                         iconName: "close_fullscreen"
                         buttonSize: Theme.buttonHeightXXS
                         iconSize: Theme.iconSizeSmall
@@ -156,7 +156,7 @@ ShellRoot {
                 height: dialogHeader.height + Theme.spacingL * 2
                 color: Theme.surfaceContainerHigh
 
-                DankWindowHeader {
+                CyWindowHeader {
                     id: dialogHeader
                     x: Theme.spacingL
                     y: Theme.spacingL
@@ -210,7 +210,7 @@ ShellRoot {
             root.verifyLeft("dialog", dialogHeader, 0);
             root.check(root.headerParts(dialogHeader).title.lineCount > 1, "dialog title wraps");
             root.check(Math.abs(dialogHeader.height - (root.headerParts(dialogHeader).column.implicitHeight + Theme.spacingXS * 2)) <= 1, "embedded header stays content sized, got " + dialogHeader.height);
-            const browserHeader = root.findFirst(browser, "DankWindowHeader", 0);
+            const browserHeader = root.findFirst(browser, "CyWindowHeader", 0);
             root.check(browserHeader !== null, "file browser has a header");
             if (browserHeader) {
                 root.verifyCentered("browser", browserHeader);

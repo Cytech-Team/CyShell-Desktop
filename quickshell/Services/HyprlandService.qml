@@ -15,11 +15,11 @@ Singleton {
     readonly property var log: Log.scoped("HyprlandService")
 
     readonly property string configDir: Paths.strip(StandardPaths.writableLocation(StandardPaths.ConfigLocation))
-    readonly property string hyprDmsDir: configDir + "/hypr/dms"
-    readonly property string outputsPath: hyprDmsDir + "/outputs.lua"
-    readonly property string layoutPath: hyprDmsDir + "/layout.lua"
-    readonly property string cursorPath: hyprDmsDir + "/cursor.lua"
-    readonly property string windowrulesPath: hyprDmsDir + "/windowrules.lua"
+    readonly property string hyprCyShellDir: configDir + "/hypr/cyshell"
+    readonly property string outputsPath: hyprCyShellDir + "/outputs.lua"
+    readonly property string layoutPath: hyprCyShellDir + "/layout.lua"
+    readonly property string cursorPath: hyprCyShellDir + "/cursor.lua"
+    readonly property string windowrulesPath: hyprCyShellDir + "/windowrules.lua"
     readonly property bool luaConfigActive: CompositorService.isHyprland && (Hyprland.usingLua === true || luaConfigDetected)
 
     property int _lastGapValue: -1
@@ -36,7 +36,7 @@ Singleton {
     property int _frameTransitionRevision: 0
     readonly property bool frameLayoutReady: _layoutAppliedRevision >= _frameTransitionRevision
 
-    // dms/layout.lua is the source of truth for xray; parsed once before the first regeneration
+    // cyshell/layout.lua is the source of truth for xray; parsed once before the first regeneration
     property bool layoutXrayEnabled: false
     property bool layoutBarXrayEnabled: true
     property bool _layoutXrayLoaded: false
@@ -95,7 +95,7 @@ Singleton {
     function ensureWindowrulesConfig() {
         if (!canWriteLuaConfig("windowrules"))
             return;
-        Proc.runCommand("hypr-ensure-windowrules", ["sh", "-c", `mkdir -p "${hyprDmsDir}" && [ ! -f "${windowrulesPath}" ] && touch "${windowrulesPath}" || true`], (output, exitCode) => {
+        Proc.runCommand("hypr-ensure-windowrules", ["sh", "-c", `mkdir -p "${hyprCyShellDir}" && [ ! -f "${windowrulesPath}" ] && touch "${windowrulesPath}" || true`], (output, exitCode) => {
             if (exitCode !== 0)
                 log.warn("Failed to ensure windowrules.lua:", output);
         });
@@ -152,7 +152,7 @@ Singleton {
             return;
 
         luaConfigStatusLoading = true;
-        Proc.runCommand("hypr-lua-config-status", [Proc.dmsBin, "config", "resolve-include", ...ConfigIncludeResolve.resolveIncludeArgs("outputs", "hyprland")], (output, exitCode) => {
+        Proc.runCommand("hypr-lua-config-status", [Proc.cyshellBin, "config", "resolve-include", ...ConfigIncludeResolve.resolveIncludeArgs("outputs", "hyprland")], (output, exitCode) => {
             luaConfigStatusLoading = false;
             luaConfigStatusReady = true;
             if (exitCode !== 0) {
@@ -301,7 +301,7 @@ Singleton {
         lines.push("");
         const content = lines.join("\n");
 
-        Proc.runCommand("hypr-write-outputs", ["sh", "-c", `mkdir -p "${hyprDmsDir}" && cat > "${outputsPath}" << 'EOF'\n${content}EOF`], (output, exitCode) => {
+        Proc.runCommand("hypr-write-outputs", ["sh", "-c", `mkdir -p "${hyprCyShellDir}" && cat > "${outputsPath}" << 'EOF'\n${content}EOF`], (output, exitCode) => {
             if (exitCode !== 0) {
                 log.warn("Failed to write outputs config:", output);
                 if (callback)
@@ -367,11 +367,11 @@ Singleton {
             return;
         _layoutXrayLoading = true;
         const configDir = Paths.strip(StandardPaths.writableLocation(StandardPaths.ConfigLocation));
-        Proc.runCommand("hypr-read-layout-xray", ["cat", configDir + "/hypr/dms/layout.lua"], (output, exitCode) => {
+        Proc.runCommand("hypr-read-layout-xray", ["cat", configDir + "/hypr/cyshell/layout.lua"], (output, exitCode) => {
             _layoutXrayLoading = false;
             if (!_layoutXrayLoaded) {
                 const content = exitCode === 0 ? output : "";
-                layoutXrayEnabled = content.includes('"^dms:.*$"');
+                layoutXrayEnabled = content.includes('"^cyshell:.*$"');
                 layoutBarXrayEnabled = !content.includes("-- bar-xray off");
                 _layoutXrayLoaded = true;
             }
@@ -421,12 +421,12 @@ Singleton {
         const resizeOnBorder = (typeof SettingsData !== "undefined" && SettingsData.hyprlandResizeOnBorder) ? true : false;
         const frameEnabled = typeof SettingsData !== "undefined" && SettingsData.frameEnabled;
         // Hyprland `xray = false` is still early-development; unset already samples real content, so only force xray=true
-        // dms:frame only in separate mode — connected-mode frame blur overlaps windows via popouts/arcs
-        const xrayNamespaces = ["dms:bar"];
+        // cyshell:frame only in separate mode — connected-mode frame blur overlaps windows via popouts/arcs
+        const xrayNamespaces = ["cyshell:bar"];
         if (typeof SettingsData !== "undefined" && SettingsData.dankIslandEnabled)
-            xrayNamespaces.push("dms:dankisland");
+            xrayNamespaces.push("cyshell:dankisland");
         if (frameEnabled && SettingsData.frameMode !== "connected")
-            xrayNamespaces.push("dms:frame");
+            xrayNamespaces.push("cyshell:frame");
 
         const tilingLayout = typeof SettingsData !== "undefined" ? SettingsData.hyprlandTilingLayout : "";
 
@@ -453,7 +453,7 @@ ${sections.join("\n")}
         if (layoutXrayEnabled) {
             content += `
 hl.layer_rule({
-	match = { namespace = "^dms:.*$" },
+	match = { namespace = "^cyshell:.*$" },
 	xray = true,
 })
 `;
@@ -475,7 +475,7 @@ hl.layer_rule({
 `;
         }
 
-        Proc.runCommand("hypr-write-layout", ["sh", "-c", `mkdir -p "${hyprDmsDir}" && cat > "${layoutPath}" << 'EOF'\n${content}EOF`], (output, exitCode) => {
+        Proc.runCommand("hypr-write-layout", ["sh", "-c", `mkdir -p "${hyprCyShellDir}" && cat > "${layoutPath}" << 'EOF'\n${content}EOF`], (output, exitCode) => {
             if (exitCode !== 0) {
                 log.warn("Failed to write layout config:", output);
                 // Best-effort ack so a failed write can't wedge frame transitions
@@ -517,7 +517,7 @@ hl.layer_rule({
 
         const settings = typeof SettingsData !== "undefined" ? SettingsData.cursorSettings : null;
         if (!settings) {
-            Proc.runCommand("hypr-write-cursor", ["sh", "-c", `mkdir -p "${hyprDmsDir}" && printf '%s\\n' "-- Auto-generated by CyShell — do not edit manually" "" > "${cursorPath}"`], (output, exitCode) => {
+            Proc.runCommand("hypr-write-cursor", ["sh", "-c", `mkdir -p "${hyprCyShellDir}" && printf '%s\\n' "-- Auto-generated by CyShell — do not edit manually" "" > "${cursorPath}"`], (output, exitCode) => {
                 if (exitCode !== 0)
                     log.warn("Failed to write cursor config:", output);
             });
@@ -535,7 +535,7 @@ hl.layer_rule({
         const hasCursorSettings = hideOnKeyPress || hideOnTouch || inactiveTimeout > 0;
 
         if (!hasTheme && !hasNonDefaultSize && !hasCursorSettings) {
-            Proc.runCommand("hypr-write-cursor", ["sh", "-c", `mkdir -p "${hyprDmsDir}" && printf '%s\\n' "-- Auto-generated by CyShell — do not edit manually" "" > "${cursorPath}"`], (output, exitCode) => {
+            Proc.runCommand("hypr-write-cursor", ["sh", "-c", `mkdir -p "${hyprCyShellDir}" && printf '%s\\n' "-- Auto-generated by CyShell — do not edit manually" "" > "${cursorPath}"`], (output, exitCode) => {
                 if (exitCode !== 0)
                     log.warn("Failed to write cursor config:", output);
             });
@@ -568,7 +568,7 @@ hl.layer_rule({
         lines.push("");
         const content = lines.join("\n");
 
-        Proc.runCommand("hypr-write-cursor", ["sh", "-c", `mkdir -p "${hyprDmsDir}" && cat > "${cursorPath}" << 'EOF'\n${content}EOF`], (output, exitCode) => {
+        Proc.runCommand("hypr-write-cursor", ["sh", "-c", `mkdir -p "${hyprCyShellDir}" && cat > "${cursorPath}" << 'EOF'\n${content}EOF`], (output, exitCode) => {
             if (exitCode !== 0) {
                 log.warn("Failed to write cursor config:", output);
                 return;

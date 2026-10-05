@@ -57,7 +57,7 @@ Flow {
                 opacity: tileMouse.containsMouse ? Theme.stateLayerHover : 0
             }
 
-            DankPaletteSwatch {
+            CyPaletteSwatch {
                 id: swatch
                 width: Theme.minimumTouchTargetSize
                 height: Theme.minimumTouchTargetSize
@@ -69,7 +69,7 @@ Flow {
                 tertiaryColor: tile.modelData.tertiary ?? tile.modelData.secondary ?? tile.modelData.primary
             }
 
-            DankTooltipHost {
+            CyTooltipHost {
                 text: root.compact ? tile.modelData.label : null
                 target: tile
                 hoverArea: tileMouse

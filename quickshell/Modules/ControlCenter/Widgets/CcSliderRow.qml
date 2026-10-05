@@ -58,12 +58,13 @@ Item {
         anchors.fill: parent
         anchors.margins: root.contentPadding
 
-        DankActionButton {
+        CyActionButton {
             id: action
             objectName: "sliderAction"
             x: root.vertical ? (parent.width - width) / 2 : root.LayoutMirroring.enabled ? parent.width - width : 0
             y: root.vertical ? parent.height - height : root.tall ? 0 : (parent.height - height) / 2
             buttonSize: root.actionSize
+            circular: false
             backgroundColor: CcMetrics.tileInactiveColor
             border.width: Theme.layerOutlineWidth
             border.color: Theme.outlineMedium
@@ -114,7 +115,7 @@ Item {
             y: root.vertical ? (root.showNumber ? labels.height + Theme.spacingS : 0) : root.tall ? action.height + Theme.spacingM : 0
             height: Math.max(0, (root.vertical ? action.y - Theme.spacingS : parent.height) - y)
 
-            DankSlider {
+            CySlider {
                 id: slider
                 anchors.centerIn: parent
                 width: root.vertical ? parent.height : parent.width

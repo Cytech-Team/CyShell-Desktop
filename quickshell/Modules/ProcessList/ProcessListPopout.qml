@@ -5,10 +5,10 @@ import qs.Modules.ProcessList
 import qs.Services
 import qs.Widgets
 
-DankPopout {
+CyPopout {
     id: processListPopout
 
-    layerNamespace: "dms:process-list-popout"
+    layerNamespace: "cyshell:process-list-popout"
 
     property var parentWidget: null
     property var triggerScreen: null
@@ -130,7 +130,7 @@ DankPopout {
                     Layout.fillWidth: true
                     spacing: Theme.spacingM
 
-                    DankSearchField {
+                    CySearchField {
                         id: searchField
                         Layout.fillWidth: true
                         Layout.minimumWidth: Theme.fontSizeMedium * 8

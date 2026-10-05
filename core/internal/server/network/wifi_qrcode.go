@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/qrcode"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/qrcode"
 )
 
 const qrCodeTmpPrefix = "/tmp/dank-wifi-qrcode-"

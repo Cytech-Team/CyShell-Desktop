@@ -1,6 +1,6 @@
 .pragma library
-.import "../../DankCommon/Common/settings/SharedSessionSpec.js" as Shared
-.import "../../DankCommon/Common/settings/SpecUtil.js" as Util
+.import "../../CyCommon/Common/settings/SharedSessionSpec.js" as Shared
+.import "../../CyCommon/Common/settings/SpecUtil.js" as Util
 
 var LOCAL_SPEC = {
     doNotDisturb: {
@@ -209,6 +209,12 @@ var LOCAL_SPEC = {
     },
     deviceMaxVolumes: {
         def: {}
+    },
+    lockedAudioOutputName: {
+        def: ""
+    },
+    lockedAudioInputName: {
+        def: ""
     },
     hiddenOutputDeviceNames: {
         def: []

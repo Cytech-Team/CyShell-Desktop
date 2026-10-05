@@ -12,7 +12,7 @@ Column {
     width: parent.width
     spacing: Theme.spacingM
 
-    DankToggle {
+    CyToggle {
         id: ipLocationToggle
         width: parent.width
         text: I18n.tr("Use IP Location")
@@ -50,7 +50,7 @@ Column {
                 width: (parent.width - Theme.spacingM) / 2
                 spacing: Theme.spacingXS
 
-                DankTextField {
+                CyTextField {
                     id: latitudeField
                     outlined: true
                     leftIconName: "location_on"
@@ -88,7 +88,7 @@ Column {
                 width: (parent.width - Theme.spacingM) / 2
                 spacing: Theme.spacingXS
 
-                DankTextField {
+                CyTextField {
                     id: longitudeField
                     outlined: true
                     leftIconName: "location_on"
@@ -130,7 +130,7 @@ Column {
             font.weight: Theme.fontWeightMedium
         }
 
-        DankLocationSearch {
+        CyLocationSearch {
             width: parent.width
             currentLocation: SessionData.nightModeLocationName
             onLocationSelected: (displayName, coordinates) => {

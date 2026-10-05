@@ -27,9 +27,10 @@ Item {
     readonly property bool expanded: expandedContent !== null && width >= CcMetrics.expandedTileMinWidth && height >= headerHeight + expandedMinimumHeight + tilePadding * 2 + Theme.spacingM
     readonly property real tilePadding: tall && !narrow ? Theme.spacingM : Theme.spacingS
     readonly property real baseIconExtent: Math.min(Math.max(Theme.minimumTouchTargetSize, CcMetrics.iconBoxSize), height - tilePadding * 2, width - tilePadding * 2)
-    readonly property real iconExtent: stacked ? Math.max(0, Math.min(baseIconExtent, height - tilePadding * 2 - Theme.spacingS - titleLabel.implicitHeight)) : baseIconExtent
+    readonly property real iconExtent: windowsQuickTile ? Math.max(0, Math.min(width - tilePadding * 2, 82)) : (stacked ? Math.max(0, Math.min(baseIconExtent, height - tilePadding * 2 - Theme.spacingS - titleLabel.implicitHeight)) : baseIconExtent)
     readonly property real headerHeight: Math.max(baseIconExtent, Theme.fontSizeLarge + Theme.fontSizeMedium + Theme.spacingS)
     readonly property bool stacked: tall && !expanded && width <= height
+    readonly property bool windowsQuickTile: stacked && narrow && columns <= 2 && rows >= 2
     readonly property bool narrow: width < CcMetrics.expandedTileMinWidth
     readonly property real labelHeight: titleLabel.implicitHeight + (showSubtitle ? Theme.spacingXXS + subtitleLabel.implicitHeight : 0)
     readonly property bool showSubtitle: subtitle !== "" && (!stacked || height - tilePadding * 2 >= iconExtent + Theme.spacingS + titleLabel.implicitHeight + Theme.spacingXXS + subtitleLabel.implicitHeight)
@@ -47,9 +48,8 @@ Item {
     readonly property bool tall: height >= CcMetrics.gridRowUnit * 2
     readonly property bool hasIconBox: (showExpand || opensPage || expanded) && !compact
     readonly property real restRadius: {
-        if (active)
-            return Math.min(CcMetrics.tileActiveRadius, width / 2, height / 2);
-        return tall ? Math.min(CcMetrics.tallTileRadius, width / 2, height / 2) : Theme.fullRadius(width, height);
+        const targetRadius = active ? CcMetrics.tileActiveRadius : (tall ? CcMetrics.tallTileRadius : Theme.cornerRadiusL);
+        return Math.min(targetRadius, width / 2, height / 2);
     }
     readonly property bool acceptsInput: interactive && enabled
     readonly property bool bodyActive: active && !hasIconBox
@@ -87,7 +87,7 @@ Item {
             return Math.min(Theme.cornerRadiusS, CcMetrics.iconBoxSize / 2);
         if (active)
             return Math.min(CcMetrics.iconBoxActiveRadius, CcMetrics.iconBoxSize / 2);
-        return Theme.fullRadius(CcMetrics.iconBoxSize, CcMetrics.iconBoxSize);
+        return Math.min(Theme.cornerRadiusL, CcMetrics.iconBoxSize / 2);
     }
 
     width: parent?.width ?? 0
@@ -150,8 +150,8 @@ Item {
 
         anchors.fill: parent
         radius: root.bodyRadius
-        color: root.bodyColor
-        border.width: root.bodyActive ? 0 : Theme.layerOutlineWidth
+        color: root.windowsQuickTile ? "transparent" : root.bodyColor
+        border.width: root.windowsQuickTile ? 0 : (root.bodyActive ? 0 : Theme.layerOutlineWidth)
         border.color: Theme.outlineMedium
 
         Behavior on color {
@@ -191,7 +191,7 @@ Item {
             visible: root.activeFocus
         }
 
-        DankIcon {
+        CyIcon {
             id: compactIcon
             anchors.centerIn: parent
             name: root.iconName
@@ -201,7 +201,7 @@ Item {
             rotation: root.iconRotation
             visible: root.compact
 
-            DankBlink {
+            CyBlink {
                 target: compactIcon
                 running: root.iconBlinking && root.compact && root.visible && root.live
             }
@@ -218,12 +218,12 @@ Item {
                 objectName: "tileIconBox"
 
                 x: root.stacked && root.narrow ? (parent.width - width) / 2 : root.LayoutMirroring.enabled ? parent.width - width : 0
-                y: root.stacked ? Math.max(0, (parent.height - height - Theme.spacingS - root.labelHeight) / 2) : root.expanded ? 0 : (parent.height - height) / 2
-                width: root.iconExtent
-                height: width
-                radius: root.hasIconBox ? root.iconBoxRadius : 0
-                color: root.hasIconBox ? root.iconBoxColor : "transparent"
-                border.width: root.hasIconBox && !root.active ? Theme.layerOutlineWidth : 0
+                y: root.windowsQuickTile ? 0 : (root.stacked ? Math.max(0, (parent.height - height - Theme.spacingS - root.labelHeight) / 2) : root.expanded ? 0 : (parent.height - height) / 2)
+                width: root.windowsQuickTile ? parent.width : root.iconExtent
+                height: root.windowsQuickTile ? 72 : width
+                radius: root.windowsQuickTile ? Theme.cornerRadiusL : (root.hasIconBox ? root.iconBoxRadius : 0)
+                color: root.windowsQuickTile ? (root.active ? CcMetrics.tileActiveColor : CcMetrics.tileInactiveColor) : (root.hasIconBox ? root.iconBoxColor : "transparent")
+                border.width: (root.windowsQuickTile || root.hasIconBox) && !root.active ? Theme.layerOutlineWidth : 0
                 border.color: Theme.outlineMedium
                 activeFocusOnTab: root.showExpand && root.toggle && root.acceptsInput
                 Accessible.role: root.toggle ? Accessible.CheckBox : Accessible.Button
@@ -253,16 +253,16 @@ Item {
                     }
                 }
 
-                DankIcon {
+                CyIcon {
                     id: tileIcon
                     anchors.centerIn: parent
                     name: root.iconName
-                    size: root.hasIconBox ? CcMetrics.iconBoxIconSize : CcMetrics.tileIconSize
-                    color: root.iconColor
+                    size: root.windowsQuickTile ? Theme.iconSizeLarge : (root.hasIconBox ? CcMetrics.iconBoxIconSize : CcMetrics.tileIconSize)
+                    color: root.windowsQuickTile && root.active ? CcMetrics.tileActiveContent : root.iconColor
                     filled: root.active
                     rotation: root.iconRotation
 
-                    DankBlink {
+                    CyBlink {
                         target: tileIcon
                         running: root.iconBlinking && !root.compact && root.visible && root.live
                     }
@@ -307,7 +307,7 @@ Item {
                     id: titleLabel
                     objectName: "tileTitle"
                     width: parent.width
-                    text: root.title
+                    text: root.windowsQuickTile ? (root.widgetDef?.text || root.title) : root.title
                     color: root.contentColor
                     font.pixelSize: root.narrow ? Theme.fontSizeMedium : Theme.fontSizeLarge
                     font.weight: Theme.fontWeightMedium
@@ -328,7 +328,7 @@ Item {
                     elide: Text.ElideRight
                     wrapMode: Text.NoWrap
                     horizontalAlignment: root.stacked && root.narrow ? Text.AlignHCenter : Text.AlignLeft
-                    visible: root.showSubtitle
+                    visible: root.showSubtitle && !root.windowsQuickTile
                 }
             }
 

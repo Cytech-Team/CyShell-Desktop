@@ -22,12 +22,12 @@ Item {
 
     readonly property string title: I18n.tr("VPN", "virtual private network, widget and page title")
     readonly property bool fillsParent: listHeight <= 0
-    readonly property bool hasProfiles: DMSNetworkService.profiles.length > 0
+    readonly property bool hasProfiles: CyNetworkService.profiles.length > 0
 
     readonly property Item headerActions: Row {
         spacing: Theme.spacingS
 
-        DankButton {
+        CyButton {
             anchors.verticalCenter: parent.verticalCenter
             buttonHeight: Theme.buttonHeightXS
             iconName: VPNService.importing ? "sync" : "add"
@@ -100,27 +100,27 @@ Item {
 
             CcListRow {
                 iconName: "vpn_key"
-                iconColor: DMSNetworkService.connected ? Theme.primary : Theme.surfaceText
+                iconColor: CyNetworkService.connected ? Theme.primary : Theme.surfaceText
                 title: {
-                    if (!DMSNetworkService.connected)
+                    if (!CyNetworkService.connected)
                         return I18n.tr("Active: None");
-                    const names = DMSNetworkService.activeNames || [];
+                    const names = CyNetworkService.activeNames || [];
                     if (names.length <= 1)
                         return I18n.tr("Active: %1", "vpn status line, %1 is the active connection name").arg(names[0] || "VPN");
                     return I18n.tr("Active: %1 +%2", "vpn status, %1 is a connection name, %2 counts the others").arg(names[0]).arg(names.length - 1);
                 }
 
-                DankButton {
+                CyButton {
                     anchors.verticalCenter: parent.verticalCenter
-                    visible: DMSNetworkService.connected
+                    visible: CyNetworkService.connected
                     buttonHeight: Theme.buttonHeightXS
                     iconName: "link_off"
                     iconSize: Theme.iconSizeSmall
                     text: I18n.tr("Disconnect", "verb, button or menu action for network, vpn or bluetooth")
                     backgroundColor: Theme.errorHover
                     textColor: Theme.error
-                    enabled: !DMSNetworkService.isBusy
-                    onClicked: DMSNetworkService.disconnectAllActive()
+                    enabled: !CyNetworkService.isBusy
+                    onClicked: CyNetworkService.disconnectAllActive()
                 }
             }
         }
@@ -137,7 +137,7 @@ Item {
                 subtitle: I18n.tr("Click Import to add a .ovpn or .conf")
             }
 
-            DankListView {
+            CyListView {
                 id: vpnListView
                 anchors.fill: parent
                 visible: root.hasProfiles
@@ -145,7 +145,7 @@ Item {
                 clip: true
 
                 model: ScriptModel {
-                    values: DMSNetworkService.profiles
+                    values: CyNetworkService.profiles
                     objectProp: "uuid"
                 }
 

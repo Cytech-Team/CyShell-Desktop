@@ -5,7 +5,7 @@
   ...
 }:
 let
-  cfg = config.programs.dank-material-shell;
+  cfg = config.programs.cyshell;
 in
 {
   packages = [

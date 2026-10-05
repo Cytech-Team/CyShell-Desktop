@@ -4,11 +4,11 @@
   ...
 }:
 pkgs.testers.runNixOSTest {
-  name = "dms-nixos-module";
+  name = "cyshell-nixos-module";
 
   nodes.machine = {
     imports = [
-      self.nixosModules.dank-material-shell
+      self.nixosModules.cyshell
     ];
 
     users.users.danklinux = {
@@ -16,7 +16,7 @@ pkgs.testers.runNixOSTest {
       extraGroups = [ "wheel" ];
     };
 
-    programs.dank-material-shell = {
+    programs.cyshell = {
       enable = true;
       systemd.enable = true;
       lockscreen.securityKey.enable = true;
@@ -35,14 +35,14 @@ pkgs.testers.runNixOSTest {
 
     machine.wait_for_unit("multi-user.target")
 
-    machine.succeed("command -v dms")
+    machine.succeed("command -v cyshell")
     machine.succeed("command -v quickshell")
-    machine.succeed("su -- danklinux -c 'dms --help >/dev/null'")
-    machine.succeed("test -d /etc/xdg/quickshell/dms-plugins")
-    machine.succeed("test -f /run/current-system/sw/lib/systemd/user/dms.service")
-    machine.succeed("grep -q 'lib/security/pam_u2f.so cue' /etc/pam.d/dankshell-u2f")
+    machine.succeed("su -- danklinux -c 'cyshell --help >/dev/null'")
+    machine.succeed("test -d /etc/xdg/quickshell/cyshell-plugins")
+    machine.succeed("test -f /run/current-system/sw/lib/systemd/user/cyshell.service")
+    machine.succeed("grep -q 'lib/security/pam_u2f.so cue' /etc/pam.d/cyshell-u2f")
 
-    payload = json.loads(machine.succeed("su -- danklinux -c 'dms doctor --json'"))
+    payload = json.loads(machine.succeed("su -- danklinux -c 'cyshell doctor --json'"))
     t.assertIn("summary", payload)
     t.assertIsInstance(payload.get("results"), list)
   '';

@@ -18,12 +18,12 @@ on:
         required: false
         default: false
       build_git:
-        description: 'Build dms-git package'
+        description: 'Build cyshell-git package'
         type: boolean
         required: false
         default: true
       build_dms:
-        description: 'Build stable dms package'
+        description: 'Build stable cyshell package'
         type: boolean
         required: false
         default: true
@@ -61,7 +61,7 @@ jobs:
     name: Build & Deploy XBPS packages
     runs-on: ubuntu-latest
     needs: preflight
-    if: github.repository == 'AvengeMedia/DankMaterialShell' && needs.preflight.outputs.should_build == 'true'
+    if: github.repository == 'Cytech-Team/CyShell-Desktop' && vars.CYSHELL_DISTRO_PUBLISH == 'true' && needs.preflight.outputs.should_build == 'true'
     env:
       AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
@@ -100,8 +100,8 @@ jobs:
 
       - name: Inject templates
         run: |
-          cp -R distro/void/srcpkgs/dms void-packages/srcpkgs/
-          cp -R distro/void/srcpkgs/dms-git void-packages/srcpkgs/
+          cp -R distro/void/srcpkgs/cyshell void-packages/srcpkgs/
+          cp -R distro/void/srcpkgs/cyshell-git void-packages/srcpkgs/
 
       - name: Enable unprivileged user namespaces (Ubuntu 24.04)
         run: |
@@ -119,11 +119,11 @@ jobs:
           chmod 600 /tmp/xbps_privkey.pem
 
           # Extract public key in PEM format
-          openssl rsa -in /tmp/xbps_privkey.pem -pubout -out /tmp/dms-key.pub
+          openssl rsa -in /tmp/xbps_privkey.pem -pubout -out /tmp/cyshell-key.pub
           rm -f /tmp/xbps_privkey.pem
 
           # Compute MD5 fingerprint in colon-separated hex format
-          FINGERPRINT=$(openssl rsa -pubin -in /tmp/dms-key.pub -outform DER 2>/dev/null | openssl dgst -md5 -c | tr '[:upper:]' '[:lower:]' | awk '{print $NF}')
+          FINGERPRINT=$(openssl rsa -pubin -in /tmp/cyshell-key.pub -outform DER 2>/dev/null | openssl dgst -md5 -c | tr '[:upper:]' '[:lower:]' | awk '{print $NF}')
 
           # Format key in XML property list (plist) format as expected by xbps
           mkdir -p /tmp/keys
@@ -131,12 +131,12 @@ jobs:
           <?xml version="1.0" encoding="UTF-8"?>
           <plist version="1.0">
           <dict>
-          	<key>public-key</key>
-          	<data>$(base64 -w0 /tmp/dms-key.pub)</data>
-          	<key>public-key-size</key>
-          	<integer>4096</integer>
-          	<key>signature-by</key>
-          	<string>AvengeMedia</string>
+              <key>public-key</key>
+              <data>$(base64 -w0 /tmp/cyshell-key.pub)</data>
+              <key>public-key-size</key>
+              <integer>4096</integer>
+              <key>signature-by</key>
+              <string>AvengeMedia</string>
           </dict>
           </plist>
           EOF
@@ -154,7 +154,7 @@ jobs:
           mkdir -p void-packages/common/repo-keys
           cp "/tmp/keys/${FINGERPRINT}.plist" "void-packages/common/repo-keys/${FINGERPRINT}.plist"
 
-          rm -rf /tmp/keys /tmp/dms-key.pub
+          rm -rf /tmp/keys /tmp/cyshell-key.pub
 
       - name: Configure repositories
         run: |
@@ -173,17 +173,17 @@ jobs:
         run: |
           mkdir -p r2-repo/current
 
-          BUILD_DMS="${{ github.event.inputs.build_dms || 'true' }}"
+          BUILD_CYSHELL="${{ github.event.inputs.build_dms || 'true' }}"
           BUILD_GIT="${{ github.event.inputs.build_git || 'true' }}"
           FORCE_REBUILD="${{ github.event.inputs.force_rebuild || 'false' }}"
 
           if [ "${{ github.event_name }}" = "schedule" ]; then
-            BUILD_DMS="false"
+            BUILD_CYSHELL="false"
             BUILD_GIT="true"
           fi
 
           if [ "${{ github.event_name }}" = "release" ]; then
-            BUILD_DMS="true"
+            BUILD_CYSHELL="true"
             BUILD_GIT="false"
           fi
 
@@ -207,73 +207,73 @@ jobs:
           fi
 
           echo "=== Starting Builds ==="
-          echo "DMS stable build enabled:     $BUILD_DMS"
+          echo "CyShell stable build enabled:     $BUILD_CYSHELL"
           echo "Git build enabled:            $BUILD_GIT"
           echo "Force rebuild:                $FORCE_REBUILD"
 
           cd void-packages
 
-          if [ -n "$RELEASE_VER" ] && [ "$BUILD_DMS" = "true" ]; then
+          if [ -n "$RELEASE_VER" ] && [ "$BUILD_CYSHELL" = "true" ]; then
             echo "🔧 Updating stable template for $ARCHIVE_TAG"
             TARBALL="$(mktemp)"
-            curl -fsSL -o "$TARBALL" "https://github.com/${{ github.repository }}/releases/download/${ARCHIVE_TAG}/dms-source.tar.gz"
+            curl -fsSL -o "$TARBALL" "https://github.com/${{ github.repository }}/releases/download/${ARCHIVE_TAG}/cyshell-source.tar.gz"
             RELEASE_CHECKSUM="$(sha256sum "$TARBALL" | cut -d' ' -f1)"
             rm -f "$TARBALL"
 
-            sed -i "s/^version=.*/version=${RELEASE_VER}/" srcpkgs/dms/template
-            sed -i "s/^checksum=.*/checksum=${RELEASE_CHECKSUM}/" srcpkgs/dms/template
+            sed -i "s/^version=.*/version=${RELEASE_VER}/" srcpkgs/cyshell/template
+            sed -i "s/^checksum=.*/checksum=${RELEASE_CHECKSUM}/" srcpkgs/cyshell/template
           fi
 
-          # 1. Build dms-git (development package)
+          # 1. Build cyshell-git (development package)
           if [ "$BUILD_GIT" = "true" ]; then
             # Calculate dynamic git version (tag.commits.hash)
             GIT_VER=$(git -C .. describe --tags --always | sed 's/^v//; s/-/./g')
-            echo "🔨 Preparing dms-git version $GIT_VER"
+            echo "🔨 Preparing cyshell-git version $GIT_VER"
 
             # Stage source tarball in the xbps-src source cache.
             # --transform adds a top-level directory so xbps-src can extract
             # into $wrksrc (create_wrksrc=yes handles the rest).
-            SRC_CACHE="hostdir/sources/dms-git-${GIT_VER}"
+            SRC_CACHE="hostdir/sources/cyshell-git-${GIT_VER}"
             mkdir -p "$SRC_CACHE"
-            tar -czhf "${SRC_CACHE}/dms-git-${GIT_VER}.tar.gz" \
+            tar -czhf "${SRC_CACHE}/cyshell-git-${GIT_VER}.tar.gz" \
               --exclude=void-packages \
               --exclude=r2-repo \
               --exclude=.git \
               --exclude=danklinux \
               -C .. .
 
-            CHECKSUM=$(sha256sum "${SRC_CACHE}/dms-git-${GIT_VER}.tar.gz" | cut -d' ' -f1)
+            CHECKSUM=$(sha256sum "${SRC_CACHE}/cyshell-git-${GIT_VER}.tar.gz" | cut -d' ' -f1)
 
             # Dynamically patch template version, checksum, and distfiles
-            sed -i "s/^version=.*/version=${GIT_VER}/" srcpkgs/dms-git/template
-            sed -i "s/^checksum=.*/checksum=${CHECKSUM}/" srcpkgs/dms-git/template
-            sed -i "s|^distfiles=.*|distfiles=\"dms-git-${GIT_VER}.tar.gz\"|" srcpkgs/dms-git/template
+            sed -i "s/^version=.*/version=${GIT_VER}/" srcpkgs/cyshell-git/template
+            sed -i "s/^checksum=.*/checksum=${CHECKSUM}/" srcpkgs/cyshell-git/template
+            sed -i "s|^distfiles=.*|distfiles=\"cyshell-git-${GIT_VER}.tar.gz\"|" srcpkgs/cyshell-git/template
 
-            EXPECTED_GIT_FILE="dms-git-${GIT_VER}_1.x86_64.xbps"
+            EXPECTED_GIT_FILE="cyshell-git-${GIT_VER}_1.x86_64.xbps"
 
             if [ -f "../r2-repo/current/$EXPECTED_GIT_FILE" ] && [ "$FORCE_REBUILD" != "true" ]; then
               echo "✅ $EXPECTED_GIT_FILE already exists, skipping build."
             else
-              echo "🔨 Compiling dms-git..."
-              ./xbps-src pkg dms-git
+              echo "🔨 Compiling cyshell-git..."
+              ./xbps-src pkg cyshell-git
               rm -f "../r2-repo/current/${EXPECTED_GIT_FILE}"
               cp -L "hostdir/binpkgs/${EXPECTED_GIT_FILE}" ../r2-repo/current/
             fi
           fi
 
-          # 2. Build stable dms package
-          if [ "$BUILD_DMS" = "true" ]; then
-            STABLE_VER=$(grep -E '^version=' srcpkgs/dms/template | cut -d= -f2 | tr -d '"')
-            STABLE_REV=$(grep -E '^revision=' srcpkgs/dms/template | cut -d= -f2 | tr -d '"')
+          # 2. Build stable cyshell package
+          if [ "$BUILD_CYSHELL" = "true" ]; then
+            STABLE_VER=$(grep -E '^version=' srcpkgs/cyshell/template | cut -d= -f2 | tr -d '"')
+            STABLE_REV=$(grep -E '^revision=' srcpkgs/cyshell/template | cut -d= -f2 | tr -d '"')
 
-            EXPECTED_DMS_FILE="dms-${STABLE_VER}_${STABLE_REV}.x86_64.xbps"
-            if [ -f "../r2-repo/current/$EXPECTED_DMS_FILE" ] && [ "$FORCE_REBUILD" != "true" ]; then
-              echo "✅ $EXPECTED_DMS_FILE already exists, skipping build."
+            EXPECTED_CYSHELL_FILE="cyshell-${STABLE_VER}_${STABLE_REV}.x86_64.xbps"
+            if [ -f "../r2-repo/current/$EXPECTED_CYSHELL_FILE" ] && [ "$FORCE_REBUILD" != "true" ]; then
+              echo "✅ $EXPECTED_CYSHELL_FILE already exists, skipping build."
             else
-              echo "🔨 Compiling dms ($STABLE_VER)..."
-              ./xbps-src pkg dms
-              rm -f "../r2-repo/current/${EXPECTED_DMS_FILE}"
-              cp -L hostdir/binpkgs/dms-${STABLE_VER}_${STABLE_REV}.x86_64.xbps ../r2-repo/current/
+              echo "🔨 Compiling cyshell ($STABLE_VER)..."
+              ./xbps-src pkg cyshell
+              rm -f "../r2-repo/current/${EXPECTED_CYSHELL_FILE}"
+              cp -L hostdir/binpkgs/cyshell-${STABLE_VER}_${STABLE_REV}.x86_64.xbps ../r2-repo/current/
             fi
           fi
 

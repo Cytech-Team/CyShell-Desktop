@@ -11,6 +11,7 @@ Item {
     property int currentTab: 0
     property var transientSurfaceTracker: null
     property bool modal: false
+    property bool calendarLayout: false
     readonly property string currentLabel: {
         const count = NotificationService.notifications.length;
         if (count === 0)
@@ -27,7 +28,7 @@ Item {
     signal closeRequested
 
     width: parent.width
-    implicitHeight: Theme.buttonHeightXS
+    implicitHeight: root.calendarLayout ? Theme.buttonHeightS : Theme.buttonHeightXS
     height: implicitHeight
     onVisibleChanged: {
         tabs.interactionStarted = false;
@@ -60,9 +61,11 @@ Item {
         anchors.left: parent.left
         anchors.verticalCenter: parent.verticalCenter
         spacing: Theme.spacingXS
+        visible: !root.calendarLayout
 
-        DankActionButton {
+        CyActionButton {
             id: dndButton
+            visible: !root.calendarLayout
             iconName: SessionData.doNotDisturb ? "notifications_off" : "notifications"
             buttonSize: Theme.buttonHeightXS
             backgroundColor: SessionData.doNotDisturb ? Theme.primaryContainer : "transparent"
@@ -74,8 +77,8 @@ Item {
             }
         }
 
-        DankActionButton {
-            visible: root.keyboardController !== null
+        CyActionButton {
+            visible: root.keyboardController !== null && !root.calendarLayout
             iconName: "info"
             buttonSize: Theme.buttonHeightXS
             tooltipText: I18n.tr("Keyboard shortcuts")
@@ -83,7 +86,7 @@ Item {
         }
     }
 
-    DankButtonGroup {
+    CyButtonGroup {
         id: tabs
         anchors.left: leadingActions.right
         anchors.right: actions.left
@@ -95,7 +98,7 @@ Item {
         size: "small"
         checkEnabled: false
         iconOnly: width < (Math.max(currentLabelMetrics.width, historyLabelMetrics.width) + buttonPadding * 2) * 2 + spacing
-        visible: SettingsData.notificationHistoryEnabled
+        visible: SettingsData.notificationHistoryEnabled && !root.calendarLayout
         model: [
             {
                 text: root.currentLabel,
@@ -117,14 +120,15 @@ Item {
         anchors.right: parent.right
         anchors.verticalCenter: parent.verticalCenter
         spacing: Theme.spacingXS
+        visible: !root.calendarLayout
 
-        DankActionButton {
+        CyActionButton {
             iconName: "settings"
             buttonSize: Theme.buttonHeightXS
             tooltipText: I18n.tr("Settings")
             onClicked: root.settingsRequested()
         }
-        DankActionButton {
+        CyActionButton {
             iconName: "delete_sweep"
             buttonSize: Theme.buttonHeightXS
             tooltipText: I18n.tr("Clear All")
@@ -139,7 +143,7 @@ Item {
                 NotificationService.clearHistory();
             }
         }
-        DankActionButton {
+        CyActionButton {
             visible: root.modal
             iconName: "close"
             buttonSize: Theme.buttonHeightXS
@@ -148,10 +152,10 @@ Item {
         }
     }
 
-    DankDropdown {
+    CyDropdown {
         id: durationMenu
         showTrigger: false
-        popupAnchorItem: dndButton
+        popupAnchorItem: root.calendarLayout ? calendarDndButton : dndButton
         popupWidth: NotificationMetrics.menuWidth
         alignPopupRight: I18n.isRtl
         options: [I18n.tr("Off")].concat(DndPresets.presetOptions.map(option => option.label))
@@ -159,7 +163,7 @@ Item {
         transientSurfaceTracker: root.transientSurfaceTracker
         onMenuOpenChanged: {
             if (!menuOpen && root.visible)
-                dndButton.forceActiveFocus();
+                (root.calendarLayout ? calendarDndButton : dndButton).forceActiveFocus();
         }
         onValueChanged: value => {
             if (value === I18n.tr("Off")) {
@@ -169,6 +173,72 @@ Item {
             const option = DndPresets.presetOptions.find(option => option.label === value);
             if (option)
                 DndPresets.selectPreset(option);
+        }
+    }
+
+    StyledText {
+        visible: root.calendarLayout
+        anchors.left: parent.left
+        anchors.right: calendarActions.left
+        anchors.rightMargin: Theme.spacingS
+        anchors.verticalCenter: parent.verticalCenter
+        text: root.currentTab === 0 ? I18n.tr("Notifications") : I18n.tr("History")
+        font.pixelSize: Theme.fontSizeLarge
+        font.weight: Theme.fontWeightMedium
+        color: Theme.surfaceText
+        elide: Text.ElideRight
+    }
+
+    Row {
+        id: calendarActions
+        anchors.right: parent.right
+        anchors.verticalCenter: parent.verticalCenter
+        spacing: Theme.spacingXS
+        visible: root.calendarLayout
+
+        CyActionButton {
+            id: calendarDndButton
+            iconName: SessionData.doNotDisturb ? "notifications_off" : "notifications"
+            buttonSize: Theme.buttonHeightXS
+            backgroundColor: SessionData.doNotDisturb ? Theme.primaryContainer : "transparent"
+            iconColor: SessionData.doNotDisturb ? Theme.onPrimaryContainer : Theme.onSurfaceVariant
+            tooltipText: I18n.tr("Do not disturb") + ": " + (SessionData.doNotDisturb ? DndPresets.status : I18n.tr("Off"))
+            onClicked: {
+                durationMenu.currentValue = SessionData.doNotDisturb ? DndPresets.status : I18n.tr("Off");
+                durationMenu.openDropdownMenu();
+            }
+        }
+
+        CyActionButton {
+            visible: SettingsData.notificationHistoryEnabled
+            iconName: root.currentTab === 0 ? "history" : "inbox"
+            buttonSize: Theme.buttonHeightXS
+            tooltipText: root.currentTab === 0 ? root.historyLabel : root.currentLabel
+            Accessible.name: tooltipText
+            onClicked: root.currentTab = root.currentTab === 0 ? 1 : 0
+        }
+
+        CyActionButton {
+            iconName: "settings"
+            buttonSize: Theme.buttonHeightXS
+            tooltipText: I18n.tr("Settings")
+            onClicked: root.settingsRequested()
+        }
+
+        CyActionButton {
+            iconName: "delete_sweep"
+            buttonSize: Theme.buttonHeightXS
+            tooltipText: I18n.tr("Clear All")
+            enabled: root.currentTab === 0 ? NotificationService.notifications.length > 0 : NotificationService.historyList.length > 0
+            backgroundColor: Theme.secondaryContainer
+            iconColor: Theme.onSecondaryContainer
+            onClicked: {
+                if (root.currentTab === 0) {
+                    NotificationService.clearAllNotifications();
+                    return;
+                }
+                NotificationService.clearHistory();
+            }
         }
     }
 }

@@ -7,8 +7,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/loginctl"
 	"github.com/AvengeMedia/dankgo/syncmap"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/server/loginctl"
 )
 
 type activeSchedule struct {
@@ -185,7 +185,7 @@ func (m *Manager) schedulerLoop() {
 						m.lastFires[key] = now
 						firesDirty = true
 					case valid && last.Before(prev):
-						// Scheduled time passed while dms wasn't running.
+						// Scheduled time passed while CyShell wasn't running.
 						s.nextFire = now.Add(catchUpDelay)
 					}
 				}

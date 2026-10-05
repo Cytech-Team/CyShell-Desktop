@@ -1,0 +1,479 @@
+#!/usr/bin/env python3
+"""
+CyShell taskbar "End Task" resolver.
+
+Labwc's foreign-toplevel protocol commonly exposes pid=0, so PID-only killing is
+not reliable. This helper resolves an app from the strongest available hints:
+  1. compositor PID(s)
+  2. desktop-entry Exec / app-id exact process or argv token
+  3. conservative window-title fallback for generic Wine/Proton app-ids
+
+When a resolved process belongs to a dedicated user app scope, End Task kills
+that scope. Otherwise it kills the matched process tree. The helper never kills
+system/foreign-user processes or broad-matches arbitrary command lines.
+"""
+
+from __future__ import annotations
+
+import os
+import re
+import shlex
+import signal
+import subprocess
+import sys
+from pathlib import Path
+
+UID = os.getuid()
+SELF = os.getpid()
+MIN_PID = 1000
+
+GENERIC = {
+    "env", "sh", "bash", "fish", "zsh", "flatpak", "gtk-launch", "dex",
+    "steam", "steam.sh", "xdg-open", "electron", "desktop", "main",
+    "python", "python3", "node", "java", "wine", "wine64", "wine-preloader",
+    "wineserver", "proton", "steam_proton",
+}
+
+
+def lower(value: str) -> str:
+    return value.strip().lower()
+
+
+def basename(value: str) -> str:
+    value = value.replace("\\", "/")
+    return value.rsplit("/", 1)[-1]
+
+
+def strip_known_suffix(value: str) -> str:
+    value = lower(basename(value))
+    for suffix in (".desktop", ".exe"):
+        if value.endswith(suffix):
+            value = value[: -len(suffix)]
+    return value
+
+
+def normalized(value: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "", strip_known_suffix(value))
+
+
+def valid_pid(pid: int) -> bool:
+    if pid <= MIN_PID or pid == SELF:
+        return False
+    proc = Path("/proc") / str(pid)
+    try:
+        return proc.is_dir() and proc.stat().st_uid == UID
+    except OSError:
+        return False
+
+
+def proc_text(path: Path) -> str:
+    try:
+        return path.read_text(errors="replace").strip()
+    except OSError:
+        return ""
+
+
+def proc_info(pid: int) -> dict:
+    proc = Path("/proc") / str(pid)
+    comm = proc_text(proc / "comm")
+    try:
+        exe = os.readlink(proc / "exe")
+    except OSError:
+        exe = ""
+    try:
+        raw = (proc / "cmdline").read_bytes()
+        argv = [x.decode(errors="replace") for x in raw.split(b"\0") if x]
+    except OSError:
+        argv = []
+    try:
+        stat_fields = (proc / "stat").read_text().split()
+        ppid = int(stat_fields[3])
+    except (OSError, ValueError, IndexError):
+        ppid = 0
+    return {"pid": pid, "ppid": ppid, "comm": comm, "exe": exe, "argv": argv}
+
+
+def parse_args(argv: list[str]) -> dict:
+    result = {"app_id": "", "exec_hint": "", "titles": [], "pids": [], "dry_run": False}
+    i = 0
+    while i < len(argv):
+        arg = argv[i]
+        if arg in {"--app-id", "--exec", "--title", "--pid"} and i + 1 < len(argv):
+            value = argv[i + 1]
+            if arg == "--app-id":
+                result["app_id"] = value
+            elif arg == "--exec":
+                result["exec_hint"] = value
+            elif arg == "--title":
+                result["titles"].append(value)
+            else:
+                try:
+                    result["pids"].append(int(value))
+                except ValueError:
+                    pass
+            i += 2
+            continue
+        if arg == "--dry-run":
+            result["dry_run"] = True
+        i += 1
+    return result
+
+
+def desktop_exec_for(app_id: str) -> str:
+    app_id = app_id.strip()
+    if not app_id:
+        return ""
+
+    roots = [
+        Path.home() / ".local/share/applications",
+        Path("/usr/local/share/applications"),
+        Path("/usr/share/applications"),
+    ]
+    filenames = [app_id]
+    if not app_id.endswith(".desktop"):
+        filenames.append(app_id + ".desktop")
+    else:
+        # Some Wayland app ids themselves end in ".desktop".
+        filenames.append(app_id + ".desktop")
+
+    def entry_exec(path: Path) -> tuple[str, str]:
+        in_desktop_entry = False
+        startup = ""
+        exec_line = ""
+        try:
+            for raw in path.read_text(errors="replace").splitlines():
+                line = raw.strip()
+                if line.startswith("[") and line.endswith("]"):
+                    in_desktop_entry = line == "[Desktop Entry]"
+                    if not in_desktop_entry and exec_line:
+                        break
+                    continue
+                if not in_desktop_entry:
+                    continue
+                if line.startswith("StartupWMClass="):
+                    startup = line.split("=", 1)[1].strip()
+                elif line.startswith("Exec=") and not exec_line:
+                    exec_line = line.split("=", 1)[1].strip()
+        except OSError:
+            return "", ""
+        return startup, exec_line
+
+    for root in roots:
+        for name in filenames:
+            path = root / name
+            if path.is_file():
+                _, value = entry_exec(path)
+                if value:
+                    return value
+
+    # Filename lookup can miss aliases. Fall back to exact StartupWMClass only.
+    wanted = lower(app_id)
+    for root in roots:
+        if not root.is_dir():
+            continue
+        try:
+            entries = root.glob("*.desktop")
+        except OSError:
+            continue
+        for path in entries:
+            startup, value = entry_exec(path)
+            if value and lower(startup) == wanted:
+                return value
+    return ""
+
+
+def add_candidate(target: list[str], value: str) -> None:
+    value = strip_known_suffix(value)
+    if not value or value in GENERIC:
+        return
+    if re.fullmatch(r"electron\d+", value):
+        return
+    if value not in target:
+        target.append(value)
+
+
+def candidates_from_exec(exec_hint: str) -> list[str]:
+    if not exec_hint:
+        return []
+    try:
+        tokens = shlex.split(exec_hint)
+    except ValueError:
+        tokens = exec_hint.split()
+
+    while tokens and "=" in tokens[0] and not tokens[0].startswith("/"):
+        tokens.pop(0)
+    if tokens and tokens[0] == "env":
+        tokens.pop(0)
+        while tokens and "=" in tokens[0] and not tokens[0].startswith("/"):
+            tokens.pop(0)
+
+    result: list[str] = []
+    if not tokens:
+        return result
+
+    command = strip_known_suffix(tokens[0])
+    add_candidate(result, command)
+
+    if command == "flatpak":
+        for i, token in enumerate(tokens[1:], 1):
+            if token == "run" and i + 1 < len(tokens):
+                app = tokens[i + 1]
+                add_candidate(result, app)
+                add_candidate(result, app.rsplit(".", 1)[-1])
+                break
+    elif command == "gtk-launch" and len(tokens) > 1:
+        add_candidate(result, tokens[1])
+
+    # Electron/wrapper desktop files often carry the real app executable/path as
+    # a later token. Only take path-like or executable-like arguments.
+    for token in tokens[1:]:
+        if not token or token.startswith("%"):
+            continue
+        raw = token.split("=", 1)[-1] if "=" in token else token
+        base = basename(raw)
+        if "/" in raw or "\\" in raw or base.lower().endswith(".exe"):
+            add_candidate(result, base)
+    return result
+
+
+def app_candidates(app_id: str, exec_hint: str) -> list[str]:
+    result = candidates_from_exec(exec_hint)
+    if app_id:
+        app = lower(app_id)
+        add_candidate(result, app)
+        add_candidate(result, app.rsplit(".", 1)[-1])
+        if app.endswith("-browser"):
+            add_candidate(result, app[: -len("-browser")])
+    return result
+
+
+def process_exact_match(info: dict, candidates: list[str]) -> bool:
+    if not candidates:
+        return False
+    values = {
+        strip_known_suffix(info["comm"]),
+        strip_known_suffix(info["exe"]),
+    }
+    for token in info["argv"]:
+        if not token:
+            continue
+        raw = token.split("=", 1)[-1] if "=" in token else token
+        values.add(strip_known_suffix(raw))
+    return any(candidate in values for candidate in candidates)
+
+
+def title_candidates(titles: list[str]) -> list[str]:
+    result: list[str] = []
+    for title in titles:
+        value = normalized(title)
+        # Title matching is deliberately conservative. This is intended for
+        # generic Wine/Proton app-ids such as steam_proton -> "Roblox Studio".
+        if len(value) < 10:
+            continue
+        if value not in result:
+            result.append(value)
+    return result
+
+
+def process_title_match(info: dict, titles: list[str]) -> bool:
+    if not titles:
+        return False
+    # Only inspect the actual process identity / argv[0], not arbitrary command
+    # line arguments. That prevents matching helper/renderer metadata.
+    identities = [
+        normalized(info["comm"]),
+        normalized(info["exe"]),
+        normalized(info["argv"][0]) if info["argv"] else "",
+    ]
+    for title in titles:
+        for identity in identities:
+            if len(identity) < 10:
+                continue
+            if identity == title or identity.startswith(title) or title.startswith(identity):
+                return True
+    return False
+
+
+def all_processes() -> dict[int, dict]:
+    result: dict[int, dict] = {}
+    for entry in Path("/proc").iterdir():
+        if not entry.name.isdigit():
+            continue
+        pid = int(entry.name)
+        if not valid_pid(pid):
+            continue
+        result[pid] = proc_info(pid)
+    return result
+
+
+def root_matches(matches: set[int], infos: dict[int, dict]) -> set[int]:
+    roots = set(matches)
+    for pid in list(matches):
+        parent = infos.get(pid, {}).get("ppid", 0)
+        seen: set[int] = set()
+        while parent > MIN_PID and parent not in seen:
+            seen.add(parent)
+            if parent in matches:
+                roots.discard(pid)
+                break
+            parent = infos.get(parent, {}).get("ppid", 0)
+    return roots
+
+
+def descendants(roots: set[int], infos: dict[int, dict]) -> set[int]:
+    selected = set(roots)
+    changed = True
+    while changed:
+        changed = False
+        for pid, info in infos.items():
+            if pid in selected:
+                continue
+            if info.get("ppid", 0) in selected:
+                selected.add(pid)
+                changed = True
+    return selected
+
+
+def app_scope_for(pid: int, candidates: list[str]) -> str:
+    try:
+        lines = (Path("/proc") / str(pid) / "cgroup").read_text().splitlines()
+    except OSError:
+        return ""
+    for line in lines:
+        try:
+            path = line.split(":", 2)[2]
+        except IndexError:
+            continue
+        if "/app.slice/" not in path:
+            continue
+        unit = path.rsplit("/", 1)[-1]
+        if not unit.endswith(".scope"):
+            continue
+        if unit.startswith("run-p"):
+            return unit
+        unit_norm = normalized(unit)
+        if unit.startswith("app-") and any(
+            len(normalized(candidate)) >= 4 and normalized(candidate) in unit_norm
+            for candidate in candidates
+        ):
+            return unit
+    return ""
+
+
+def main() -> int:
+    args = parse_args(sys.argv[1:])
+    exec_hint = args["exec_hint"] or desktop_exec_for(args["app_id"])
+    candidates = app_candidates(args["app_id"], exec_hint)
+    titles = title_candidates(args["titles"])
+
+    # Fast path first. When the compositor gives us a real PID, terminate its
+    # app scope/process immediately before doing the slower /proc fallback scan.
+    # The cleanup scan still runs afterwards for wrapper/helper leftovers.
+    direct_matches = {pid for pid in args["pids"] if valid_pid(pid)}
+    fast_failed = False
+    fast_acted = False
+    fast_scopes: set[str] = set()
+    if direct_matches and not args["dry_run"]:
+        for pid in sorted(direct_matches):
+            scope = app_scope_for(pid, candidates)
+            if scope:
+                if scope in fast_scopes:
+                    continue
+                fast_scopes.add(scope)
+                result = subprocess.run(
+                    ["systemctl", "--user", "kill", "--kill-who=all", "--signal=KILL", scope],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    check=False,
+                )
+                fast_acted = True
+                if result.returncode != 0:
+                    fast_failed = True
+                continue
+            try:
+                os.kill(pid, signal.SIGKILL)
+                fast_acted = True
+            except ProcessLookupError:
+                fast_acted = True
+            except PermissionError:
+                fast_failed = True
+
+    infos = all_processes()
+    matches = {pid for pid, info in infos.items() if process_exact_match(info, candidates)}
+    if not matches and titles:
+        matches = {pid for pid, info in infos.items() if process_title_match(info, titles)}
+    # Dry-run keeps explicit PIDs visible. For the live fast path the PID may
+    # already be gone, which is success rather than an identification failure.
+    if args["dry_run"]:
+        matches.update(direct_matches)
+    if not matches:
+        if fast_acted:
+            return 1 if fast_failed else 0
+        if not args["dry_run"]:
+            label = args["titles"][0] if args["titles"] else (args["app_id"] or "application")
+            try:
+                subprocess.Popen(
+                    [
+                        "notify-send",
+                        "-a", "CyShell",
+                        "-u", "normal",
+                        "End Task",
+                        f"Could not identify the process for {label}",
+                    ],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                )
+            except OSError:
+                pass
+        return 3
+
+    roots = root_matches(matches, infos)
+    scopes: set[str] = set()
+    scoped_roots: set[int] = set()
+    for pid in roots:
+        scope = app_scope_for(pid, candidates)
+        if scope:
+            scopes.add(scope)
+            scoped_roots.add(pid)
+
+    unscoped_roots = roots - scoped_roots
+    kill_pids = descendants(unscoped_roots, infos)
+
+    if args["dry_run"]:
+        for scope in sorted(scopes):
+            print(f"scope:{scope}")
+        for pid in sorted(kill_pids):
+            print(pid)
+        if not scopes and not kill_pids:
+            # All roots may share a safe scope which is already printed, but
+            # keep the historical numeric dry-run useful when no scope exists.
+            for pid in sorted(roots):
+                print(pid)
+        return 0
+
+    failed = fast_failed
+    for scope in sorted(scopes - fast_scopes):
+        result = subprocess.run(
+            ["systemctl", "--user", "kill", "--kill-who=all", "--signal=KILL", scope],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=False,
+        )
+        if result.returncode != 0:
+            failed = True
+
+    for pid in sorted(kill_pids, reverse=True):
+        if not valid_pid(pid):
+            continue
+        try:
+            os.kill(pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+        except PermissionError:
+            failed = True
+
+    return 1 if failed else 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

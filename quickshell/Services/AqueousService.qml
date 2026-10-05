@@ -567,7 +567,7 @@ Singleton {
         onTriggered: root.reconnecting = false
     }
 
-    component IpcConnection: DankSocket {
+    component IpcConnection: CySocket {
         id: connection
         property bool events: false
         property var handshake: null

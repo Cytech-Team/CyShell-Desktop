@@ -5,10 +5,10 @@ import qs.Services
 import qs.Widgets
 import Quickshell.Services.UPower
 
-DankModal {
+CyModal {
     id: root
 
-    layerNamespace: "dms:power-profiles"
+    layerNamespace: "cyshell:power-profiles"
     keepPopoutsOpen: true
 
     property int selectedIndex: 0
@@ -156,7 +156,7 @@ DankModal {
                         }
                     }
 
-                    DankActionButton {
+                    CyActionButton {
                         iconName: "close"
                         Accessible.name: I18n.tr("Close")
                         iconSize: Theme.iconSize - 4
@@ -224,7 +224,7 @@ DankModal {
                                 anchors.centerIn: parent
                                 spacing: Theme.spacingS
 
-                                DankIcon {
+                                CyIcon {
                                     name: Theme.getPowerProfileIcon(modelData)
                                     size: Theme.iconSize + 16
                                     color: isActive ? Theme.primary : Theme.surfaceText
@@ -273,7 +273,7 @@ DankModal {
                     spacing: Theme.spacingXS
                     opacity: 0.5
 
-                    DankIcon {
+                    CyIcon {
                         name: "keyboard"
                         size: Theme.fontSizeSmall
                         color: Theme.surfaceText

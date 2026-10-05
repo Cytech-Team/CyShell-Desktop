@@ -494,7 +494,7 @@ RegistryBrowserWindow {
     function refreshPlugins() {
         isLoading = true;
         loadError = "";
-        DMSService.listPlugins(response => {
+        CyShellService.listPlugins(response => {
             isLoading = false;
             if (!visible)
                 return;
@@ -505,8 +505,8 @@ RegistryBrowserWindow {
             allPlugins = response.result || [];
             updateFilteredPlugins();
         });
-        if (DMSService.apiVersion >= 8)
-            DMSService.listInstalled();
+        if (CyShellService.apiVersion >= 8)
+            CyShellService.listInstalled();
     }
 
     function checkPendingInstall() {
@@ -565,7 +565,7 @@ RegistryBrowserWindow {
     }
 
     Connections {
-        target: DMSService
+        target: CyShellService
 
         function onInstalledPluginsReceived(plugins) {
             if (!root.visible)
@@ -605,7 +605,7 @@ RegistryBrowserWindow {
             iconName: "extension"
             onToggled: show => root.setThirdPartyVisible(show)
         },
-        DankCard {
+        CyCard {
             id: operationStatus
             readonly property color statusColor: root.operationFailed ? Theme.onErrorContainer : contentColor
             anchors.left: parent.left
@@ -623,7 +623,7 @@ RegistryBrowserWindow {
                 anchors.fill: parent
                 spacing: Theme.spacingS
 
-                DankIcon {
+                CyIcon {
                     name: root.operationFailed ? "error" : root.operationPending ? "downloading" : "check_circle"
                     size: Theme.iconSize
                     color: operationStatus.statusColor
@@ -646,7 +646,7 @@ RegistryBrowserWindow {
             anchors.right: parent.right
             spacing: Theme.spacingS
 
-            DankFilterChips {
+            CyFilterChips {
                 width: parent.width
                 model: root.sortChipOptions.slice(2)
                 currentIndex: Math.max(0, model.findIndex(option => option.id === root.normalizedSortMode(SessionData.pluginBrowserSortMode)))
@@ -658,7 +658,7 @@ RegistryBrowserWindow {
                     root.updateFilteredPlugins();
                 }
             }
-            DankFilterChips {
+            CyFilterChips {
                 width: parent.width
                 model: root.sortChipOptions.slice(0, 2).map(option => ({
                             label: option.label,
@@ -695,7 +695,7 @@ RegistryBrowserWindow {
                     Layout.alignment: Qt.AlignVCenter
                 }
 
-                DankDropdown {
+                CyDropdown {
                     Layout.fillWidth: true
                     Layout.preferredHeight: Theme.buttonHeightS
                     compactMode: true
@@ -715,7 +715,7 @@ RegistryBrowserWindow {
     ]
 
     listContent: [
-        DankGridView {
+        CyGridView {
             id: pluginGrid
 
             property int columns: Math.max(1, Math.floor(width / (Theme.smallBreakpoint / 2 + Theme.spacingXL * 2)))
@@ -756,7 +756,7 @@ RegistryBrowserWindow {
                 }
             }
         },
-        DankFlickable {
+        CyFlickable {
             id: letterIndex
             anchors.right: parent.right
             anchors.top: pluginGrid.top
@@ -772,7 +772,7 @@ RegistryBrowserWindow {
                 Repeater {
                     model: root.availableLetters
 
-                    DankButton {
+                    CyButton {
                         required property string modelData
                         width: letterIndex.width
                         minimumWidth: 0
@@ -791,7 +791,7 @@ RegistryBrowserWindow {
             spacing: Theme.spacingS
             visible: !root.isLoading && root.loadError === "" && root.filteredPlugins.length === 0
 
-            DankIcon {
+            CyIcon {
                 anchors.horizontalCenter: parent.horizontalCenter
                 name: "search_off"
                 size: Theme.iconButtonSize
@@ -811,7 +811,7 @@ RegistryBrowserWindow {
             visible: !root.isLoading && root.loadError !== ""
             width: parent.width
 
-            DankIcon {
+            CyIcon {
                 anchors.horizontalCenter: parent.horizontalCenter
                 name: "cloud_off"
                 size: Theme.iconButtonSize
@@ -835,7 +835,7 @@ RegistryBrowserWindow {
                 color: Theme.onSurfaceVariant
             }
 
-            DankButton {
+            CyButton {
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: I18n.tr("Retry", "retry failed action button")
                 iconName: "refresh"
@@ -897,7 +897,7 @@ RegistryBrowserWindow {
             anchors.right: parent.right
             height: Theme.buttonHeightS
 
-            DankActionButton {
+            CyActionButton {
                 id: detailBackButton
                 anchors.left: parent.left
                 anchors.verticalCenter: parent.verticalCenter
@@ -908,7 +908,7 @@ RegistryBrowserWindow {
                 onClicked: root.closePluginDetail()
             }
 
-            DankIcon {
+            CyIcon {
                 id: detailIcon
                 anchors.left: detailBackButton.right
                 anchors.leftMargin: Theme.spacingS
@@ -932,7 +932,7 @@ RegistryBrowserWindow {
                 maximumLineCount: 1
             }
 
-            DankButton {
+            CyButton {
                 id: detailInstallButton
                 readonly property bool compatible: PluginService.checkPluginCompatibility(detailPane.plugin.requires_dms)
                 anchors.right: parent.right
@@ -944,7 +944,7 @@ RegistryBrowserWindow {
             }
         }
 
-        DankFlickable {
+        CyFlickable {
             id: detailFlickable
             anchors.top: detailHeader.bottom
             anchors.topMargin: Theme.spacingM
@@ -990,7 +990,7 @@ RegistryBrowserWindow {
                         }
                     }
 
-                    DankSpinner {
+                    CySpinner {
                         anchors.centerIn: parent
                         running: heroImage.status === Image.Loading
                         visible: running
@@ -1001,7 +1001,7 @@ RegistryBrowserWindow {
                         spacing: Theme.spacingXS
                         visible: heroImage.imagePath.length === 0 || heroImage.status === Image.Error
 
-                        DankIcon {
+                        CyIcon {
                             anchors.horizontalCenter: parent.horizontalCenter
                             name: "image_not_supported"
                             size: Theme.iconSizeLarge
@@ -1116,7 +1116,7 @@ RegistryBrowserWindow {
                     spacing: Theme.spacingS
                     visible: (detailPane.plugin.permissions || []).length > 0
 
-                    DankIcon {
+                    CyIcon {
                         name: "security"
                         size: Theme.iconSizeSmall
                         color: Theme.surfaceVariantText
@@ -1143,7 +1143,7 @@ RegistryBrowserWindow {
                     spacing: Theme.spacingS
                     visible: (detailPane.plugin.dependencies || []).length > 0
 
-                    DankIcon {
+                    CyIcon {
                         name: "package_2"
                         size: Theme.iconSizeSmall
                         color: Theme.surfaceVariantText
@@ -1184,7 +1184,7 @@ RegistryBrowserWindow {
                         Repeater {
                             model: root.relatedPlugins(detailPane.plugin)
 
-                            DankButton {
+                            CyButton {
                                 required property var modelData
                                 text: modelData.name
                                 iconName: "extension"

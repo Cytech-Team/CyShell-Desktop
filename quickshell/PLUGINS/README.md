@@ -8,7 +8,7 @@ Browse and discover community plugins at **https://plugins.danklinux.com/**
 
 ## Overview
 
-Plugins are discovered from `~/.config/DankMaterialShell/plugins/` and managed by PluginService. One plugin can provide a single surface or several (see [Composite Plugins](#composite-plugins)).
+Plugins are discovered from `~/.config/CyShell/plugins/` and managed by PluginService. One plugin can provide a single surface or several (see [Composite Plugins](#composite-plugins)).
 
 ## Architecture
 
@@ -16,7 +16,7 @@ Plugins are discovered from `~/.config/DankMaterialShell/plugins/` and managed b
 
 1. **PluginService** (`Services/PluginService.qml`)
    - Singleton service managing plugin lifecycle
-   - Discovers plugins from `$CONFIGPATH/DankMaterialShell/plugins/`
+   - Discovers plugins from `$CONFIGPATH/CyShell/plugins/`
    - Handles loading, unloading, and state management
    - Provides data persistence for plugin settings
 
@@ -31,7 +31,7 @@ Plugins are discovered from `~/.config/DankMaterialShell/plugins/` and managed b
    - Merges plugin components with built-in widgets
    - Supports every bar and dock edge
 
-5. **Dash integration** (`Modules/DankDash/DashRegistry.qml`)
+5. **Dash integration** (`Modules/CyDash/DashRegistry.qml`)
    - Lists built-in and plugin tabs and overview cards
    - Hosts plugin tabs in `DashTabHost.qml` and cards in `Overview/DashCardSlot.qml`
 
@@ -39,10 +39,10 @@ Many widgets are implemented in the shared [dank-qml-common](https://github.com/
 
 ## Plugin Structure
 
-Each plugin must be a directory in `$CONFIGPATH/DankMaterialShell/plugins/` containing:
+Each plugin must be a directory in `$CONFIGPATH/CyShell/plugins/` containing:
 
 ```
-$CONFIGPATH/DankMaterialShell/plugins/YourPlugin/
+$CONFIGPATH/CyShell/plugins/YourPlugin/
 ├── plugin.json          # Required: Plugin manifest
 ├── YourWidget.qml       # Required: Widget component
 ├── YourSettings.qml     # Optional: Settings UI
@@ -116,7 +116,7 @@ import qs.Widgets
 import qs.Modules.Plugins
 
 PluginComponent {
-    // Define horizontal bar pill, for top and bottom DankBar positions (optional)
+    // Define horizontal bar pill, for top and bottom CyBar positions (optional)
     horizontalBarPill: Component {
         StyledRect {
             width: content.implicitWidth + Theme.spacingM * 2
@@ -134,7 +134,7 @@ PluginComponent {
         }
     }
 
-    // Define vertical bar pill, for left and right DankBar positions (optional)
+    // Define vertical bar pill, for left and right CyBar positions (optional)
     verticalBarPill: Component {
         // Same as horizontal but optimized for vertical layout
     }
@@ -244,7 +244,7 @@ shrinks below the minimum size. Keep persistent state in the plugin instance.
 ```qml
 ccExpandedContent: Component {
     CcTileContent {
-        DankButton {
+        CyButton {
             maximumWidth: parent.width
             text: I18n.trFor("myPlugin", "Run")
             onClicked: root.runAction()
@@ -302,7 +302,7 @@ PopoutComponent {
 
     // Your content here - use parent.width for full width
     // Calculate available height: root.popoutHeight - headerHeight - detailsHeight - spacing
-    DankGridView {
+    CyGridView {
         width: parent.width
         height: parent.height
         // ...
@@ -642,7 +642,7 @@ Strings you wrap in plain `I18n.tr()` are not uploaded. They resolve from the sh
 
 ```qml
 PluginService.pluginDirectory: string
-// Path to plugins directory ($CONFIGPATH/DankMaterialShell/plugins)
+// Path to plugins directory ($CONFIGPATH/CyShell/plugins)
 
 PluginService.availablePlugins: object
 // Map of all discovered plugins {pluginId: pluginInfo}
@@ -844,8 +844,8 @@ PluginComponent {
 ### Step 1: Create Plugin Directory
 
 ```bash
-mkdir -p $CONFIGPATH/DankMaterialShell/plugins/MyPlugin
-cd $CONFIGPATH/DankMaterialShell/plugins/MyPlugin
+mkdir -p $CONFIGPATH/CyShell/plugins/MyPlugin
+cd $CONFIGPATH/CyShell/plugins/MyPlugin
 ```
 
 ### Step 2: Create Manifest
@@ -964,13 +964,13 @@ PluginSettings {
 3. Navigate to Plugins tab
 4. Click "Scan for Plugins"
 5. Enable your plugin with the toggle switch
-6. Add the plugin to your DankBar configuration
+6. Add the plugin to your CyBar configuration
 
-## Adding Plugin to DankBar
+## Adding Plugin to CyBar
 
 After enabling a plugin, add it to the bar:
 
-1. Open Settings → Appearance → DankBar Layout
+1. Open Settings → Appearance → CyBar Layout
 2. Add a new widget entry with your plugin ID
 3. Choose section (left, center, right)
 4. Save and reload
@@ -987,7 +987,7 @@ Or edit `$CONFIGPATH/quickshell/dms/config.json`:
 
 ## Best Practices
 
-1. **Use Existing Widgets**: Leverage `qs.Widgets` components (DankIcon, DankToggle, etc.) for consistency
+1. **Use Existing Widgets**: Leverage `qs.Widgets` components (CyIcon, CyToggle, etc.) for consistency
 2. **Follow Theme**: Use `Theme` singleton for colors, spacing, and fonts
 3. **Data Persistence**: Use PluginService data APIs instead of manual file operations
 4. **Error Handling**: Gracefully handle missing dependencies and invalid data
@@ -1011,7 +1011,7 @@ import Quickshell
 
 Item {
     function copyToClipboard(text) {
-        Quickshell.execDetached(["dms", "cl", "copy", text])
+        Quickshell.execDetached(["cyshell", "cl", "copy", text])
     }
 }
 ```
@@ -1023,7 +1023,7 @@ From the ExampleEmojiPlugin (EmojiWidget.qml):
 ```qml
 MouseArea {
     onClicked: {
-        Quickshell.execDetached(["dms", "cl", "copy", modelData])
+        Quickshell.execDetached(["cyshell", "cl", "copy", modelData])
         ToastService.showInfo("Copied " + modelData + " to clipboard")
         popoutColumn.closePopout()
     }
@@ -1178,7 +1178,7 @@ import qs.Common
 import qs.Widgets
 
 Item {
-    DankTextField {
+    CyTextField {
         id: searchField
         placeholderText: "Search files..."
 
@@ -1239,12 +1239,12 @@ Look for lines prefixed with:
 
 1. **Plugin Not Detected**
    - Check plugin.json syntax (use `jq` or JSON validator)
-   - Verify directory is in `$CONFIGPATH/DankMaterialShell/plugins/`
+   - Verify directory is in `$CONFIGPATH/CyShell/plugins/`
    - Click "Scan for Plugins" in Settings
 
 2. **Widget Not Displaying**
    - Ensure plugin is enabled in Settings
-   - Add plugin ID to DankBar widget list
+   - Add plugin ID to CyBar widget list
    - Check widget width/height properties
 
 3. **Settings Not Loading**
@@ -1255,7 +1255,7 @@ Look for lines prefixed with:
 
 4. **Data Not Persisting**
    - Confirm pluginService.savePluginData() calls (with injection)
-   - Check `$CONFIGPATH/DankMaterialShell/settings.json` for pluginSettings data
+   - Check `$CONFIGPATH/CyShell/settings.json` for pluginSettings data
    - Verify plugin has settings permissions
    - Ensure PluginService was properly injected into settings component
 
@@ -1475,7 +1475,7 @@ FocusScope {
             }
         }
 
-        DankTextField {
+        CyTextField {
             id: triggerField
             visible: !noTriggerToggle.checked
             text: loadSettings("trigger", "#")
@@ -1921,7 +1921,7 @@ Optional on the tab:
 - `signal tabRequested(string id)`: switch the dash to another tab (`"overview"`, `"media"`, `"wallpaper"`, `"weather"`, `"notifications"` or a `plugin_<id>`); a tab hidden from the bar opens as a detail page
 - `signal navFocusRequested`: return focus to the dash navigation
 
-Use `Card` from `qs.Modules.DankDash.Overview` for tiles inside a tab so they pick up the same surface colors, radius and tones as the overview.
+Use `Card` from `qs.Modules.CyDash.Overview` for tiles inside a tab so they pick up the same surface colors, radius and tones as the overview.
 
 ### Widgets inside a tab
 
@@ -1952,7 +1952,7 @@ DashTabComponent {
 }
 ```
 
-Import `qs.Modules.DankDash` for the grid. Each definition has a stable `id`, a translated `text`, an `icon`, a QML `component`, default `w`/`h` and optional `minW`/`minH`/`maxW`/`maxH`. The grid is 4 columns wide (2 when narrower than `Theme.smallBreakpoint`), independent of the overview column count. Set `enabled: false` to leave a widget in the Add menu initially. `graphics: true` exposes a per-widget Show graphics option.
+Import `qs.Modules.CyDash` for the grid. Each definition has a stable `id`, a translated `text`, an `icon`, a QML `component`, default `w`/`h` and optional `minW`/`minH`/`maxW`/`maxH`. The grid is 4 columns wide (2 when narrower than `Theme.smallBreakpoint`), independent of the overview column count. Set `enabled: false` to leave a widget in the Add menu initially. `graphics: true` exposes a per-widget Show graphics option.
 
 The grid saves order, size and graphics options in `dashOptions[entryId].widgets`. Missing definitions keep their saved placement. A saved empty list stays empty; Reset restores the current defaults. Widgets receive `widgetId`, `widgetOptions` and a bound `live` value if they declare those properties. The grid unloads widget content when `live` is false. Edit mode offers drag ordering, a resize handle, removal, and menu actions for keyboard ordering and sizing.
 
@@ -1990,10 +1990,10 @@ DashCardComponent {
 
 ### Opening the dash from other surfaces
 
-`popoutService.toggleDankDash(tabId, x, y, width, section, screen)` opens the dash on a tab. A bar or dock widget can wire it to its pill with the positioned `pillClickAction` form:
+`popoutService.toggleCyDash(tabId, x, y, width, section, screen)` opens the dash on a tab. A bar or dock widget can wire it to its pill with the positioned `pillClickAction` form:
 
 ```qml
-pillClickAction: (x, y, width, section, screen) => popoutService?.toggleDankDash("plugin_" + pluginId, x, y, width, section, screen)
+pillClickAction: (x, y, width, section, screen) => popoutService?.toggleCyDash("plugin_" + pluginId, x, y, width, section, screen)
 ```
 
 ### Example Plugins
@@ -2094,8 +2094,8 @@ plugin.
 - **PluginService**: `Services/PluginService.qml`
 - **Settings UI**: `Modules/Settings/PluginSettingsPage.qml`
 - **Bar and Dock Integration**: `Modules/SurfaceWidgets/SurfaceWidgetHost.qml`
-- **Dash Integration**: `Modules/DankDash/DashRegistry.qml`
-- **Launcher Integration**: `Modals/DankLauncherV2/Controller.qml`
+- **Dash Integration**: `Modules/CyDash/DashRegistry.qml`
+- **Launcher Integration**: `Modals/CyLauncherV2/Controller.qml`
 - **Desktop Widget Integration**: `Modules/DesktopWidgetLayer.qml`
 - **Theme Reference**: `Common/Theme.qml`
 - **Widget Library**: `Widgets/`

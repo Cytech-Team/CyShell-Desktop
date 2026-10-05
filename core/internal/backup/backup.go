@@ -11,18 +11,29 @@ import (
 	"time"
 )
 
-const dirName = "DankMaterialShell"
+const (
+	dirName       = "CyShell"
+	legacyDirName = "DankMaterialShell"
+)
 
 func ConfigDir() (string, error) {
 	configDir, err := os.UserConfigDir()
 	if err != nil {
 		return "", err
 	}
-	return filepath.Join(configDir, dirName), nil
+	primary := filepath.Join(configDir, dirName)
+	if _, err := os.Stat(primary); err == nil {
+		return primary, nil
+	}
+	legacy := filepath.Join(configDir, legacyDirName)
+	if _, err := os.Stat(legacy); err == nil {
+		return legacy, nil
+	}
+	return primary, nil
 }
 
 func DefaultArchiveName() string {
-	return fmt.Sprintf("dms-backup-%s.tar.gz", time.Now().Format("20060102-150405"))
+	return fmt.Sprintf("cyshell-backup-%s.tar.gz", time.Now().Format("20060102-150405"))
 }
 
 func Create(outputPath string) error {
@@ -31,7 +42,7 @@ func Create(outputPath string) error {
 		return err
 	}
 	if _, err := os.Stat(srcDir); err != nil {
-		return fmt.Errorf("no DMS configuration found at %s: %w", srcDir, err)
+		return fmt.Errorf("no CyShell configuration found at %s: %w", srcDir, err)
 	}
 
 	out, err := os.Create(outputPath)
@@ -49,7 +60,6 @@ func Create(outputPath string) error {
 		if err != nil {
 			return err
 		}
-
 		rel, err := filepath.Rel(srcDir, path)
 		if err != nil {
 			return err
@@ -57,27 +67,23 @@ func Create(outputPath string) error {
 		if rel == "." {
 			return nil
 		}
-
 		var link string
 		if info.Mode()&os.ModeSymlink != 0 {
 			if link, err = os.Readlink(path); err != nil {
 				return err
 			}
 		}
-
 		header, err := tar.FileInfoHeader(info, link)
 		if err != nil {
 			return err
 		}
 		header.Name = filepath.ToSlash(filepath.Join(dirName, rel))
-
 		if err := tw.WriteHeader(header); err != nil {
 			return err
 		}
 		if !info.Mode().IsRegular() {
 			return nil
 		}
-
 		f, err := os.Open(path)
 		if err != nil {
 			return err
@@ -89,11 +95,11 @@ func Create(outputPath string) error {
 }
 
 func Restore(archivePath string) (string, error) {
-	dstDir, err := ConfigDir()
+	configRoot, err := os.UserConfigDir()
 	if err != nil {
 		return "", err
 	}
-
+	dstDir := filepath.Join(configRoot, dirName)
 	if err := validateArchive(archivePath); err != nil {
 		return "", err
 	}
@@ -106,27 +112,41 @@ func Restore(archivePath string) (string, error) {
 		}
 	}
 
-	if err := extract(archivePath, filepath.Dir(dstDir)); err != nil {
+	if err := extract(archivePath, configRoot); err != nil {
 		if previous != "" {
 			os.RemoveAll(dstDir)
-			os.Rename(previous, dstDir)
+			_ = os.Rename(previous, dstDir)
 		}
 		return "", err
 	}
 	return previous, nil
 }
 
+func archiveRelativePath(name string) (string, bool) {
+	clean := filepath.ToSlash(filepath.Clean(name))
+	if strings.HasPrefix(clean, "..") || filepath.IsAbs(name) {
+		return "", false
+	}
+	for _, root := range []string{dirName, legacyDirName} {
+		if clean == root {
+			return "", true
+		}
+		prefix := root + "/"
+		if strings.HasPrefix(clean, prefix) {
+			return strings.TrimPrefix(clean, prefix), true
+		}
+	}
+	return "", false
+}
+
 func validateArchive(archivePath string) error {
 	hasSettings := false
 	err := walkArchive(archivePath, func(header *tar.Header, _ *tar.Reader) error {
-		name := filepath.ToSlash(filepath.Clean(header.Name))
-		if strings.HasPrefix(name, "..") || filepath.IsAbs(header.Name) {
-			return fmt.Errorf("unsafe path in archive: %s", header.Name)
+		rel, ok := archiveRelativePath(header.Name)
+		if !ok {
+			return fmt.Errorf("not a CyShell backup: unexpected entry %s", header.Name)
 		}
-		if !strings.HasPrefix(name, dirName+"/") && name != dirName {
-			return fmt.Errorf("not a DMS backup: unexpected entry %s", header.Name)
-		}
-		if name == dirName+"/settings.json" {
+		if rel == "settings.json" {
 			hasSettings = true
 		}
 		return nil
@@ -135,15 +155,24 @@ func validateArchive(archivePath string) error {
 		return err
 	}
 	if !hasSettings {
-		return fmt.Errorf("not a DMS backup: settings.json missing from archive")
+		return fmt.Errorf("not a CyShell backup: settings.json missing from archive")
 	}
 	return nil
 }
 
 func extract(archivePath, destParent string) error {
 	return walkArchive(archivePath, func(header *tar.Header, tr *tar.Reader) error {
-		target := filepath.Join(destParent, filepath.Clean(header.Name))
-
+		rel, ok := archiveRelativePath(header.Name)
+		if !ok {
+			return fmt.Errorf("unsafe or unsupported path in archive: %s", header.Name)
+		}
+		if rel == "" {
+			return nil
+		}
+		target := filepath.Join(destParent, dirName, filepath.FromSlash(rel))
+		if !strings.HasPrefix(filepath.Clean(target), filepath.Clean(filepath.Join(destParent, dirName))+string(os.PathSeparator)) {
+			return fmt.Errorf("unsafe path in archive: %s", header.Name)
+		}
 		switch header.Typeflag {
 		case tar.TypeDir:
 			return os.MkdirAll(target, os.FileMode(header.Mode))
@@ -175,13 +204,11 @@ func walkArchive(archivePath string, visit func(*tar.Header, *tar.Reader) error)
 		return err
 	}
 	defer f.Close()
-
 	gz, err := gzip.NewReader(f)
 	if err != nil {
 		return fmt.Errorf("not a gzip archive: %w", err)
 	}
 	defer gz.Close()
-
 	tr := tar.NewReader(gz)
 	for {
 		header, err := tr.Next()

@@ -1,0 +1,85 @@
+#!/usr/bin/make -f
+
+DEB_VERSION := $(shell dpkg-parsechangelog -S Version)
+UPSTREAM_VERSION := $(shell echo $(DEB_VERSION) | sed 's/-[^-]*$$//')
+DEB_HOST_ARCH := $(shell dpkg-architecture -qDEB_HOST_ARCH)
+
+%:
+	dh $@
+
+override_dh_installsystemd:
+	dh_installsystemd --name=cyshell
+
+override_dh_auto_build:
+	if [ "$(DEB_HOST_ARCH)" = "amd64" ]; then \
+		if [ -f cyshell-distropkg-amd64.gz ]; then \
+			gunzip -c cyshell-distropkg-amd64.gz > cyshell; \
+		elif [ -f ../SOURCES/cyshell-distropkg-amd64.gz ]; then \
+			gunzip -c ../SOURCES/cyshell-distropkg-amd64.gz > cyshell; \
+		elif [ -f ../../SOURCES/cyshell-distropkg-amd64.gz ]; then \
+			gunzip -c ../../SOURCES/cyshell-distropkg-amd64.gz > cyshell; \
+		else \
+			echo "ERROR: cyshell-distropkg-amd64.gz not found!" && exit 1; \
+		fi \
+	elif [ "$(DEB_HOST_ARCH)" = "arm64" ]; then \
+		if [ -f cyshell-distropkg-arm64.gz ]; then \
+			gunzip -c cyshell-distropkg-arm64.gz > cyshell; \
+		elif [ -f ../SOURCES/cyshell-distropkg-arm64.gz ]; then \
+			gunzip -c ../SOURCES/cyshell-distropkg-arm64.gz > cyshell; \
+		elif [ -f ../../SOURCES/cyshell-distropkg-arm64.gz ]; then \
+			gunzip -c ../../SOURCES/cyshell-distropkg-arm64.gz > cyshell; \
+		else \
+			echo "ERROR: cyshell-distropkg-arm64.gz not found!" && exit 1; \
+		fi \
+	else \
+		echo "Unsupported architecture: $(DEB_HOST_ARCH)" && exit 1; \
+	fi
+	chmod +x cyshell
+
+	# Extract source if needed
+	if [ ! -d CyShell-Desktop-$(UPSTREAM_VERSION) ]; then \
+		if [ -f ../SOURCES/cyshell-source.tar.gz ]; then \
+			tar -xzf ../SOURCES/cyshell-source.tar.gz; \
+		elif [ -f cyshell-source.tar.gz ]; then \
+			tar -xzf cyshell-source.tar.gz; \
+		fi; \
+	fi
+	# Rename directory to match expected version
+	SOURCE_DIR=$$(find . -maxdepth 1 -type d -name "CyShell-*" ! -name "CyShell-Desktop-$(UPSTREAM_VERSION)" | head -n1); \
+	if [ -n "$$SOURCE_DIR" ]; then \
+		echo "Renaming $$SOURCE_DIR to CyShell-Desktop-$(UPSTREAM_VERSION)"; \
+		mv "$$SOURCE_DIR" CyShell-Desktop-$(UPSTREAM_VERSION); \
+	fi
+
+
+override_dh_auto_install:
+	install -Dm755 cyshell debian/cyshell/usr/bin/cyshell
+
+	mkdir -p debian/cyshell/usr/share/quickshell/cyshell debian/cyshell/usr/lib/systemd/user
+	# Ensure directory has correct version name for install step
+	SOURCE_DIR=$$(find . -maxdepth 1 -type d -name "CyShell-*" ! -name "CyShell-Desktop-$(UPSTREAM_VERSION)" | head -n1); \
+	if [ -n "$$SOURCE_DIR" ]; then \
+		echo "Renaming $$SOURCE_DIR to CyShell-Desktop-$(UPSTREAM_VERSION) for install"; \
+		mv "$$SOURCE_DIR" CyShell-Desktop-$(UPSTREAM_VERSION); \
+	fi
+	if [ -d CyShell-Desktop-$(UPSTREAM_VERSION) ]; then \
+		cp -rL CyShell-Desktop-$(UPSTREAM_VERSION)/quickshell/* debian/cyshell/usr/share/quickshell/cyshell/; \
+		for unit in CyShell-Desktop-$(UPSTREAM_VERSION)/assets/systemd/cyshell*.service; do install -Dm644 "$$unit" "debian/cyshell/usr/lib/systemd/user/$$(basename "$$unit")"; done; \
+		install -Dm644 CyShell-Desktop-$(UPSTREAM_VERSION)/assets/cyshell-open.desktop debian/cyshell/usr/share/applications/cyshell-open.desktop; \
+		install -Dm644 CyShell-Desktop-$(UPSTREAM_VERSION)/assets/com.cytechteam.cyshell.desktop debian/cyshell/usr/share/applications/com.cytechteam.cyshell.desktop; \
+		install -Dm644 CyShell-Desktop-$(UPSTREAM_VERSION)/assets/com.cytechteam.cyshell.notepad.desktop debian/cyshell/usr/share/applications/com.cytechteam.cyshell.notepad.desktop; \
+		install -Dm644 CyShell-Desktop-$(UPSTREAM_VERSION)/assets/com.cytechteam.cyshell.png debian/cyshell/usr/share/icons/hicolor/512x512/apps/com.cytechteam.cyshell.png; \
+	else \
+		echo "ERROR: CyShell-Desktop-$(UPSTREAM_VERSION) directory not found!" && \
+		echo "Contents of current directory:" && ls -la && \
+		exit 1; \
+	fi
+
+	rm -rf debian/cyshell/usr/share/quickshell/cyshell/core \
+		debian/cyshell/usr/share/quickshell/cyshell/distro \
+		debian/cyshell/usr/share/quickshell/cyshell/tests
+
+override_dh_auto_clean:
+	rm -f cyshell
+	rm -rf CyShell-Desktop-$(UPSTREAM_VERSION)
+	dh_auto_clean

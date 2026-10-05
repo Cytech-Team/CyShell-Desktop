@@ -6,7 +6,7 @@ import qs.Services
 import qs.Widgets
 import "../../Common/Format.js" as Format
 
-DankListItem {
+CyListItem {
     id: root
 
     required property var process
@@ -50,7 +50,7 @@ DankListItem {
         height: root.rowHeight
         spacing: Theme.spacingS
 
-        DankIcon {
+        CyIcon {
             name: root.processIcon(root.command)
             size: Theme.iconSize
             color: root.contentColor
@@ -131,7 +131,7 @@ DankListItem {
             Layout.maximumWidth: ProcessListMetrics.actionColumnWidth
             Layout.preferredHeight: Theme.iconButtonSize
 
-            DankActionButton {
+            CyActionButton {
                 anchors.centerIn: parent
                 iconName: "close"
                 iconColor: root.contentColor
@@ -167,11 +167,11 @@ DankListItem {
                 wrapMode: Text.WrapAnywhere
             }
 
-            DankActionButton {
+            CyActionButton {
                 iconName: "content_copy"
                 iconColor: root.contentColor
                 tooltipText: I18n.tr("Copy Full Command")
-                onClicked: Quickshell.execDetached(["dms", "cl", "copy", root.fullCommand])
+                onClicked: Quickshell.execDetached(["cyshell", "cl", "copy", root.fullCommand])
             }
         }
 

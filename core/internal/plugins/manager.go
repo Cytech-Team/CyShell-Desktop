@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/log"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/log"
 	"github.com/spf13/afero"
 )
 
@@ -40,7 +40,7 @@ func getPluginsDir() string {
 		log.Error("failed to get user config dir", "err", err)
 		return ""
 	}
-	path := filepath.Join(configDir, "DankMaterialShell", "plugins")
+	path := filepath.Join(configDir, "CyShell", "plugins")
 	if resolved, err := filepath.EvalSymlinks(path); err == nil {
 		return resolved
 	}
@@ -56,7 +56,7 @@ func getPluginLockPath() string {
 		log.Error("failed to get user config dir", "err", err)
 		return ""
 	}
-	return filepath.Join(configDir, "DankMaterialShell", "plugins.lock.json")
+	return filepath.Join(configDir, "CyShell", "plugins.lock.json")
 }
 
 func (m *Manager) IsInstalled(plugin Plugin) (bool, error) {
@@ -78,8 +78,14 @@ func (m *Manager) findInstalledPath(pluginID string) (string, error) {
 	}
 
 	// Check system plugins directory
-	systemDir := "/etc/xdg/quickshell/dms-plugins"
-	return m.findInDir(systemDir, pluginID)
+	for _, systemDir := range []string{"/etc/xdg/quickshell/cyshell-plugins", "/etc/xdg/quickshell/dms-plugins"} {
+		if path, err := m.findInDir(systemDir, pluginID); err != nil {
+			return "", err
+		} else if path != "" {
+			return path, nil
+		}
+	}
+	return "", nil
 }
 
 // isSafePluginPathComponent rejects ids that aren't a single path component,
@@ -271,7 +277,7 @@ func (m *Manager) Update(plugin Plugin) error {
 		return fmt.Errorf("plugin not installed: %s", plugin.Name)
 	}
 
-	if strings.HasPrefix(pluginPath, "/etc/xdg/quickshell/dms-plugins") {
+	if strings.HasPrefix(pluginPath, "/etc/xdg/quickshell/cyshell-plugins") || strings.HasPrefix(pluginPath, "/etc/xdg/quickshell/dms-plugins") {
 		return fmt.Errorf("cannot update system plugin: %s", plugin.Name)
 	}
 	if plugin.Repo == "" {
@@ -319,7 +325,7 @@ func (m *Manager) Uninstall(plugin Plugin) error {
 		return fmt.Errorf("plugin not installed: %s", plugin.Name)
 	}
 
-	if strings.HasPrefix(pluginPath, "/etc/xdg/quickshell/dms-plugins") {
+	if strings.HasPrefix(pluginPath, "/etc/xdg/quickshell/cyshell-plugins") || strings.HasPrefix(pluginPath, "/etc/xdg/quickshell/dms-plugins") {
 		return fmt.Errorf("cannot uninstall system plugin: %s", plugin.Name)
 	}
 	updatedLock := lock.Clone()
@@ -430,19 +436,21 @@ func (m *Manager) ListInstalled() ([]string, error) {
 		}
 	}
 
-	systemPluginsDir := "/etc/xdg/quickshell/dms-plugins"
-	systemExists, err := afero.DirExists(m.fs, systemPluginsDir)
-	if err == nil && systemExists {
+	for _, systemPluginsDir := range []string{"/etc/xdg/quickshell/cyshell-plugins", "/etc/xdg/quickshell/dms-plugins"} {
+		systemExists, err := afero.DirExists(m.fs, systemPluginsDir)
+		if err != nil || !systemExists {
+			continue
+		}
 		entries, err := afero.ReadDir(m.fs, systemPluginsDir)
-		if err == nil {
-			for _, entry := range entries {
-				if entry.IsDir() {
-					fullPath := filepath.Join(systemPluginsDir, entry.Name())
-					// Read plugin.json to get the actual plugin ID
-					pluginID := m.getPluginID(fullPath)
-					if pluginID != "" {
-						installedMap[pluginID] = true
-					}
+		if err != nil {
+			continue
+		}
+		for _, entry := range entries {
+			if entry.IsDir() {
+				fullPath := filepath.Join(systemPluginsDir, entry.Name())
+				pluginID := m.getPluginID(fullPath)
+				if pluginID != "" {
+					installedMap[pluginID] = true
 				}
 			}
 		}
@@ -498,7 +506,7 @@ func (m *Manager) UninstallByIDOrName(idOrName string) error {
 		return fmt.Errorf("plugin not found: %s", idOrName)
 	}
 
-	if strings.HasPrefix(pluginPath, "/etc/xdg/quickshell/dms-plugins") {
+	if strings.HasPrefix(pluginPath, "/etc/xdg/quickshell/cyshell-plugins") || strings.HasPrefix(pluginPath, "/etc/xdg/quickshell/dms-plugins") {
 		return fmt.Errorf("cannot uninstall system plugin: %s", idOrName)
 	}
 	manifest := m.getPluginManifest(pluginPath)
@@ -540,7 +548,7 @@ func (m *Manager) UpdateByIDOrName(idOrName string) error {
 		return fmt.Errorf("plugin not found: %s", idOrName)
 	}
 
-	if strings.HasPrefix(pluginPath, "/etc/xdg/quickshell/dms-plugins") {
+	if strings.HasPrefix(pluginPath, "/etc/xdg/quickshell/cyshell-plugins") || strings.HasPrefix(pluginPath, "/etc/xdg/quickshell/dms-plugins") {
 		return fmt.Errorf("cannot update system plugin: %s", idOrName)
 	}
 	manifest := m.getPluginManifest(pluginPath)
@@ -586,8 +594,14 @@ func (m *Manager) findInstalledPathByIDOrName(idOrName string) (string, error) {
 		return path, nil
 	}
 
-	systemDir := "/etc/xdg/quickshell/dms-plugins"
-	return m.findInDirByIDOrName(systemDir, idOrName)
+	for _, systemDir := range []string{"/etc/xdg/quickshell/cyshell-plugins", "/etc/xdg/quickshell/dms-plugins"} {
+		if path, err := m.findInDirByIDOrName(systemDir, idOrName); err != nil {
+			return "", err
+		} else if path != "" {
+			return path, nil
+		}
+	}
+	return "", nil
 }
 
 func (m *Manager) findInDirByIDOrName(dir, idOrName string) (string, error) {
@@ -661,7 +675,7 @@ func (m *Manager) HasUpdates(pluginID string, plugin Plugin) (hasUpdates bool, d
 		return false, "", fmt.Errorf("plugin not installed: %s", pluginID)
 	}
 
-	if strings.HasPrefix(pluginPath, "/etc/xdg/quickshell/dms-plugins") {
+	if strings.HasPrefix(pluginPath, "/etc/xdg/quickshell/cyshell-plugins") || strings.HasPrefix(pluginPath, "/etc/xdg/quickshell/dms-plugins") {
 		return false, "", nil
 	}
 

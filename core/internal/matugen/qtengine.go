@@ -7,7 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/utils"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/utils"
 )
 
 // Options.IconTheme defaults to this UI label rather than a real icon theme name.
@@ -26,7 +26,7 @@ func QtengineConfigPath() string {
 	return qtengineConfigPath("")
 }
 
-// SyncQtengineConfig merges the DMS colour scheme path and icon theme into
+// SyncQtengineConfig merges the CyShell colour scheme path and icon theme into
 // qtengine's config, preserving every other key, and writes it atomically. The
 // write's mtime bump is what trips qtengine's watcher and repaints running apps.
 // Map round trip rather than a typed struct so keys from qtengine versions we

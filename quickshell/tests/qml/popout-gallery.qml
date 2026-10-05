@@ -6,12 +6,12 @@ import qs.Common
 import qs.Services
 import qs.Modules.ProcessList
 import qs.Modules.Notifications.Center
-import qs.Modules.DankBar.Popouts
-import qs.Modules.DankBar.Widgets
+import qs.Modules.CyBar.Popouts
+import qs.Modules.CyBar.Widgets
 import qs.Modules.ControlCenter
-import qs.Modules.DankDash
+import qs.Modules.CyDash
 import qs.Modals.Clipboard
-import qs.DankCommon.Common as DC
+import qs.CyCommon.Common as DC
 
 ShellRoot {
     id: root
@@ -104,7 +104,6 @@ ShellRoot {
     }
     Component {
         id: dwlLayout
-        DWLLayoutPopout {}
     }
     Component {
         id: colorPicker
@@ -138,7 +137,7 @@ ShellRoot {
     }
     Component {
         id: dash
-        DankDashPopout {}
+        CyDashPopout {}
     }
 
     function typeName(item) {
@@ -182,7 +181,7 @@ ShellRoot {
         if (!item || depth > 8)
             return null;
         for (const child of item.children || []) {
-            if (typeName(child) === "DankWindowHeader")
+            if (typeName(child) === "CyWindowHeader")
                 return {
                     shared: true,
                     height: child.height,

@@ -26,7 +26,7 @@ CcTile {
     }
     subtitle: {
         if (!DgopService.dgopAvailable)
-            return I18n.tr("DMS_SOCKET not available");
+            return I18n.tr("CYSHELL_SOCKET not available");
         if (!selectedMount)
             return I18n.tr("No disk data available");
         return `${selectedMount.used} / ${selectedMount.size} (${usagePercent.toFixed(0)}%)`;
@@ -36,7 +36,7 @@ CcTile {
     enabled: DgopService.dgopAvailable
     tallContent: Component {
         Item {
-            DankRingGauge {
+            CyRingGauge {
                 anchors.left: parent.left
                 anchors.verticalCenter: parent.verticalCenter
                 width: Math.min(parent.width, parent.height)
@@ -68,7 +68,7 @@ CcTile {
     onClicked: expandClicked()
     expandedContent: Component {
         Item {
-            DankRingGauge {
+            CyRingGauge {
                 anchors.centerIn: parent
                 width: Math.min(parent.width, parent.height)
                 height: width

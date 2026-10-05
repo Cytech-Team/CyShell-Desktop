@@ -30,7 +30,7 @@ PluginComponent {
         Row {
             spacing: Theme.spacingXS
 
-            DankIcon {
+            CyIcon {
                 name: root.isEnabled ? "toggle_on" : "toggle_off"
                 color: root.isEnabled ? Theme.primary : Theme.surfaceVariantText
                 font.pixelSize: Theme.iconSize - 4
@@ -50,7 +50,7 @@ PluginComponent {
         Column {
             spacing: Theme.spacingXS
 
-            DankIcon {
+            CyIcon {
                 name: root.isEnabled ? "toggle_on" : "toggle_off"
                 color: root.isEnabled ? Theme.primary : Theme.surfaceVariantText
                 font.pixelSize: Theme.iconSize - 4

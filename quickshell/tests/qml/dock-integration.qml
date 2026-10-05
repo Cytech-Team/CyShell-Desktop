@@ -4,7 +4,7 @@ import qs.Common
 import qs.Services
 import qs.Modules.Dock
 import qs.Modules.Frame
-import qs.DankCommon.Common as DC
+import qs.CyCommon.Common as DC
 import "Common/settings/DockConfig.js" as DockConfig
 
 ShellRoot {
@@ -111,8 +111,7 @@ ShellRoot {
         SettingsData.barConfigs = [];
         SettingsData.frameScreenPreferences = ["all"];
         SettingsData.dockConfigs = [config];
-        SessionData.setDockPins("fixture", ["browser", "missing"]);
-        SessionData.setBarPinnedApps(["other"]);
+        SessionData.setBarPinnedApps(["browser", "missing"]);
     }
     Timer {
         interval: 600
@@ -130,14 +129,14 @@ ShellRoot {
                     const from = strip.items.findIndex(item => item.isPinned && item.appId === "browser");
                     const to = strip.items.findIndex(item => item.isPinned && item.appId === "missing");
                     strip.movePinnedApp(from, to);
-                    root.check(SessionData.getDockPins("fixture").join() === "missing,browser", "runtime pin reorder uses the originating dock store");
-                    SessionData.setDockPins("fixture", ["browser", "missing"]);
+                    root.check(SessionData.barPinnedApps.join() === "missing,browser", "runtime pin reorder updates the shared Apps Dock store");
+                    SessionData.setBarPinnedApps(["browser", "missing"]);
                     CompositorService.sortedToplevels = [first, second];
                     break;
                 case 1:
                     root.check(strip.items.find(item => item.appId === "browser").windowCount === 2, "grouped windows");
                     root.check(strip.overflowItemCount === 1, "pinned overflow");
-                    root.check(SessionData.barPinnedApps.join() === "other", "separate bar pins");
+                    root.check(SessionData.getDockPins("fixture").join() === SessionData.barPinnedApps.join(), "dock and taskbar expose the same pins");
                     const button = root.find(body, item => item.appData?.appId === "browser" && typeof item.activate === "function");
                     root.check(button.isWindowFocused, "group focus from model windows");
                     button.activate();

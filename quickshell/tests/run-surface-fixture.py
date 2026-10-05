@@ -49,7 +49,7 @@ if not fixtures:
 log_path = Path(sys.argv[2]) if not suite and len(sys.argv) > 2 and not sys.argv[2].startswith("--") else None
 with tempfile.TemporaryDirectory(prefix="dms-surface-test-") as temporary:
     root = Path(temporary)
-    for name in ["qml", "runtime", "config/DankMaterialShell", "cache", "state", "data"]:
+    for name in ["qml", "runtime", "config/CyShell", "cache", "state", "data"]:
         (root / name).mkdir(parents=True, exist_ok=True)
     (root / "runtime").chmod(0o700)
     def link_tree(target, fixture):
@@ -67,11 +67,11 @@ with tempfile.TemporaryDirectory(prefix="dms-surface-test-") as temporary:
         settings[name] = 0
     if os.environ.get("DMS_FIXTURE_SETTINGS"):
         settings.update(json.loads(Path(os.environ["DMS_FIXTURE_SETTINGS"]).read_text()))
-    (root / "config/DankMaterialShell/settings.json").write_text(json.dumps(settings))
+    (root / "config/CyShell/settings.json").write_text(json.dumps(settings))
     if os.environ.get("DMS_FIXTURE_PLUGIN_SETTINGS"):
-        (root / "config/DankMaterialShell/plugin_settings.json").write_text(Path(os.environ["DMS_FIXTURE_PLUGIN_SETTINGS"]).read_text())
+        (root / "config/CyShell/plugin_settings.json").write_text(Path(os.environ["DMS_FIXTURE_PLUGIN_SETTINGS"]).read_text())
     if os.environ.get("DMS_FIXTURE_PLUGINS"):
-        plugins = root / "config/DankMaterialShell/plugins"
+        plugins = root / "config/CyShell/plugins"
         plugins.mkdir()
         for entry in Path(os.environ["DMS_FIXTURE_PLUGINS"]).iterdir():
             if entry.name.startswith("."):
@@ -89,7 +89,7 @@ with tempfile.TemporaryDirectory(prefix="dms-surface-test-") as temporary:
     env.update(HOME=str(root / "home"), XDG_DATA_DIRS=str(root / "share"), XDG_CONFIG_DIRS=str(root / "xdg"), QML_DISK_CACHE_PATH=str(root / "qmlcache"), LANG="C.UTF-8", LC_ALL="C.UTF-8", TZ="UTC")
     for name in ["runtime", "config", "cache", "state", "data"]:
         env["XDG_" + name.upper() + ("_DIR" if name == "runtime" else "_HOME")] = str(root / name)
-    env.update(QT_QPA_PLATFORM="wayland", QT_LOGGING_RULES="qml.debug=true", LIBGL_ALWAYS_SOFTWARE="1", DMS_DISABLE_HOT_RELOAD="1", DMS_DISABLE_MATUGEN="1", DBUS_SESSION_BUS_ADDRESS="unix:path=" + str(root / "no-session-bus"), DBUS_SYSTEM_BUS_ADDRESS="unix:path=" + str(root / "no-system-bus"), PULSE_SERVER="unix:" + str(root / "no-pulse"), PIPEWIRE_REMOTE="no-pipewire")
+    env.update(QT_QPA_PLATFORM="wayland", QT_LOGGING_RULES="qml.debug=true", LIBGL_ALWAYS_SOFTWARE="1", DMS_DISABLE_HOT_RELOAD="1", CYSHELL_DISABLE_MATUGEN="1", DBUS_SESSION_BUS_ADDRESS="unix:path=" + str(root / "no-session-bus"), DBUS_SYSTEM_BUS_ADDRESS="unix:path=" + str(root / "no-system-bus"), PULSE_SERVER="unix:" + str(root / "no-pulse"), PIPEWIRE_REMOTE="no-pipewire")
     # glvnd loads the nvidia vendor first, which powers up a sleeping dGPU
     mesa_vendor = mesa_egl_vendor()
     if mesa_vendor:

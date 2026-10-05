@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/config"
-	"github.com/AvengeMedia/DankMaterialShell/core/pkg/ipp"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/config"
+	"github.com/Cytech-Team/CyShell-Desktop/core/pkg/ipp"
 )
 
 func isAuthError(err error) bool {

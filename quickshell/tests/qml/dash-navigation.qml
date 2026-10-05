@@ -4,11 +4,11 @@ import Quickshell
 import qs.Common
 import qs.Services
 import qs.Widgets
-import qs.Modules.DankDash
-import qs.Modules.DankIsland
-import qs.Modules.DankIsland.Activities
+import qs.Modules.CyDash
+import qs.Modules.CyIsland
+import qs.Modules.CyIsland.Activities
 import qs.Modules.Settings as Settings
-import qs.DankCommon.Common as DC
+import qs.CyCommon.Common as DC
 
 ShellRoot {
     id: root
@@ -20,12 +20,12 @@ ShellRoot {
 
     Component {
         id: dashComponent
-        DankDashPopout {}
+        CyDashPopout {}
     }
 
     Component {
         id: settingsComponent
-        Settings.DankDashTab {}
+        Settings.CyDashTab {}
     }
 
     QtObject {
@@ -74,7 +74,7 @@ ShellRoot {
         implicitHeight: 800
         color: Theme.surface
 
-        DankNavigationBar {
+        CyNavigationBar {
             id: navigation
             width: 800
             height: implicitHeight
@@ -199,10 +199,10 @@ ShellRoot {
                 root.dash.instantClose();
                 PopoutService.dankDashPopout = null;
                 PopoutService.dankDashPopoutLoader = deferredDashLoader;
-                PopoutService.openDankDashEditor("media", Quickshell.screens[0]);
+                PopoutService.openCyDashEditor("media", Quickshell.screens[0]);
                 check(deferredDashLoader.active && PopoutService._dankDashWantsEdit, "cold editor request activates loader");
                 PopoutService.dankDashPopout = root.dash;
-                PopoutService._onDankDashPopoutLoaded();
+                PopoutService._onCyDashPopoutLoaded();
                 check(root.dash.editMode && root.dash.activeTabId === "media" && !PopoutService._dankDashWantsEdit, "cold editor request survives loading");
                 root.dash.editMode = false;
                 for (const id of ["overview", "media", "weather"]) {

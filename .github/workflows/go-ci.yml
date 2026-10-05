@@ -54,17 +54,17 @@ jobs:
       - name: Test
         run: go test -race -v ./...
 
-      - name: Build dms
-        run: go build -v ./cmd/dms
+      - name: Build cyshell
+        run: go build -v ./cmd/cyshell
 
-      - name: Build dms (embedded shell)
+      - name: Build cyshell (embedded shell)
         run: make build
 
-      - name: Build dms (distropkg)
-        run: go build -v -tags 'distro_binary withshell' ./cmd/dms
+      - name: Build cyshell (distropkg)
+        run: go build -v -tags 'distro_binary withshell' ./cmd/cyshell
 
-      - name: Build dankinstall
-        run: go build -v ./cmd/dankinstall
+      - name: Build cyshell-install
+        run: go build -v ./cmd/cyshell-install
 
   build-freebsd:
     runs-on: ubuntu-latest
@@ -90,7 +90,7 @@ jobs:
           CGO_ENABLED: 0
         run: go build -v ./...
 
-      - name: Build dms (distropkg, embedded shell)
+      - name: Build cyshell (distropkg, embedded shell)
         run: |
           make sync-shell
-          GOOS=freebsd CGO_ENABLED=0 go build -v -tags 'distro_binary withshell' ./cmd/dms
+          GOOS=freebsd CGO_ENABLED=0 go build -v -tags 'distro_binary withshell' ./cmd/cyshell

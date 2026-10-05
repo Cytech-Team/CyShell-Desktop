@@ -86,16 +86,6 @@ Item {
                 onToggled: checked => dock.setOption("isolateDisplays", checked)
             }
 
-            SettingsToggleRow {
-                settingKey: "dockRestoreSpecialWorkspaceOnClick"
-                tags: ["dock", "hyprland", "special", "workspace", "restore"]
-                resetStore: dock
-                resetKeys: ["restoreSpecialWorkspaceOnClick"]
-                text: I18n.tr("Restore special workspace")
-                visible: CompositorService.isHyprland
-                checked: dock.config?.restoreSpecialWorkspaceOnClick ?? false
-                onToggled: checked => dock.setOption("restoreSpecialWorkspaceOnClick", checked)
-            }
         }
     }
 }

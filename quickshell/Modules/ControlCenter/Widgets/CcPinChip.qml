@@ -62,7 +62,7 @@ Rectangle {
         anchors.centerIn: parent
         spacing: Theme.spacingS
 
-        DankIcon {
+        CyIcon {
             name: "push_pin"
             size: Theme.chipIconSize
             color: root.contentColor

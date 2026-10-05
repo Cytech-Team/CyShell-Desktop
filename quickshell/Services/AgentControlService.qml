@@ -14,6 +14,15 @@ Singleton {
     property bool embedded: false
     property bool enabled: false
     property bool controlEnabled: false
+    property bool agentWorkspaceEnabled: false
+    property bool agentWorkspaceActive: false
+    property bool useAgentWorkspace: false
+    property string agentWorkspaceDisplay: ""
+    property int agentWorkspaceWidth: 1280
+    property int agentWorkspaceHeight: 720
+    property real agentWorkspaceRefresh: 60
+    property real agentWorkspaceScale: 1
+    property bool workspaceBusy: false
     property int toolCount: 0
     property int activeCalls: 0
     property var permissions: []
@@ -33,7 +42,7 @@ Singleton {
     signal emergencyStopped
 
     Connections {
-        target: DMSService
+        target: CyShellService
         function onCapabilitiesReceived() {
             root.refresh();
             root.refreshActivity();
@@ -43,7 +52,7 @@ Singleton {
             root.applyEvent(data);
         }
         function onConnectionStateChanged() {
-            if (DMSService.isConnected) {
+            if (CyShellService.isConnected) {
                 root.refresh();
                 root.refreshActivity();
                 root.refreshReceipts();
@@ -53,6 +62,15 @@ Singleton {
             root.embedded = false;
             root.enabled = false;
             root.controlEnabled = false;
+            root.agentWorkspaceEnabled = false;
+            root.agentWorkspaceActive = false;
+            root.useAgentWorkspace = false;
+            root.agentWorkspaceDisplay = "";
+            root.agentWorkspaceWidth = 1280;
+            root.agentWorkspaceHeight = 720;
+            root.agentWorkspaceRefresh = 60;
+            root.agentWorkspaceScale = 1;
+            root.workspaceBusy = false;
             root.activeCalls = 0;
             root.permissions = [];
             root.appPolicies = [];
@@ -76,6 +94,14 @@ Singleton {
         embedded = state?.embedded === true;
         enabled = state?.enabled === true;
         controlEnabled = state?.controlEnabled === true;
+        agentWorkspaceEnabled = state?.agentWorkspaceEnabled === true;
+        agentWorkspaceActive = state?.agentWorkspaceActive === true;
+        useAgentWorkspace = state?.useAgentWorkspace === true;
+        agentWorkspaceDisplay = String(state?.agentWorkspaceDisplay || "");
+        agentWorkspaceWidth = Number(state?.agentWorkspaceWidth || 1280);
+        agentWorkspaceHeight = Number(state?.agentWorkspaceHeight || 720);
+        agentWorkspaceRefresh = Number(state?.agentWorkspaceRefresh || 60);
+        agentWorkspaceScale = Number(state?.agentWorkspaceScale || 1);
         toolCount = Number(state?.toolCount || 0);
         activeCalls = Number(state?.activeCalls || 0);
         permissions = Array.isArray(state?.permissions) ? state.permissions : [];
@@ -116,13 +142,13 @@ Singleton {
     }
 
     function refresh(callback) {
-        if (!DMSService.isConnected || !(DMSService.capabilities || []).includes("cycom")) {
+        if (!CyShellService.isConnected || !(CyShellService.capabilities || []).includes("cycom")) {
             available = false;
             if (callback)
                 callback(false, "CyCom runtime unavailable");
             return;
         }
-        DMSService.sendRequest("cycom.getRuntimeState", null, response => {
+        CyShellService.sendRequest("cycom.getRuntimeState", null, response => {
             if (response.error || !response.result) {
                 available = false;
                 lastError = response.error || "CyCom state unavailable";
@@ -138,12 +164,12 @@ Singleton {
     }
 
     function refreshActivity(callback) {
-        if (!DMSService.isConnected || !(DMSService.capabilities || []).includes("cycom")) {
+        if (!CyShellService.isConnected || !(CyShellService.capabilities || []).includes("cycom")) {
             if (callback)
                 callback(false, "CyCom runtime unavailable");
             return;
         }
-        DMSService.sendRequest("cycom.activity.list", null, response => {
+        CyShellService.sendRequest("cycom.activity.list", null, response => {
             if (response.error) {
                 if (callback)
                     callback(false, response.error);
@@ -157,7 +183,7 @@ Singleton {
     }
 
     function clearActivity(callback) {
-        DMSService.sendRequest("cycom.activity.clear", null, response => {
+        CyShellService.sendRequest("cycom.activity.clear", null, response => {
             if (response.error) {
                 lastError = response.error;
                 if (callback)
@@ -172,12 +198,12 @@ Singleton {
     }
 
     function refreshReceipts(callback) {
-        if (!DMSService.isConnected || !(DMSService.capabilities || []).includes("cycom")) {
+        if (!CyShellService.isConnected || !(CyShellService.capabilities || []).includes("cycom")) {
             if (callback)
                 callback(false, "CyCom runtime unavailable");
             return;
         }
-        DMSService.sendRequest("cycom.receipts.list", null, response => {
+        CyShellService.sendRequest("cycom.receipts.list", null, response => {
             if (response.error) {
                 if (callback)
                     callback(false, response.error);
@@ -197,7 +223,7 @@ Singleton {
                 callback(false, I18n.tr("Action receipt is missing"));
             return;
         }
-        DMSService.sendRequest("cycom.tools.call", {
+        CyShellService.sendRequest("cycom.tools.call", {
             name: "desktop_undo",
             reason: "User requested rollback from CyShell Agent Settings",
             arguments: { receipt: id },
@@ -219,7 +245,7 @@ Singleton {
         if (busy)
             return;
         busy = true;
-        DMSService.sendRequest("cycom.setEnabled", { enabled: !!value }, response => {
+        CyShellService.sendRequest("cycom.setEnabled", { enabled: !!value }, response => {
             busy = false;
             if (response.error || !response.result) {
                 lastError = response.error || "Failed to update Agent state";
@@ -237,7 +263,7 @@ Singleton {
         if (busy)
             return;
         busy = true;
-        DMSService.sendRequest("cycom.setControlEnabled", { enabled: !!value }, response => {
+        CyShellService.sendRequest("cycom.setControlEnabled", { enabled: !!value }, response => {
             busy = false;
             if (response.error || !response.result) {
                 lastError = response.error || "Failed to update Agent control state";
@@ -251,11 +277,70 @@ Singleton {
         });
     }
 
+    function setAgentWorkspaceEnabled(value, callback) {
+        if (workspaceBusy)
+            return;
+        workspaceBusy = true;
+        CyShellService.sendRequest("cycom.agentWorkspace.setEnabled", { enabled: !!value }, response => {
+            workspaceBusy = false;
+            if (response.error || !response.result) {
+                lastError = response.error || "Failed to update Agent Workspace";
+                if (callback)
+                    callback(false, lastError);
+                return;
+            }
+            applyState(response.result);
+            if (callback)
+                callback(true, "");
+        }, 15000);
+    }
+
+    function setUseAgentWorkspace(value, callback) {
+        if (workspaceBusy)
+            return;
+        workspaceBusy = true;
+        CyShellService.sendRequest("cycom.agentWorkspace.setUse", { enabled: !!value }, response => {
+            workspaceBusy = false;
+            if (response.error || !response.result) {
+                lastError = response.error || "Failed to update Agent Workspace routing";
+                if (callback)
+                    callback(false, lastError);
+                return;
+            }
+            applyState(response.result);
+            if (callback)
+                callback(true, "");
+        });
+    }
+
+    function configureAgentWorkspace(width, height, refresh, scale, callback) {
+        if (workspaceBusy)
+            return;
+        workspaceBusy = true;
+        CyShellService.sendRequest("cycom.agentWorkspace.configure", {
+            width: Math.round(Number(width)),
+            height: Math.round(Number(height)),
+            refresh: Number(refresh),
+            scale: Number(scale)
+        }, response => {
+            workspaceBusy = false;
+            if (response.error || !response.result) {
+                lastError = response.error || "Failed to configure Agent Workspace";
+                if (callback)
+                    callback(false, lastError);
+                return;
+            }
+            applyState(response.result);
+            if (callback)
+                callback(true, "");
+        }, 15000);
+    }
+
     function setPermission(scope, value, callback) {
         if (busy)
             return;
         busy = true;
-        DMSService.sendRequest("cycom.setPermission", { scope: String(scope), enabled: !!value }, response => {
+        CyShellService.sendRequest("cycom.setPermission", { scope: String(scope), enabled: !!value }, response => {
             busy = false;
             if (response.error || !response.result) {
                 lastError = response.error || "Failed to update Agent permission";
@@ -277,7 +362,7 @@ Singleton {
         if (busy)
             return;
         busy = true;
-        DMSService.sendRequest("cycom.emergencyStop", null, response => {
+        CyShellService.sendRequest("cycom.emergencyStop", null, response => {
             busy = false;
             if (response.error || !response.result) {
                 lastError = response.error || "Emergency stop failed";

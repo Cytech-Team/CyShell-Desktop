@@ -6,7 +6,7 @@ import Quickshell
 import Quickshell.Io
 import qs.Common
 import qs.Services
-import qs.Modules.DankDash
+import qs.Modules.CyDash
 
 Singleton {
     id: root
@@ -64,7 +64,7 @@ Singleton {
             "soundsAvailable": () => !MultimediaService.unavailable,
             "cupsAvailable": () => CupsService.cupsAvailable,
             "networkAvailable": () => NetworkService.networkAvailable,
-            "dmsConnected": () => DMSService.isConnected && DMSService.apiVersion >= 23,
+            "dmsConnected": () => CyShellService.isConnected && CyShellService.apiVersion >= 23,
             "matugenAvailable": () => Theme.matugenAvailable,
             "greeterAvailable": () => GreeterService.available,
             "frameEnabled": () => SettingsData.frameEnabled,

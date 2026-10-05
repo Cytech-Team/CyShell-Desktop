@@ -5,7 +5,7 @@ import test from "node:test";
 
 const read = path => readFileSync(new URL("../" + path, import.meta.url), "utf8");
 const model = vm.createContext({});
-vm.runInContext(read("Modules/DankBar/WidgetModel.js").replace(/^\.pragma.*$/m, ""), model);
+vm.runInContext(read("Modules/CyBar/WidgetModel.js").replace(/^\.pragma.*$/m, ""), model);
 const plain = value => JSON.parse(JSON.stringify(value));
 
 function method(source, name) {
@@ -76,7 +76,7 @@ test("focus discovery prefers native output, then recent interaction and active 
 });
 
 test("system updater IPC does not require the optional updater bar widget", () => {
-    const source = read("DMSShellIPC.qml");
+    const source = read("CyShellIPC.qml");
     const target = source.indexOf('target: "systemupdater"');
     assert.ok(target > 0);
     const handlerStart = source.lastIndexOf("    IpcHandler {", target);
@@ -86,7 +86,7 @@ test("system updater IPC does not require the optional updater bar widget", () =
 });
 
 test("bar actions preserve first-instance fallback and reject a focused output without a bar", () => {
-    const source = read("Modules/DankBar/DankBar.qml");
+    const source = read("Modules/CyBar/CyBar.qml");
     let focused = "";
     const calls = [];
     const instance = name => ({ modelData: { name }, triggerControlCenter() { calls.push("cc:" + name); }, triggerWallpaperBrowser() { calls.push("wallpaper:" + name); } });
@@ -106,7 +106,7 @@ test("bar actions preserve first-instance fallback and reject a focused output w
 
 test("center placement preserves configured anchors, visible fallbacks and geometric extents", () => {
     const layout = vm.createContext({});
-    vm.runInContext(read("Modules/DankBar/CenterLayout.js").replace(/^\.pragma.*$/m, ""), layout);
+    vm.runInContext(read("Modules/CyBar/CenterLayout.js").replace(/^\.pragma.*$/m, ""), layout);
     const cases = [
         [[], 600, 4, "index", [], 0],
         [[null, null], 600, 4, "geometric", [null, null], 0],

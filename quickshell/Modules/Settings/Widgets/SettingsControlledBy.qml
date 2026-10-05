@@ -71,7 +71,7 @@ StyledRect {
         anchors.rightMargin: Theme.spacingM
         spacing: Theme.spacingM
 
-        DankIcon {
+        CyIcon {
             name: root.iconName
             size: Theme.iconSize
             color: Theme.primary
@@ -102,7 +102,7 @@ StyledRect {
             }
         }
 
-        DankButton {
+        CyButton {
             id: openButton
             anchors.verticalCenter: parent.verticalCenter
             text: root.buttonText

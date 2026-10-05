@@ -4,8 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/deps"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/distros"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/deps"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -105,60 +104,8 @@ func (m Model) renderInstallProgressBar() string {
 		strings.Repeat("█", filled), strings.Repeat("░", barWidth-filled), m.packageProgress.progress*100)
 }
 
-func dmsPackageName(distroID string, dependencies []deps.Dependency) string {
-	config, ok := distros.Registry[distroID]
-	if !ok {
-		return "dms"
-	}
-
-	var isGit bool
-	for _, dep := range dependencies {
-		if dep.Name == dmsDepName {
-			isGit = dep.Variant == deps.VariantGit
-			break
-		}
-	}
-
-	switch config.Family {
-	case distros.FamilyArch:
-		if isGit {
-			return "dms-shell-git"
-		}
-		return "dms-shell"
-	case distros.FamilyFedora, distros.FamilyUbuntu, distros.FamilyDebian, distros.FamilySUSE, distros.FamilyVoid:
-		if isGit {
-			return "dms-git"
-		}
-		return "dms"
-	default:
-		return "dms"
-	}
-}
-
-func uninstallCommand(distroID string, dependencies []deps.Dependency) string {
-	config, ok := distros.Registry[distroID]
-	if !ok {
-		return ""
-	}
-	if config.Family == distros.FamilyGentoo {
-		return "sudo emerge --deselect gui-apps/dankmaterialshell && sudo emerge --depclean gui-apps/dankmaterialshell"
-	}
-
-	pkg := dmsPackageName(distroID, dependencies)
-	switch config.Family {
-	case distros.FamilyArch:
-		return "sudo pacman -Rs " + pkg
-	case distros.FamilyFedora:
-		return "sudo dnf remove " + pkg
-	case distros.FamilyUbuntu, distros.FamilyDebian:
-		return "sudo apt remove " + pkg
-	case distros.FamilySUSE:
-		return "sudo zypper remove " + pkg
-	case distros.FamilyVoid:
-		return "sudo xbps-remove -R " + pkg
-	default:
-		return ""
-	}
+func uninstallCommand(_ string, _ []deps.Dependency) string {
+	return "sudo rm -f /usr/local/bin/cyshell"
 }
 
 func (m Model) loginHint() string {
@@ -189,22 +136,22 @@ func (m Model) troubleshootingHints() (autostart, logs string) {
 	wm := m.chosenWindowManager()
 
 	if !m.useSystemdConfig() {
-		logs = "quickshell --path ~/.config/quickshell/dms log"
+		logs = "quickshell --path ~/.config/quickshell/cyshell log"
 		switch wm {
 		case deps.WindowManagerNiri:
-			autostart = `remove spawn-at-startup "dms" "run" from ~/.config/niri/config.kdl`
+			autostart = `remove spawn-at-startup "cyshell" "run" from ~/.config/niri/config.kdl`
 		case deps.WindowManagerHyprland:
-			autostart = `remove hl.exec_cmd("dms run") from ~/.config/hypr/hyprland.lua`
+			autostart = `remove hl.exec_cmd("cyshell run") from ~/.config/hypr/hyprland.lua`
 		default:
-			autostart = "remove 'exec-once=dms run' from ~/.config/mango/config.conf"
+			autostart = "remove 'exec-once=cyshell run' from ~/.config/mango/config.conf"
 		}
 		return autostart, logs
 	}
 
 	if wm == deps.WindowManagerMango {
-		return "remove 'exec-once=dms run' from ~/.config/mango/config.conf", "qs -p ~/.config/quickshell/dms log"
+		return "remove 'exec-once=cyshell run' from ~/.config/mango/config.conf", "qs -p ~/.config/quickshell/cyshell log"
 	}
-	return "systemctl --user disable dms", "journalctl --user -u dms"
+	return "systemctl --user disable cyshell.service", "journalctl --user -u cyshell.service"
 }
 
 func (m Model) viewInstallComplete() string {

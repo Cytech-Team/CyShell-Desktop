@@ -10,8 +10,8 @@ import (
 	"github.com/godbus/dbus/v5"
 	bolt "go.etcd.io/bbolt"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/server/wlcontext"
 	wlclient "github.com/AvengeMedia/dankgo/wayland/client"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/server/wlcontext"
 )
 
 const largeEntryBytes = 1 << 20
@@ -40,7 +40,7 @@ func getConfigPath() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return filepath.Join(configDir, "DankMaterialShell", "clsettings.json"), nil
+	return filepath.Join(configDir, "CyShell", "clsettings.json"), nil
 }
 
 func LoadConfig() Config {
@@ -53,7 +53,15 @@ func LoadConfig() Config {
 
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return cfg
+		configDir, cfgErr := os.UserConfigDir()
+		if cfgErr != nil {
+			return cfg
+		}
+		legacyPath := filepath.Join(configDir, "DankMaterialShell", "clsettings.json") // legacy compatibility
+		data, err = os.ReadFile(legacyPath)
+		if err != nil {
+			return cfg
+		}
 	}
 
 	if err := json.Unmarshal(data, &cfg); err != nil {

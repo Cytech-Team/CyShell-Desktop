@@ -57,7 +57,7 @@ Column {
         visible: root.description !== ""
     }
 
-    DankSlider {
+    CySlider {
         width: parent.width
         value: root.value
         minimum: root.minimum

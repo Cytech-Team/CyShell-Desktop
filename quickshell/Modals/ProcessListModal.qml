@@ -7,7 +7,7 @@ import qs.Services
 import qs.Widgets
 import "../Common/Format.js" as Format
 
-DankFloatingWindow {
+CyFloatingWindow {
     id: processListModal
     readonly property var log: Log.scoped("ProcessListModal")
 
@@ -170,7 +170,7 @@ DankFloatingWindow {
                 anchors.centerIn: parent
                 spacing: Theme.spacingL
 
-                DankIcon {
+                CyIcon {
                     name: "error"
                     size: 48
                     color: Theme.error
@@ -186,7 +186,7 @@ DankFloatingWindow {
                 }
 
                 StyledText {
-                    text: I18n.tr("DMS_SOCKET not available")
+                    text: I18n.tr("CYSHELL_SOCKET not available")
                     font.pixelSize: Theme.fontSizeMedium
                     color: Theme.surfaceText
                     anchors.horizontalCenter: parent.horizontalCenter
@@ -201,14 +201,16 @@ DankFloatingWindow {
             spacing: 0
             visible: DgopService.dgopAvailable
 
-            DankWindowHeader {
+            CyWindowHeader {
+                visible: !processListModal.useServerSideTitlebar
                 Layout.fillWidth: true
+                Layout.preferredHeight: visible ? implicitHeight : 0
                 controls: windowControls
                 title: I18n.tr("System Monitor")
                 onCloseRequested: processListModal.hide()
             }
 
-            DankNavigationBar {
+            CyNavigationBar {
                 id: viewNavigation
                 Layout.fillWidth: true
                 Layout.topMargin: Theme.spacingS
@@ -254,7 +256,7 @@ DankFloatingWindow {
                 spacing: Theme.spacingM
                 visible: currentTab === 0
 
-                DankSearchField {
+                CySearchField {
                     id: searchField
                     Layout.fillWidth: true
                     Layout.preferredHeight: Theme.buttonHeightS
@@ -339,7 +341,7 @@ DankFloatingWindow {
                     Row {
                         spacing: Theme.spacingXS
 
-                        DankIcon {
+                        CyIcon {
                             name: "swap_horiz"
                             size: Theme.iconSizeSmall
                             color: Theme.info
@@ -357,7 +359,7 @@ DankFloatingWindow {
                     Row {
                         spacing: Theme.spacingXS
 
-                        DankIcon {
+                        CyIcon {
                             name: "storage"
                             size: Theme.iconSizeSmall
                             color: Theme.warning
@@ -375,7 +377,7 @@ DankFloatingWindow {
                     Row {
                         spacing: Theme.spacingXS
 
-                        DankIcon {
+                        CyIcon {
                             name: "memory"
                             size: Theme.iconSizeSmall
                             color: Theme.primary
@@ -394,7 +396,7 @@ DankFloatingWindow {
                     Row {
                         spacing: Theme.spacingXS
 
-                        DankIcon {
+                        CyIcon {
                             name: "sd_card"
                             size: Theme.iconSizeSmall
                             color: Theme.secondary

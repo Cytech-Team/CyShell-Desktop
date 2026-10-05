@@ -2,7 +2,7 @@ import QtQuick
 import qs.Common
 import qs.Widgets
 
-DankWindowHeader {
+CyWindowHeader {
     id: header
 
     required property var modal

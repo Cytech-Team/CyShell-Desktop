@@ -22,7 +22,7 @@ Singleton {
     property bool freedeskAvailable: false
     property string pendingProfileImage: ""
 
-    readonly property string socketPath: Quickshell.env("DMS_SOCKET")
+    readonly property string socketPath: Quickshell.env("CYSHELL_SOCKET")
 
     function init() {
     }
@@ -33,7 +33,7 @@ Singleton {
         const username = Quickshell.env("USER");
         if (!username)
             return;
-        DMSService.sendRequest("freedesktop.accounts.getUserIconFile", {
+        CyShellService.sendRequest("freedesktop.accounts.getUserIconFile", {
             "username": username
         }, response => {
             if (response.result && response.result.success) {
@@ -53,7 +53,7 @@ Singleton {
             profileImage = "";
             return;
         }
-        if (Quickshell.env("DMS_RUN_GREETER") === "1" || Quickshell.env("DMS_RUN_GREETER") === "true") {
+        if (Quickshell.env("CYSHELL_RUN_GREETER") === "1" || Quickshell.env("CYSHELL_RUN_GREETER") === "true") {
             profileImage = "";
             return;
         }
@@ -63,7 +63,7 @@ Singleton {
             return;
         }
 
-        DMSService.sendRequest("freedesktop.accounts.getUserIconFile", {
+        CyShellService.sendRequest("freedesktop.accounts.getUserIconFile", {
             "username": username
         }, response => {
             if (response.result && response.result.success) {
@@ -102,7 +102,7 @@ Singleton {
 
     // Follow only genuine portal transitions, debounced by the settle window — the
     // opt-in GTK4-refresh toggle reverts within ~400ms, and a stale portal value
-    // (broken gsettings→portal bridge) must never revert a DMS-initiated change.
+    // (broken gsettings→portal bridge) must never revert a CyShell-initiated change.
     function handlePortalColorScheme(scheme) {
         const isTransition = colorSchemeInitialized && scheme !== systemColorScheme;
         colorSchemeInitialized = true;
@@ -152,7 +152,7 @@ Singleton {
     function setSystemIconTheme(themeName) {
         if (!settingsPortalAvailable || !freedeskAvailable)
             return;
-        DMSService.sendRequest("freedesktop.settings.setIconTheme", {
+        CyShellService.sendRequest("freedesktop.settings.setIconTheme", {
             "iconTheme": themeName
         }, response => {
             if (response.error) {
@@ -164,7 +164,7 @@ Singleton {
     function setSystemProfileImage(imagePath) {
         if (!accountsServiceAvailable || !freedeskAvailable)
             return;
-        DMSService.sendRequest("freedesktop.accounts.setIconFile", {
+        CyShellService.sendRequest("freedesktop.accounts.setIconFile", {
             "path": imagePath || ""
         }, response => {
             if (response.error) {
@@ -198,7 +198,7 @@ Singleton {
         if (socketPath && socketPath.length > 0) {
             checkDMSCapabilities();
         } else {
-            log.info("DMS_SOCKET not set");
+            log.info("CYSHELL_SOCKET not set");
         }
     }
 
@@ -223,7 +223,7 @@ Singleton {
     }
 
     Connections {
-        target: DMSService
+        target: CyShellService
 
         function onFreedesktopStateUpdate(data) {
             if (!data || !data.settings)
@@ -234,18 +234,18 @@ Singleton {
     }
 
     Connections {
-        target: DMSService
+        target: CyShellService
 
         function onConnectionStateChanged() {
-            if (DMSService.isConnected) {
+            if (CyShellService.isConnected) {
                 checkDMSCapabilities();
             }
         }
     }
 
     Connections {
-        target: DMSService
-        enabled: DMSService.isConnected
+        target: CyShellService
+        enabled: CyShellService.isConnected
 
         function onCapabilitiesChanged() {
             checkDMSCapabilities();
@@ -253,15 +253,15 @@ Singleton {
     }
 
     function checkDMSCapabilities() {
-        if (!DMSService.isConnected) {
+        if (!CyShellService.isConnected) {
             return;
         }
 
-        if (DMSService.capabilities.length === 0) {
+        if (CyShellService.capabilities.length === 0) {
             return;
         }
 
-        freedeskAvailable = DMSService.capabilities.includes("freedesktop");
+        freedeskAvailable = CyShellService.capabilities.includes("freedesktop");
         if (freedeskAvailable) {
             checkAccountsService();
             checkSettingsPortal();
@@ -273,7 +273,7 @@ Singleton {
     function checkAccountsService() {
         if (!freedeskAvailable)
             return;
-        DMSService.sendRequest("freedesktop.getState", null, response => {
+        CyShellService.sendRequest("freedesktop.getState", null, response => {
             if (response.result && response.result.accounts) {
                 accountsServiceAvailable = response.result.accounts.available || false;
                 if (accountsServiceAvailable) {
@@ -286,7 +286,7 @@ Singleton {
     function checkSettingsPortal() {
         if (!freedeskAvailable)
             return;
-        DMSService.sendRequest("freedesktop.getState", null, response => {
+        CyShellService.sendRequest("freedesktop.getState", null, response => {
             if (response.result && response.result.settings) {
                 settingsPortalAvailable = response.result.settings.available || false;
                 handlePortalColorScheme(response.result.settings.colorScheme || 0);

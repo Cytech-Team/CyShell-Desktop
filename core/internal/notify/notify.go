@@ -14,9 +14,9 @@ import (
 )
 
 const (
-	AppID = "com.danklinux.dms"
+	AppID = "com.cytechteam.cyshell"
 
-	appName = "DMS"
+	appName = "CyShell"
 
 	notifyDest      = "org.freedesktop.Notifications"
 	notifyPath      = "/org/freedesktop/Notifications"

@@ -4,7 +4,7 @@ import qs.Services
 import qs.Widgets
 import qs.Modules.Notepad
 
-DankFloatingWindow {
+CyFloatingWindow {
     id: win
 
     property alias shouldBeVisible: win.visible
@@ -42,8 +42,10 @@ DankFloatingWindow {
     Item {
         anchors.fill: parent
 
-        DankWindowHeader {
+        CyWindowHeader {
             id: titleBar
+            visible: !win.useServerSideTitlebar
+            height: visible ? implicitHeight : 0
             anchors.top: parent.top
             anchors.left: parent.left
             anchors.right: parent.right

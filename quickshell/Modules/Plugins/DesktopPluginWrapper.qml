@@ -230,7 +230,7 @@ Item {
 
         mask: root.clickThrough ? emptyMask : null
 
-        WlrLayershell.namespace: "dms:desktop-widget:" + root.pluginId + (root.instanceId ? ":" + root.instanceId : "")
+        WlrLayershell.namespace: "cyshell:desktop-widget:" + root.pluginId + (root.instanceId ? ":" + root.instanceId : "")
         WlrLayershell.layer: {
             if (root.isInteracting && !CompositorService.useHyprlandFocusGrab)
                 return WlrLayer.Overlay;
@@ -336,6 +336,7 @@ Item {
                 }
                 if (item.pluginId !== undefined)
                     item.pluginId = root.pluginId;
+                PluginService.injectCompatApi(item, root.pluginId);
                 if (item.instanceId !== undefined)
                     item.instanceId = root.instanceId;
                 if (item.instanceData !== undefined)
@@ -509,7 +510,7 @@ Item {
 
             mask: Region {}
 
-            WlrLayershell.namespace: "dms:desktop-widget-preview"
+            WlrLayershell.namespace: "cyshell:desktop-widget-preview"
             WlrLayershell.layer: WlrLayer.Bottom
             WlrLayershell.exclusionMode: ExclusionMode.Ignore
             WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
@@ -589,7 +590,7 @@ Item {
 
             mask: Region {}
 
-            WlrLayershell.namespace: "dms:desktop-widget-grid"
+            WlrLayershell.namespace: "cyshell:desktop-widget-grid"
             WlrLayershell.layer: root.overviewActive && (root.showOnOverview || root.showOnOverviewOnly) ? WlrLayer.Overlay : WlrLayer.Background
             WlrLayershell.exclusionMode: ExclusionMode.Ignore
             WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
@@ -635,7 +636,7 @@ Item {
             screen: root.screen
             color: "transparent"
 
-            WlrLayershell.namespace: "dms:desktop-widget-helper"
+            WlrLayershell.namespace: "cyshell:desktop-widget-helper"
             WlrLayershell.layer: WlrLayer.Overlay
             WlrLayershell.exclusionMode: ExclusionMode.Ignore
             WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
@@ -668,7 +669,7 @@ Item {
                         spacing: Theme.spacingS
                         anchors.verticalCenter: parent.verticalCenter
 
-                        DankIcon {
+                        CyIcon {
                             name: "grid_on"
                             size: 16
                             color: root.gridEnabled ? Theme.primary : Theme.surfaceText
@@ -683,7 +684,7 @@ Item {
                             anchors.verticalCenter: parent.verticalCenter
                         }
 
-                        DankKeycap {
+                        CyKeycap {
                             text: "G"
                             anchors.verticalCenter: parent.verticalCenter
                         }
@@ -700,7 +701,7 @@ Item {
                         spacing: Theme.spacingS
                         anchors.verticalCenter: parent.verticalCenter
 
-                        DankKeycap {
+                        CyKeycap {
                             text: "Z"
                             anchors.verticalCenter: parent.verticalCenter
                         }
@@ -715,7 +716,7 @@ Item {
                             anchors.verticalCenter: parent.verticalCenter
                         }
 
-                        DankKeycap {
+                        CyKeycap {
                             text: "X"
                             anchors.verticalCenter: parent.verticalCenter
                         }

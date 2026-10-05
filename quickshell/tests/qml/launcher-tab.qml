@@ -3,7 +3,7 @@ import Quickshell
 import qs.Common
 import qs.Services
 import qs.Modules.Settings
-import qs.DankCommon.Common as DC
+import qs.CyCommon.Common as DC
 
 ShellRoot {
     id: root
@@ -47,7 +47,7 @@ ShellRoot {
 
     function collect(item, out) {
         const type = typeName(item);
-        if (["QQuickImage", "IconImage", "AppIconRenderer", "StyledText", "DankIcon"].includes(type)) {
+        if (["QQuickImage", "IconImage", "AppIconRenderer", "StyledText", "CyIcon"].includes(type)) {
             const entry = {
                 type: type,
                 w: Math.round(item.width),
@@ -107,7 +107,7 @@ ShellRoot {
             check(nodes.filter(n => n.type === "AppIconRenderer").length >= 4, "every listed app renders through AppIconRenderer");
             console.log("PARITY " + JSON.stringify({
                 count: nodes.length,
-                images: nodes.filter(n => n.type !== "StyledText" && n.type !== "DankIcon"),
+                images: nodes.filter(n => n.type !== "StyledText" && n.type !== "CyIcon"),
                 texts: visibleTexts.filter(t => t === "Kitty Renamed" || t === "Ghost" || t === "missing.app" || t.startsWith("Dolphin"))
             }));
             root.finish();

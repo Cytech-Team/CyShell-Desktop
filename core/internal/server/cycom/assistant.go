@@ -100,6 +100,7 @@ type Assistant struct {
 	client      *http.Client
 	provider    string
 	baseURL     string
+	configured  bool
 	configPath  string
 	historyPath string
 
@@ -143,6 +144,7 @@ func NewAssistant(manager *Manager) *Assistant {
 	if raw := strings.TrimSpace(os.Getenv("CYSHELL_AGENT_BASE_URL")); raw != "" {
 		if endpoint, err := normalizeAssistantEndpoint(raw); err == nil {
 			a.baseURL = endpoint
+			a.configured = true
 		} else {
 			a.configError = err.Error()
 		}
@@ -151,8 +153,10 @@ func NewAssistant(manager *Manager) *Assistant {
 	}
 	if model := strings.TrimSpace(os.Getenv("CYSHELL_AGENT_MODEL")); model != "" {
 		a.model = model
+		a.configured = true
 	}
 	if key := strings.TrimSpace(os.Getenv("CYSHELL_AGENT_API_KEY")); key != "" {
+		a.configured = true
 		a.apiKey = key
 		a.apiKeyLoaded = true
 		a.hasAPIKey = true
@@ -190,7 +194,7 @@ func (a *Assistant) State() AssistantState {
 		Provider:   provider,
 		Endpoint:   endpoint,
 		Model:      model,
-		Configured: endpoint != "",
+		Configured: a.configured,
 		HasAPIKey:  hasAPIKey,
 		KeySource:  keySource,
 		Profiles:   profiles,
@@ -227,6 +231,12 @@ func (a *Assistant) Chat(ctx context.Context, prompt string) (ChatResult, error)
 	}
 	if !a.manager.enabled.Load() {
 		return ChatResult{}, errors.New("CyShell Agent is disabled")
+	}
+	a.mu.Lock()
+	configured := a.configured
+	a.mu.Unlock()
+	if !configured {
+		return ChatResult{}, errors.New("Assistant provider is not configured; choose a provider in Settings > Agent")
 	}
 
 	ctx, done := a.manager.trackContext(ctx)

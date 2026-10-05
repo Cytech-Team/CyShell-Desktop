@@ -13,8 +13,8 @@ import (
 	"testing"
 	"time"
 
-	mocks_utils "github.com/AvengeMedia/DankMaterialShell/core/internal/mocks/utils"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/utils"
+	mocks_utils "github.com/Cytech-Team/CyShell-Desktop/core/internal/mocks/utils"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/utils"
 	matcolor "github.com/Nadim147c/material/v3/color"
 	"github.com/stretchr/testify/assert"
 )

@@ -1,11 +1,52 @@
 .pragma library
-.import "../../DankCommon/Common/settings/SharedSettingsSpec.js" as Shared
-.import "../../DankCommon/Common/settings/SpecUtil.js" as Util
+.import "../../CyCommon/Common/settings/SharedSettingsSpec.js" as Shared
+.import "../../CyCommon/Common/settings/SpecUtil.js" as Util
 .import "DockConfig.js" as DockConfig
 
 var LOCAL_SPEC = {
+    // CyShell product baseline: preserve the current Cytech desktop defaults
+    // while keeping SharedSettingsSpec behavior such as coercion/hooks.
+    radiusStrength: {
+        def: 31,
+        coerce: Shared.SPEC.radiusStrength.coerce,
+        onChange: Shared.SPEC.radiusStrength.onChange
+    },
+    clockFormat: {
+        def: "24h",
+        onChange: Shared.SPEC.clockFormat.onChange
+    },
+    blurBorderOpacity: {
+        def: 0.28,
+        coerce: Shared.SPEC.blurBorderOpacity.coerce
+    },
+    fontFamily: {
+        def: "Noto Sans"
+    },
+    monoFontFamily: {
+        def: "Noto Sans Mono"
+    },
+    fontWeight: {
+        def: 500
+    },
+    lockScreenShowPowerActions: {
+        def: true
+    },
+    lockScreenWallpaperFillMode: {
+        def: "Fill"
+    },
+    lockScreenFontFamily: {
+        def: "Noto Sans"
+    },
     dockConfigs: {
         def: [DockConfig.create("dock", "Dock")]
+    },
+    appsDockSharedConfig: {
+        def: {
+            groupByApp: true,
+            separatePinnedAndRunningApps: false,
+            currentWorkspace: false,
+            restoreSpecialWorkspaceOnClick: false
+        }
     },
     currentThemeCategory: {
         def: "generic"
@@ -337,7 +378,7 @@ var LOCAL_SPEC = {
         def: 12
     },
     m3ElevationOpacity: {
-        def: 30
+        def: 32
     },
     m3ElevationColorMode: {
         def: "default"
@@ -393,62 +434,22 @@ var LOCAL_SPEC = {
         def: 135
     },
     controlCenterColumns: {
-        def: 8
-    },
-    controlCenterIconScale: {
-        def: 1.0
+        def: 6
     },
     controlCenterWidgets: {
         def: [
-            {
-                id: "volumeSlider",
-                enabled: true,
-                w: 4,
-                h: 1
-            },
-            {
-                id: "brightnessSlider",
-                enabled: true,
-                w: 4,
-                h: 1
-            },
-            {
-                id: "wifi",
-                enabled: true,
-                w: 4,
-                h: 1
-            },
-            {
-                id: "bluetooth",
-                enabled: true,
-                w: 4,
-                h: 1
-            },
-            {
-                id: "audioOutput",
-                enabled: true,
-                w: 4,
-                h: 1
-            },
-            {
-                id: "audioInput",
-                enabled: true,
-                w: 4,
-                h: 1
-            },
-            {
-                id: "nightMode",
-                enabled: true,
-                w: 4,
-                h: 1
-            },
-            {
-                id: "darkMode",
-                enabled: true,
-                w: 4,
-                h: 1
-            }
+            { id: "wifi", enabled: true, w: 2, h: 2 },
+            { id: "bluetooth", enabled: true, w: 2, h: 2 },
+            { id: "audioOutput", enabled: true, w: 2, h: 2 },
+            { id: "nightMode", enabled: true, w: 2, h: 2 },
+            { id: "darkMode", enabled: true, w: 2, h: 2 },
+            { id: "audioInput", enabled: true, w: 2, h: 2 },
+            { id: "brightnessSlider", enabled: true, w: 6, h: 1 },
+            { id: "volumeSlider", enabled: true, w: 6, h: 1 }
         ]
+    },
+    controlCenterIconScale: {
+        def: 1.0
     },
     workspaceNameIcons: {
         def: {}
@@ -527,6 +528,18 @@ var LOCAL_SPEC = {
         def: false,
         onChange: "scheduleGreeterAutoLoginSync"
     },
+    greeterLayoutHorizontal: {
+        def: "center",
+        onChange: "markGreeterSyncPending"
+    },
+    greeterPanelWidth: {
+        def: 380,
+        onChange: "markGreeterSyncPending"
+    },
+    greeterVerticalOffset: {
+        def: 0,
+        onChange: "markGreeterSyncPending"
+    },
     greeterPamExternallyManaged: {
         def: false,
         onChange: "markGreeterSyncPending"
@@ -541,7 +554,7 @@ var LOCAL_SPEC = {
         def: false
     },
     appLauncherGridColumns: {
-        def: 4
+        def: 6
     },
     closeNiriOverviewOnWindowFocus: {
         def: true
@@ -568,13 +581,13 @@ var LOCAL_SPEC = {
         def: "compact"
     },
     dankLauncherV2ShowSourceBadges: {
-        def: true
-    },
-    dankLauncherV2BorderEnabled: {
         def: false
     },
+    dankLauncherV2BorderEnabled: {
+        def: true
+    },
     dankLauncherV2BorderThickness: {
-        def: 2
+        def: 1
     },
     dankLauncherV2BorderColor: {
         def: "primary"
@@ -592,7 +605,7 @@ var LOCAL_SPEC = {
         def: false
     },
     launcherUseOverlayLayer: {
-        def: false
+        def: true
     },
     launcherStyle: {
         def: "full"
@@ -666,7 +679,7 @@ var LOCAL_SPEC = {
         def: {}
     },
     networkPreference: {
-        def: "auto"
+        def: "wifi"
     },
     iconThemeDark: {
         def: "System Default",
@@ -785,7 +798,7 @@ var LOCAL_SPEC = {
         def: false
     },
     soundLogin: {
-        def: false
+        def: true
     },
     soundNewNotification: {
         def: true
@@ -848,10 +861,10 @@ var LOCAL_SPEC = {
         def: true
     },
     batteryLowThreshold: {
-        def: 20
+        def: 10
     },
     batteryNotifyLow: {
-        def: false
+        def: true
     },
     batteryChargeLimitNotificationType: {
         def: 0
@@ -915,13 +928,13 @@ var LOCAL_SPEC = {
         def: true
     },
     matugenTemplateNiri: {
-        def: true
+        def: false
     },
     matugenTemplateHyprland: {
-        def: true
+        def: false
     },
     matugenTemplateMangowc: {
-        def: true
+        def: false
     },
     matugenTemplateQt5ct: {
         def: true
@@ -933,58 +946,58 @@ var LOCAL_SPEC = {
         def: true
     },
     matugenTemplateQtengine: {
-        def: true
+        def: false
     },
     matugenTemplateFirefox: {
-        def: true
+        def: false
     },
     matugenTemplatePywalfox: {
-        def: true
+        def: false
     },
     matugenTemplateZenBrowser: {
-        def: true
+        def: false
     },
     matugenTemplateVesktop: {
-        def: true
+        def: false
     },
     matugenTemplateVencord: {
-        def: true
+        def: false
     },
     matugenTemplateEquibop: {
-        def: true
+        def: false
     },
     matugenTemplateGhostty: {
-        def: true
+        def: false
     },
     matugenTemplateKitty: {
-        def: true
+        def: false
     },
     matugenTemplateFoot: {
-        def: true
+        def: false
     },
     matugenTemplateAlacritty: {
-        def: true
+        def: false
     },
     matugenTemplateNeovim: {
         def: false
     },
     matugenTemplateWezterm: {
-        def: true
+        def: false
     },
     matugenTemplateDgop: {
-        def: true
+        def: false
     },
     matugenTemplateKcolorscheme: {
         def: true
     },
     matugenTemplateVscode: {
-        def: true
+        def: false
     },
     matugenTemplateEmacs: {
-        def: true
+        def: false
     },
     matugenTemplateZed: {
-        def: true
+        def: false
     },
     matugenTemplateNeovimSettings: {
         def: {
@@ -1002,7 +1015,7 @@ var LOCAL_SPEC = {
         def: true
     },
     notificationOverlayEnabled: {
-        def: false
+        def: true
     },
     notificationPopupShadowEnabled: {
         def: true
@@ -1011,7 +1024,7 @@ var LOCAL_SPEC = {
         def: false
     },
     notificationPopupBodyInvokesAction: {
-        def: false
+        def: true
     },
     notificationForegroundLayers: {
         def: true
@@ -1056,7 +1069,7 @@ var LOCAL_SPEC = {
         def: false
     },
     enableFprint: {
-        def: false
+        def: true
     },
     maxFprintTries: {
         def: 15
@@ -1093,7 +1106,7 @@ var LOCAL_SPEC = {
         def: "#000000"
     },
     lockScreenNotificationMode: {
-        def: 0
+        def: 3
     },
     lockScreenVideoEnabled: {
         def: false
@@ -1117,7 +1130,7 @@ var LOCAL_SPEC = {
         def: false
     },
     notificationCompactMode: {
-        def: false
+        def: true
     },
     notificationShowTimeoutBar: {
         def: false
@@ -1126,7 +1139,13 @@ var LOCAL_SPEC = {
         def: true
     },
     notificationPopupPosition: {
-        def: 0
+        def: 3,
+        coerce: function (value) {
+            var n = Number(value);
+            if (n === -1)
+                return 4; // legacy Top Center
+            return [0, 1, 2, 3, 4, 5].indexOf(n) >= 0 ? n : 0;
+        }
     },
     notificationAnimationDuration: {
         def: 200
@@ -1159,7 +1178,7 @@ var LOCAL_SPEC = {
         def: true
     },
     notificationFocusedMonitor: {
-        def: false
+        def: true
     },
     osdAlwaysShowValue: {
         def: false
@@ -1222,7 +1241,7 @@ var LOCAL_SPEC = {
         def: []
     },
     updaterCheckOnStart: {
-        def: false
+        def: true
     },
     updaterUseCustomCommand: {
         def: false
@@ -1251,6 +1270,12 @@ var LOCAL_SPEC = {
     displayNameMode: {
         def: "system"
     },
+    primaryDisplayName: {
+        def: ""
+    },
+    labwcDisplayConfiguration: {
+        def: {}
+    },
     screenPreferences: {
         def: {}
     },
@@ -1264,13 +1289,25 @@ var LOCAL_SPEC = {
         def: {}
     },
     displayProfileAutoSelect: {
-        def: false
+        def: true
     },
     displayShowDisconnected: {
         def: false
     },
     displaySnapToEdge: {
         def: true
+    },
+    displayAutoPrimaryOnLidClose: {
+        def: true
+    },
+    displayRestorePrimaryOnLidOpen: {
+        def: true
+    },
+    displayLidPrimaryRestore: {
+        def: ""
+    },
+    displayLidFailoverTarget: {
+        def: ""
     },
     connectedFrameBarStyleBackups: {
         def: {}
@@ -1279,35 +1316,36 @@ var LOCAL_SPEC = {
         def: [
             {
                 id: "default",
-                name: "CyBar",
+                name: "CyBar Taskbar",
                 enabled: true,
                 position: 1,
                 screenPreferences: ["all"],
                 showOnLastDisplay: true,
                 leftWidgets: [
-                    "launcherButton",
+                    { id: "cyStart", enabled: true },
                     {
                         id: "appsDock",
                         enabled: true,
-                        runningAppsCompactMode: true,
-                        runningAppsCurrentWorkspace: false,
                         appsDockHideIndicators: false,
-                        appsDockIndicatorStyle: "taskbar",
                         appsDockColorizeActive: true,
-                        appsDockEnlargeOnHover: false,
+                        appsDockEnlargePercentage: 100,
                         appsDockIconSizePercentage: 120,
-                        appsDockSpacing: 2
+                        appsDockIndicatorStyle: "taskbar",
+                        appsDockEnlargeOnHover: false,
+                        appsDockSpacing: 2,
+                        runningAppsCompactMode: true
                     }
                 ],
                 centerWidgets: [],
-                rightWidgets: ["systemTray", "controlCenterButton", "battery", "clock", "notificationButton"],
+                // aiQuotas is intentionally not part of the product-default panel.
+                rightWidgets: ["systemTray", "controlCenterButton", "cytechLanguage", "cytechClock", "notificationButton", "cytechPeek"],
                 spacing: 0,
                 innerPadding: 6,
                 barInsetPadding: 0,
                 barLengthPadding: 0,
                 bottomGap: 0,
                 attachToScreenEdge: true,
-                followInterfaceStyle: true,
+                followInterfaceStyle: false,
                 transparency: 0.96,
                 widgetTransparency: 1.0,
                 squareCorners: true,
@@ -1319,39 +1357,47 @@ var LOCAL_SPEC = {
                 batteryColorMode: "theme",
                 gothCornersEnabled: false,
                 gothCornerRadiusOverride: false,
-                gothCornerRadiusValue: 12,
+                gothCornerRadiusValue: 16,
                 borderEnabled: false,
-                borderColor: "surfaceText",
-                borderOpacity: 1.0,
+                borderColor: "outline",
+                borderOpacity: 0.24,
                 borderThickness: 1,
                 widgetOutlineEnabled: false,
                 widgetOutlineColor: "primary",
-                widgetOutlineOpacity: 1.0,
+                widgetOutlineOpacity: 0.12,
                 widgetOutlineThickness: 1,
                 fontScale: 0.95,
                 iconScale: 0.90,
                 autoHide: false,
                 autoHideStrict: false,
                 autoHideDelay: 250,
-                showOnWindowsOpen: false,
+                showOnWindowsOpen: true,
                 openOnOverview: false,
                 visible: true,
-                popupGapsAuto: true,
-                popupGapsManual: 4,
+                popupGapsAuto: false,
+                popupGapsManual: 0,
                 maximizeDetection: true,
                 useOverlayLayer: false,
                 scrollEnabled: true,
                 scrollXBehavior: "column",
                 scrollYBehavior: "workspace",
                 shadowIntensity: 0,
-                shadowOpacity: 60,
+                shadowOpacity: 0,
                 shadowColorMode: "default",
                 shadowCustomColor: "#000000",
                 shadowDirectionMode: "inherit",
                 shadowDirection: "top",
                 clickThrough: false,
-                hoverPopouts: false,
-                hoverPopoutDelay: 150
+                hoverPopouts: true,
+                hoverPopoutDelay: 260,
+                island: false,
+                islandFloating: false,
+                islandUseOverlayLayer: false,
+                islandPalette: "bright",
+                islandHighContrast: false,
+                islandNotificationExpand: false,
+                islandSatelliteBackground: false,
+                islandInteractionMode: "hybrid"
             }
         ],
         onChange: "updateBarConfigs"
@@ -1362,8 +1408,37 @@ var LOCAL_SPEC = {
     desktopWidgetGroups: {
         def: []
     },
-    builtInPluginSettings: {
+    desktopIconLayoutMode: {
+        def: "grid"
+    },
+    screenEdgesEnabled: {
+        def: false
+    },
+    screenEdgeThickness: {
+        def: 3
+    },
+    screenEdgeLeftAction: {
+        def: "launcher"
+    },
+    screenEdgeRightAction: {
+        def: "control-center"
+    },
+    screenEdgeTopAction: {
+        def: "none"
+    },
+    screenEdgeBottomAction: {
+        def: "none"
+    },
+    desktopIconPositions: {
         def: {}
+    },
+    builtInPluginSettings: {
+        def: {
+            dms_settings_search: { trigger: "?" },
+            dms_clipboard_search: { trigger: "cb" },
+            dms_power: { trigger: "pw" },
+            dms_qr_generator: { trigger: "qrg" }
+        }
     },
     clipboardClickToPaste: {
         def: false
@@ -1387,7 +1462,9 @@ var LOCAL_SPEC = {
         def: ["pin", "edit", "delete"]
     },
     launcherPluginVisibility: {
-        def: {}
+        def: {
+            dms_power: { allowWithoutTrigger: true }
+        }
     },
     launcherPluginOrder: {
         def: []

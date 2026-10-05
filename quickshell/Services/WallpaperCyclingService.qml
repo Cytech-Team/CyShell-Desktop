@@ -23,12 +23,12 @@ Singleton {
         return false;
     }
     readonly property bool shouldPauseCycling: fullscreenShowing || SessionService.locked
-    readonly property bool serverSchedulingAvailable: DMSService.capabilities.includes("wallpaper")
+    readonly property bool serverSchedulingAvailable: CyShellService.capabilities.includes("wallpaper")
     property real lastCycleSeq: -1
     property var monitorProcesses: ({})
 
     Connections {
-        target: DMSService
+        target: CyShellService
 
         function onWallpaperCycleUpdate(data) {
             if (!data)
@@ -129,7 +129,7 @@ Singleton {
     function pushConfigToServer() {
         if (!serverSchedulingAvailable)
             return;
-        DMSService.sendRequest("wallpaper.setConfig", {
+        CyShellService.sendRequest("wallpaper.setConfig", {
             "config": buildServerConfig()
         }, null);
     }
@@ -226,7 +226,7 @@ Singleton {
     function resetScheduleAfterManual() {
         if (!serverSchedulingAvailable)
             return;
-        DMSService.sendRequest("wallpaper.trigger", {
+        CyShellService.sendRequest("wallpaper.trigger", {
             "target": ""
         }, null);
     }

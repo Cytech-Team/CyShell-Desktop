@@ -2,16 +2,16 @@ package providers
 
 import (
 	"fmt"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/configfrag"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/configfrag"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/luaconfig"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/utils"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/windowrules"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/luaconfig"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/utils"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/windowrules"
 )
 
 type HyprlandWindowRule struct {

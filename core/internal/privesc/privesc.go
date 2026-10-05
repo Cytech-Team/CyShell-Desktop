@@ -22,7 +22,7 @@ const (
 )
 
 // EnvVar selects a specific tool when set to one of: sudo, doas, run0.
-const EnvVar = "DMS_PRIVESC"
+const EnvVar = "CYSHELL_PRIVESC"
 
 var detectionOrder = []Tool{ToolSudo, ToolDoas, ToolRun0}
 
@@ -62,7 +62,7 @@ func AvailableTools() []Tool {
 	return out
 }
 
-// EnvOverride returns the tool selected by the $DMS_PRIVESC env var (if any)
+// EnvOverride returns the tool selected by the $CYSHELL_PRIVESC env var (if any)
 // along with ok=true when the variable is set. An empty or unset variable
 // returns ok=false.
 func EnvOverride() (Tool, bool) {
@@ -332,7 +332,7 @@ func stdinIsTTY() bool {
 }
 
 // PromptCLI interactively prompts the user to pick a privilege tool when more
-// than one is installed and $DMS_PRIVESC is not set. If stdin is not a TTY,
+// than one is installed and $CYSHELL_PRIVESC is not set. If stdin is not a TTY,
 // or only one tool is available, or the env var is set, the detected tool is
 // returned without any prompt.
 //

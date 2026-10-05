@@ -129,7 +129,7 @@ func (b shellyBackend) Upgrade(ctx context.Context, opts UpgradeOptions, onLine 
 		}
 		for _, pkg := range aur {
 			if slices.Contains(opts.Ignored, pkg.Name) {
-				return fmt.Errorf("shelly cannot exclude held AUR package %q; disable AUR updates or remove its DMS hold before updating", pkg.Name)
+				return fmt.Errorf("shelly cannot exclude held AUR package %q; disable AUR updates or remove its CyShell hold before updating", pkg.Name)
 			}
 		}
 	}
@@ -155,9 +155,9 @@ func (b shellyBackend) Upgrade(ctx context.Context, opts UpgradeOptions, onLine 
 	}
 	term := findTerminal(opts.Terminal)
 	if term == "" {
-		return fmt.Errorf("no terminal found (pick one in DMS settings, set $TERMINAL, or install kitty/ghostty/foot/alacritty)")
+		return fmt.Errorf("no terminal found (pick one in CyShell settings, set $TERMINAL, or install kitty/ghostty/foot/alacritty)")
 	}
-	return Run(ctx, wrapInTerminal(term, "DMS — System Update (shelly)", strings.Join(argv, " "), opts.TerminalArgs), RunOptions{OnLine: onLine})
+	return Run(ctx, wrapInTerminal(term, "CyShell — System Update (shelly)", strings.Join(argv, " "), opts.TerminalArgs), RunOptions{OnLine: onLine})
 }
 
 func shellyUpgradeArgv(includeAUR bool) []string {

@@ -13,7 +13,7 @@ SettingsRow {
     clickable: true
     onClicked: navigated()
 
-    DankIcon {
+    CyIcon {
         name: "chevron_right"
         size: Theme.iconSize
         color: Theme.surfaceVariantText
@@ -33,7 +33,7 @@ SettingsRow {
         height: parent.height
     }
 
-    DankToggle {
+    CyToggle {
         hideText: true
         checked: root.checked
         enabled: root.enabled

@@ -1,6 +1,6 @@
 .pragma library
 .import "./SessionSpec.js" as SpecModule
-.import "../../DankCommon/Common/settings/SpecUtil.js" as Util
+.import "../../CyCommon/Common/settings/SpecUtil.js" as Util
 
 function parse(root, jsonObj) {
     var SPEC = SpecModule.SPEC;

@@ -221,7 +221,7 @@ Rectangle {
                     }
                 }
 
-                DankButton {
+                CyButton {
                     visible: root.interactive && root.groupCount > 1
                     text: root.groupCount.toString()
                     iconName: root.groupExpanded ? "expand_less" : "expand_more"
@@ -233,7 +233,7 @@ Rectangle {
                     onClicked: root.groupToggleRequested()
                 }
 
-                DankActionButton {
+                CyActionButton {
                     visible: root.interactive && root.canExpand && root.groupCount <= 1
                     iconName: root.descriptionExpanded ? "expand_less" : "expand_more"
                     backgroundColor: root.chipColor
@@ -244,7 +244,7 @@ Rectangle {
                     onClicked: root.expandRequested()
                 }
 
-                DankActionButton {
+                CyActionButton {
                     visible: root.interactive && root.showClose
                     iconName: "close"
                     buttonSize: NotificationMetrics.controlSize
@@ -375,7 +375,7 @@ Rectangle {
 
                 Repeater {
                     model: root.showActions ? (root.notificationData?.actions || []) : []
-                    DankButton {
+                    CyButton {
                         required property var modelData
                         required property int index
                         text: (modelData.text || I18n.tr("Open")) + (root.keyboardHints && index < 9 ? " (" + (index + 1) + ")" : "")
@@ -390,7 +390,7 @@ Rectangle {
                     }
                 }
 
-                DankButton {
+                CyButton {
                     visible: root.showDismiss
                     text: root.dismissText
                     maximumWidth: actions.width

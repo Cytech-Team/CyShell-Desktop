@@ -19,7 +19,7 @@ Requires=graphical-session.target
 After=graphical-session.target
 `
 
-// Only a missing or dankinstall-written unit is replaced; hand-written units are left alone.
+// Only a missing or cyshell-install-written unit is replaced; hand-written units are left alone.
 func EnsureHyprlandSessionTarget() (string, error) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {

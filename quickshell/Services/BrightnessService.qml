@@ -99,6 +99,7 @@ Singleton {
                 "percentage": device.currentPercent,
                 "max": device.max,
                 "backend": device.backend,
+                "connector": device.connector || "",
                 "displayMax": displayMax
             };
             devices = newDevices;
@@ -170,6 +171,7 @@ Singleton {
                 "percentage": d.currentPercent,
                 "max": d.max,
                 "backend": d.backend,
+                "connector": d.connector || "",
                 "displayMax": displayMax
             };
         });
@@ -250,7 +252,7 @@ Singleton {
 
         const clampedValue = Math.max(minValue, Math.min(maxValue, percentage));
 
-        if (!DMSService.isConnected) {
+        if (!CyShellService.isConnected) {
             log.warn("Not connected to CyShell");
             return;
         }
@@ -288,7 +290,7 @@ Singleton {
             params.exponent = SessionData.getBrightnessExponent(actualDevice);
         }
 
-        DMSService.sendRequest("brightness.setBrightness", params, response => {
+        CyShellService.sendRequest("brightness.setBrightness", params, response => {
             if (response.error) {
                 log.error("Failed to set brightness:", response.error);
                 ToastService.showError(I18n.tr("Failed to set brightness"), response.error, "", "brightness");
@@ -350,25 +352,47 @@ Singleton {
         return devices.length > 0 ? devices[0].id : "";
     }
 
+
+    function getDeviceForScreen(screenName) {
+        if (!screenName || !devices || devices.length === 0)
+            return "";
+
+        const screen = Quickshell.screens.find(s => s.name === screenName);
+        const screenKey = screen ? SettingsData.getScreenDisplayName(screen) : screenName;
+        const pinned = (CacheData.brightnessDevicePins || {})[screenKey];
+        if (pinned && devices.some(d => d.id === pinned))
+            return pinned;
+
+        const exact = devices.find(d => String(d.connector || "") === screenName);
+        if (exact) {
+            // Internal panels should always use the kernel backlight rather than DDC.
+            if (/^(eDP|LVDS|DSI)/i.test(screenName)) {
+                const backlight = devices.find(d => d.class === "backlight" && String(d.connector || "") === screenName);
+                if (backlight)
+                    return backlight.id;
+            }
+            return exact.id;
+        }
+
+        if (/^(eDP|LVDS|DSI)/i.test(screenName)) {
+            const backlight = devices.find(d => d.class === "backlight");
+            return backlight ? backlight.id : "";
+        }
+
+        // Never route virtual/headless screens to a physical monitor by accident.
+        if (/^(HEADLESS|VIRTUAL|WL-|XWAYLAND)/i.test(screenName))
+            return "";
+
+        // Safe fallback only when there is exactly one external DDC monitor.
+        const ddc = devices.filter(d => d.class === "ddc" && d.connector);
+        if (ddc.length === 1)
+            return ddc[0].id;
+        return "";
+    }
+
     function getPinnedDeviceForFocusedScreen() {
         const focusedScreen = CompositorService.getFocusedScreen();
-        if (!focusedScreen)
-            return "";
-
-        const pins = CacheData.brightnessDevicePins || {};
-        const screenKey = SettingsData.getScreenDisplayName(focusedScreen);
-        if (!screenKey)
-            return "";
-
-        const pinnedDevice = pins[screenKey];
-        if (!pinnedDevice)
-            return "";
-
-        const deviceExists = devices.some(d => d.id === pinnedDevice);
-        if (!deviceExists)
-            return "";
-
-        return pinnedDevice;
+        return focusedScreen ? getDeviceForScreen(focusedScreen.name) : "";
     }
 
     function getPreferredDevice() {
@@ -465,11 +489,11 @@ Singleton {
     }
 
     function rescanDevices() {
-        if (!DMSService.isConnected) {
+        if (!CyShellService.isConnected) {
             return;
         }
 
-        DMSService.sendRequest("brightness.rescan", null, response => {
+        CyShellService.sendRequest("brightness.rescan", null, response => {
             if (response.error) {
                 log.error("Failed to rescan brightness devices:", response.error);
             }
@@ -477,11 +501,11 @@ Singleton {
     }
 
     function requestBrightnessState() {
-        if (!DMSService.isConnected) {
+        if (!CyShellService.isConnected) {
             return;
         }
 
-        DMSService.sendRequest("brightness.getState", null, response => {
+        CyShellService.sendRequest("brightness.getState", null, response => {
             if (response.error) {
                 log.error("Failed to request brightness state:", response.error);
                 return;
@@ -514,7 +538,7 @@ Singleton {
 
     Component.onCompleted: {
         deviceBrightnessUserSet = Object.assign({}, SessionData.brightnessUserSetValues);
-        if (DMSService.isConnected) {
+        if (CyShellService.isConnected) {
             requestBrightnessState();
         }
     }
@@ -550,10 +574,10 @@ Singleton {
     }
 
     Connections {
-        target: DMSService
+        target: CyShellService
 
         function onConnectionStateChanged() {
-            if (!DMSService.isConnected) {
+            if (!CyShellService.isConnected) {
                 brightnessAvailable = false;
                 return;
             }

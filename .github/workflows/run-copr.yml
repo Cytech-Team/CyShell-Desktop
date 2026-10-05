@@ -1,4 +1,4 @@
-name: DMS Copr Stable Release
+name: CyShell Copr Stable Release
 
 on:
   workflow_dispatch:
@@ -6,10 +6,10 @@ on:
       package:
         description: 'Package to build'
         required: false
-        default: 'dms'
+        default: 'cyshell'
         type: choice
         options:
-          - dms
+          - cyshell
       version:
         description: 'Versioning (e.g., 1.0.3, leave empty for latest release)'
         required: false
@@ -28,7 +28,7 @@ jobs:
       - name: Set package list
         id: set-packages
         run: |
-          PACKAGE_INPUT="${{ github.event.inputs.package || 'dms' }}"
+          PACKAGE_INPUT="${{ github.event.inputs.package || 'cyshell' }}"
           echo "packages=[\"$PACKAGE_INPUT\"]" >> $GITHUB_OUTPUT
 
   build-and-upload:
@@ -75,16 +75,16 @@ jobs:
           VERSION="${{ steps.version.outputs.version }}"
           cd ~/rpmbuild/SOURCES
 
-          echo "📦 Downloading DMS QML source for v${VERSION}..."
+          echo "📦 Downloading CyShell QML source for v${VERSION}..."
 
-          # Download DMS QML source
-          wget "https://github.com/AvengeMedia/DankMaterialShell/releases/download/v${VERSION}/dms-qml.tar.gz" || {
-            echo "❌ Failed to download dms-qml.tar.gz for v${VERSION}"
+          # Download CyShell QML source
+          wget "https://github.com/Cytech-Team/CyShell-Desktop/releases/download/v${VERSION}/cyshell-qml.tar.gz" || {
+            echo "❌ Failed to download cyshell-qml.tar.gz for v${VERSION}"
             exit 1
           }
 
           echo "✅ Source downloaded"
-          echo "Note: dms-cli binary will be downloaded during build based on target architecture"
+          echo "Note: cyshell-cli binary will be downloaded during build based on target architecture"
           ls -lh
 
       - name: Generate stable spec file
@@ -155,7 +155,7 @@ jobs:
         id: copr_project
         run: |
           PACKAGE="${{ matrix.package }}"
-          if [ "$PACKAGE" = "dms" ]; then
+          if [ "$PACKAGE" = "cyshell" ]; then
             COPR_PROJECT="avengemedia/dms"
           else
             echo "❌ Unknown package: $PACKAGE"

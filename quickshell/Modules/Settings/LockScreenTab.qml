@@ -74,7 +74,7 @@ Item {
         root.authValidateOk = false;
         root.authValidateWarn = false;
         root.authValidateRunning = true;
-        authValidateProcess.command = ["dms", "auth", "validate", "--path", path, "--json"];
+        authValidateProcess.command = ["cyshell", "auth", "validate", "--path", path, "--json"];
         authValidateProcess.running = true;
     }
 
@@ -93,7 +93,7 @@ Item {
         root.u2fValidateOk = false;
         root.u2fValidateWarn = false;
         root.u2fValidateRunning = true;
-        u2fValidateProcess.command = ["dms", "auth", "validate", "--purpose", "u2f", "--path", path, "--json"];
+        u2fValidateProcess.command = ["cyshell", "auth", "validate", "--purpose", "u2f", "--path", path, "--json"];
         u2fValidateProcess.running = true;
     }
 
@@ -170,7 +170,7 @@ Item {
 
     Process {
         id: authListServicesProcess
-        command: ["dms", "auth", "list-services", "--json"]
+        command: ["cyshell", "auth", "list-services", "--json"]
         running: false
 
         property string collected: ""
@@ -498,7 +498,7 @@ Item {
                 placeholderText: "/path/to/videos"
                 onValueEdited: value => SettingsData.set("lockScreenVideoPath", value)
 
-                actions: DankButton {
+                actions: CyButton {
                     text: I18n.tr("Browse")
                     onClicked: videoBrowserModal.open()
                 }
@@ -606,7 +606,7 @@ Item {
                         }
                     }
 
-                    DankButton {
+                    CyButton {
                         id: securityKeyCapture
                         width: 200
                         anchors.verticalCenter: parent.verticalCenter
@@ -791,7 +791,7 @@ Item {
                     width: parent.width
                     spacing: Theme.spacingS
 
-                    DankTextField {
+                    CyTextField {
                         id: customPamField
                         outlined: true
                         leftIconName: "lock"
@@ -801,7 +801,7 @@ Item {
                         text: SettingsData.lockPamPath
                     }
 
-                    DankButton {
+                    CyButton {
                         id: validatePamButton
                         text: I18n.tr("Apply changes")
                         enabled: !root.authValidateRunning && customPamField.text.trim() !== ""
@@ -859,17 +859,17 @@ Item {
                     width: parent.width
                     spacing: Theme.spacingS
 
-                    DankTextField {
+                    CyTextField {
                         id: customU2fPamField
                         outlined: true
                         leftIconName: "key"
                         labelText: I18n.tr("Path")
                         width: parent.width - validateU2fPamButton.width - Theme.spacingS
-                        placeholderText: "/etc/pam.d/dankshell-u2f"
+                        placeholderText: "/etc/pam.d/cyshell-u2f"
                         text: SettingsData.lockU2fPamPath
                     }
 
-                    DankButton {
+                    CyButton {
                         id: validateU2fPamButton
                         text: I18n.tr("Apply changes")
                         enabled: !root.u2fValidateRunning && customU2fPamField.text.trim() !== ""

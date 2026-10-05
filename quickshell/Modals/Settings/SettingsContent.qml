@@ -60,8 +60,10 @@ FocusScope {
         const properties = {};
         if (pagesWithParentModal.includes(page))
             properties.parentModal = Qt.binding(() => root.parentModal);
-        if (page === "keybinds")
+        if (page === "keybinds") {
             properties.requestedSearchQuery = Qt.binding(() => root.parentModal?.keybindSearchQuery ?? "");
+            properties.requestedAction = Qt.binding(() => root.parentModal?.keybindRequestedAction ?? "");
+        }
         return properties;
     }
 
@@ -121,7 +123,7 @@ FocusScope {
             readonly property bool pageActive: root.sessionVisible && pageStack.currentItem === host
 
             enabled: pageActive
-            asynchronous: page === "dankbar_widgets" || page === "window_rules"
+            asynchronous: page === "dankbar_widgets"
 
             Component.onCompleted: {
                 const file = root._fileFor(page);
@@ -148,11 +150,9 @@ FocusScope {
             "weather": "WeatherSettingsTab.qml",
             "keybinds": "KeybindsTab.qml",
             "dankbar_widgets": "WidgetsTab.qml",
-            "window_rules": "WindowRulesTab.qml",
-            "dankbar_settings": "DankBarTab.qml",
-            "dankbar_appearance": "DankBarAppearanceTab.qml",
+            "dankbar_settings": "CyBarTab.qml",
+            "dankbar_appearance": "CyBarAppearanceTab.qml",
             "bar_widget": "BarWidgetTab.qml",
-            "compositor_layout": "CompositorLayoutTab.qml",
             "dock_general": "DockGeneralTab.qml",
             "dock_widgets": "DockWidgetsTab.qml",
             "dock_appearance": "DockAppearanceTab.qml",
@@ -167,6 +167,7 @@ FocusScope {
             "network_cellular": "NetworkCellularTab.qml",
             "printers": "PrinterTab.qml",
             "launcher": "LauncherTab.qml",
+            "desktop": "DesktopTab.qml",
             "theme": "ThemeColorsTab.qml",
             "theme_apps": "ThemeAppsTab.qml",
             "lock_screen": "LockScreenTab.qml",
@@ -188,19 +189,21 @@ FocusScope {
             "locale": "LocaleTab.qml",
             "multiplexers": "MuxTab.qml",
             "frame": "FrameTab.qml",
-            "dank_island": "DankIslandTab.qml",
+            "dank_island": "CyIslandTab.qml",
             "users": "UsersTab.qml",
             "user_create": "CreateUserTab.qml",
             "greeter_auth": "GreeterAuthTab.qml",
             "autostart": "AutoStartTab.qml",
             "battery": "BatteryTab.qml",
-            "dank_dash": "DankDashTab.qml",
+            "bluetooth": "BluetoothTab.qml",
+            "performance": "PerformanceTab.qml",
+            "dank_dash": "CyDashTab.qml",
             "mouse_touchpad": "MouseTouchpadTab.qml",
             "keyboard": "KeyboardTab.qml",
             "plugins_manage": "PluginsManageTab.qml"
         })
 
-    readonly property var pagesWithParentModal: ["dankbar_widgets", "window_rules", "display_config", "users", "time_weather", "weather", "lock_screen", "greeter", "dank_dash", "wallpaper_cycling", "theme_schedule", "surface_shadows", "keybinds", "dankbar_settings", "dankbar_appearance", "bar_widget", "dock_general", "dock_widgets", "dock_appearance", "dock_advanced", "launcher", "theme", "theme_apps", "media_player", "desktop_widgets", "dank_island", "autostart", "compositor_layout", "agent"]
+    readonly property var pagesWithParentModal: ["dankbar_widgets", "window_rules", "display_config", "users", "user_create", "time_weather", "weather", "lock_screen", "greeter", "dank_dash", "wallpaper_cycling", "theme_schedule", "surface_shadows", "keybinds", "dankbar_settings", "dankbar_appearance", "bar_widget", "dock_general", "dock_widgets", "dock_appearance", "dock_advanced", "launcher", "theme", "theme_apps", "media_player", "desktop_widgets", "dank_island", "autostart", "compositor_layout", "agent"]
 
     Column {
         anchors.fill: parent
@@ -221,7 +224,7 @@ FocusScope {
                 width: root.showBack ? Theme.iconButtonSize + Theme.spacingL : 0
                 height: Theme.iconButtonSize
 
-                DankActionButton {
+                CyActionButton {
                     buttonSize: Theme.iconButtonSize
                     iconName: I18n.isRtl ? "arrow_forward" : "arrow_back"
                     Accessible.name: I18n.tr("Back")
@@ -272,7 +275,7 @@ FocusScope {
                 toX: pageStack.slideOffscreen
             }
 
-            DankSpinner {
+            CySpinner {
                 anchors.centerIn: parent
                 visible: pageStack.currentItem?.status === Loader.Loading
             }

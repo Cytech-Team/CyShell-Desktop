@@ -3,16 +3,16 @@
 # Usage: ./ppa-upload.sh [package-name] [ppa-name] [ubuntu-series] [rebuild-number] [--keep-builds] [--rebuild=N]
 #
 # Examples:
-#   ./ppa-upload.sh dms                    # Upload to resolute + stonking (default)
-#   ./ppa-upload.sh dms 2                 # Native: resolute ppa2, stonking ppa3 (auto +1 on second series)
-#   ./ppa-upload.sh dms --rebuild=2       # Rebuild with ppa2 (flag syntax)
-#   ./ppa-upload.sh dms-git               # Single package (both series)
+#   ./ppa-upload.sh cyshell                    # Upload to resolute + stonking (default)
+#   ./ppa-upload.sh cyshell 2                 # Native: resolute ppa2, stonking ppa3 (auto +1 on second series)
+#   ./ppa-upload.sh cyshell --rebuild=2       # Rebuild with ppa2 (flag syntax)
+#   ./ppa-upload.sh cyshell-git               # Single package (both series)
 #   ./ppa-upload.sh all                   # All packages (each to both series)
-#   ./ppa-upload.sh dms resolute          # 26.04 LTS only (same as "dms dms resolute")
-#   ./ppa-upload.sh dms stonking          # 26.10 only
-#   ./ppa-upload.sh dms dms resolute      # Explicit PPA name + one series (optional form)
-#   ./ppa-upload.sh dms dms resolute 2    # One series + rebuild number
-#   ./ppa-upload.sh distro/ubuntu/dms dms # Path-style (backward compatible)
+#   ./ppa-upload.sh cyshell resolute          # 26.04 LTS only (same as "cyshell cyshell resolute")
+#   ./ppa-upload.sh cyshell stonking          # 26.10 only
+#   ./ppa-upload.sh cyshell cyshell resolute      # Explicit PPA name + one series (optional form)
+#   ./ppa-upload.sh cyshell cyshell resolute 2    # One series + rebuild number
+#   ./ppa-upload.sh distro/ubuntu/cyshell cyshell # Path-style (backward compatible)
 
 set -e
 
@@ -27,7 +27,7 @@ success() { echo -e "${GREEN}[SUCCESS]${NC} $1"; }
 warn() { echo -e "${YELLOW}[WARN]${NC} $1"; }
 error() { echo -e "${RED}[ERROR]${NC} $1"; }
 
-AVAILABLE_PACKAGES=(dms dms-git)
+AVAILABLE_PACKAGES=(cyshell cyshell-git)
 
 KEEP_BUILDS=false
 REBUILD_RELEASE=""
@@ -70,7 +70,7 @@ if [[ ${#POSITIONAL_ARGS[@]} -gt 0 ]]; then
     fi
 fi
 
-# Shorthand: "dms resolute" / "dms stonking" (package + series; PPA inferred — no need for "dms dms resolute")
+# Shorthand: "cyshell resolute" / "cyshell stonking" (package + series; PPA inferred — no need for "cyshell cyshell resolute")
 if [[ ${#POSITIONAL_ARGS[@]} -eq 2 ]] && [[ "${POSITIONAL_ARGS[1]}" == "resolute" || "${POSITIONAL_ARGS[1]}" == "stonking" ]]; then
     PACKAGE_INPUT="${POSITIONAL_ARGS[0]}"
     PPA_NAME_INPUT=""
@@ -99,8 +99,8 @@ fi
 get_ppa_name() {
     local pkg="$1"
     case "$pkg" in
-        dms) echo "dms" ;;
-        dms-git) echo "dms-git" ;;
+        cyshell) echo "cyshell" ;;
+        cyshell-git) echo "cyshell-git" ;;
         *) echo "" ;;
     esac
 }
@@ -335,7 +335,7 @@ echo
 
 info "Step 2: Uploading to PPA..."
 
-if [ "$PPA_NAME" = "dms" ] || [ "$PPA_NAME" = "dms-git" ]; then
+if [ "$PPA_NAME" = "cyshell" ] || [ "$PPA_NAME" = "cyshell-git" ]; then
     warn "Using lftp for upload"
 
     BUILD_DIR=$(dirname "$CHANGES_FILE")
@@ -408,10 +408,10 @@ EOF
         fi
     fi
 else
-    # This branch should not be reached for DMS packages
-    # All DMS packages (dms, dms-git) use lftp
+    # This branch should not be reached for CyShell packages
+    # All CyShell packages (cyshell, cyshell-git) use lftp
     error "Unknown PPA: $PPA_NAME"
-    error "DMS packages use lftp for upload. Supported PPAs: dms, dms-git"
+    error "CyShell packages use lftp for upload. Supported PPAs: cyshell, cyshell-git"
     exit 1
 fi
 
@@ -462,24 +462,24 @@ if [ "$KEEP_BUILDS" = "false" ]; then
             REMOVED=$((REMOVED + 1))
         fi
         ;;
-    dms)
-        if [ -f "$PACKAGE_DIR/dms-distropkg-amd64.gz" ]; then
-            rm -f "$PACKAGE_DIR/dms-distropkg-amd64.gz"
+    cyshell)
+        if [ -f "$PACKAGE_DIR/cyshell-distropkg-amd64.gz" ]; then
+            rm -f "$PACKAGE_DIR/cyshell-distropkg-amd64.gz"
             REMOVED=$((REMOVED + 1))
         fi
-        if [ -f "$PACKAGE_DIR/dms-distropkg-arm64.gz" ]; then
-            rm -f "$PACKAGE_DIR/dms-distropkg-arm64.gz"
+        if [ -f "$PACKAGE_DIR/cyshell-distropkg-arm64.gz" ]; then
+            rm -f "$PACKAGE_DIR/cyshell-distropkg-arm64.gz"
             REMOVED=$((REMOVED + 1))
         fi
-        if [ -f "$PACKAGE_DIR/dms-source.tar.gz" ]; then
-            rm -f "$PACKAGE_DIR/dms-source.tar.gz"
+        if [ -f "$PACKAGE_DIR/cyshell-source.tar.gz" ]; then
+            rm -f "$PACKAGE_DIR/cyshell-source.tar.gz"
             REMOVED=$((REMOVED + 1))
         fi
         ;;
-    dms-git)
+    cyshell-git)
         # Remove git source directory binary
-        if [ -d "$PACKAGE_DIR/dms-git-repo" ]; then
-            rm -rf "$PACKAGE_DIR/dms-git-repo"
+        if [ -d "$PACKAGE_DIR/cyshell-git-repo" ]; then
+            rm -rf "$PACKAGE_DIR/cyshell-git-repo"
             REMOVED=$((REMOVED + 1))
         fi
         ;;

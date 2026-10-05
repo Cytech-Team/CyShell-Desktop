@@ -15,9 +15,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/dank16"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/log"
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/utils"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/dank16"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/log"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/utils"
 	"github.com/godbus/dbus/v5"
 	"github.com/lucasb-eyer/go-colorful"
 )
@@ -242,7 +242,7 @@ func smartSchemePreview(fallback SchemePreview, sourceColor string, contrast flo
 }
 
 func (o *Options) ColorsOutput() string {
-	return filepath.Join(o.StateDir, "dms-colors.json")
+	return filepath.Join(o.StateDir, "cyshell-colors.json")
 }
 
 func (o *Options) colorsStaging() string {
@@ -342,6 +342,11 @@ func Run(opts Options) error {
 	if opts.SyncModeWithPortal {
 		syncColorScheme(opts.Mode)
 	}
+
+	// Keep every toolkit/system-theme consumer in lockstep even when the
+	// generated palette itself did not change. This covers GTK/libadwaita,
+	// portals (Electron/Chromium/Flatpak system mode), Qt5/Qt6, KDE and XSettings.
+	syncSystemAppearance(opts)
 
 	if !changed {
 		log.Info("No color changes detected, skipping refresh")
@@ -523,7 +528,7 @@ func buildOnce(opts *Options) (bool, error) {
 		return true, nil
 	}
 
-	if isDMSGTKActive(opts.ConfigDir) {
+	if isCyShellGTKActive(opts.ConfigDir) {
 		switch opts.Mode {
 		case ColorModeLight:
 			syncAccentColor(primaryLight)
@@ -534,7 +539,7 @@ func buildOnce(opts *Options) (bool, error) {
 		refreshGTKColorScheme()
 	}
 
-	if isDMSKDEColorSchemeActive(opts.ConfigDir) {
+	if isCyShellKDEColorSchemeActive(opts.ConfigDir) {
 		applyKDEColorScheme(opts.Mode)
 	}
 
@@ -544,7 +549,7 @@ func buildOnce(opts *Options) (bool, error) {
 
 	// kcolorscheme writes the .colors file qtengine is pointed at, so with that
 	// template off there is nothing to point to and the config would name a
-	// scheme DMS no longer generates.
+	// scheme CyShell no longer generates.
 	if !opts.ShouldSkipTemplate("qtengine") && !opts.ShouldSkipTemplate("kcolorscheme") && QtengineActive() {
 		if err := SyncQtengineConfigAt(opts.ConfigDir, opts.IconTheme); err != nil {
 			log.Warnf("Failed to sync qtengine config: %v", err)
@@ -557,6 +562,28 @@ func buildOnce(opts *Options) (bool, error) {
 	}
 
 	return true, nil
+}
+
+func syncSystemAppearance(opts Options) {
+	helper, err := exec.LookPath("cyshell-theme-sync")
+	if err != nil {
+		log.Debugf("System theme sync helper unavailable: %v", err)
+		return
+	}
+
+	mode := string(opts.Mode)
+	if mode != string(ColorModeLight) {
+		mode = string(ColorModeDark)
+	}
+	args := []string{"--mode", mode, "--icon-theme", opts.IconTheme, "--config-dir", opts.ConfigDir}
+	output, err := exec.Command(helper, args...).CombinedOutput()
+	if err != nil {
+		log.Warnf("System theme sync failed: %v (%s)", err, strings.TrimSpace(string(output)))
+		return
+	}
+	if text := strings.TrimSpace(string(output)); text != "" {
+		log.Infof("%s", text)
+	}
 }
 
 func appendContrastArg(args []string, contrast float64) []string {
@@ -674,7 +701,7 @@ output_path = '%s'
 		}
 	}
 
-	userPluginConfigDir := filepath.Join(opts.ConfigDir, "matugen", "dms", "configs")
+	userPluginConfigDir := filepath.Join(opts.ConfigDir, "matugen", "cyshell", "configs")
 	if entries, err := os.ReadDir(userPluginConfigDir); err == nil {
 		for _, entry := range entries {
 			if !strings.HasSuffix(entry.Name(), ".toml") {
@@ -859,25 +886,30 @@ func (e vscodeEditor) extensionsDir(homeDir string) string {
 }
 
 func appendVSCodeConfig(cfgFile *os.File, name, extBaseDir, shellDir string) {
-	pattern := filepath.Join(extBaseDir, "danklinux.dms-theme-*")
-	matches, err := filepath.Glob(pattern)
-	if err != nil || len(matches) == 0 {
+	patterns := []string{"cytech-team.cyshell-theme-*", "danklinux.dms-theme-*"}
+	var extDir string
+	for _, pattern := range patterns {
+		matches, err := filepath.Glob(filepath.Join(extBaseDir, pattern))
+		if err == nil && len(matches) > 0 {
+			extDir = matches[0]
+			break
+		}
+	}
+	if extDir == "" {
 		return
 	}
-
-	extDir := matches[0]
 	templateDir := filepath.Join(shellDir, "matugen", "templates")
-	fmt.Fprintf(cfgFile, `[templates.dms%sdefault]
+	fmt.Fprintf(cfgFile, `[templates.cyshell%sdefault]
 input_path = '%s/vscode-color-theme-default.json'
-output_path = '%s/themes/dankshell-default.json'
+output_path = '%s/themes/cyshell-default.json'
 
-[templates.dms%sdark]
+[templates.cyshell%sdark]
 input_path = '%s/vscode-color-theme-dark.json'
-output_path = '%s/themes/dankshell-dark.json'
+output_path = '%s/themes/cyshell-dark.json'
 
-[templates.dms%slight]
+[templates.cyshell%slight]
 input_path = '%s/vscode-color-theme-light.json'
-output_path = '%s/themes/dankshell-light.json'
+output_path = '%s/themes/cyshell-light.json'
 
 `, name, templateDir, extDir,
 		name, templateDir, extDir,
@@ -1223,7 +1255,7 @@ func generateDank16Variants(primaryDark, primaryLight, surfaceDark, surfaceLight
 	return dank16.GenerateVariantJSON(variantColors)
 }
 
-func isDMSGTKActive(configDir string) bool {
+func isCyShellGTKActive(configDir string) bool {
 	gtkCSS := filepath.Join(configDir, "gtk-4.0", "gtk.css")
 
 	info, err := os.Lstat(gtkCSS)
@@ -1233,16 +1265,16 @@ func isDMSGTKActive(configDir string) bool {
 
 	if info.Mode()&os.ModeSymlink != 0 {
 		target, err := os.Readlink(gtkCSS)
-		return err == nil && strings.Contains(target, "dank-colors.css")
+		return err == nil && (strings.Contains(target, "cyshell-colors.css") || strings.Contains(target, "dank-colors.css"))
 	}
 
 	data, err := os.ReadFile(gtkCSS)
-	return err == nil && strings.Contains(string(data), "dank-colors.css")
+	return err == nil && (strings.Contains(string(data), "cyshell-colors.css") || strings.Contains(string(data), "dank-colors.css"))
 }
 
-// isDMSKDEColorSchemeActive only flips the scheme when the user is already on a
-// DankMatugen one, leaving Breeze (or anything else) untouched.
-func isDMSKDEColorSchemeActive(configDir string) bool {
+// isCyShellKDEColorSchemeActive only flips the scheme when the user is already on a
+// CyShell-managed one, leaving Breeze (or anything else) untouched.
+func isCyShellKDEColorSchemeActive(configDir string) bool {
 	data, err := os.ReadFile(filepath.Join(configDir, "kdeglobals"))
 	if err != nil {
 		return false
@@ -1501,9 +1533,10 @@ func CheckTemplates(checker utils.AppChecker) []TemplateCheck {
 
 func checkVSCodeExtension(homeDir string) bool {
 	for _, editor := range vscodeEditors {
-		pattern := filepath.Join(editor.extensionsDir(homeDir), "danklinux.dms-theme-*")
-		if matches, err := filepath.Glob(pattern); err == nil && len(matches) > 0 {
-			return true
+		for _, pattern := range []string{"cytech-team.cyshell-theme-*", "danklinux.dms-theme-*"} {
+			if matches, err := filepath.Glob(filepath.Join(editor.extensionsDir(homeDir), pattern)); err == nil && len(matches) > 0 {
+				return true
+			}
 		}
 	}
 	return false

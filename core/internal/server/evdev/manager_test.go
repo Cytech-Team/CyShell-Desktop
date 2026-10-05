@@ -7,7 +7,7 @@ import (
 	evdev "github.com/holoplot/go-evdev"
 	"github.com/stretchr/testify/assert"
 
-	mocks "github.com/AvengeMedia/DankMaterialShell/core/internal/mocks/evdev"
+	mocks "github.com/Cytech-Team/CyShell-Desktop/core/internal/mocks/evdev"
 )
 
 func TestManager_GetState(t *testing.T) {
@@ -322,4 +322,48 @@ func TestCapsLockFromDevices(t *testing.T) {
 		assert.True(t, ok)
 		assert.True(t, result)
 	})
+}
+
+func TestTrackAltTabAcrossDevices(t *testing.T) {
+	m := &Manager{modifierByPath: make(map[string]modifierDeviceState)}
+
+	m.trackLayoutCombo("kbd-mod", &evdev.InputEvent{Type: evKeyType, Code: keyLeftAlt, Value: keyStateOn})
+	m.trackLayoutCombo("kbd-main", &evdev.InputEvent{Type: evKeyType, Code: keyTab, Value: keyStateOn})
+	state := m.GetState()
+	assert.Equal(t, uint64(1), state.AltTabSerial)
+	assert.False(t, state.AltTabReverse)
+
+	m.trackLayoutCombo("kbd-mod", &evdev.InputEvent{Type: evKeyType, Code: keyLeftShift, Value: keyStateOn})
+	m.trackLayoutCombo("kbd-main", &evdev.InputEvent{Type: evKeyType, Code: keyTab, Value: keyStateOn})
+	state = m.GetState()
+	assert.Equal(t, uint64(2), state.AltTabSerial)
+	assert.True(t, state.AltTabReverse)
+
+	// Key repeat must not manufacture extra switcher cycles.
+	m.trackLayoutCombo("kbd-main", &evdev.InputEvent{Type: evKeyType, Code: keyTab, Value: 2})
+	assert.Equal(t, uint64(2), m.GetState().AltTabSerial)
+}
+
+func TestTrackLayoutComboAcrossDevices(t *testing.T) {
+	m := &Manager{modifierByPath: make(map[string]modifierDeviceState)}
+
+	m.trackLayoutCombo("kbd-alt", &evdev.InputEvent{Type: evKeyType, Code: keyLeftAlt, Value: keyStateOn})
+	assert.Equal(t, uint64(0), m.GetState().LayoutToggleSerial)
+
+	m.trackLayoutCombo("kbd-shift", &evdev.InputEvent{Type: evKeyType, Code: keyLeftShift, Value: keyStateOn})
+	assert.Equal(t, uint64(1), m.GetState().LayoutToggleSerial)
+
+	// Mirrored modifier events from another keyboard interface must not double-count.
+	m.trackLayoutCombo("kbd-mirror", &evdev.InputEvent{Type: evKeyType, Code: keyLeftAlt, Value: keyStateOn})
+	m.trackLayoutCombo("kbd-mirror", &evdev.InputEvent{Type: evKeyType, Code: keyLeftShift, Value: keyStateOn})
+	assert.Equal(t, uint64(1), m.GetState().LayoutToggleSerial)
+
+	m.trackLayoutCombo("kbd-alt", &evdev.InputEvent{Type: evKeyType, Code: keyLeftAlt, Value: keyStateOff})
+	m.trackLayoutCombo("kbd-shift", &evdev.InputEvent{Type: evKeyType, Code: keyLeftShift, Value: keyStateOff})
+	m.trackLayoutCombo("kbd-mirror", &evdev.InputEvent{Type: evKeyType, Code: keyLeftAlt, Value: keyStateOff})
+	m.trackLayoutCombo("kbd-mirror", &evdev.InputEvent{Type: evKeyType, Code: keyLeftShift, Value: keyStateOff})
+
+	m.trackLayoutCombo("kbd-shift", &evdev.InputEvent{Type: evKeyType, Code: keyRightShift, Value: keyStateOn})
+	m.trackLayoutCombo("kbd-alt", &evdev.InputEvent{Type: evKeyType, Code: keyRightAlt, Value: keyStateOn})
+	assert.Equal(t, uint64(2), m.GetState().LayoutToggleSerial)
 }

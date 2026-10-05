@@ -117,7 +117,7 @@ Item {
                     radius: root.centerIconContainerSize / 2
                     color: Theme.primaryContainer
 
-                    DankIcon {
+                    CyIcon {
                         anchors.centerIn: parent
                         name: "vital_signs"
                         size: Theme.iconSizeLarge
@@ -198,7 +198,7 @@ Item {
                     color: root.errorCount > 0 ? Theme.errorContainer : Theme.primaryContainer
                     anchors.verticalCenter: parent.verticalCenter
 
-                    DankIcon {
+                    CyIcon {
                         anchors.centerIn: parent
                         name: root.errorCount > 0 ? "warning" : "check_circle"
                         size: Theme.iconSize + 4
@@ -297,7 +297,7 @@ Item {
                 spacing: Theme.spacingS
                 visible: root.filteredResults.length === 0
 
-                DankIcon {
+                CyIcon {
                     name: {
                         switch (root.selectedFilter) {
                         case "error":
@@ -334,7 +334,7 @@ Item {
                 }
             }
 
-            DankFlickable {
+            CyFlickable {
                 anchors.fill: parent
                 anchors.margins: Theme.spacingM
                 clip: true
@@ -366,7 +366,7 @@ Item {
             anchors.bottomMargin: Theme.spacingL
             spacing: Theme.spacingM
 
-            DankButton {
+            CyButton {
                 text: I18n.tr("Run Again", "greeter doctor page button")
                 iconName: "refresh"
                 backgroundColor: Theme.chipSurface
@@ -378,7 +378,7 @@ Item {
 
     Process {
         id: doctorProcess
-        command: ["dms", "doctor", "--json"]
+        command: ["cyshell", "doctor", "--json"]
         running: false
 
         stdout: StdioCollector {

@@ -31,7 +31,7 @@ PanelWindow {
         clipHeight: innerH
     }
 
-    WlrLayershell.namespace: "dms:notification-popup"
+    WlrLayershell.namespace: "cyshell:notification-popup"
 
     required property var notificationData
     required property string notificationId
@@ -51,6 +51,7 @@ PanelWindow {
     property real presentationProgress: 0
     property real chromeRelease: 0
     property real layoutHeight: targetAlignedHeight
+    property real stackHeightLimit: 0
     property bool _entryStarted: false
     property bool _positioned: false
     readonly property bool presenting: _entryStarted && !_finalized
@@ -205,7 +206,12 @@ PanelWindow {
     color: "transparent"
     readonly property real contentImplicitWidth: screen ? Math.min(NotificationMetrics.popupWidth, Math.max(NotificationMetrics.popupMinWidth, screen.width * NotificationMetrics.popupScreenRatio)) : NotificationMetrics.popupWidth
     readonly property real timeoutRailClearance: SettingsData.notificationShowTimeoutBar && notificationData?.timer?.interval > 0 ? Theme.spacingS : 0
-    readonly property real contentImplicitHeight: Math.min(notificationCard.targetHeight + content.cardInset * 2 + timeoutRailClearance, (screen?.height ?? NotificationMetrics.centerMaxHeight) * NotificationMetrics.screenHeightRatio)
+    readonly property real contentImplicitHeight: {
+        const desiredHeight = notificationCard.targetHeight + content.cardInset * 2 + timeoutRailClearance;
+        const screenLimit = (screen?.height ?? NotificationMetrics.centerMaxHeight) * NotificationMetrics.screenHeightRatio;
+        const stackLimit = stackHeightLimit > 0 ? stackHeightLimit : desiredHeight;
+        return Math.max(0, Math.min(desiredHeight, screenLimit, stackLimit));
+    }
     readonly property real targetAlignedHeight: Theme.px(Math.max(0, contentImplicitHeight), dpr)
     readonly property real renderedAlignedHeight: heightMotion.value
     property real allocatedAlignedHeight: targetAlignedHeight
@@ -321,7 +327,7 @@ PanelWindow {
         }
     }
 
-    property bool isTopCenter: SettingsData.notificationPopupPosition === -1
+    property bool isTopCenter: SettingsData.notificationPopupPosition === SettingsData.Position.TopCenter || SettingsData.notificationPopupPosition === -1
     property bool isBottomCenter: SettingsData.notificationPopupPosition === SettingsData.Position.BottomCenter
     property bool isCenterPosition: isTopCenter || isBottomCenter
     readonly property real maxPopupShadowBlurPx: Math.max((Theme.elevationLevel3 && Theme.elevationLevel3.blurPx !== undefined) ? Theme.elevationLevel3.blurPx : 12, (Theme.elevationLevel4 && Theme.elevationLevel4.blurPx !== undefined) ? Theme.elevationLevel4.blurPx : 16)
@@ -371,6 +377,23 @@ PanelWindow {
             screenPreferences: [screen.name],
             autoHide: false
         });
+    }
+
+    function getStackViewportHeight() {
+        if (!screen)
+            return NotificationMetrics.centerMaxHeight;
+
+        const barInfo = getBarInfo();
+        function edgeInset(side) {
+            if (connectedFrameMode)
+                return _frameEdgeInset(side) + _connectedCornerClear();
+            if (frameVisibleWithoutConnectedChrome)
+                return _frameGapMargin(side);
+            const bar = side === "top" ? barInfo.topBar : barInfo.bottomBar;
+            return bar > 0 ? bar : Theme.popupDistance;
+        }
+
+        return Math.max(0, screen.height - edgeInset("top") - edgeInset("bottom"));
     }
 
     function _frameEdgeInset(side) {
@@ -676,7 +699,7 @@ PanelWindow {
                 }
             }
 
-            DankFlickable {
+            CyFlickable {
                 anchors.fill: parent
                 anchors.bottomMargin: win.timeoutRailClearance
                 contentHeight: notificationCard.targetHeight
@@ -874,7 +897,7 @@ PanelWindow {
         ]
     }
 
-    DankAnim {
+    CyAnim {
         id: enterAnimation
         target: win
         property: "presentationProgress"
@@ -890,7 +913,7 @@ PanelWindow {
     SequentialAnimation {
         id: exitAnim
 
-        DankAnim {
+        CyAnim {
             target: win
             property: "presentationProgress"
             to: 0
@@ -898,7 +921,7 @@ PanelWindow {
             easing.bezierCurve: NotificationMetrics.exitCurve
         }
 
-        DankAnim {
+        CyAnim {
             target: win
             property: "chromeRelease"
             to: 1

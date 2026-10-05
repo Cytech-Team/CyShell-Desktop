@@ -32,7 +32,7 @@ Item {
         return name.includes("bluez") || name.includes("usb") ? "headset" : "mic";
     }
 
-    DankFlickable {
+    CyFlickable {
         anchors.fill: parent
         contentHeight: column.height
         clip: true

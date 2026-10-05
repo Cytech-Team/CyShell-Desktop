@@ -70,7 +70,7 @@ Item {
             SettingsRow {
                 enabled: !SettingsData.useAutoLocation
                 title: I18n.tr("Location search")
-                body: DankLocationSearch {
+                body: CyLocationSearch {
                     width: parent.width
                     currentLocation: SettingsData.weatherLocation
                     placeholderText: I18n.tr("New York, NY")
@@ -89,7 +89,7 @@ Item {
                         width: parent.width
                         spacing: Theme.spacingM
 
-                        DankTextField {
+                        CyTextField {
                             id: latitude
                             outlined: true
                             leftIconName: "location_on"
@@ -100,7 +100,7 @@ Item {
                             onAccepted: root.saveCoordinates()
                         }
 
-                        DankTextField {
+                        CyTextField {
                             id: longitude
                             outlined: true
                             leftIconName: "location_on"
@@ -112,7 +112,7 @@ Item {
                         }
                     }
 
-                    DankButton {
+                    CyButton {
                         text: I18n.tr("Apply", "verb, button that saves custom weather coordinates")
                         enabled: root.validCoordinates
                         onClicked: root.saveCoordinates()

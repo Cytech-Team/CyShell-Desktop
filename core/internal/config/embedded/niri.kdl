@@ -240,11 +240,11 @@ recent-windows {
     }
 }
 
-// Include dms files
-include optional=true "dms/colors.kdl"
-include optional=true "dms/layout.kdl"
-include optional=true "dms/alttab.kdl"
-include optional=true "dms/binds.kdl"
-include optional=true "dms/outputs.kdl"
-include optional=true "dms/cursor.kdl"
-include optional=true "dms/input.kdl"
+// Include CyShell files
+include optional=true "cyshell/colors.kdl"
+include optional=true "cyshell/layout.kdl"
+include optional=true "cyshell/alttab.kdl"
+include optional=true "cyshell/binds.kdl"
+include optional=true "cyshell/outputs.kdl"
+include optional=true "cyshell/cursor.kdl"
+include optional=true "cyshell/input.kdl"

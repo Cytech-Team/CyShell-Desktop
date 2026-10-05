@@ -3,19 +3,18 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import Quickshell
-import Quickshell.Io
 import qs.Common
-import qs.Services
 
 Singleton {
     id: root
-    readonly property var log: Log.scoped("BlurService")
 
-    property bool compositorSupported: false
-    readonly property bool available: compositorSupported
-    readonly property bool enabled: available && (SettingsData.blurEnabled ?? false)
+    // CyShell targets Labwc only. Labwc does not expose ext-background-effect-v1,
+    // so compositor background blur is intentionally unavailable.
+    readonly property bool compositorSupported: false
+    readonly property bool available: false
+    readonly property bool enabled: false
 
-    // These settings predate non-blurred surface borders, so keep their keys for compatibility.
+    // Keep the historical border settings because surface chrome still uses them.
     readonly property color borderColor: {
         if (!(SettingsData.blurBorderEnabled ?? true))
             return "transparent";
@@ -36,37 +35,12 @@ Singleton {
     readonly property int borderWidth: (SettingsData.blurBorderEnabled ?? true) ? 1 : 0
 
     function hoverColor(baseColor, hoverAlpha) {
-        if (!enabled)
-            return baseColor;
-        return Theme.withAlpha(baseColor, hoverAlpha ?? 0.15);
+        return baseColor;
     }
 
     Binding {
         target: Theme
         property: "blurLayersActive"
-        value: root.enabled
+        value: false
     }
-
-    Process {
-        id: blurProbe
-        running: false
-        command: ["dms", "blur", "check"]
-
-        stdout: StdioCollector {
-            onStreamFinished: {
-                root.compositorSupported = text.trim() === "supported";
-                if (root.compositorSupported)
-                    log.info("Compositor supports ext-background-effect-v1");
-                else
-                    log.info("Compositor does not support ext-background-effect-v1");
-            }
-        }
-
-        onExited: exitCode => {
-            if (exitCode !== 0)
-                log.warn("blur probe failed with code:", exitCode);
-        }
-    }
-
-    Component.onCompleted: blurProbe.running = true
 }

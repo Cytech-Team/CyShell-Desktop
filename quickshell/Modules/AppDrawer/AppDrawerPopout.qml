@@ -1,12 +1,12 @@
 import QtQuick
 import qs.Common
-import qs.Modals.DankLauncherV2
+import qs.Modals.CyLauncherV2
 import qs.Widgets
 
-DankPopout {
+CyPopout {
     id: appDrawerPopout
 
-    layerNamespace: "dms:app-launcher"
+    layerNamespace: "cyshell:app-launcher"
 
     property string _pendingMode: ""
     property string _pendingQuery: ""

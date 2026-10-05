@@ -3,7 +3,7 @@ package highlight
 import (
 	"bytes"
 
-	"github.com/AvengeMedia/DankMaterialShell/core/internal/highlight/lexers"
+	"github.com/Cytech-Team/CyShell-Desktop/core/internal/highlight/lexers"
 	"github.com/alecthomas/chroma/v2"
 	"github.com/alecthomas/chroma/v2/formatters/html"
 	"github.com/yuin/goldmark"
