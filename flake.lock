@@ -3,16 +3,17 @@
     "dank-qml-common": {
       "flake": false,
       "locked": {
-        "lastModified": 1789958362,
-        "narHash": "sha256-cR1S8SdXzGGmnCRNIPacLXThEHsU1jk0yS+M7QCxylw=",
-        "owner": "AvengeMedia",
-        "repo": "dank-qml-common",
-        "rev": "0de254e8dde48af44bd3411f625a930ce47cf136",
+        "lastModified": 1791238967,
+        "narHash": "sha256-FDz6XoE1oA9mZXz1SPqYrS6Y2kGitKHHfy1o71Q0ezk=",
+        "owner": "Cytech-Team",
+        "repo": "CyShell-QML-Common",
+        "rev": "c673dc2610fd2f5f6b0276a19a5b6476b4ce6e4c",
         "type": "github"
       },
       "original": {
-        "owner": "AvengeMedia",
-        "repo": "dank-qml-common",
+        "owner": "Cytech-Team",
+        "ref": "cyshell-dev",
+        "repo": "CyShell-QML-Common",
         "type": "github"
       }
     },
