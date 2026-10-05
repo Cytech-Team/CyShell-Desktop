@@ -15,18 +15,11 @@ jobs:
   sync:
     runs-on: ubuntu-latest
     steps:
-      - name: Create GitHub App token
-        id: app_token
-        uses: actions/create-github-app-token@v1
-        with:
-          app-id: ${{ secrets.APP_ID }}
-          private-key: ${{ secrets.APP_PRIVATE_KEY }}
-
       - name: Checkout
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
-          token: ${{ steps.app_token.outputs.token }}
+          token: ${{ github.token }}
 
       - name: Install Nix
         uses: cachix/install-nix-action@v31
@@ -41,7 +34,7 @@ jobs:
 
       - name: Commit and push flake.lock update
         env:
-          GH_TOKEN: ${{ steps.app_token.outputs.token }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           if git diff --quiet flake.lock; then
