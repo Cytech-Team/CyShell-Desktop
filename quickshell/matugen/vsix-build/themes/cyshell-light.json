@@ -1,6 +1,6 @@
 {
   "$schema": "vscode://schemas/color-theme",
-  "name": "Dynamic Base16 DankShell",
+  "name": "Dynamic Base16 CyShell",
   "colors": {
     "editor.background": "#1a1a2e",
     "editor.foreground": "#e4e4e7",

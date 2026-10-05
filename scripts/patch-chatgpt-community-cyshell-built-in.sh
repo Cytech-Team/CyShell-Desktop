@@ -242,7 +242,7 @@ for name in sys.argv[2:]:
     interface = data.setdefault("interface", {})
     interface["displayName"] = "CyShell Built-in"
     interface["shortDescription"] = "Built-in CyShell desktop + visual browser control"
-    interface["longDescription"] = "CyShell Built-in lets ChatGPT Community inspect and control Linux desktop apps and the isolated CyShell browser. Browser control includes deep rendered state, native screenshots, real pointer input, real keyboard input, tabs and navigation. Desktop screenshots, accessibility metadata, window control, and input are routed through CyShell. CyShell native state is authoritative for readiness."
+    interface["longDescription"] = "CyShell Built-in lets ChatGPT Community inspect and control Linux desktop apps and the user's connected browser through the CyCom extension. Browser control can enumerate real tabs, read page state, capture screenshots, and send pointer, keyboard, and navigation actions in the user's normal browser profile. Actions can change page state and may focus a tab or window, including during capture; the browser is not isolated. Desktop screenshots, accessibility metadata, window control, and input are routed through CyShell. CyShell native state is authoritative for readiness."
     interface["developerName"] = "Cytech Team Development"
     interface["logo"] = "./assets/app-icon.png"
     interface["defaultPrompt"] = [

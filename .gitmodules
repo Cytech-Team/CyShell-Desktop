@@ -6,4 +6,4 @@
 [submodule "agent/cycom/runtime"]
 	path = agent/cycom/runtime
 	url = https://github.com/Cytech-Team/CyComAgent-MCP.git
-	branch = main
+	branch = cyshell-embed

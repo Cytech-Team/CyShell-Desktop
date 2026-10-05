@@ -8,7 +8,7 @@
       flake = false;
     };
     dank-qml-common = {
-      url = "github:AvengeMedia/dank-qml-common";
+      url = "github:Cytech-Team/CyShell-QML-Common/cyshell-dev";
       flake = false;
     };
   };

@@ -77,12 +77,31 @@ process, idle polling, timer, or retained allocation to the running session.
 
 ## API ownership
 
-`bridge.c` is the authority for API version 1. Requests and responses remain
+`bridge.c` is the authority for API version 2. Requests and responses remain
 newline-delimited JSON over `$XDG_RUNTIME_DIR/cyshell-labwc.sock`, with socket
-mode `0600` for the session user. Existing methods are `status`, `capabilities`,
-`windows.list`, `window.close`, `pointer.output`, `events.subscribe`, and
-`events.unsubscribe`. The advertised capability names are `windows.list`,
-`window.close`, `pointer.output`, `events.subscribe`, and `events.unsubscribe`.
+mode `0600` for the session user. API v1 methods remain `status`,
+`capabilities`, `windows.list`, `window.close`, `pointer.output`,
+`events.subscribe`, and `events.unsubscribe`. The advertised capability names
+are `windows.list`, `window.close`, `pointer.output`, `events.subscribe`, and
+`events.unsubscribe`. The v2 capability list adds `keyboard.layout.status` and
+`keyboard.layout.cycle`.
+
+`keyboard.layout.status` returns `{"ok":true,"group":N,"layouts":M}`.
+`group` is the current zero-based keyboard layout group, and `layouts` is the
+number of layouts in the configured keymap. `keyboard.layout.cycle` advances
+the group by one, wrapping to zero, and returns the resulting `group` and
+`layouts` in the same form. Both methods return
+`{"ok":false,"error":"keyboard layout unavailable"}` when the bridge has no
+tracked keyboard group/member or the first tracked member has no usable keymap
+or configured layouts. Cycle returns
+`{"ok":false,"error":"only one keyboard layout configured"}` when fewer than
+two layouts are configured.
+
+These methods inspect the first keyboard group created by the compositor and
+the first currently tracked member of that group. They report and change that
+member's compositor keyboard group; they do not query the QML language service.
+Layout changes do not emit bridge events or notifications. The QML shell's
+keyboard service still uses `cyshell-language` and has not migrated to this API.
 
 `pointer.output` reports the LabWC output beneath the compositor's current
 cursor together with its layout coordinates. CyStart's keyboard shortcut uses

@@ -16,7 +16,9 @@
 #include <unistd.h>
 
 #include <wayland-server-core.h>
+#include <wlr/interfaces/wlr_keyboard.h>
 #include <wlr/types/wlr_compositor.h>
+#include <wlr/types/wlr_keyboard_group.h>
 #include <wlr/types/wlr_cursor.h>
 #include <wlr/types/wlr_output.h>
 #include <wlr/types/wlr_output_layout.h>
@@ -34,7 +36,7 @@
 #error "wlroots headers do not match the declared adapter ABI"
 #endif
 
-#define CYSHELL_LABWC_BRIDGE_API 1
+#define CYSHELL_LABWC_BRIDGE_API 2
 #define CYSHELL_LABWC_CLIENTS 16
 #define CYSHELL_LABWC_RX 8192
 
@@ -95,6 +97,11 @@ static bool bridge_enabled;
 static int bridge_listen_fd = -1;
 static struct wl_event_source *bridge_listen_source;
 static char bridge_socket_path[sizeof(((struct sockaddr_un *)0)->sun_path)];
+
+#define CYSHELL_LABWC_KEYBOARDS 16
+static struct wlr_keyboard_group *bridge_keyboard_group;
+static struct wlr_keyboard *bridge_keyboards[CYSHELL_LABWC_KEYBOARDS];
+static size_t bridge_keyboard_count;
 
 static void
 bridge_log(const char *level, const char *message)
@@ -604,6 +611,111 @@ bridge_close_window(struct bridge_window *window)
 }
 
 static void
+bridge_track_keyboard(struct wlr_keyboard_group *group,
+    struct wlr_keyboard *keyboard)
+{
+    if (!bridge_candidate || !group || !keyboard ||
+            group != bridge_keyboard_group) {
+        return;
+    }
+    for (size_t i = 0; i < bridge_keyboard_count; ++i) {
+        if (bridge_keyboards[i] == keyboard) {
+            return;
+        }
+    }
+    if (bridge_keyboard_count < CYSHELL_LABWC_KEYBOARDS) {
+        bridge_keyboards[bridge_keyboard_count++] = keyboard;
+    }
+}
+
+static void
+bridge_untrack_keyboard(struct wlr_keyboard *keyboard)
+{
+    if (!keyboard) {
+        return;
+    }
+    for (size_t i = 0; i < bridge_keyboard_count; ++i) {
+        if (bridge_keyboards[i] != keyboard) {
+            continue;
+        }
+        for (size_t j = i + 1; j < bridge_keyboard_count; ++j) {
+            bridge_keyboards[j - 1] = bridge_keyboards[j];
+        }
+        bridge_keyboards[--bridge_keyboard_count] = NULL;
+        return;
+    }
+}
+
+static bool
+bridge_keyboard_layout_state(uint32_t *group_out, uint32_t *layouts_out)
+{
+    if (!bridge_keyboard_group || bridge_keyboard_count == 0) {
+        return false;
+    }
+    struct wlr_keyboard *keyboard = bridge_keyboards[0];
+    if (!keyboard || !keyboard->keymap) {
+        return false;
+    }
+    xkb_layout_index_t layouts = xkb_keymap_num_layouts(keyboard->keymap);
+    if (layouts == 0) {
+        return false;
+    }
+    if (group_out) {
+        *group_out = keyboard->modifiers.group;
+    }
+    if (layouts_out) {
+        *layouts_out = layouts;
+    }
+    return true;
+}
+
+static void
+bridge_reply_keyboard_layout(int fd)
+{
+    uint32_t group = 0;
+    uint32_t layouts = 0;
+    if (!bridge_keyboard_layout_state(&group, &layouts)) {
+        bridge_send_line(fd,
+            "{\"ok\":false,\"error\":\"keyboard layout unavailable\"}");
+        return;
+    }
+    char response[160];
+    snprintf(response, sizeof(response),
+        "{\"ok\":true,\"group\":%u,\"layouts\":%u}", group, layouts);
+    bridge_send_line(fd, response);
+}
+
+static void
+bridge_cycle_keyboard_layout(int fd)
+{
+    uint32_t group = 0;
+    uint32_t layouts = 0;
+    if (!bridge_keyboard_layout_state(&group, &layouts)) {
+        bridge_send_line(fd,
+            "{\"ok\":false,\"error\":\"keyboard layout unavailable\"}");
+        return;
+    }
+    if (layouts < 2) {
+        bridge_send_line(fd,
+            "{\"ok\":false,\"error\":\"only one keyboard layout configured\"}");
+        return;
+    }
+
+    struct wlr_keyboard *keyboard = bridge_keyboards[0];
+    uint32_t next = (group + 1u) % layouts;
+    wlr_keyboard_notify_modifiers(keyboard,
+        keyboard->modifiers.depressed,
+        keyboard->modifiers.latched,
+        keyboard->modifiers.locked,
+        next);
+
+    char response[160];
+    snprintf(response, sizeof(response),
+        "{\"ok\":true,\"group\":%u,\"layouts\":%u}", next, layouts);
+    bridge_send_line(fd, response);
+}
+
+static void
 bridge_reply_status(int fd)
 {
     const char *labwc_version = getenv("CYSHELL_LABWC_VERSION");
@@ -624,7 +736,8 @@ bridge_reply_status(int fd)
         wlr_version_get_micro());
     json_escape(f, bridge_socket_path);
     fputs(",\"capabilities\":[\"windows.list\",\"window.close\","
-        "\"events.subscribe\",\"events.unsubscribe\",\"pointer.output\"]}", f);
+        "\"events.subscribe\",\"events.unsubscribe\",\"pointer.output\","
+        "\"keyboard.layout.status\",\"keyboard.layout.cycle\"]}", f);
     fclose(f);
     bridge_send_line(fd, buf);
     free(buf);
@@ -723,6 +836,16 @@ bridge_handle_request(struct bridge_client *client, const char *request)
 
     if (strcmp(method, "pointer.output") == 0) {
         bridge_reply_pointer_output(client->fd);
+        return;
+    }
+
+    if (strcmp(method, "keyboard.layout.status") == 0) {
+        bridge_reply_keyboard_layout(client->fd);
+        return;
+    }
+
+    if (strcmp(method, "keyboard.layout.cycle") == 0) {
+        bridge_cycle_keyboard_layout(client->fd);
         return;
     }
 
@@ -986,9 +1109,97 @@ bridge_constructor(void)
     for (size_t i = 0; i < CYSHELL_LABWC_CLIENTS; ++i) {
         bridge_clients[i].fd = -1;
     }
-    bridge_candidate = bridge_process_is_labwc();
-    // Gate before either create hook can access wlroots structure layouts.
-    bridge_candidate = bridge_runtime_compatible();
+    // Gate before any hook can access wlroots structure layouts. The bridge
+    // must only interpose inside the LabWC compositor process itself.
+    bridge_candidate = bridge_process_is_labwc() && bridge_runtime_compatible();
+}
+
+struct wlr_keyboard_group *
+wlr_keyboard_group_create(void)
+{
+    typedef struct wlr_keyboard_group *(*real_fn)(void);
+    static real_fn real;
+
+    if (!real) {
+        real = (real_fn)dlsym(RTLD_NEXT, "wlr_keyboard_group_create");
+    }
+    if (!real) {
+        bridge_log("fatal", "cannot resolve wlr_keyboard_group_create");
+        return NULL;
+    }
+
+    struct wlr_keyboard_group *group = real();
+    if (bridge_candidate && group && !bridge_keyboard_group) {
+        bridge_keyboard_group = group;
+        bridge_keyboard_count = 0;
+        memset(bridge_keyboards, 0, sizeof(bridge_keyboards));
+    }
+    return group;
+}
+
+bool
+wlr_keyboard_group_add_keyboard(struct wlr_keyboard_group *group,
+    struct wlr_keyboard *keyboard)
+{
+    typedef bool (*real_fn)(struct wlr_keyboard_group *, struct wlr_keyboard *);
+    static real_fn real;
+
+    if (!real) {
+        real = (real_fn)dlsym(RTLD_NEXT, "wlr_keyboard_group_add_keyboard");
+    }
+    if (!real) {
+        bridge_log("fatal", "cannot resolve wlr_keyboard_group_add_keyboard");
+        return false;
+    }
+
+    bool added = real(group, keyboard);
+    if (added) {
+        bridge_track_keyboard(group, keyboard);
+    }
+    return added;
+}
+
+void
+wlr_keyboard_group_remove_keyboard(struct wlr_keyboard_group *group,
+    struct wlr_keyboard *keyboard)
+{
+    typedef void (*real_fn)(struct wlr_keyboard_group *, struct wlr_keyboard *);
+    static real_fn real;
+
+    if (!real) {
+        real = (real_fn)dlsym(RTLD_NEXT, "wlr_keyboard_group_remove_keyboard");
+    }
+    if (!real) {
+        bridge_log("fatal", "cannot resolve wlr_keyboard_group_remove_keyboard");
+        return;
+    }
+
+    if (bridge_candidate && group == bridge_keyboard_group) {
+        bridge_untrack_keyboard(keyboard);
+    }
+    real(group, keyboard);
+}
+
+void
+wlr_keyboard_group_destroy(struct wlr_keyboard_group *group)
+{
+    typedef void (*real_fn)(struct wlr_keyboard_group *);
+    static real_fn real;
+
+    if (!real) {
+        real = (real_fn)dlsym(RTLD_NEXT, "wlr_keyboard_group_destroy");
+    }
+    if (!real) {
+        bridge_log("fatal", "cannot resolve wlr_keyboard_group_destroy");
+        return;
+    }
+
+    if (bridge_candidate && group == bridge_keyboard_group) {
+        bridge_keyboard_group = NULL;
+        bridge_keyboard_count = 0;
+        memset(bridge_keyboards, 0, sizeof(bridge_keyboards));
+    }
+    real(group);
 }
 
 struct wlr_cursor *

@@ -1,6 +1,6 @@
 # Plugin System
 
-Extend DMS with dynamically loaded QML components: bar and dock widgets, Control Center tiles, dash tabs and overview cards, desktop widgets, launcher providers and background daemons.
+Extend CyShell with dynamically loaded QML components: bar and dock widgets, Control Center tiles, dash tabs and overview cards, desktop widgets, launcher providers and background daemons.
 
 ## Plugin Registry
 
@@ -35,7 +35,7 @@ Plugins are discovered from `~/.config/CyShell/plugins/` and managed by PluginSe
    - Lists built-in and plugin tabs and overview cards
    - Hosts plugin tabs in `DashTabHost.qml` and cards in `Overview/DashCardSlot.qml`
 
-Many widgets are implemented in the shared [dank-qml-common](https://github.com/AvengeMedia/dank-qml-common) library and re-exported by DMS. Plugins should keep importing `qs.Common`, `qs.Services`, `qs.Widgets`, and `qs.Modules.Plugins` — these remain the supported plugin API and are unaffected by where a widget is implemented.
+Many widgets are implemented in the shared [CyShell-QML-Common](https://github.com/Cytech-Team/CyShell-QML-Common) library and re-exported by CyShell. Plugins should keep importing `qs.Common`, `qs.Services`, `qs.Widgets`, and `qs.Modules.Plugins` — these remain the supported plugin API and are unaffected by where a widget is implemented.
 
 ## Plugin Structure
 
@@ -562,7 +562,7 @@ PluginSettings {
 
 ## Translations
 
-Plugins ship their own translations. Drop a `translations/` directory next to `plugin.json`, wrap your strings in `I18n.trFor()`, done — nothing needs to change in the DMS repo, and users get your translations just by installing the plugin.
+Plugins ship their own translations. Drop a `translations/` directory next to `plugin.json`, wrap your strings in `I18n.trFor()`, done — nothing needs to change in the CyShell repo, and users get your translations just by installing the plugin.
 
 ```
 YourPlugin/
@@ -574,7 +574,7 @@ YourPlugin/
     └── zh_CN.json
 ```
 
-DMS loads the file matching the user's locale when it discovers the plugin, and re-reads it whenever the locale changes. No restart, no registration call.
+CyShell loads the file matching the user's locale when it discovers the plugin, and re-reads it whenever the locale changes. No restart, no registration call.
 
 ### Marking Strings
 
@@ -588,18 +588,18 @@ StyledText {
 }
 ```
 
-Placeholders work the same as anywhere else in DMS:
+Placeholders work the same as anywhere else in CyShell:
 
 ```qml
 ToastService.showInfo(I18n.trFor("yourPlugin", "Copied %1 to clipboard").arg(item))
 ```
 
-Lookup order is: your plugin's translation file → the global DMS catalog → the English term itself. Strings DMS already translates ("Settings", "Close", etc.) resolve from the global catalog for free, and anything untranslated renders as your English text instead of breaking.
+Lookup order is: your plugin's translation file → the global CyShell catalog → the English term itself. Strings CyShell already translates ("Settings", "Close", etc.) resolve from the global catalog for free, and anything untranslated renders as your English text instead of breaking.
 
 Two rules:
 
 - The plugin id must be a **literal string** that exactly matches `id` in your `plugin.json`. The string extraction tooling for central translation reads call sites — a variable there means your strings never get extracted.
-- `I18n.trFor` doesn't exist on DMS versions without plugin translation support, and calling a missing function in QML is a TypeError, not a silent no-op. Bump `requires_dms` when you adopt it.
+- `I18n.trFor` doesn't exist on CyShell versions without plugin translation support, and calling a missing function in QML is a TypeError, not a silent no-op. Bump the `requires_dms` manifest value when you adopt it; the field name is retained for plugin compatibility.
 
 Plain `I18n.tr()` still works inside plugins, but it only checks the global catalog — it will never see your `translations/` files.
 
@@ -620,11 +620,11 @@ One JSON file per locale. Top-level keys are context buckets; unless you have a 
 
 There is no `en.json` — the strings in your QML are the English source. Translate what you want, skip what you don't; missing terms fall through the lookup order above.
 
-File names match what DMS ships in its own catalog (`es.json`, `pt.json`, `zh_CN.json`, ...), but you're not limited to that list — resolution is driven by the user's locale. For a user on `zh_CN`, DMS tries `zh_CN.json`, then `zh-CN.json`, then `zh.json`, and uses the first one that exists.
+File names match what CyShell ships in its own catalog (`es.json`, `pt.json`, `zh_CN.json`, ...), but you're not limited to that list — resolution is driven by the user's locale. For a user on `zh_CN`, CyShell tries `zh_CN.json`, then `zh-CN.json`, then `zh.json`, and uses the first one that exists.
 
 ### Testing
 
-1. Reload after editing a file: `dms ipc call plugins reload yourPlugin`
+1. Reload after editing a file: `cyshell ipc call plugins reload yourPlugin`
 2. Switch languages in Settings → Locale — plugin strings retranslate live along with the rest of the shell
 3. Broken JSON logs a `bad plugin translations` warning in shell output and falls back to English
 
@@ -634,7 +634,7 @@ File names match what DMS ships in its own catalog (`es.json`, `pt.json`, `zh_CN
 
 Plugins in the [plugin registry](https://github.com/AvengeMedia/dms-plugin-registry) can apply to join the DankPlugins POEditor project, translated by the same community that translates DMS itself. Approved plugins get every `I18n.trFor()` string uploaded under a `<pluginId>:` context, so your "Auto" and another plugin's "Auto" are separate terms with separate translations. Finished translations come back to the plugin repo as PRs to `translations/`, in the file format above. See the registry's CONTRIBUTING guide for the application process.
 
-Strings you wrap in plain `I18n.tr()` are not uploaded. They resolve from the shell catalog only, which is the right choice for terms DMS already has ("Cancel", "Settings"). A term DMS does not have stays English, and the sync warns about it.
+Strings you wrap in plain `I18n.tr()` are not uploaded. They resolve from the shell catalog only, which is the right choice for terms CyShell already has ("Cancel", "Settings"). A term CyShell does not have stays English, and the sync warns about it.
 
 ## PluginService API
 
@@ -959,7 +959,7 @@ PluginSettings {
 
 ### Step 5: Enable Plugin
 
-1. Run the shell: `qs -p $CONFIGPATH/quickshell/dms/shell.qml`
+1. Run CyShell: `cyshell run` (the default config directory is `~/.config/quickshell/cyshell`; use `cyshell -c <config-dir> run` to select another one).
 2. Open Settings (Ctrl+,)
 3. Navigate to Plugins tab
 4. Click "Scan for Plugins"
@@ -975,15 +975,7 @@ After enabling a plugin, add it to the bar:
 3. Choose section (left, center, right)
 4. Save and reload
 
-Or edit `$CONFIGPATH/quickshell/dms/config.json`:
-
-```json
-{
-    "dankBarLeftWidgets": [
-        {"widgetId": "myPlugin", "enabled": true}
-    ]
-}
-```
+Settings are stored in `~/.config/CyShell/settings.json` (or `$XDG_CONFIG_HOME/CyShell/settings.json`). The current bar layout is under `barConfigs[]`, with widget lists in each bar's `leftWidgets`, `centerWidgets`, and `rightWidgets` fields. Prefer the Settings UI when adding a plugin so existing bar settings are preserved.
 
 ## Best Practices
 
@@ -999,11 +991,11 @@ Or edit `$CONFIGPATH/quickshell/dms/config.json`:
 
 ## Clipboard Access
 
-Plugins that need to copy text to the clipboard should use the built-in `dms cl copy` command through Quickshell's `execDetached` function.
+Plugins that need to copy text to the clipboard should use the built-in `cyshell cl copy` command through Quickshell's `execDetached` function.
 
 ### Correct Method
 
-Import Quickshell and use `execDetached` with `dms cl copy`:
+Import Quickshell and use `execDetached` with `cyshell cl copy`:
 
 ```qml
 import QtQuick
@@ -1038,7 +1030,7 @@ MouseArea {
 
 ### Dependencies
 
-This method uses the built-in DMS clipboard functionality which has native Wayland support.
+This method uses the built-in CyShell clipboard functionality which has native Wayland support.
 
 ## Running External Commands
 
@@ -1227,7 +1219,7 @@ Item {
 View plugin logs:
 
 ```bash
-qs -v -p $CONFIGPATH/quickshell/dms/shell.qml
+qs -v -p "${XDG_CONFIG_HOME:-$HOME/.config}/quickshell/cyshell"
 ```
 
 Look for lines prefixed with:
@@ -1273,7 +1265,7 @@ Currently, only `settings_write` is enforced by the PluginSettings component.
 
 ## API Stability
 
-The plugin API is currently **experimental**. Breaking changes may occur in minor version updates. Pin to specific DMS versions for production use.
+The plugin API is currently **experimental**. Breaking changes may occur in minor version updates. Pin to CyShell versions you have tested for production use.
 
 **Roadmap:**
 - Plugin marketplace/repository
@@ -1284,7 +1276,7 @@ The plugin API is currently **experimental**. Breaking changes may occur in mino
 
 ## Launcher Plugins
 
-Launcher plugins extend the DMS application launcher by adding custom searchable items with trigger-based filtering.
+Launcher plugins extend the CyShell application launcher by adding custom searchable items with trigger-based filtering.
 
 ### Overview
 
@@ -1819,9 +1811,9 @@ See `PLUGINS/ExampleDesktopClock/` for a complete working example demonstrating:
 
 ### Overview
 
-The dash popout (`dms ipc call dash open`) is a set of entries. Each entry can have a tab, an overview card, or both. The built-ins (Overview, Media, Wallpapers, Weather, Notifications, Clock, Calendar, User, System Monitor, CPU, Memory, Network, Disk, Battery) are the same kind of entry as a plugin, they just ship enabled.
+The dash popout (`cyshell ipc call dash open`) is a set of entries. Each entry can have a tab, an overview card, or both. The built-ins (Overview, Media, Wallpapers, Weather, Notifications, Clock, Calendar, User, System Monitor, CPU, Memory, Network, Disk, Battery) are the same kind of entry as a plugin, they just ship enabled.
 
-- `dash`: a full tab, built on `DashTabComponent`. Its id is `plugin_<pluginId>`, so `dms ipc call dash open plugin_dashTabExample` opens the example tab.
+- `dash`: a full tab, built on `DashTabComponent`. Its id is `plugin_<pluginId>`, so `cyshell ipc call dash open plugin_dashTabExample` opens the example tab.
 - `dashCard`: a card in the overview grid, built on `DashCardComponent`. The grid is 6 columns by default (users pick 3 to 8 in the Overview options) and rows are 96 px tall. Users drag the corner handle to any size inside the range the manifest allows.
 
 Only enabled plugins show up. A disabled plugin has no tab, no card, no row under Settings → Dashboard and no entry in the Add widget menu. Its saved placement is kept, so re-enabling it puts the card back where it was.
@@ -2110,6 +2102,6 @@ Share your plugins with the community:
 4. Add example screenshots
 5. Document dependencies and permissions
 
-For plugin system improvements, submit issues or PRs to the main DMS repository.
+For plugin system improvements, submit issues or PRs to the main CyShell repository.
 
 Widget plugins can also run in named docks. See the [surface widget contract](SURFACE_WIDGETS.md) and [attached panel example](AttachedPanelExample/).

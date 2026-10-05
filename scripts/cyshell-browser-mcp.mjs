@@ -1,7 +1,9 @@
 #!/usr/bin/env node
 import readline from "node:readline";
 
-const BRIDGE_URL = process.env.CYSHELL_BROWSER_BRIDGE_URL || "http://127.0.0.1:17374/api";
+const BRIDGE_URL = process.env.CYSHELL_BROWSER_BRIDGE_URL || "http://127.0.0.1:17373/api";
+const MAX_BRIDGE_REQUEST_BYTES = 1024 * 1024;
+const MAX_BRIDGE_RESPONSE_BYTES = 16 * 1024 * 1024;
 const PROTOCOL_VERSION = "2024-11-05";
 const SERVER_NAME = "cyshell-browser";
 const SERVER_VERSION = "0.3.1";
@@ -22,7 +24,9 @@ const actionSchema = {
     active: { type: "boolean", description: "Whether a newly opened tab should be active." },
     selector: { type: "string", description: "Optional CSS selector for semantic targeting." },
     text: { type: "string", description: "Visible text for semantic targeting or literal text for type." },
-    index: { type: "integer", description: "Element index from state." },
+    index: { type: "integer", description: "Element index from state; requires snapshotId from that state." },
+    snapshotId: { type: "string", description: "State snapshot identity required for an observed index." },
+    frameId: { type: "integer", description: "Semantic pointer frame; only top frame (0) is supported. Use viewport coordinates for child frames." },
     x: { type: "integer", description: "Viewport x coordinate." },
     y: { type: "integer", description: "Viewport y coordinate, or legacy vertical scroll delta when deltaY is omitted." },
     button: { type: "string", enum: ["left", "middle", "right"], description: "Mouse button." },
@@ -57,9 +61,11 @@ const actionSchema = {
 const tool = {
   name: "browser_control",
   description:
-    "Control the CyShell isolated browser using a visual computer-use loop. " +
+    "Control the user's connected browser through the CyCom extension using a visual computer-use loop. " +
     "Supports deep rendered state, native PNG screenshots, real pointer move/click/double-click/drag/wheel, " +
-    "real keyboard type/keypress, tabs and navigation. Mutating actions automatically return a fresh screenshot. " +
+    "real keyboard type/keypress, real tabs and navigation. " +
+    "Actions can change page state and may focus a tab or browser window, including during capture; " +
+    "this is not an isolated browser. Mutating actions automatically return a fresh screenshot. " +
     "Use state for semantic/accessible page understanding and screenshots when visual context matters.",
   inputSchema: actionSchema
 };
@@ -80,17 +86,52 @@ function safeJson(value, max = 180000) {
   return text.slice(0, max) + `...[truncated ${text.length - max} chars]`;
 }
 
+async function readBridgeResponse(response) {
+  if (!response.body) return "";
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  const chunks = [];
+  let totalBytes = 0;
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      totalBytes += value.byteLength;
+      if (totalBytes > MAX_BRIDGE_RESPONSE_BYTES) {
+        throw new Error("CyShell Browser Bridge response exceeds 16 MiB limit");
+      }
+
+      chunks.push(decoder.decode(value, { stream: true }));
+    }
+    chunks.push(decoder.decode());
+    return chunks.join("");
+  } catch (error) {
+    try { await reader.cancel(); } catch {}
+    throw error;
+  } finally {
+    reader.releaseLock();
+  }
+}
+
 async function bridgeCall(args) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 25000);
   try {
+    const requestBody = JSON.stringify(args);
+    if (Buffer.byteLength(requestBody, "utf8") > MAX_BRIDGE_REQUEST_BYTES) {
+      throw new Error("CyShell Browser Bridge request exceeds 1 MiB limit");
+    }
+
     const response = await fetch(BRIDGE_URL, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify(args),
+      body: requestBody,
       signal: controller.signal
     });
-    const body = await response.text();
+    const body = await readBridgeResponse(response);
     if (!response.ok) {
       throw new Error(`CyShell Browser Bridge HTTP ${response.status}: ${body}`);
     }
@@ -151,7 +192,7 @@ async function callTool(args) {
     return screenshotResult(result);
   }
 
-  if (!needsPostActionObservation(action)) {
+  if (!needsPostActionObservation(action) || (action === "open" && args.active === false)) {
     return {
       content: [textContent(safeJson(result))],
       structuredContent: result,

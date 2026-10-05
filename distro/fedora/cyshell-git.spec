@@ -78,7 +78,7 @@ Provides native DBus bindings, NetworkManager integration, and system utilities.
 {{{ git_repo_setup_macro }}}
 rm -rf dank-qml-common
 tar -xzf %{SOURCE3}
-test -e quickshell/DankCommon/Widgets/DankIcon.qml || { echo "DankCommon missing after submodule unpack"; exit 1; }
+test -e quickshell/DankCommon/Widgets/CyIcon.qml || { echo "CyShell Common CyIcon.qml missing after submodule unpack"; exit 1; }
 
 %build
 # Build CyShell CLI from source (core/subdirectory)
