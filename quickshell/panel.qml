@@ -8,10 +8,18 @@ import Quickshell.Io
 import qs.Common
 import qs.CyCommon.Common as DC
 import qs.Modules.Notifications.Center
+import qs.Modules.Notifications.Popup
 import qs.Services
 
 ShellRoot {
     id: root
+
+    readonly property var notificationPopupScreens: {
+        const screens = SettingsData.notificationFocusedMonitor ? Quickshell.screens : SettingsData.getFilteredScreens("notifications");
+        if (!SettingsData.dankIslandEnabled)
+            return screens;
+        return screens.filter(screen => !SettingsData.dankIslandHandlesNotifications(screen));
+    }
 
     Component.onCompleted: {
         DC.Style.theme = Theme;
@@ -25,6 +33,12 @@ ShellRoot {
 
     ShellCore {
         id: core
+    }
+
+    Variants {
+        model: root.notificationPopupScreens
+
+        delegate: NotificationPopupManager {}
     }
 
     // Notifications and their center must share this process: the panel owns
@@ -107,6 +121,11 @@ ShellRoot {
                 request.barConfig && typeof request.barConfig === "object" ? request.barConfig : fallback?.config ?? null
             );
             return success ? "NOTIFICATION_CENTER_OPENED" : "NOTIFICATION_CENTER_FAILED";
+        }
+
+        function testNotifications(): string {
+            NotificationService.sendTestNotifications();
+            return "NOTIFICATION_TEST_STARTED";
         }
     }
 }

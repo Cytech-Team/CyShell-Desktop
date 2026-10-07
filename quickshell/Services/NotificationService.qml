@@ -18,6 +18,11 @@ Singleton {
     readonly property list<NotifWrapper> popups: allWrappers.filter(n => n && n.popup)
 
     property var seenNotifications: []
+    readonly property bool ownsNotificationServer: {
+        const role = Quickshell.env("CYSHELL_UI_ROLE") || "";
+        return role === "" || role === "panel" || (role === "shell" && Quickshell.env("CYSHELL_EXTERNAL_PANEL") !== "1");
+    }
+    property var notificationServerInstance: null
     readonly property int unreadCount: {
         const seen = root.seenNotifications;
         if (seen.length === 0)
@@ -71,6 +76,8 @@ Singleton {
         _recomputeGroups();
         Quickshell.execDetached(["mkdir", "-p", Paths.strip(Paths.cache)]);
         Quickshell.execDetached(["mkdir", "-p", imageCacheDir]);
+        if (root.ownsNotificationServer)
+            root.notificationServerInstance = notificationServerComponent.createObject(root);
     }
 
     FileView {
@@ -650,113 +657,113 @@ Singleton {
     property var expandedMessages: ({})
     property bool popupsDisabled: false
 
-    NotificationServer {
-        id: server
+    Component {
+        id: notificationServerComponent
 
-        keepOnReload: false
-        actionsSupported: true
-        actionIconsSupported: true
-        bodyHyperlinksSupported: true
-        bodyImagesSupported: true
-        bodyMarkupSupported: true
-        imageSupported: true
-        inlineReplySupported: true
-        persistenceSupported: true
+        NotificationServer {
+            id: server
 
-        onNotification: notif => {
-            notif.tracked = true;
+            keepOnReload: false
+            actionsSupported: true
+            actionIconsSupported: true
+            bodyHyperlinksSupported: true
+            bodyImagesSupported: true
+            bodyMarkupSupported: true
+            imageSupported: true
+            inlineReplySupported: true
+            persistenceSupported: true
 
-            const policy = _evaluateNotificationPolicy(notif);
-            if (policy.drop) {
-                try {
-                    notif.dismiss();
-                } catch (e) {}
-                return;
-            }
-
-            if (SettingsData.notificationDedupeEnabled) {
-                const dedupKey = _notificationDedupKey(notif);
-                const duplicate = _findActiveDuplicate(notif);
-                if (duplicate || _hasRecentDuplicate(dedupKey)) {
-                    if (duplicate) {
-                        if (duplicate.timer && duplicate.timer.running)
-                            duplicate.timer.restart();
-                        root.notificationDeduplicated(duplicate);
-                    }
-                    try {
-                        notif.dismiss();
-                    } catch (e) {}
-                    return;
-                }
-            }
-
-            if (!_ingressAllowed(policy.urgency)) {
-                if (policy.urgency !== NotificationUrgency.Critical) {
-                    try {
-                        notif.dismiss();
-                    } catch (e) {}
-                    return;
-                }
-            }
-
-            // Honor the freedesktop "suppress-sound" hint: the sender
-            // plays its own audio for this notification and asks the
-            // server not to double up. "sound-name" is the opposite — an
-            // explicit request for audio — so it plays even when the
-            // global new-notification sound is off.
-            const soundHints = notif.hints || {};
-            const suppressSound = !!soundHints["suppress-sound"];
-            const requestsSound = !!soundHints["sound-name"];
-            const dndBlocked = SessionData.doNotDisturb && !_allowedInDnd(policy.urgency, policy.bypassDnd);
-            if (!dndBlocked && SettingsData.soundsEnabled && (SettingsData.soundNewNotification || requestsSound) && !suppressSound) {
-                if (policy.urgency === NotificationUrgency.Critical) {
-                    AudioService.playCriticalNotificationSound();
-                } else {
-                    AudioService.playNormalNotificationSound();
-                }
-            }
-
-            const shouldShowPopup = !root.popupsDisabled && !dndBlocked && !policy.disablePopup;
-            const isTransient = notif.transient;
-            const shouldKeepInCenter = !isTransient && !policy.hideFromCenter;
-
-            if (!shouldShowPopup && !shouldKeepInCenter) {
-                try {
-                    notif.dismiss();
-                } catch (e) {}
-                return;
-            }
-
-            const wrapper = notifComponent.createObject(root, {
-                "popup": shouldShowPopup,
-                "notification": notif,
-                "urgencyOverride": policy.urgency,
-                "bypassDnd": policy.bypassDnd
-            });
-
-            if (wrapper) {
-                if (SettingsData.notificationDedupeEnabled)
-                    _recordDedupKey(_notificationDedupKey(notif));
-
-                root.allWrappers.push(wrapper);
-                if (shouldKeepInCenter) {
-                    root.notifications.push(wrapper);
-                    if (_shouldSaveToHistory(wrapper.urgency, policy.disableHistory)) {
-                        root.addToHistory(wrapper);
-                    }
-                }
-                Qt.callLater(() => {
-                    _initWrapperPersistence(wrapper);
-                });
-
-                if (shouldShowPopup) {
-                    _enqueuePopup(wrapper);
-                    processQueue();
-                }
-            }
-
-            _recomputeGroupsLater();
+            onNotification: notif => root._handleNotification(notif)
         }
+    }
+
+    function _handleNotification(notif) {
+        notif.tracked = true;
+
+        const policy = root._evaluateNotificationPolicy(notif);
+        if (policy.drop) {
+            try {
+                notif.dismiss();
+            } catch (e) {}
+            return;
+        }
+
+        if (SettingsData.notificationDedupeEnabled) {
+            const dedupKey = root._notificationDedupKey(notif);
+            const duplicate = root._findActiveDuplicate(notif);
+            if (duplicate || root._hasRecentDuplicate(dedupKey)) {
+                if (duplicate) {
+                    if (duplicate.timer && duplicate.timer.running)
+                        duplicate.timer.restart();
+                    root.notificationDeduplicated(duplicate);
+                }
+                try {
+                    notif.dismiss();
+                } catch (e) {}
+                return;
+            }
+        }
+
+        if (!root._ingressAllowed(policy.urgency) && policy.urgency !== NotificationUrgency.Critical) {
+            try {
+                notif.dismiss();
+            } catch (e) {}
+            return;
+        }
+
+        // Honor the freedesktop "suppress-sound" hint: the sender
+        // plays its own audio for this notification and asks the
+        // server not to double up. "sound-name" is the opposite — an
+        // explicit request for audio — so it plays even when the
+        // global new-notification sound is off.
+        const soundHints = notif.hints || {};
+        const suppressSound = !!soundHints["suppress-sound"];
+        const requestsSound = !!soundHints["sound-name"];
+        const dndBlocked = SessionData.doNotDisturb && !root._allowedInDnd(policy.urgency, policy.bypassDnd);
+        if (!dndBlocked && SettingsData.soundsEnabled && (SettingsData.soundNewNotification || requestsSound) && !suppressSound) {
+            if (policy.urgency === NotificationUrgency.Critical)
+                AudioService.playCriticalNotificationSound();
+            else
+                AudioService.playNormalNotificationSound();
+        }
+
+        const shouldShowPopup = !root.popupsDisabled && !dndBlocked && !policy.disablePopup;
+        const isTransient = notif.transient;
+        const shouldKeepInCenter = !isTransient && !policy.hideFromCenter;
+
+        if (!shouldShowPopup && !shouldKeepInCenter) {
+            try {
+                notif.dismiss();
+            } catch (e) {}
+            return;
+        }
+
+        const wrapper = notifComponent.createObject(root, {
+            "popup": shouldShowPopup,
+            "notification": notif,
+            "urgencyOverride": policy.urgency,
+            "bypassDnd": policy.bypassDnd
+        });
+
+        if (wrapper) {
+            if (SettingsData.notificationDedupeEnabled)
+                root._recordDedupKey(root._notificationDedupKey(notif));
+
+            root.allWrappers.push(wrapper);
+            if (shouldKeepInCenter) {
+                root.notifications.push(wrapper);
+                if (root._shouldSaveToHistory(wrapper.urgency, policy.disableHistory))
+                    root.addToHistory(wrapper);
+            }
+            Qt.callLater(() => root._initWrapperPersistence(wrapper));
+
+            if (shouldShowPopup) {
+                root._enqueuePopup(wrapper);
+                root.processQueue();
+            }
+        }
+
+        root._recomputeGroupsLater();
     }
 
     function isFocusedScreen(screen) {
@@ -1031,6 +1038,11 @@ Singleton {
     }
 
     function sendTestNotifications() {
+        if (!root.ownsNotificationServer) {
+            Quickshell.execDetached(["cyshell", "ipc", "call", "panel", "testNotifications"]);
+            return;
+        }
+
         // Position changes can happen faster than the popup exit animation.
         // Debounce the preview so an older 3-notification sequence can never
         // reappear at the previous position and pile up with the new one.

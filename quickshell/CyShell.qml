@@ -456,7 +456,10 @@ Item {
     }
 
     Variants {
-        model: root.notificationPopupScreens
+        // The panel process owns NotificationService when surfaces are
+        // isolated. Keep the popup windows beside that service so they
+        // receive the exact wrappers that drive the unread badge.
+        model: Quickshell.env("CYSHELL_EXTERNAL_PANEL") === "1" ? [] : root.notificationPopupScreens
 
         delegate: NotificationPopupManager {}
     }
