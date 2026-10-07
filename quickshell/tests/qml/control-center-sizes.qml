@@ -190,7 +190,7 @@ ShellRoot {
                 ];
                 const grid = gridComponent.createObject(scene);
                 check(grid.maximumRows === 12 && grid.slotLayout.slots[0].rows === 12, "list height is independent of panel columns");
-                check(grid.slotLayout.slots[0].cols === 8, "wide saved tiles fit the current panel");
+                check(grid.slotLayout.slots[0].cols === grid.columns, "wide saved tiles clamp to the current panel");
                 check(island.controlCenterColumnCap === 20, "Island columns use available screen width");
                 island.setDestinationContentHeight("controlcenter", CcMetrics.fallbackScreenHeight);
                 check(island.controlCenterHeight === CcMetrics.fallbackScreenHeight, "Island allows taller lists within its screen height");

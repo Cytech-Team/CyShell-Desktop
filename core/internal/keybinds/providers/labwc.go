@@ -526,7 +526,7 @@ func removeManagedLabwcBlock(content string) (string, error) {
 	lineStart := strings.LastIndex(content[:start], "\n") + 1
 	endRel := strings.Index(content[start:], labwcManagedEnd)
 	if endRel < 0 {
-		return "", errors.New("Labwc config has a CyShell begin marker without an end marker")
+		return "", errors.New("labwc config has a CyShell begin marker without an end marker")
 	}
 	end := start + endRel + len(labwcManagedEnd)
 	return content[:lineStart] + content[end:], nil
@@ -709,7 +709,7 @@ func replaceManagedLabwcBlock(content, block string) (string, error) {
 		lineStart := strings.LastIndex(content[:start], "\n") + 1
 		endRel := strings.Index(content[start:], labwcManagedEnd)
 		if endRel < 0 {
-			return "", errors.New("Labwc config has a CyShell begin marker without an end marker")
+			return "", errors.New("labwc config has a CyShell begin marker without an end marker")
 		}
 		end := start + endRel + len(labwcManagedEnd)
 		return content[:lineStart] + block + content[end:], nil
@@ -725,7 +725,7 @@ func replaceManagedLabwcBlock(content, block string) (string, error) {
 	}
 	rootEnd := strings.LastIndex(lower, "</labwc_config>")
 	if rootEnd < 0 {
-		return "", errors.New("Labwc config is missing </labwc_config>")
+		return "", errors.New("labwc config is missing </labwc_config>")
 	}
 	prefix := content[:rootEnd]
 	if !strings.HasSuffix(prefix, "\n") {

@@ -5,8 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
-	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -354,14 +352,3 @@ func (a *Assistant) ListModels(ctx context.Context) ([]string, error) {
 	return a.listModelsLocked(ctx)
 }
 
-func readLimitedBody(resp *http.Response) ([]byte, error) {
-	if resp == nil || resp.Body == nil {
-		return nil, errors.New("empty provider response")
-	}
-	return ioReadAllLimit(resp.Body, assistantMaxResponse)
-}
-
-// Isolated for small tests and to keep all provider response limits identical.
-var ioReadAllLimit = func(r interface{ Read([]byte) (int, error) }, limit int64) ([]byte, error) {
-	return io.ReadAll(io.LimitReader(r, limit))
-}

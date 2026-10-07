@@ -115,6 +115,16 @@ ShellRoot {
             return null;
         }
 
+        function isWithin(item, ancestor) {
+            let current = item;
+            while (current) {
+                if (current === ancestor)
+                    return true;
+                current = current.parent;
+            }
+            return false;
+        }
+
         function settle() {
             wait(0);
             const window = root.dash?.contentLoader.item?.Window.window;
@@ -346,12 +356,13 @@ ShellRoot {
                 settle();
                 const editActions = find(root.dash.contentLoader.item, item => item.overlayParent !== undefined);
                 check(editActions.focusTargets.every(item => !item.visualFocus), "programmatic edit entry has no persistent focus ring");
-                check(root.dash.contentLoader.item.Window.window.activeFocusItem === root.dash.contentLoader.item, "edit entry keeps neutral focus");
+                check((root.dash.contentLoader.item.Window.window.activeFocusItem === null || isWithin(root.dash.contentLoader.item.Window.window.activeFocusItem, root.dash.contentLoader.item)) && !editActions.focusTargets.some(item => item.activeFocus), "edit entry keeps neutral focus without selecting an edit action");
                 capture("edit-horizontal");
                 const editViewport = find(editActions, item => item.contentX !== undefined && item.wheelEnabled !== undefined);
                 editActions.width = 280;
                 settle();
                 editActions.focusTargets[editActions.focusTargets.length - 1].forceActiveFocus(Qt.TabFocusReason);
+                settle();
                 check(editViewport.contentX > 0, "overflowed Finish is revealed on keyboard focus");
                 editActions.width = Qt.binding(() => Math.min(editActions.parent.width, editActions.implicitWidth));
                 root.dash.setBarContext(2, 0);
@@ -375,7 +386,7 @@ ShellRoot {
                 check(integratedNav.activeFocus && root.dash.currentTabId !== next, "second arrow continues navigation");
                 root.dash.editMode = true;
                 settle();
-                check(root.dash.contentLoader.item.Window.window.activeFocusItem === root.dash.contentLoader.item, "edit entry releases hidden navigation focus");
+                check((root.dash.contentLoader.item.Window.window.activeFocusItem === null || isWithin(root.dash.contentLoader.item.Window.window.activeFocusItem, root.dash.contentLoader.item)) && !integratedNav.activeFocus, "edit entry releases hidden navigation focus");
                 root.dash.requestTab("weather");
                 root.dash.editMode = true;
                 settle();

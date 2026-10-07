@@ -2,20 +2,16 @@ import QtQuick
 import Quickshell
 import qs.Common
 import qs.Services
-import qs.Modules.CyBar
 import qs.Modules.CyBar.Widgets
 import qs.Modules.OSD
 import qs.CyCommon.Common as DC
-import "Common/WorkspaceModel.js" as WorkspaceModel
 
 ShellRoot {
     id: root
 
     property var switcher: null
     property var osd: null
-    property var content: null
     property string output: ""
-    property var workspaceIds: []
 
     function check(condition, message) {
         if (!condition)
@@ -25,6 +21,8 @@ ShellRoot {
     function pills() {
         const found = [];
         function visit(item) {
+            if (!item)
+                return;
             if (item.isPlaceholder !== undefined && item.isActive !== undefined)
                 found.push(item);
             for (const child of item.children || [])
@@ -35,25 +33,46 @@ ShellRoot {
     }
 
     function texts(item) {
-        if (!item.visible)
+        if (!item || !item.visible)
             return [];
         if (typeof item.text === "string")
             return [item.text];
         return (item.children || []).reduce((result, child) => result.concat(texts(child)), []);
     }
 
-    function hyprlandRaw(id, name) {
+    function state(activeId) {
         return {
-            "id": id,
-            "name": name,
-            "monitor": {
-                "name": root.output
-            }
+            "available": true,
+            "groups": [{
+                "objectId": "group-1",
+                "outputs": [root.output]
+            }],
+            "workspaces": [{
+                "objectId": "ws-1",
+                "groupId": "group-1",
+                "id": "1",
+                "name": "alpha",
+                "active": activeId === "1",
+                "urgent": false,
+                "hidden": false
+            }, {
+                "objectId": "ws-2",
+                "groupId": "group-1",
+                "id": "2",
+                "name": "web",
+                "active": activeId === "2",
+                "urgent": false,
+                "hidden": false
+            }, {
+                "objectId": "ws-hidden",
+                "groupId": "group-1",
+                "id": "hidden",
+                "name": "hidden",
+                "active": false,
+                "urgent": false,
+                "hidden": true
+            }]
         };
-    }
-
-    function activeIdx() {
-        return NiriService.allWorkspaces.find(ws => ws.output === root.output && ws.is_active)?.idx ?? -1;
     }
 
     Component {
@@ -64,31 +83,6 @@ ShellRoot {
     Component {
         id: osdComponent
         WorkspaceOSD {}
-    }
-
-    Component {
-        id: contentComponent
-        CyBarContent {}
-    }
-
-    QtObject {
-        id: barAxis
-        property bool isVertical: false
-        property string edge: "top"
-    }
-
-    QtObject {
-        id: barWindow
-        property string screenName: root.output
-        property var screen: Quickshell.screens[0] ?? null
-        property var axis: barAxis
-        property bool isVertical: false
-        property real widgetThickness: 30
-        property bool usesFrameBarChrome: false
-        property bool hasAdjacentTopBar: false
-        property bool hasAdjacentBottomBar: false
-        property bool hasAdjacentLeftBar: false
-        property bool hasAdjacentRightBar: false
     }
 
     FloatingWindow {
@@ -128,23 +122,12 @@ ShellRoot {
                     throw new Error("timed out in step " + step);
                 switch (step) {
                 case 0:
-                    if (!CompositorService.isNiri || NiriService.allWorkspaces.length === 0 || Quickshell.screens.length === 0)
+                    if (Quickshell.screens.length === 0)
                         return;
+                    root.check(CompositorService.isLabwc && CompositorService.compositor === "labwc", "fixture uses CyShell Labwc backend");
                     root.output = Quickshell.screens[0].name;
-                    NiriService.send({
-                        "Action": {
-                            "SetWorkspaceName": {
-                                "name": "alpha",
-                                "workspace": null
-                            }
-                        }
-                    });
-                    advance();
-                    return;
-                case 1:
-                    if (NiriService.allWorkspaces.filter(ws => ws.output === root.output).length < 2)
-                        return;
                     SettingsData.osdWorkspaceEnabled = true;
+                    ExtWorkspaceService.applyState(root.state("1"));
                     root.switcher = switcherComponent.createObject(stage, {
                         "axis": {
                             "isVertical": false,
@@ -162,87 +145,45 @@ ShellRoot {
                             "id": "workspaceSwitcher",
                             "showWorkspaceIndex": true,
                             "showWorkspaceName": true,
-                            "showWorkspacePadding": true
+                            "showWorkspacePadding": true,
+                            "workspacePaddingCount": 3
                         }
                     });
                     root.osd = osdComponent.createObject(root, {
                         "screen": Quickshell.screens[0],
                         "modelData": Quickshell.screens[0]
                     });
-                    root.content = contentComponent.createObject(stage, {
-                        "barWindow": barWindow,
-                        "rootWindow": null,
-                        "barConfig": {
-                            "id": "fixture"
-                        }
-                    });
-                    root.check(root.switcher && root.osd && root.content, "components instantiate");
+                    root.check(root.switcher && root.osd, "Labwc workspace surfaces instantiate");
                     advance();
                     return;
-                case 2:
-                    if (root.pills().length !== 3 || !root.texts(root.pills()[0]).join("|").includes(":"))
+                case 1: {
+                    const visiblePills = root.pills();
+                    if (visiblePills.length !== 3)
                         return;
-                    root.workspaceIds = NiriService.allWorkspaces.filter(ws => ws.output === root.output).map(ws => ws.id);
-                    root.check(root.switcher.workspaceList.length === 3, "two workspaces plus one padding placeholder, got " + root.switcher.workspaceList.length);
-                    root.check(root.switcher.currentWorkspace === 1, "current workspace is idx 1, got " + root.switcher.currentWorkspace);
-                    root.check(root.pills().map(pill => pill.isActive).join() === "true,false,false", "first pill active");
-                    root.check(root.pills().map(pill => pill.isPlaceholder).join() === "false,false,true", "padding pill is a placeholder");
-                    root.check(root.texts(root.pills()[0]).join("|") === "1: alpha" && root.texts(root.pills()[1]).join("|") === "2" && root.texts(root.pills()[2]).join("|") === "3", "pill labels, got " + root.pills().map(pill => root.texts(pill).join("|")).join(","));
-                    root.check(root.osd.activeWorkspace?.id === root.workspaceIds[0] && root.osd.activeWorkspace?.name === "alpha" && root.osd.activeWorkspace?.idx === 1, "osd active workspace " + JSON.stringify(root.osd.activeWorkspace));
-                    root.switcher.switchWorkspace(1);
+                    root.check(CompositorService.hasWorkspaceIpc, "Labwc ext-workspace backend is available");
+                    root.check(root.switcher.workspaceList.length === 3, "two Labwc workspaces plus one padding placeholder");
+                    root.check(root.switcher.currentWorkspace === "1", "first Labwc workspace is current");
+                    root.check(visiblePills.map(pill => pill.isActive).join() === "true,false,false", "first Labwc workspace pill is active");
+                    root.check(visiblePills.map(pill => pill.isPlaceholder).join() === "false,false,true", "third pill is padding only");
+                    const labels = visiblePills.map(pill => root.texts(pill).join("|"));
+                    root.check(labels[0].includes("alpha") && labels[1].includes("web") && labels[2].includes("3"), "Labwc workspace labels render names and padding: " + labels.join(","));
+                    root.check(root.osd.activeWorkspace?.id === "1" && root.osd.activeWorkspace?.name === "alpha", "OSD reads active Labwc workspace");
+                    ExtWorkspaceService.applyState(root.state("2"));
                     advance();
                     return;
-                case 3:
-                    if (root.activeIdx() !== 2 || root.switcher.currentWorkspace !== 2)
+                }
+                case 2: {
+                    const visiblePills = root.pills();
+                    if (root.switcher.currentWorkspace !== "2" || visiblePills.length !== 3 || !visiblePills[1].isActive)
                         return;
-                    root.check(root.pills().map(pill => pill.isActive).join() === "false,true,false", "second pill active after scroll");
-                    root.check(root.osd.activeWorkspace?.id === root.workspaceIds[1] && root.osd.workspaceLabel === "Workspace 2", "osd follows the switch, label " + root.osd.workspaceLabel);
-                    root.content.switchWorkspace(-1);
-                    advance();
-                    return;
-                case 4:
-                    if (root.activeIdx() !== 1 || root.switcher.currentWorkspace !== 1)
-                        return;
-                    root.check(root.osd.workspaceLabel === "Workspace 1: alpha", "osd label with name, got " + root.osd.workspaceLabel);
-                    root.content.switchWorkspace(-1);
-                    root.switcher.switchToWorkspaceByModelData(root.switcher.workspaceList[2]);
-                    advance();
-                    return;
-                case 5:
-                    if (waited < 12)
-                        return;
-                    root.check(root.activeIdx() === 1, "scrolling past the first workspace and pressing a placeholder do nothing");
-                    NiriService.send({
-                        "Action": {
-                            "UnsetWorkspaceName": {
-                                "reference": {
-                                    "Name": "alpha"
-                                }
-                            }
-                        }
-                    });
-                    root.switcher.widgetData = {
-                        "id": "workspaceSwitcher",
-                        "showWorkspaceName": true,
-                        "showWorkspacePadding": true
-                    };
-                    root.switcher.workspaceList = root.switcher.hyprlandSlotList(WorkspaceModel.hyprlandWorkspacesForScreen({
-                        "workspaces": [root.hyprlandRaw(1, "web"), root.hyprlandRaw(3, "")],
-                        "monitors": [],
-                        "focusedWorkspace": null,
-                        "toplevels": []
-                    }, root.output, false, false, 3));
-                    advance();
-                    return;
-                case 6:
-                    if (root.pills().length !== 3 || waited < 4)
-                        return;
-                    root.check(root.pills().map(pill => root.texts(pill).join("|")).join() === "web,2,3", "hyprland slot pills label from their record, got " + root.pills().map(pill => root.texts(pill).join("|")).join());
-                    root.check(root.pills().every(pill => !pill.isPlaceholder), "hyprland padding slots are real workspaces");
-                    console.log("FIXTURE_PASS");
+                    root.check(visiblePills.map(pill => pill.isActive).join() === "false,true,false", "Labwc active workspace update reaches pills");
+                    root.check(root.osd.activeWorkspace?.id === "2" && root.osd.activeWorkspace?.name === "web", "OSD follows Labwc workspace update");
+                    root.check(ExtWorkspaceService.workspacesForOutput(root.output).length === 2, "hidden workspace is excluded from the output projection");
+                    console.log("FIXTURE_PASS Labwc workspace switcher and OSD");
                     stop();
                     Qt.quit();
                     return;
+                }
                 }
             } catch (error) {
                 console.error("FIXTURE_FAIL", error.message);

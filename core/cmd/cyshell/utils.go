@@ -2,7 +2,6 @@ package main
 
 import (
 	"os"
-	"os/exec"
 	"runtime"
 	"strings"
 )
@@ -30,8 +29,3 @@ func isReadOnlyCommand(args []string) bool {
 	return false
 }
 
-func isArchPackageInstalled(packageName string) bool {
-	cmd := exec.Command("pacman", "-Q", packageName)
-	err := cmd.Run()
-	return err == nil
-}

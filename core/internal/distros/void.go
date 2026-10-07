@@ -139,14 +139,6 @@ func (v *VoidDistribution) packageInstalled(pkg string) bool {
 	return exec.Command("xbps-query", pkg).Run() == nil
 }
 
-func (v *VoidDistribution) packageVersion(pkg string) string {
-	output, err := exec.Command("xbps-query", "-p", "pkgver", pkg).Output()
-	if err != nil {
-		return ""
-	}
-	return strings.TrimSpace(string(output))
-}
-
 func (v *VoidDistribution) GetPackageMapping(wm deps.WindowManager) map[string]PackageMapping {
 	return v.GetPackageMappingWithVariants(wm, make(map[string]deps.PackageVariant))
 }

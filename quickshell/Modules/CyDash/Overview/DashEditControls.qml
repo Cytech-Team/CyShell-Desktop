@@ -31,8 +31,7 @@ Item {
     onWidthChanged: revealFocusedItem()
     onHeightChanged: revealFocusedItem()
 
-    function revealFocusedItem() {
-        const target = focusedItem;
+    function revealItem(target) {
         if (!target || !focusTargets.includes(target))
             return;
         const point = target.mapToItem(viewport.contentItem, 0, 0);
@@ -41,6 +40,10 @@ Item {
             return;
         }
         viewport.contentX = Math.max(0, Math.min(point.x, Math.max(viewport.contentX, point.x + target.width - viewport.width)));
+    }
+
+    function revealFocusedItem() {
+        revealItem(focusedItem);
     }
 
     function cancelConfirmation() {
@@ -55,10 +58,22 @@ Item {
     onVisibleChanged: cancelConfirmation()
 
     component EditButton: CyButton {
+        id: editButton
+
         property string label: ""
         text: root.vertical ? "" : label
         tooltipText: root.vertical ? label : null
         buttonHeight: Theme.buttonHeightS
+
+        onFocusChanged: {
+            if (focus)
+                Qt.callLater(() => root.revealItem(editButton));
+        }
+
+        onActiveFocusChanged: {
+            if (activeFocus)
+                Qt.callLater(() => root.revealItem(editButton));
+        }
     }
 
     component ConfirmButton: EditButton {

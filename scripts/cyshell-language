@@ -70,7 +70,7 @@ switch_group() {
 }
 
 set_layout() {
-  local target="$1" current value i
+  local target="$1" current value
   current="$(actual_layout)"
   if [[ "$current" == "$target" ]]; then
     printf '%s\n' "$current"

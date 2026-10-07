@@ -73,6 +73,8 @@ ShellRoot {
             }
             SettingsData.fontWeight = Font.Normal;
 
+            const previousFontFamily = SettingsData.fontFamily;
+            SettingsData.fontFamily = Theme.defaultFontFamily;
             const widths = [Font.Light, Font.Normal, Font.Medium, Font.Bold].map(weight => probeWidth(weight));
             console.log("WIDTHS " + JSON.stringify(widths));
             check(widths.every((width, index) => index === 0 || width > widths[index - 1]), "bundled sans renders each weight heavier than the last");
@@ -93,6 +95,7 @@ ShellRoot {
             check(display.fontInfo.family === DC.Fonts.notable && display.font.weight === Font.Normal, `a bundled family token resolves to that face, got ${display.fontInfo.family}`);
             display.destroy();
             SettingsData.fontWeight = Font.Normal;
+            SettingsData.fontFamily = previousFontFamily;
 
             root.finish();
             Qt.quit();

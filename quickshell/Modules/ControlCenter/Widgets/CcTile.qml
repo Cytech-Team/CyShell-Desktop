@@ -220,7 +220,7 @@ Item {
                 x: root.stacked && root.narrow ? (parent.width - width) / 2 : root.LayoutMirroring.enabled ? parent.width - width : 0
                 y: root.windowsQuickTile ? 0 : (root.stacked ? Math.max(0, (parent.height - height - Theme.spacingS - root.labelHeight) / 2) : root.expanded ? 0 : (parent.height - height) / 2)
                 width: root.windowsQuickTile ? parent.width : root.iconExtent
-                height: root.windowsQuickTile ? 72 : width
+                height: root.windowsQuickTile ? Math.max(0, Math.min(72, parent.height - Theme.spacingS - titleLabel.implicitHeight)) : width
                 radius: root.windowsQuickTile ? Theme.cornerRadiusL : (root.hasIconBox ? root.iconBoxRadius : 0)
                 color: root.windowsQuickTile ? (root.active ? CcMetrics.tileActiveColor : CcMetrics.tileInactiveColor) : (root.hasIconBox ? root.iconBoxColor : "transparent")
                 border.width: (root.windowsQuickTile || root.hasIconBox) && !root.active ? Theme.layerOutlineWidth : 0
