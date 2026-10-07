@@ -92,6 +92,9 @@ func TestPermissionScopesBlockOnlyTheirDomain(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	if err := manager.SetApprovalMode("auto"); err != nil {
+		t.Fatal(err)
+	}
 	gate := runtimeGate{manager: manager}
 	args := json.RawMessage(`{"reason":"permission scope test"}`)
 	if err := manager.setAppPolicyWithoutCancel("app:focused", "Focused application", "app.read", "allow"); err != nil {
@@ -116,6 +119,9 @@ func TestScreenshotPermissionIsArgumentAware(t *testing.T) {
 	t.Setenv("XDG_STATE_HOME", t.TempDir())
 	manager, err := NewManager()
 	if err != nil {
+		t.Fatal(err)
+	}
+	if err := manager.SetApprovalMode("auto"); err != nil {
 		t.Fatal(err)
 	}
 	if err := manager.SetPermission("screen.capture", false); err != nil {

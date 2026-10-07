@@ -206,6 +206,7 @@ func TestManager_MonitorDevice(t *testing.T) {
 		ledState := evdev.StateMap{ledCapslockKey: true}
 
 		mockDevice.EXPECT().ReadOne().Return(capsLockEvent, nil).Once()
+		mockDevice.EXPECT().Path().Return("/dev/input/event-test").Once()
 		mockDevice.EXPECT().State(evdev.EvType(evLedType)).Return(ledState, nil).Once()
 		mockDevice.EXPECT().ReadOne().Return(nil, errors.New("stop")).Maybe()
 		mockDevice.EXPECT().Close().Return(nil).Maybe()

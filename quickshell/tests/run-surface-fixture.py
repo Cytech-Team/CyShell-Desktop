@@ -89,7 +89,10 @@ with tempfile.TemporaryDirectory(prefix="dms-surface-test-") as temporary:
     env.update(HOME=str(root / "home"), XDG_DATA_DIRS=str(root / "share"), XDG_CONFIG_DIRS=str(root / "xdg"), QML_DISK_CACHE_PATH=str(root / "qmlcache"), LANG="C.UTF-8", LC_ALL="C.UTF-8", TZ="UTC")
     for name in ["runtime", "config", "cache", "state", "data"]:
         env["XDG_" + name.upper() + ("_DIR" if name == "runtime" else "_HOME")] = str(root / name)
-    env.update(QT_QPA_PLATFORM="wayland", QT_LOGGING_RULES="qml.debug=true", LIBGL_ALWAYS_SOFTWARE="1", DMS_DISABLE_HOT_RELOAD="1", CYSHELL_DISABLE_MATUGEN="1", DBUS_SESSION_BUS_ADDRESS="unix:path=" + str(root / "no-session-bus"), DBUS_SYSTEM_BUS_ADDRESS="unix:path=" + str(root / "no-system-bus"), PULSE_SERVER="unix:" + str(root / "no-pulse"), PIPEWIRE_REMOTE="no-pipewire")
+    # Niri is only the isolated Wayland host for fixture rendering. CyShell is
+    # Labwc-only, so identify the synthetic session as Labwc while the harness
+    # continues to use niri msg for deterministic layer/window inspection.
+    env.update(QT_QPA_PLATFORM="wayland", QT_LOGGING_RULES="qml.debug=true", LIBGL_ALWAYS_SOFTWARE="1", DMS_DISABLE_HOT_RELOAD="1", CYSHELL_DISABLE_MATUGEN="1", LABWC_PID="fixture", XDG_CURRENT_DESKTOP="labwc", DBUS_SESSION_BUS_ADDRESS="unix:path=" + str(root / "no-session-bus"), DBUS_SYSTEM_BUS_ADDRESS="unix:path=" + str(root / "no-system-bus"), PULSE_SERVER="unix:" + str(root / "no-pulse"), PIPEWIRE_REMOTE="no-pipewire")
     # glvnd loads the nvidia vendor first, which powers up a sleeping dGPU
     mesa_vendor = mesa_egl_vendor()
     if mesa_vendor:
