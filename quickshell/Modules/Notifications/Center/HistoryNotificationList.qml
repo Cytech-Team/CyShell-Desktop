@@ -16,6 +16,7 @@ Item {
     property int selectedIndex: -1
     property bool showKeyboardHints: false
     property bool nested: false
+    readonly property real preferredContentHeight: filterChips.height + Theme.spacingS + (historyListView.count > 0 ? Math.max(historyListView.contentHeight, historyListView.count * NotificationMetrics.estimatedCardHeight) : NotificationMetrics.emptyHeight)
 
     function getStartOfDay(date) {
         const d = new Date(date);

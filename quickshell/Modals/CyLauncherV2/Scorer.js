@@ -17,7 +17,8 @@ const Weights = {
         clipboard: 825,
         file: 800,
         action: 600
-    }
+    },
+    nameMatchPriority: 10000
 }
 
 function tokenize(text) {
@@ -44,34 +45,41 @@ function hasWordBoundaryMatch(text, query) {
     return false
 }
 
-function levenshteinDistance(s1, s2) {
+function levenshteinDistance(s1, s2, maxDistance) {
     var len1 = s1.length
     var len2 = s2.length
+    var outsideLimit = maxDistance + 1
+    if (Math.abs(len1 - len2) > maxDistance) return outsideLimit
+
     var prev = new Array(len2 + 1)
-    var curr = new Array(len2 + 1)
 
     for (var j = 0; j <= len2; j++)
-        prev[j] = j
+        prev[j] = j <= maxDistance ? j : outsideLimit
 
     for (var i = 1; i <= len1; i++) {
+        var curr = new Array(len2 + 1).fill(outsideLimit)
         curr[0] = i
-        for (var j = 1; j <= len2; j++) {
+        var rowMinimum = curr[0]
+        var start = Math.max(1, i - maxDistance)
+        var end = Math.min(len2, i + maxDistance)
+        for (var j = start; j <= end; j++) {
             var cost = s1[i - 1] === s2[j - 1] ? 0 : 1
             curr[j] = Math.min(prev[j] + 1, curr[j - 1] + 1, prev[j - 1] + cost)
+            rowMinimum = Math.min(rowMinimum, curr[j])
         }
-        var tmp = prev
+        if (rowMinimum > maxDistance) return outsideLimit
         prev = curr
-        curr = tmp
     }
     return prev[len2]
 }
 
 function fuzzyScore(text, query) {
-    var maxDistance = query.length === 3 ? 1 : query.length <= 6 ? 2 : 3
+    if (query.length < 4) return 0
+    var maxDistance = Math.min(2, Math.max(1, Math.floor(query.length * 0.2)))
     var bestScore = 0
 
     if (Math.abs(text.length - query.length) <= maxDistance) {
-        var distance = levenshteinDistance(text, query)
+        var distance = levenshteinDistance(text, query, maxDistance)
         if (distance <= maxDistance) {
             var maxLen = Math.max(text.length, query.length)
             bestScore = 1 - (distance / maxLen)
@@ -81,7 +89,7 @@ function fuzzyScore(text, query) {
     var words = tokenize(text)
     for (var i = 0; i < words.length && bestScore < 0.8; i++) {
         if (Math.abs(words[i].length - query.length) > maxDistance) continue
-        var wordDistance = levenshteinDistance(words[i], query)
+        var wordDistance = levenshteinDistance(words[i], query, maxDistance)
         if (wordDistance <= maxDistance) {
             var wordMaxLen = Math.max(words[i].length, query.length)
             var score = 1 - (wordDistance / wordMaxLen)
@@ -92,13 +100,13 @@ function fuzzyScore(text, query) {
     return bestScore
 }
 
-function calculateTextScore(name, query) {
+function calculateTextScore(name, query, allowFuzzy) {
     if (name === query) return Weights.exactMatch
     if (name.startsWith(query)) return Weights.prefixMatch
     if (hasWordBoundaryMatch(name, query)) return Weights.wordBoundary
     if (name.includes(query)) return Weights.substring
 
-    if (query.length >= 3) {
+    if (allowFuzzy && query.length >= 4) {
         var fs = fuzzyScore(name, query)
         if (fs > 0) return fs * Weights.fuzzy
     }
@@ -117,16 +125,17 @@ function score(item, query, frecencyData) {
     var name = (item.name || "").toLowerCase()
     var q = query.toLowerCase()
 
-    var textScore = calculateTextScore(name, q)
+    var textScore = calculateTextScore(name, q, true)
+    var nameMatchPriority = textScore > 0 ? Weights.nameMatchPriority : 0
 
     if (textScore === 0 && item.subtitle) {
-        var subtitleScore = calculateTextScore(item.subtitle.toLowerCase(), q)
+        var subtitleScore = calculateTextScore(item.subtitle.toLowerCase(), q, false)
         textScore = subtitleScore * 0.5
     }
 
     if (textScore === 0 && item.keywords) {
         for (var i = 0; i < item.keywords.length; i++) {
-            var keywordScore = calculateTextScore(item.keywords[i].toLowerCase(), q)
+            var keywordScore = calculateTextScore(item.keywords[i].toLowerCase(), q, true)
             if (keywordScore > 0) {
                 textScore = keywordScore * 0.3
                 break
@@ -153,7 +162,7 @@ function score(item, query, frecencyData) {
 
     var usageBonus = frecencyData ? Math.min(frecencyData.usageCount * 50, Weights.frecency) : 0
 
-    return textScore + usageBonus + typeBonus
+    return nameMatchPriority + textScore + usageBonus + typeBonus
 }
 
 function scoreItems(items, query, getFrecencyFn) {
@@ -185,7 +194,7 @@ function scoreItems(items, query, getFrecencyFn) {
     return scored
 }
 
-function groupBySection(scoredItems, sectionOrder, sortAlphabetically, maxPerSection) {
+function groupBySection(scoredItems, sectionOrder, sortAlphabetically, maxPerSection, sortAllResultsAlphabetically) {
     var sections = {}
     var result = []
     var limit = maxPerSection || 50
@@ -218,9 +227,9 @@ function groupBySection(scoredItems, sectionOrder, sortAlphabetically, maxPerSec
     for (var i = 0; i < sectionOrder.length; i++) {
         var section = sections[sectionOrder[i].id]
         if (section && section.items.length > 0) {
-            if (sortAlphabetically && section.id === "apps") {
+            if ((sortAlphabetically && section.id === "apps") || sortAllResultsAlphabetically) {
                 section.items.sort(function (a, b) {
-                    return (a.name || "").localeCompare(b.name || "")
+                    return String(a.name || "").toLowerCase().localeCompare(String(b.name || "").toLowerCase())
                 })
             }
             result.push(section)

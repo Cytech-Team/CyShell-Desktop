@@ -148,19 +148,29 @@ CyContextMenu {
         return Array.isArray(actions) ? actions : [];
     }
 
-    function show(x, y, spotlightItem, fromKeyboard) {
-        if (!spotlightItem?.data)
-            return;
+    function prepareForInline(spotlightItem, requestedScreen) {
+        if (!spotlightItem?.data) {
+            item = null;
+            pinDockId = "";
+            return false;
+        }
         item = spotlightItem;
+        const modal = parentHandler?.parentModal ?? null;
+        const screenRef = requestedScreen ?? modal?.effectiveScreen ?? parentHandler?.Window?.window?.screen ?? searchField?.Window?.window?.screen ?? null;
+        pinDockId = SettingsData.dockConfigForAction(screenRef)?.id ?? "";
+        return true;
+    }
 
+    function show(x, y, spotlightItem, fromKeyboard) {
         const modal = parentHandler?.parentModal ?? null;
         const screenRef = modal?.effectiveScreen ?? parentHandler?.Window?.window?.screen ?? searchField?.Window?.window?.screen ?? null;
+        if (!prepareForInline(spotlightItem, screenRef))
+            return;
         const screenX = screenRef?.x || 0;
         const screenY = screenRef?.y || 0;
         const screenRelativeX = modal ? ((modal.alignedX ?? 0) + x) : ((parentHandler ? parentHandler.mapToGlobal(x, y).x : x) - screenX);
         const screenRelativeY = modal ? ((modal.alignedY ?? 0) + y) : ((parentHandler ? parentHandler.mapToGlobal(x, y).y : y) - screenY);
 
-        pinDockId = SettingsData.dockConfigForAction(screenRef)?.id ?? "";
         if (parentHandler)
             parentHandler.enabled = false;
         open(screenRef, screenRelativeX + Theme.spacingXS, screenRelativeY + Theme.spacingXS, fromKeyboard);

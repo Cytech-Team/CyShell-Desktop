@@ -1073,3 +1073,23 @@ func TestStoreEntry_CorruptDBReturnsErrorNotPanic(t *testing.T) {
 		})
 	}
 }
+
+func TestShouldCopyEntryAsFile(t *testing.T) {
+	tests := []struct {
+		name  string
+		entry *Entry
+		want  bool
+	}{
+		{name: "nil", entry: nil, want: false},
+		{name: "image bytes restore as image", entry: &Entry{MimeType: "image/png", IsImage: true}, want: false},
+		{name: "plain text stays text", entry: &Entry{MimeType: "text/plain;charset=utf-8"}, want: false},
+		{name: "uri list without alternate keeps file semantics", entry: &Entry{MimeType: "text/uri-list"}, want: true},
+		{name: "uri list with alternate restores stored offers", entry: &Entry{MimeType: "text/uri-list", AltMimeType: "text/plain"}, want: false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, shouldCopyEntryAsFile(tt.entry))
+		})
+	}
+}

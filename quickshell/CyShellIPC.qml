@@ -104,6 +104,7 @@ Item {
         const defaultSources = ({
             controlCenter: "controlCenter",
             notificationCenter: "notifications",
+            calendar: "calendar",
             battery: "battery",
             vpn: "vpn",
             systemUpdate: "systemUpdate",
@@ -2392,6 +2393,13 @@ Item {
                 "role": "surface",
                 "name": "Notification Center",
                 "visible": PopoutService.notificationCenterPopout?.shouldBeVisible === true,
+                "actions": ["open", "close", "toggle"]
+            },
+            {
+                "id": "surface:calendar",
+                "role": "surface",
+                "name": "Calendar",
+                "visible": PopoutService.calendarPopout?.shouldBeVisible === true,
                 "actions": ["open", "close", "toggle"]
             },
             {

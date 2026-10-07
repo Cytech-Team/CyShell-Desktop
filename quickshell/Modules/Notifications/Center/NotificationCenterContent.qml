@@ -15,12 +15,20 @@ Item {
     readonly property alias notificationHeader: notificationHeader
     readonly property int currentTab: notificationHeader.currentTab
     readonly property bool hostOwnsHeight: root.host.hostOwnsHeight ?? false
-    readonly property real desiredPanelHeight: Math.min(maxContentHeight, NotificationMetrics.centerMaxHeight + Theme.buttonHeightM * 2)
     readonly property real panelSpacing: Theme.spacingS
     readonly property real panelPadding: Theme.spacingM
-    readonly property real panelContentHeight: Math.max(0, desiredPanelHeight - Theme.spacingXS * 2 - panelSpacing)
-    readonly property real notificationPaneHeight: panelContentHeight * 0.32
-    readonly property real expandedCalendarHeight: panelContentHeight - notificationPaneHeight
+    readonly property real preferredListHeight: {
+        if (currentTab === 0) {
+            if (notificationList.count === 0)
+                return NotificationMetrics.emptyHeight;
+            const measured = notificationList.stableContentHeight;
+            return measured > 0 ? measured : notificationList.estimateContentHeight(notificationList.count);
+        }
+        return historyList.preferredContentHeight;
+    }
+    readonly property real desiredPanelHeight: root.hostOwnsHeight ? height : Math.min(maxContentHeight, NotificationMetrics.centerMaxHeight + Theme.buttonHeightM * 2, panelPadding * 2 + notificationHeader.implicitHeight + panelSpacing + preferredListHeight + Theme.spacingXS * 2)
+    readonly property real panelContentHeight: Math.max(0, desiredPanelHeight - Theme.spacingXS * 2)
+    readonly property real notificationPaneHeight: panelContentHeight
 
     LayoutMirroring.enabled: I18n.isRtl
     LayoutMirroring.childrenInherit: true
@@ -32,7 +40,7 @@ Item {
         return (root.host.screen?.height ?? 1080) * NotificationMetrics.screenHeightRatio;
     }
 
-    readonly property real targetImplicitHeight: root.hostOwnsHeight ? height : desiredPanelHeight - (calendarPanel.calendarExpanded ? 0 : expandedCalendarHeight - calendarPanel.collapsedHeight)
+    readonly property real targetImplicitHeight: root.hostOwnsHeight ? height : desiredPanelHeight
 
     implicitHeight: root.hostOwnsHeight ? height : targetImplicitHeight
 
@@ -102,7 +110,6 @@ Item {
 
                         objectName: "notificationHeader"
                         width: parent.width
-                        calendarLayout: true
                         transientSurfaceTracker: root.host.transientSurfaceTracker ?? null
                         onSettingsRequested: {
                             if (typeof root.host.requestSettings === "function")
@@ -148,15 +155,6 @@ Item {
                 }
             }
 
-            NotificationCalendar {
-                id: calendarPanel
-                width: parent.width
-                expandedHeight: root.expandedCalendarHeight
-                onFocusSessionStarted: {
-                    if (typeof root.host.close === "function")
-                        root.host.close();
-                }
-            }
         }
     }
 

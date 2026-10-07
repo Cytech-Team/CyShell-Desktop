@@ -25,7 +25,7 @@ PluginComponent {
         }
     }
 
-    pillClickAction: (x, y, width, section, screen) => popoutService?.toggleNotificationCenter(x, y, width, section, screen)
+    pillClickAction: (x, y, width, section, screen) => popoutService?.toggleCalendar(x, y, width, section, screen)
 
     horizontalBarPill: Component {
         Column {

@@ -470,7 +470,7 @@ Item {
     })
     onModelOptionsChanged: modelUpdate.schedule()
     onDockScreenChanged: modelUpdate.schedule()
-    readonly property var visibleWindows: options.currentWorkspace && dockScreen ? CompositorService.filterCurrentWorkspace(CompositorService.sortedToplevels, dockScreen.name) : CompositorService.sortedToplevels
+    readonly property var visibleWindows: options.currentWorkspace && dockScreen ? CompositorService.filterCurrentWorkspace(CompositorService.taskbarToplevels, dockScreen.name) : CompositorService.taskbarToplevels
     onVisibleWindowsChanged: modelUpdate.schedule()
     readonly property string windowMetadata: JSON.stringify(visibleWindows.map(toplevel => [toplevel.appId, ["org.quickshell", "com.cytechteam.cyshell"].includes(toplevel.appId) ? toplevel.title : "", options.isolateDisplays ? (toplevel.screens || []).map(screen => screen.name) : null]))
     onWindowMetadataChanged: modelUpdate.schedule()

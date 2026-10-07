@@ -83,6 +83,7 @@ Singleton {
     signal randrDataReady
 
     property var sortedToplevels: []
+    readonly property var taskbarToplevels: (sortedToplevels || []).filter(toplevel => toplevel && !toplevel.skipSwitcher)
     property var hyprlandVisibleSpecialWorkspaces: ({})
     property bool _sortScheduled: false
 

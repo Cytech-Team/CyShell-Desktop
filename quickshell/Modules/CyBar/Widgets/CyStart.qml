@@ -165,6 +165,57 @@ PluginComponent {
         return cat ? String(cat.title || cat.id) : String(categoryId || "All apps");
     }
 
+    function appPreviewFromLauncherItem(item) {
+        if (!item || item.type !== "app")
+            return null;
+
+        const data = item.data && typeof item.data === "object" ? item.data : {};
+        return {
+            id: data.id || item.id || "",
+            name: item.name || data.name || "",
+            generic: data.genericName || data.generic || item.subtitle || "",
+            comment: data.comment || data.description || item.subtitle || "",
+            icon: item.icon || data.icon || "",
+            iconType: item.iconType || data.iconType || "image",
+            icon_path: data.icon_path || data.iconPath || "",
+            categories: data.categories || item.categories || [],
+            provider: item.source || data.provider || data.source || "",
+            source: item.source || data.source || "",
+            install_path: data.filename || data.filePath || data.install_path || ""
+        };
+    }
+
+    function appDescription(app) {
+        if (!app)
+            return "";
+        const entry = root.desktopEntryFor(app);
+        return String(app.comment || app.description || entry?.comment || "").trim();
+    }
+
+    function appGenericName(app) {
+        if (!app)
+            return "";
+        const entry = root.desktopEntryFor(app);
+        return String(app.generic || app.genericName || entry?.genericName || "").trim();
+    }
+
+    function launcherItemIconValue(item) {
+        if (!item)
+            return "";
+        const value = String(item.icon || item.iconFull || "");
+        switch (String(item.iconType || "image")) {
+        case "material":
+        case "nerd":
+            return "material:" + (value || "apps");
+        case "unicode":
+            return "unicode:" + value;
+        case "composite":
+            return String(item.iconFull || "");
+        default:
+            return value;
+        }
+    }
+
     function rebuildDerived() {
         const map = {};
         for (let i = 0; i < root.apps.length; ++i)
@@ -207,7 +258,7 @@ PluginComponent {
         root.recommendedApps = rec.slice(0, 6);
 
         const ordered = root.apps.slice();
-        ordered.sort((a, b) => String(a.name || "").localeCompare(String(b.name || "")));
+        ordered.sort((a, b) => String(a.name || "").toLowerCase().localeCompare(String(b.name || "").toLowerCase()));
         root.allAppsSorted = ordered;
 
         // Same XDG category model used by the original Noctalia CyStart.
@@ -519,8 +570,13 @@ PluginComponent {
             property string categoryFilter: ""
             property bool accountOpen: false
             property bool powerOpen: false
+            property var previewApp: null
+            property var previewItem: null
+            property bool showAllAppsInSearch: false
+            property bool searchModeExplicit: false
             property var shownApps: categoryFilter.length > 0 ? root.categoryApps(categoryFilter) : root.allAppsSorted
             readonly property bool searchActive: searchField.text.trim().length > 0
+            readonly property bool searchViewActive: searchActive || showAllAppsInSearch
             property bool searchSessionStarted: false
 
             Controller {
@@ -528,7 +584,15 @@ PluginComponent {
                 active: menu.parentPopout?.shouldBeVisible === true
                 viewModeContext: "spotlight"
                 forceLinearNavigation: true
+                sortSearchResultsAlphabetically: true
                 onItemExecuted: root.closePopout()
+                onSelectedItemChanged: {
+                    if (menu.searchViewActive) {
+                        menu.previewItem = selectedItem;
+                        menu.previewApp = root.appPreviewFromLauncherItem(selectedItem);
+                        unifiedContextMenu.prepareForInline(selectedItem);
+                    }
+                }
                 onSearchQueryRequested: query => {
                     searchField.text = String(query || "");
                     searchField.cursorPosition = searchField.text.length;
@@ -564,25 +628,29 @@ PluginComponent {
                         menu.categoryFilter = "";
                         menu.accountOpen = false;
                         menu.powerOpen = false;
+                        menu.showAllAppsInSearch = false;
+                        menu.searchModeExplicit = false;
+                        menu.previewApp = null;
+                        menu.previewItem = null;
                         root.selectedIndex = 0;
                         menu.searchSessionStarted = false;
-                        // CyStart is a Start menu, so every fresh session begins in All.
-                        // Do not inherit the standalone launcher's last tab (e.g. plugins/More).
-                        unifiedSearchController.openSession("", false, "all", false);
                         searchField.text = "";
                         Qt.callLater(() => {
-                            homeFlick.contentY = 0;
                             searchField.forceActiveFocus();
                             searchFocusTimer.restart();
                         });
                     } else {
                         searchFocusTimer.stop();
+                        menu.showAllAppsInSearch = false;
+                        menu.searchModeExplicit = false;
                         menu.searchSessionStarted = false;
                         unifiedContextMenu.hide();
                         unifiedSearchController.reset();
                         searchField.text = "";
                         menu.accountOpen = false;
                         menu.powerOpen = false;
+                        menu.previewApp = null;
+                        menu.previewItem = null;
                         root.actionApp = null;
                     }
                 }
@@ -633,21 +701,38 @@ PluginComponent {
                         unifiedContextMenu.hide();
                         const query = text.trim();
                         if (query.length > 0) {
+                            const wasBrowsingAllApps = menu.showAllAppsInSearch;
+                            menu.showAllAppsInSearch = false;
+                            menu.previewApp = null;
+                            menu.previewItem = null;
                             if (!menu.searchSessionStarted) {
                                 menu.searchSessionStarted = true;
-                                // Preserve an explicitly clicked mode, but default CyStart search to All.
-                                unifiedSearchController.openSession(text, true, unifiedSearchController.searchMode || "all", false);
+                                const mode = menu.searchModeExplicit
+                                    ? unifiedSearchController.searchMode
+                                    : (wasBrowsingAllApps ? "all" : (unifiedSearchController.searchMode || "all"));
+                                unifiedSearchController.openSession(text, true, mode, false);
                             } else {
                                 unifiedSearchController.setSearchQuery(text);
                             }
                         } else {
+                            const returnToAllApps = menu.searchSessionStarted;
                             menu.searchSessionStarted = false;
-                            unifiedSearchController.openSession("", false, "all", false);
+                            menu.previewApp = null;
+                            menu.previewItem = null;
+                            if (returnToAllApps && menu.parentPopout?.shouldBeVisible) {
+                                menu.showAllAppsInSearch = true;
+                                menu.searchModeExplicit = false;
+                                menu.allAppsMode = false;
+                                menu.categoryFilter = "";
+                                unifiedSearchController.openSession("", false, "apps", true);
+                            } else if (!menu.parentPopout?.shouldBeVisible) {
+                                menu.showAllAppsInSearch = false;
+                            }
                         }
                     }
 
                     Keys.onPressed: event => {
-                        if (!menu.searchActive)
+                        if (!menu.searchViewActive)
                             return;
                         const hasCtrl = (event.modifiers & Qt.ControlModifier) !== 0;
                         if (event.key === Qt.Key_Down) {
@@ -669,16 +754,25 @@ PluginComponent {
                             unifiedSearchController.cycleMode(true);
                             event.accepted = true;
                         } else if (event.key === Qt.Key_Tab && unifiedActionPanel.hasActions) {
-                            unifiedActionPanel.toggle();
+                            if (!unifiedActionPanel.expanded) {
+                                unifiedActionPanel.expanded = true;
+                                unifiedActionPanel.selectedActionIndex = 0;
+                            } else {
+                                unifiedActionPanel.cycleAction(false);
+                            }
                             event.accepted = true;
                         } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
-                            if (unifiedActionPanel.expanded && unifiedActionPanel.selectedActionIndex > 0)
+                            if (unifiedActionPanel.expanded)
                                 unifiedActionPanel.executeSelectedAction();
                             else
                                 unifiedSearchController.executeSelected();
                             event.accepted = true;
                         } else if (event.key === Qt.Key_Menu || event.key === Qt.Key_F10) {
-                            if (unifiedContextMenu.hasContextMenuActions(unifiedSearchController.selectedItem)) {
+                            if (unifiedSearchController.selectedItem?.type === "app") {
+                                menu.previewItem = unifiedSearchController.selectedItem;
+                                menu.previewApp = root.appPreviewFromLauncherItem(unifiedSearchController.selectedItem);
+                                unifiedContextMenu.prepareForInline(unifiedSearchController.selectedItem);
+                            } else if (unifiedContextMenu.hasContextMenuActions(unifiedSearchController.selectedItem)) {
                                 const pos = unifiedResults.getSelectedItemPosition();
                                 const local = menu.mapFromItem(null, pos.x, pos.y);
                                 unifiedContextMenu.show(local.x, local.y, unifiedSearchController.selectedItem, true);
@@ -747,7 +841,7 @@ PluginComponent {
                     Item {
                         id: unifiedSearchPane
                         anchors.fill: parent
-                        visible: !root.loading && root.loadError.length === 0 && menu.searchActive
+                        visible: !root.loading && root.loadError.length === 0 && menu.searchViewActive
 
                         Column {
                             anchors.fill: parent
@@ -791,6 +885,7 @@ PluginComponent {
                                             cursorShape: Qt.PointingHandCursor
                                             onClicked: {
                                                 unifiedActionPanel.hide();
+                                                menu.searchModeExplicit = true;
                                                 unifiedSearchController.setMode(modelData.id);
                                                 searchField.forceActiveFocus();
                                             }
@@ -803,37 +898,223 @@ PluginComponent {
 
                             Item {
                                 width: parent.width
-                                height: parent.height - modeRow.height - unifiedActionPanel.height - 16
+                                height: parent.height - modeRow.height - Theme.spacingS
 
-                                ResultsList {
-                                    id: unifiedResults
+                                Row {
+                                    id: searchContentRow
                                     anchors.fill: parent
-                                    controller: unifiedSearchController
-                                    focusReturnTarget: searchField
-                                    keyForwardTargets: [searchField]
-                                    onItemRightClicked: (index, item, mouseX, mouseY) => {
-                                        unifiedSearchController.selectedFlatIndex = index;
-                                        unifiedSearchController.updateSelectedItem();
-                                        if (!unifiedContextMenu.hasContextMenuActions(item))
-                                            return;
-                                        const pos = unifiedResults.mapToItem(menu, mouseX, mouseY);
-                                        unifiedContextMenu.show(pos.x, pos.y, item, false);
+                                    readonly property bool showAppPreview: menu.previewItem?.type === "app"
+                                    spacing: showAppPreview ? Theme.spacingM : 0
+
+                                    Item {
+                                        id: searchResultsColumn
+                                        width: searchContentRow.showAppPreview
+                                            ? Math.round((searchContentRow.width - searchContentRow.spacing * 2 - previewDivider.width) * 0.48)
+                                            : searchContentRow.width
+                                        height: parent.height
+
+                                        ResultsList {
+                                            id: unifiedResults
+                                            anchors.fill: parent
+                                            controller: unifiedSearchController
+                                            clickSelectsOnly: false
+                                            focusReturnTarget: searchField
+                                            keyForwardTargets: [searchField]
+                                            onItemHovered: item => {
+                                                menu.previewItem = item;
+                                                menu.previewApp = root.appPreviewFromLauncherItem(item);
+                                                unifiedContextMenu.prepareForInline(item);
+                                            }
+                                            onItemRightClicked: (index, item, mouseX, mouseY) => {
+                                                unifiedSearchController.selectedFlatIndex = index;
+                                                unifiedSearchController.updateSelectedItem();
+                                                if (item?.type === "app")
+                                                    return;
+                                                if (!unifiedContextMenu.hasContextMenuActions(item))
+                                                    return;
+                                                const pos = unifiedResults.mapToItem(menu, mouseX, mouseY);
+                                                unifiedContextMenu.show(pos.x, pos.y, item, false);
+                                            }
+                                        }
+
+                                        BusyIndicator {
+                                            anchors.centerIn: parent
+                                            running: unifiedSearchController.isSearching && unifiedSearchController.flatModel.length === 0
+                                            visible: running
+                                        }
+                                    }
+
+                                    Rectangle {
+                                        id: previewDivider
+                                        width: searchContentRow.showAppPreview ? Theme.outlineWidth : 0
+                                        height: parent.height
+                                        color: Theme.outlineMedium
+                                        visible: searchContentRow.showAppPreview
+                                    }
+
+                                    Rectangle {
+                                        id: appPreviewPane
+                                        width: searchContentRow.showAppPreview
+                                            ? parent.width - searchResultsColumn.width - previewDivider.width - searchContentRow.spacing * 2
+                                            : 0
+                                        height: parent.height
+                                        radius: Theme.cornerRadiusL
+                                        color: Theme.foregroundColor(Theme.cardSurface, Theme.isFloatingWindow(menu))
+                                        visible: searchContentRow.showAppPreview
+
+                                        Column {
+                                            anchors.fill: parent
+                                            anchors.margins: Theme.spacingM
+                                            spacing: Theme.spacingM
+
+                                            Column {
+                                                width: parent.width
+                                                spacing: Theme.spacingXS
+                                                visible: menu.previewItem !== null
+
+                                                Item {
+                                                    width: parent.width
+                                                    height: Theme.listItemTwoLineHeight + Theme.spacingS
+
+                                                    AppIconRenderer {
+                                                        anchors.centerIn: parent
+                                                        width: Theme.listItemTwoLineHeight
+                                                        height: Theme.listItemTwoLineHeight
+                                                        iconSize: Theme.listItemTwoLineHeight
+                                                        iconValue: root.launcherItemIconValue(menu.previewItem)
+                                                        fallbackText: String(menu.previewItem?.name || "?").charAt(0).toUpperCase()
+                                                        fallbackBackgroundColor: Theme.primaryContainer
+                                                        fallbackTextColor: Theme.onPrimaryContainer
+                                                        iconColor: Theme.surfaceText
+                                                        fallbackRadius: Theme.cornerRadiusL
+                                                    }
+                                                }
+
+                                                StyledText {
+                                                    width: parent.width
+                                                    text: menu.previewItem?.name || ""
+                                                    color: Theme.surfaceText
+                                                    font.pixelSize: Theme.fontSizeLarge
+                                                    font.weight: Theme.fontWeightMedium
+                                                    horizontalAlignment: Text.AlignHCenter
+                                                    wrapMode: Text.Wrap
+                                                    maximumLineCount: 2
+                                                    elide: Text.ElideRight
+                                                }
+
+                                                StyledText {
+                                                    width: parent.width
+                                                    text: menu.previewItem?.type === "app" ? I18n.tr("App") : (menu.previewItem?.type || "")
+                                                    color: Theme.surfaceVariantText
+                                                    font.pixelSize: Theme.fontSizeSmall
+                                                    horizontalAlignment: Text.AlignHCenter
+                                                }
+
+                                                StyledText {
+                                                    width: parent.width
+                                                    text: {
+                                                        if (!menu.previewItem)
+                                                            return "";
+                                                        const app = menu.previewApp;
+                                                        return root.appGenericName(app) || root.appDescription(app) || String(menu.previewItem.subtitle || "");
+                                                    }
+                                                    color: Theme.surfaceVariantText
+                                                    font.pixelSize: Theme.fontSizeSmall
+                                                    horizontalAlignment: Text.AlignHCenter
+                                                    wrapMode: Text.Wrap
+                                                    maximumLineCount: 3
+                                                    elide: Text.ElideRight
+                                                    visible: text.length > 0
+                                                }
+                                            }
+
+                                            Rectangle {
+                                                width: parent.width
+                                                height: Theme.outlineWidth
+                                                color: Theme.outlineMedium
+                                            }
+
+                                                Column {
+                                                    width: parent.width
+                                                    spacing: Theme.spacingXS
+
+                                                Repeater {
+                                                    model: unifiedContextMenu.menuItems
+
+                                                    delegate: Item {
+                                                        required property var modelData
+                                                        required property int index
+                                                        width: parent.width
+                                                        height: modelData?.type === "separator" ? Theme.spacingXS * 2 + Theme.outlineWidth : Theme.buttonHeightS
+                                                        visible: menu.previewItem?.type === "app"
+
+                                                        Rectangle {
+                                                            anchors.left: parent.left
+                                                            anchors.right: parent.right
+                                                            anchors.verticalCenter: parent.verticalCenter
+                                                            height: Theme.outlineWidth
+                                                            color: Theme.outlineMedium
+                                                            visible: modelData?.type === "separator"
+                                                        }
+
+                                                        Rectangle {
+                                                            anchors.fill: parent
+                                                            radius: Theme.cornerRadiusM
+                                                            color: previewActionMouse.containsMouse ? Theme.surfaceHover : "transparent"
+                                                            visible: modelData?.type === "item"
+
+                                                            Row {
+                                                                anchors.fill: parent
+                                                                anchors.leftMargin: Theme.spacingS
+                                                                anchors.rightMargin: Theme.spacingS
+                                                                spacing: Theme.spacingS
+
+                                                                CyIcon {
+                                                                    anchors.verticalCenter: parent.verticalCenter
+                                                                    name: modelData?.icon || "open_in_new"
+                                                                    size: Theme.iconSizeSmall
+                                                                    color: modelData?.isDestructive ? Theme.error : Theme.surfaceVariantText
+                                                                }
+
+                                                                StyledText {
+                                                                    width: parent.width - Theme.iconSizeSmall - Theme.spacingS
+                                                                    anchors.verticalCenter: parent.verticalCenter
+                                                                    text: modelData?.text || ""
+                                                                    color: modelData?.isDestructive ? Theme.error : Theme.surfaceText
+                                                                    font.pixelSize: Theme.fontSizeSmall
+                                                                    elide: Text.ElideRight
+                                                                }
+                                                            }
+                                                        }
+
+                                                        MouseArea {
+                                                            id: previewActionMouse
+                                                            anchors.fill: parent
+                                                            hoverEnabled: true
+                                                            enabled: modelData?.type === "item"
+                                                            cursorShape: Qt.PointingHandCursor
+                                                            onClicked: {
+                                                                const action = modelData?.action;
+                                                                if (typeof action === "function")
+                                                                    action();
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
                                     }
                                 }
-
-                                BusyIndicator {
-                                    anchors.centerIn: parent
-                                    running: unifiedSearchController.isSearching && unifiedSearchController.flatModel.length === 0
-                                    visible: running
-                                }
                             }
+                        }
 
-                            ActionPanel {
-                                id: unifiedActionPanel
-                                width: parent.width
-                                selectedItem: unifiedSearchController.selectedItem
-                                controller: unifiedSearchController
-                            }
+                        ActionPanel {
+                            id: unifiedActionPanel
+                            width: 0
+                            height: 0
+                            visible: false
+                            selectedItem: menu.previewItem?.type === "app" ? menu.previewItem : null
+                            controller: unifiedSearchController
                         }
                     }
 
@@ -841,7 +1122,7 @@ PluginComponent {
                         id: allAppsPage
                         anchors.fill: parent
                         visible: !root.loading && root.loadError.length === 0
-                            && searchField.text.trim().length === 0 && menu.allAppsMode
+                            && !menu.searchViewActive && menu.allAppsMode
 
                         RowLayout {
                             id: pageHeader
@@ -1005,7 +1286,7 @@ PluginComponent {
                         id: homeFlick
                         anchors.fill: parent
                         visible: !root.loading && root.loadError.length === 0
-                            && searchField.text.trim().length === 0 && !menu.allAppsMode
+                            && !menu.searchViewActive && !menu.allAppsMode
                         clip: true
                         contentWidth: width
                         contentHeight: homeColumn.implicitHeight + 12

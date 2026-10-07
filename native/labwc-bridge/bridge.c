@@ -1110,8 +1110,13 @@ bridge_constructor(void)
         bridge_clients[i].fd = -1;
     }
     // Gate before any hook can access wlroots structure layouts. The bridge
-    // must only interpose inside the LabWC compositor process itself.
-    bridge_candidate = bridge_process_is_labwc() && bridge_runtime_compatible();
+    // must only interpose inside the LabWC compositor process itself. Keep the
+    // checks sequenced: bridge_runtime_compatible() intentionally refuses to
+    // run unless bridge_candidate has already identified a LabWC process.
+    bridge_candidate = bridge_process_is_labwc();
+    if (bridge_candidate) {
+        bridge_candidate = bridge_runtime_compatible();
+    }
 }
 
 struct wlr_keyboard_group *

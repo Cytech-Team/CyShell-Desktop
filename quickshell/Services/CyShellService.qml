@@ -102,7 +102,13 @@ Singleton {
             if (linkUp) {
                 root.isConnected = true;
                 root.connectionStateChanged();
-                subscribeSocket.connected = true;
+                // The subscription socket can reconnect independently after a
+                // backend restart. If it came back first, subscribe now that
+                // the request channel is actually usable; otherwise start it.
+                if (subscribeSocket.linkUp)
+                    root.sendSubscribeRequest();
+                else
+                    subscribeSocket.connected = true;
                 root.refreshMatugenStatus();
                 return;
             }
@@ -147,6 +153,11 @@ Singleton {
                 root.connectionCapabilities = null;
                 return;
             }
+            // Do not publish server/capability state before the request socket
+            // is ready, or listeners may immediately send requests into a dead
+            // channel. requestSocket's link-up handler will subscribe once ready.
+            if (!root.isConnected)
+                return;
             sendSubscribeRequest();
         }
 

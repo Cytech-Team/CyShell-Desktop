@@ -116,6 +116,8 @@ Item {
             return invokeTransient("controlCenter");
         case "notifications":
             return invokeTransient("notificationCenter");
+        case "calendar":
+            return invokeTransient("calendar");
         case "battery":
             return invokeTransient("battery");
         case "dndDuration":
@@ -167,7 +169,7 @@ Item {
         if (loader.item)
             return loader.item;
 
-        const pairs = [[PopoutService.appDrawerLoader, PopoutService.appDrawerPopout], [PopoutService.batteryPopoutLoader, PopoutService.batteryPopout], [PopoutService.clipboardHistoryPopoutLoader, PopoutService.clipboardHistoryPopout], [PopoutService.controlCenterLoader, PopoutService.controlCenterPopout], [PopoutService.dankDashPopoutLoader, PopoutService.dankDashPopout], [PopoutService.notificationCenterLoader, PopoutService.notificationCenterPopout], [PopoutService.processListPopoutLoader, PopoutService.processListPopout], [PopoutService.systemUpdateLoader, PopoutService.systemUpdatePopout], [PopoutService.vpnPopoutLoader, PopoutService.vpnPopout], [PopoutService.colorPickerPopoutLoader, PopoutService.colorPickerPopout], [PopoutService.durationPopoutLoader, PopoutService.durationPopout], [PopoutService.powerMenuPopoutLoader, PopoutService.powerMenuPopout]];
+        const pairs = [[PopoutService.appDrawerLoader, PopoutService.appDrawerPopout], [PopoutService.batteryPopoutLoader, PopoutService.batteryPopout], [PopoutService.calendarPopoutLoader, PopoutService.calendarPopout], [PopoutService.clipboardHistoryPopoutLoader, PopoutService.clipboardHistoryPopout], [PopoutService.controlCenterLoader, PopoutService.controlCenterPopout], [PopoutService.dankDashPopoutLoader, PopoutService.dankDashPopout], [PopoutService.notificationCenterLoader, PopoutService.notificationCenterPopout], [PopoutService.processListPopoutLoader, PopoutService.processListPopout], [PopoutService.systemUpdateLoader, PopoutService.systemUpdatePopout], [PopoutService.vpnPopoutLoader, PopoutService.vpnPopout], [PopoutService.colorPickerPopoutLoader, PopoutService.colorPickerPopout], [PopoutService.durationPopoutLoader, PopoutService.durationPopout], [PopoutService.powerMenuPopoutLoader, PopoutService.powerMenuPopout]];
         for (let i = 0; i < pairs.length; i++) {
             if (loader === pairs[i][0] && pairs[i][1])
                 return pairs[i][1];
@@ -526,11 +528,10 @@ Item {
             onCalendarClicked: {
                 const section = root.getWidgetSection(parent) || "center";
                 root.openWidgetPopout({
-                    loader: PopoutService.notificationCenterLoader,
+                    loader: PopoutService.calendarPopoutLoader,
                     widgetItem: clockWidget,
                     section,
-                    islandActivity: "notificationcenter",
-                    triggerSource: "notifications",
+                    triggerSource: "calendar",
                     mode: "click",
                     setTriggerScreen: true
                 });

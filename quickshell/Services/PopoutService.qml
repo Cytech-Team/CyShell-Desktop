@@ -13,6 +13,8 @@ Singleton {
     property var controlCenterLoader: null
     property var notificationCenterPopout: null
     property var notificationCenterLoader: null
+    property var calendarPopout: null
+    property var calendarPopoutLoader: null
     property var appDrawerPopout: null
     property var appDrawerLoader: null
     property var processListPopout: null
@@ -282,6 +284,7 @@ Singleton {
             "dankDash": () => _unloadPopoutNow("dankDashPopout", "dankDashPopoutLoader"),
             "controlCenter": () => _unloadPopoutNow("controlCenterPopout", "controlCenterLoader"),
             "notificationCenter": () => _unloadPopoutNow("notificationCenterPopout", "notificationCenterLoader"),
+            "calendar": () => _unloadPopoutNow("calendarPopout", "calendarPopoutLoader"),
             "appDrawer": () => _unloadPopoutNow("appDrawerPopout", "appDrawerLoader"),
             "processList": () => _unloadPopoutNow("processListPopout", "processListPopoutLoader"),
             "battery": () => _unloadPopoutNow("batteryPopout", "batteryPopoutLoader"),
@@ -336,6 +339,10 @@ Singleton {
             loaderName = "notificationCenterLoader";
             triggerSource = triggerSource || "notifications";
             islandActivity = "notificationcenter";
+        } else if (surface === "calendar") {
+            popoutName = "calendarPopout";
+            loaderName = "calendarPopoutLoader";
+            triggerSource = triggerSource || "calendar";
         } else if (surface === "battery") {
             popoutName = "batteryPopout";
             loaderName = "batteryPopoutLoader";
@@ -506,6 +513,37 @@ Singleton {
         if (routeToIsland("notificationcenter", screen, true, section, callerBarId))
             return;
         _withLazyPopout("notificationCenterPopout", "notificationCenterLoader", popout => {
+            if (!_setDirectCallerPosition(popout, x, y, width, section, screen))
+                return;
+            popout.toggle();
+        });
+    }
+
+    function openCalendar(x, y, width, section, screen) {
+        if (_externalAnchoredTransientUiCall("calendar", "open", x, y, width, section, screen, "calendar", "", "click", ""))
+            return;
+        _withLazyPopout("calendarPopout", "calendarPopoutLoader", popout => {
+            if (!_setDirectCallerPosition(popout, x, y, width, section, screen))
+                return;
+            popout.open();
+        });
+    }
+
+    function closeCalendar() {
+        if (_externalShellCall("transient-ui", "invoke", ["calendar", "close", ""]))
+            return;
+        calendarPopout?.close();
+        _scheduleUnload("calendar");
+    }
+
+    function unloadCalendar() {
+        _scheduleUnload("calendar");
+    }
+
+    function toggleCalendar(x, y, width, section, screen) {
+        if (_externalAnchoredTransientUiCall("calendar", "toggle", x, y, width, section, screen, "calendar", "", "click", ""))
+            return;
+        _withLazyPopout("calendarPopout", "calendarPopoutLoader", popout => {
             if (!_setDirectCallerPosition(popout, x, y, width, section, screen))
                 return;
             popout.toggle();

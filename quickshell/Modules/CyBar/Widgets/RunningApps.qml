@@ -91,7 +91,7 @@ BasePill {
 
     readonly property var sortedToplevels: {
         _toplevelsUpdateTrigger;
-        let toplevels = CompositorService.sortedToplevels;
+        let toplevels = CompositorService.taskbarToplevels;
         if (!toplevels || toplevels.length === 0)
             return [];
 
@@ -185,7 +185,7 @@ BasePill {
         const deltaY = wheelEvent.angleDelta.y;
         const isMouseWheel = Math.abs(deltaY) >= 120 && (Math.abs(deltaY) % 120) === 0;
 
-        const windows = root.sortedToplevels.filter(w => !w.skipSwitcher);
+        const windows = root.sortedToplevels;
         if (windows.length < 2)
             return;
 

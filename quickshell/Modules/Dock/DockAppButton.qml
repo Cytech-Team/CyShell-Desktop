@@ -121,6 +121,10 @@ Item {
         return appData?.allWindows?.map(w => w.toplevel).filter(t => t !== null) || [];
     }
 
+    function isPreviewableToplevel(toplevel) {
+        return !!toplevel && !toplevel.skipSwitcher;
+    }
+
     function normalizedPreviewAppId(appId) {
         if (!appId)
             return "";
@@ -134,18 +138,18 @@ Item {
 
         if (appData.type === "window") {
             const toplevel = getToplevelObject();
-            return toplevel ? [toplevel] : [];
+            return isPreviewableToplevel(toplevel) ? [toplevel] : [];
         }
 
         if (appData.type === "grouped")
-            return getGroupedToplevels();
+            return getGroupedToplevels().filter(toplevel => isPreviewableToplevel(toplevel));
 
         if (!appData.isRunning || !appData.appId)
             return [];
 
         const targetAppId = normalizedPreviewAppId(appData.appId);
         const candidates = dockApps?.visibleWindows ?? CompositorService.sortedToplevels ?? [];
-        return candidates.filter(toplevel => normalizedPreviewAppId(toplevel?.appId) === targetAppId);
+        return candidates.filter(toplevel => isPreviewableToplevel(toplevel) && normalizedPreviewAppId(toplevel.appId) === targetAppId);
     }
 
     function activatePreviewToplevel(waylandToplevel) {

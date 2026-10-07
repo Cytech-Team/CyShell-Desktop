@@ -195,6 +195,10 @@ func handleCopy(conn *ipc.ConnWriter, req ipc.Request, m *Manager) {
 	models.Respond(conn, req.ID, models.SuccessResult{Success: true, Message: "copied to clipboard"})
 }
 
+func shouldCopyEntryAsFile(entry *Entry) bool {
+	return entry != nil && entry.AltMimeType == "" && entry.MimeType == "text/uri-list"
+}
+
 func handleCopyEntry(conn *ipc.ConnWriter, req ipc.Request, m *Manager) {
 	id, err := params.Int(req.Params, "id")
 	if err != nil {
@@ -210,7 +214,7 @@ func handleCopyEntry(conn *ipc.ConnWriter, req ipc.Request, m *Manager) {
 
 	textOnly := params.BoolOpt(req.Params, "textOnly", false) && entry.AltMimeType != ""
 
-	if entry.AltMimeType == "" {
+	if shouldCopyEntryAsFile(entry) {
 		filePath := m.EntryToFile(entry)
 		if filePath != "" {
 			if err := m.CopyFile(filePath); err != nil {

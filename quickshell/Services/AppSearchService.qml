@@ -639,35 +639,44 @@ Singleton {
         return false;
     }
 
-    function levenshteinDistance(s1, s2) {
+    function levenshteinDistance(s1, s2, maxDistance) {
         const len1 = s1.length;
         const len2 = s2.length;
-        const matrix = [];
+        const outsideLimit = maxDistance + 1;
+        if (Math.abs(len1 - len2) > maxDistance)
+            return outsideLimit;
 
-        for (var i = 0; i <= len1; i++) {
-            matrix[i] = [i];
-        }
-        for (var j = 0; j <= len2; j++) {
-            matrix[0][j] = j;
-        }
+        let previous = Array.from({ length: len2 + 1 }, (_, j) => j <= maxDistance ? j : outsideLimit);
+        for (let i = 1; i <= len1; i++) {
+            const current = new Array(len2 + 1).fill(outsideLimit);
+            current[0] = i;
+            let rowMinimum = current[0];
+            const start = Math.max(1, i - maxDistance);
+            const end = Math.min(len2, i + maxDistance);
 
-        for (var i = 1; i <= len1; i++) {
-            for (var j = 1; j <= len2; j++) {
+            for (let j = start; j <= end; j++) {
                 const cost = s1[i - 1] === s2[j - 1] ? 0 : 1;
-                matrix[i][j] = Math.min(matrix[i - 1][j] + 1, matrix[i][j - 1] + 1, matrix[i - 1][j - 1] + cost);
+                current[j] = Math.min(previous[j] + 1, current[j - 1] + 1, previous[j - 1] + cost);
+                rowMinimum = Math.min(rowMinimum, current[j]);
             }
+
+            if (rowMinimum > maxDistance)
+                return outsideLimit;
+            previous = current;
         }
-        return matrix[len1][len2];
+        return previous[len2];
     }
 
     function fuzzyMatchScore(text, query, words) {
         const queryLower = query.toLowerCase();
-        const maxDistance = query.length <= 2 ? 0 : query.length === 3 ? 1 : query.length <= 6 ? 2 : 3;
+        if (queryLower.length < 4)
+            return 0;
+        const maxDistance = Math.min(2, Math.max(1, Math.floor(queryLower.length * 0.2)));
 
         let bestScore = 0;
 
         if (Math.abs(text.length - query.length) <= maxDistance) {
-            const distance = levenshteinDistance(text.toLowerCase(), queryLower);
+            const distance = levenshteinDistance(text.toLowerCase(), queryLower, maxDistance);
             if (distance <= maxDistance) {
                 const maxLen = Math.max(text.length, query.length);
                 bestScore = 1 - (distance / maxLen);
@@ -677,7 +686,7 @@ Singleton {
         for (const word of words || tokenize(text)) {
             if (Math.abs(word.length - query.length) > maxDistance)
                 continue;
-            const wordDistance = levenshteinDistance(word, queryLower);
+            const wordDistance = levenshteinDistance(word, queryLower, maxDistance);
             if (wordDistance <= maxDistance) {
                 const maxLen = Math.max(word.length, query.length);
                 const score = 1 - (wordDistance / maxLen);
@@ -844,6 +853,7 @@ Singleton {
                 results.push({
                     "app": app,
                     "textScore": textScore,
+                    "nameMatch": matchType === "exact" || matchType === "prefix" || matchType === "word_boundary" || matchType === "substring" || matchType === "fuzzy",
                     "frecency": frecencyData.frecency,
                     "daysSinceUsed": frecencyData.daysSinceUsed,
                     "matchType": matchType
@@ -855,7 +865,8 @@ Singleton {
             const frecencyBonus = result.frecency > 0 ? Math.min(result.frecency, 2000) : 0;
             const recencyBonus = result.daysSinceUsed < 1 ? 1500 : result.daysSinceUsed < 7 ? 1000 : result.daysSinceUsed < 30 ? 500 : 0;
 
-            const finalScore = result.textScore + frecencyBonus + recencyBonus;
+            const nameMatchBonus = result.nameMatch ? 10000 : 0;
+            const finalScore = nameMatchBonus + result.textScore + frecencyBonus + recencyBonus;
 
             scoredApps.push({
                 "app": result.app,

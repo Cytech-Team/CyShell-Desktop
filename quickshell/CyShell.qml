@@ -436,6 +436,25 @@ Item {
         }
     }
 
+    LazyLoader {
+        id: calendarPopoutLoader
+
+        active: false
+
+        Component.onCompleted: {
+            PopoutService.calendarPopoutLoader = calendarPopoutLoader;
+        }
+
+        CalendarPopout {
+            id: calendarPopout
+            onPopoutClosed: PopoutService.unloadCalendar()
+
+            Component.onCompleted: {
+                PopoutService.calendarPopout = calendarPopout;
+            }
+        }
+    }
+
     Variants {
         model: root.notificationPopupScreens
 

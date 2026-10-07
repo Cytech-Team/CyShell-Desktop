@@ -27,11 +27,13 @@ Item {
     property int _lastSelectedFlatIndex: -1
     property bool _selectionMotionReady: false
     property var transientSurfaceTracker: null
+    property bool clickSelectsOnly: false
     readonly property bool _bottomSectionHeaderActive: leadingSectionHeaderAtBottom && (controller?.sections?.length ?? 0) > 0
 
     readonly property real contentHeight: _visualModel.height
 
     signal itemRightClicked(int index, var item, real mouseX, real mouseY)
+    signal itemHovered(var item)
 
     function _rebuildVisualModel() {
         root._selectionMotionReady = false;
@@ -376,9 +378,20 @@ Item {
                         controller: root.controller
                         flatIndex: delegateRoot.modelData?.flatIndex ?? -1
 
+                        onIsHoveredChanged: {
+                            if (isHovered && item)
+                                root.itemHovered(item);
+                        }
+
                         onClicked: {
                             if (root.controller && delegateRoot.modelData?.item) {
-                                root.controller.executeItem(delegateRoot.modelData.item);
+                                if (root.clickSelectsOnly && delegateRoot.modelData.item.type === "app") {
+                                    root.controller.selectedFlatIndex = delegateRoot.modelData.flatIndex ?? -1;
+                                    root.controller.updateSelectedItem();
+                                    root.itemHovered(delegateRoot.modelData.item);
+                                } else {
+                                    root.controller.executeItem(delegateRoot.modelData.item);
+                                }
                             }
                         }
 
@@ -436,9 +449,20 @@ Item {
                                             controller: root.controller
                                             flatIndex: gridCellDelegate.modelData?.flatIndex ?? -1
 
+                                            onIsHoveredChanged: {
+                                                if (isHovered && item)
+                                                    root.itemHovered(item);
+                                            }
+
                                             onClicked: {
                                                 if (root.controller && gridCellDelegate.modelData?.item) {
-                                                    root.controller.executeItem(gridCellDelegate.modelData.item);
+                                                    if (root.clickSelectsOnly && gridCellDelegate.modelData.item.type === "app") {
+                                                        root.controller.selectedFlatIndex = gridCellDelegate.modelData.flatIndex ?? -1;
+                                                        root.controller.updateSelectedItem();
+                                                        root.itemHovered(gridCellDelegate.modelData.item);
+                                                    } else {
+                                                        root.controller.executeItem(gridCellDelegate.modelData.item);
+                                                    }
                                                 }
                                             }
 
@@ -458,9 +482,20 @@ Item {
                                             controller: root.controller
                                             flatIndex: gridCellDelegate.modelData?.flatIndex ?? -1
 
+                                            onIsHoveredChanged: {
+                                                if (isHovered && item)
+                                                    root.itemHovered(item);
+                                            }
+
                                             onClicked: {
                                                 if (root.controller && gridCellDelegate.modelData?.item) {
-                                                    root.controller.executeItem(gridCellDelegate.modelData.item);
+                                                    if (root.clickSelectsOnly && gridCellDelegate.modelData.item.type === "app") {
+                                                        root.controller.selectedFlatIndex = gridCellDelegate.modelData.flatIndex ?? -1;
+                                                        root.controller.updateSelectedItem();
+                                                        root.itemHovered(gridCellDelegate.modelData.item);
+                                                    } else {
+                                                        root.controller.executeItem(gridCellDelegate.modelData.item);
+                                                    }
                                                 }
                                             }
 

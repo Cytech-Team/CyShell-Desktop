@@ -37,6 +37,7 @@ Item {
     property string viewModeContext: "spotlight"
     property bool forceLinearNavigation: false
     property bool explicitQuerySession: false
+    property bool sortSearchResultsAlphabetically: false
 
     signal itemExecuted
     signal searchCompleted
@@ -722,7 +723,7 @@ Item {
         var restoreSelection = preserveSelectionAfterUpdate(shouldResetSelection);
 
         var cachedSections = AppSearchService.getCachedDefaultSections();
-        if (!cachedSections && !_diskCacheConsumed && !searchQuery && searchMode === "all" && !pluginFilter) {
+        if (!sortSearchResultsAlphabetically && !cachedSections && !_diskCacheConsumed && !searchQuery && searchMode === "all" && !pluginFilter) {
             _diskCacheConsumed = true;
             var diskSections = _loadDiskCache();
             if (diskSections) {
@@ -746,7 +747,7 @@ Item {
             }
         }
 
-        if (cachedSections && !searchQuery && searchMode === "all" && !pluginFilter) {
+        if (!sortSearchResultsAlphabetically && cachedSections && !searchQuery && searchMode === "all" && !pluginFilter) {
             activePluginId = "";
             activePluginName = "";
             activePluginCategories = [];
@@ -805,7 +806,8 @@ Item {
             var dynamicDefs = buildDynamicSectionDefs(allItems);
             var scoredItems = Scorer.scoreItems(allItems, triggerMatch.query, getFrecencyForItem);
             var sortAlpha = !triggerMatch.query && SettingsData.sortAppsAlphabetically;
-            var newSections = Scorer.groupBySection(scoredItems, dynamicDefs, sortAlpha, 500);
+            var sortSearchAlpha = !triggerMatch.query && sortSearchResultsAlphabetically;
+            var newSections = Scorer.groupBySection(scoredItems, dynamicDefs, sortAlpha, 500, sortSearchAlpha);
 
             for (var sid in collapsedSections) {
                 for (var i = 0; i < newSections.length; i++) {
@@ -848,7 +850,7 @@ Item {
         if (searchMode === "apps") {
             var isCategoryFiltered = appCategory && appCategory !== I18n.tr("All");
             var cachedSections = AppSearchService.getCachedDefaultSections();
-            if (cachedSections && !searchQuery && !isCategoryFiltered) {
+            if (!sortSearchResultsAlphabetically && cachedSections && !searchQuery && !isCategoryFiltered) {
                 var modeCache = _getCachedModeData("apps");
                 if (modeCache) {
                     _applyHighlights(modeCache.sections, "");
@@ -894,11 +896,14 @@ Item {
                 for (var i = 0; i < apps.length; i++) {
                     allItems.push(apps[i]);
                 }
+                appendWebSearchFallback(allItems, searchQuery, apps.length > 0);
             }
 
             var scoredItems = Scorer.scoreItems(allItems, searchQuery, getFrecencyForItem);
             var sortAlpha = !searchQuery && SettingsData.sortAppsAlphabetically;
-            var newSections = Scorer.groupBySection(scoredItems, buildDynamicSectionDefs(allItems), sortAlpha, searchQuery ? 50 : 500);
+            var sortSearchAlpha = !searchQuery && sortSearchResultsAlphabetically;
+            var maxAppsPerSection = searchQuery ? 50 : (sortSearchResultsAlphabetically ? 10000 : 500);
+            var newSections = Scorer.groupBySection(scoredItems, buildDynamicSectionDefs(allItems), sortAlpha, maxAppsPerSection, sortSearchAlpha);
 
             for (var sid in collapsedSections) {
                 for (var i = 0; i < newSections.length; i++) {
@@ -958,7 +963,8 @@ Item {
             var dynamicDefs = buildDynamicSectionDefs(allItems);
             var scoredItems = Scorer.scoreItems(allItems, searchQuery, getFrecencyForItem);
             var sortAlpha = !searchQuery && SettingsData.sortAppsAlphabetically;
-            var newSections = Scorer.groupBySection(scoredItems, dynamicDefs, sortAlpha, 500);
+            var sortSearchAlpha = !searchQuery && sortSearchResultsAlphabetically;
+            var newSections = Scorer.groupBySection(scoredItems, dynamicDefs, sortAlpha, 500, sortSearchAlpha);
 
             for (var sid in collapsedSections) {
                 for (var i = 0; i < newSections.length; i++) {
@@ -983,6 +989,7 @@ Item {
         for (var i = 0; i < apps.length; i++) {
             allItems.push(apps[i]);
         }
+        appendWebSearchFallback(allItems, searchQuery, apps.length > 0);
         _lastAppItems = apps;
         _lastPhase1Query = searchQuery;
 
@@ -1013,7 +1020,8 @@ Item {
 
         var scoredItems = Scorer.scoreItems(allItems, searchQuery, getFrecencyForItem);
         var sortAlpha = !searchQuery && SettingsData.sortAppsAlphabetically;
-        var newSections = Scorer.groupBySection(scoredItems, dynamicDefs, sortAlpha, searchQuery ? 50 : 500);
+        var sortSearchAlpha = !searchQuery && sortSearchResultsAlphabetically;
+        var newSections = Scorer.groupBySection(scoredItems, dynamicDefs, sortAlpha, searchQuery ? 50 : 500, sortSearchAlpha);
 
         if (currentVersion !== _searchVersion) {
             isSearching = false;
@@ -1159,7 +1167,8 @@ Item {
         var dynamicDefs = buildDynamicSectionDefs(allItems);
         var scoredItems = Scorer.scoreItems(allItems, searchQuery, getFrecencyForItem);
         var sortAlpha = !searchQuery && SettingsData.sortAppsAlphabetically;
-        var newSections = Scorer.groupBySection(scoredItems, dynamicDefs, sortAlpha, searchQuery ? 50 : 500);
+        var sortSearchAlpha = !searchQuery && sortSearchResultsAlphabetically;
+        var newSections = Scorer.groupBySection(scoredItems, dynamicDefs, sortAlpha, searchQuery ? 50 : 500, sortSearchAlpha);
 
         for (var i = 0; i < newSections.length; i++) {
             var sid = newSections[i].id;
@@ -1352,6 +1361,22 @@ Item {
         }
 
         return items;
+    }
+
+    function appendWebSearchFallback(items, query, hasAppMatches) {
+        var trimmedQuery = String(query || "").trim();
+        if (!trimmedQuery || hasAppMatches || trimmedQuery.startsWith(">"))
+            return;
+
+        var webItems = AppSearchService.getPluginItemsForPlugin("cytechSearch", trimmedQuery);
+        for (var i = 0; i < webItems.length; i++) {
+            if (!String(webItems[i]?.action || "").startsWith("web:"))
+                continue;
+            var fallback = transformPluginItem(webItems[i], "cytechSearch");
+            fallback._preScored = webItems[i]._preScored || 905;
+            items.push(fallback);
+            return;
+        }
     }
 
     function transformApp(app) {
