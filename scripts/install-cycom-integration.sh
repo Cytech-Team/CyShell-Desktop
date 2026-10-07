@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 
-repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+repo_root=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 core_dir="$repo_root/core"
 bridge_path=${CYSHELL_AGENT_BRIDGE:-"$HOME/.local/lib/cyshell/cyshell-agent-bridge"}
 state_home=${XDG_STATE_HOME:-"$HOME/.local/state"}
