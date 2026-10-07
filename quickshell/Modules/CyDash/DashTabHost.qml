@@ -129,7 +129,9 @@ FocusScope {
 
         anchors.fill: parent
         anchors.margins: root.contentPadding
-        focus: true
+        // Loaded pages should not claim focus merely because their host becomes
+        // current. Dashboard navigation/content entry assigns focus explicitly.
+        focus: false
         active: root.isCurrent || root.animatingOut
         asynchronous: root.entry?.tab?.async === true
         sourceComponent: DashRegistry.tabComponentFor(root.entry?.id ?? "")

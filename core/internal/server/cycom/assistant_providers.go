@@ -214,7 +214,7 @@ func anthropicResponseMessage(blocks []map[string]any) (assistantMessage, error)
 	}
 	message.Content = strings.Join(texts, "\n")
 	if message.Content == "" && len(message.ToolCalls) == 0 {
-		return assistantMessage{}, errors.New("Anthropic returned no text or tool calls")
+		return assistantMessage{}, errors.New("anthropic returned no text or tool calls")
 	}
 	return message, nil
 }
@@ -256,14 +256,14 @@ func (a *Assistant) completeGemini(ctx context.Context, model string, messages [
 		return assistantMessage{}, err
 	}
 	if key == "" {
-		return assistantMessage{}, errors.New("Gemini provider requires an API key")
+		return assistantMessage{}, errors.New("gemini provider requires an API key")
 	}
 	req.Header.Set("x-goog-api-key", key)
 	req.Header.Set("content-type", "application/json")
 	req.Header.Set("user-agent", "CyShell-Desktop/agent")
 	resp, err := a.client.Do(req)
 	if err != nil {
-		return assistantMessage{}, fmt.Errorf("Gemini request failed: %w", err)
+		return assistantMessage{}, fmt.Errorf("gemini request failed: %w", err)
 	}
 	defer resp.Body.Close()
 	responseData, err := io.ReadAll(io.LimitReader(resp.Body, assistantMaxResponse))
@@ -279,13 +279,13 @@ func (a *Assistant) completeGemini(ctx context.Context, model string, messages [
 		if parsed.Error != nil && parsed.Error.Message != "" {
 			message = parsed.Error.Message
 		}
-		return assistantMessage{}, fmt.Errorf("Gemini returned HTTP %d: %s", resp.StatusCode, message)
+		return assistantMessage{}, fmt.Errorf("gemini returned HTTP %d: %s", resp.StatusCode, message)
 	}
 	if parsed.Error != nil {
 		return assistantMessage{}, errors.New(parsed.Error.Message)
 	}
 	if len(parsed.Candidates) == 0 {
-		return assistantMessage{}, errors.New("Gemini returned no candidates")
+		return assistantMessage{}, errors.New("gemini returned no candidates")
 	}
 	return geminiResponseMessage(parsed.Candidates[0].Content.Parts)
 }
@@ -414,7 +414,7 @@ func geminiResponseMessage(parts []map[string]any) (assistantMessage, error) {
 	}
 	message.Content = strings.Join(texts, "\n")
 	if message.Content == "" && len(message.ToolCalls) == 0 {
-		return assistantMessage{}, errors.New("Gemini returned no text or function calls")
+		return assistantMessage{}, errors.New("gemini returned no text or function calls")
 	}
 	return message, nil
 }
@@ -452,7 +452,7 @@ func (a *Assistant) listOpenAIModels(ctx context.Context) ([]string, error) {
 		return nil, err
 	}
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return nil, fmt.Errorf("Assistant provider models request returned HTTP %d: %s", resp.StatusCode, strings.TrimSpace(string(body)))
+		return nil, fmt.Errorf("assistant provider models request returned HTTP %d: %s", resp.StatusCode, strings.TrimSpace(string(body)))
 	}
 	var parsed struct {
 		Data []struct {
@@ -493,7 +493,7 @@ func (a *Assistant) listAnthropicModels(ctx context.Context) ([]string, error) {
 		return nil, err
 	}
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return nil, fmt.Errorf("Anthropic models returned HTTP %d: %s", resp.StatusCode, strings.TrimSpace(string(body)))
+		return nil, fmt.Errorf("anthropic models returned HTTP %d: %s", resp.StatusCode, strings.TrimSpace(string(body)))
 	}
 	var parsed struct {
 		Data []struct {
@@ -520,7 +520,7 @@ func (a *Assistant) listGeminiModels(ctx context.Context) ([]string, error) {
 		return nil, err
 	}
 	if key == "" {
-		return nil, errors.New("Gemini provider requires an API key")
+		return nil, errors.New("gemini provider requires an API key")
 	}
 	req.Header.Set("x-goog-api-key", key)
 	resp, err := a.client.Do(req)
@@ -533,7 +533,7 @@ func (a *Assistant) listGeminiModels(ctx context.Context) ([]string, error) {
 		return nil, err
 	}
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return nil, fmt.Errorf("Gemini models returned HTTP %d: %s", resp.StatusCode, strings.TrimSpace(string(body)))
+		return nil, fmt.Errorf("gemini models returned HTTP %d: %s", resp.StatusCode, strings.TrimSpace(string(body)))
 	}
 	var parsed struct {
 		Models []struct {
@@ -599,7 +599,7 @@ func providerURL(baseURL, rootSuffix, versionSuffix string) (string, error) {
 		return "", fmt.Errorf("invalid Assistant endpoint %q", baseURL)
 	}
 	if base.Scheme != "http" && base.Scheme != "https" {
-		return "", errors.New("Assistant endpoint must use http or https")
+		return "", errors.New("assistant endpoint must use http or https")
 	}
 	path := strings.TrimRight(base.Path, "/")
 	if strings.HasSuffix(path, rootSuffix) {
@@ -620,7 +620,7 @@ func geminiModelsURL(baseURL string) (string, error) {
 		return "", fmt.Errorf("invalid Assistant endpoint %q", baseURL)
 	}
 	if base.Scheme != "http" && base.Scheme != "https" {
-		return "", errors.New("Assistant endpoint must use http or https")
+		return "", errors.New("assistant endpoint must use http or https")
 	}
 	path := strings.TrimRight(base.Path, "/")
 	if !strings.HasSuffix(path, "/models") {
@@ -638,11 +638,11 @@ func geminiGenerateURL(baseURL, model string) (string, error) {
 		return "", fmt.Errorf("invalid Assistant endpoint %q", baseURL)
 	}
 	if base.Scheme != "http" && base.Scheme != "https" {
-		return "", errors.New("Assistant endpoint must use http or https")
+		return "", errors.New("assistant endpoint must use http or https")
 	}
 	model = strings.TrimPrefix(strings.TrimSpace(model), "models/")
 	if model == "" {
-		return "", errors.New("Gemini model is required")
+		return "", errors.New("gemini model is required")
 	}
 	base.Path = strings.TrimRight(base.Path, "/") + "/models/" + url.PathEscape(model) + ":generateContent"
 	base.RawQuery = ""
