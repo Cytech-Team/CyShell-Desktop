@@ -38,6 +38,10 @@ FocusScope {
                 enter();
             return;
         }
+        // A previously selected page can retain FocusScope.focus after it is
+        // hidden. Clear it as the page leaves so re-enabling that host cannot
+        // steal keyboard focus from the dashboard navigation bar.
+        focus = false;
         enterAnim.stop();
         if (!loader.item || !DashMetrics.animationsEnabled) {
             opacity = 0;

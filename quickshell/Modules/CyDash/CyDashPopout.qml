@@ -635,12 +635,8 @@ CyPopout {
                                     return;
                                 const keepNavigationFocus = tabBar.activeFocus;
                                 root.currentTabId = id;
-                                if (keepNavigationFocus) {
-                                    Qt.callLater(() => {
-                                        if (tabBar.visible)
-                                            tabBar.forceActiveFocus(Qt.OtherFocusReason);
-                                    });
-                                }
+                                if (keepNavigationFocus && tabBar.visible)
+                                    tabBar.forceActiveFocus(Qt.OtherFocusReason);
                             }
                         }
 
