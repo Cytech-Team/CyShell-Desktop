@@ -631,8 +631,16 @@ CyPopout {
                             model: DashRegistry.tabBarModel
                             onActivated: index => {
                                 const id = root.orderedTabIds[index];
-                                if (id !== undefined)
-                                    root.currentTabId = id;
+                                if (id === undefined)
+                                    return;
+                                const keepNavigationFocus = tabBar.activeFocus;
+                                root.currentTabId = id;
+                                if (keepNavigationFocus) {
+                                    Qt.callLater(() => {
+                                        if (tabBar.visible)
+                                            tabBar.forceActiveFocus(Qt.OtherFocusReason);
+                                    });
+                                }
                             }
                         }
 

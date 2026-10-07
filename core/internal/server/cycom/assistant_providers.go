@@ -92,7 +92,7 @@ func (a *Assistant) completeAnthropic(ctx context.Context, model string, message
 		return assistantMessage{}, err
 	}
 	if key == "" {
-		return assistantMessage{}, errors.New("Anthropic provider requires an API key")
+		return assistantMessage{}, errors.New("anthropic provider requires an API key")
 	}
 	req.Header.Set("x-api-key", key)
 	req.Header.Set("anthropic-version", "2023-06-01")
@@ -100,7 +100,7 @@ func (a *Assistant) completeAnthropic(ctx context.Context, model string, message
 	req.Header.Set("user-agent", "CyShell-Desktop/agent")
 	resp, err := a.client.Do(req)
 	if err != nil {
-		return assistantMessage{}, fmt.Errorf("Anthropic request failed: %w", err)
+		return assistantMessage{}, fmt.Errorf("anthropic request failed: %w", err)
 	}
 	defer resp.Body.Close()
 	responseData, err := io.ReadAll(io.LimitReader(resp.Body, assistantMaxResponse))
@@ -116,7 +116,7 @@ func (a *Assistant) completeAnthropic(ctx context.Context, model string, message
 		if parsed.Error != nil && parsed.Error.Message != "" {
 			message = parsed.Error.Message
 		}
-		return assistantMessage{}, fmt.Errorf("Anthropic returned HTTP %d: %s", resp.StatusCode, message)
+		return assistantMessage{}, fmt.Errorf("anthropic returned HTTP %d: %s", resp.StatusCode, message)
 	}
 	if parsed.Error != nil {
 		return assistantMessage{}, errors.New(parsed.Error.Message)
@@ -479,7 +479,7 @@ func (a *Assistant) listAnthropicModels(ctx context.Context) ([]string, error) {
 		return nil, err
 	}
 	if key == "" {
-		return nil, errors.New("Anthropic provider requires an API key")
+		return nil, errors.New("anthropic provider requires an API key")
 	}
 	req.Header.Set("x-api-key", key)
 	req.Header.Set("anthropic-version", "2023-06-01")
