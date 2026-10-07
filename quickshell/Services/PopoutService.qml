@@ -34,7 +34,19 @@ Singleton {
     property var settingsModalLoader: null
     readonly property string uiRole: Quickshell.env("CYSHELL_UI_ROLE") || ""
     readonly property bool transientUiOwner: uiRole === "" || uiRole === "shell"
+    readonly property bool externalNotificationCenterOwner: Quickshell.env("CYSHELL_EXTERNAL_PANEL") === "1" && uiRole !== "panel"
     readonly property bool externalSettingsProcess: uiRole !== "settings" && (uiRole.length > 0 || Quickshell.env("CYSHELL_EXTERNAL_SETTINGS") === "1")
+
+    function forwardNotificationCenterRequest(action, payload) {
+        if (!externalNotificationCenterOwner)
+            return false;
+        Quickshell.execDetached(["cyshell", "ipc", "call", "panel", "notificationCenter", String(action), String(payload || "")]);
+        return true;
+    }
+
+    function routeNotificationCenterRequest(action, x, y, width, section, screen, triggerSource, tab, mode, islandActivity, barPosition, barThickness, barSpacing, barConfig) {
+        return forwardNotificationCenterRequest(action, transientUiPayload(x, y, width, section, screen, triggerSource, tab, mode, islandActivity, barPosition, barThickness, barSpacing, barConfig));
+    }
 
     function _externalSettingsCall(method, args) {
         if (!externalSettingsProcess)
@@ -453,7 +465,9 @@ Singleton {
     }
 
     function openNotificationCenter(x, y, width, section, screen) {
-        if (_externalAnchoredTransientUiCall("notificationCenter", "open", x, y, width, section, screen, "notifications", "", "click", "notificationcenter"))
+        if (routeNotificationCenterRequest("open", x, y, width, section, screen, "notifications", "", "click", "notificationcenter"))
+            return;
+        if (uiRole !== "panel" && _externalAnchoredTransientUiCall("notificationCenter", "open", x, y, width, section, screen, "notifications", "", "click", "notificationcenter"))
             return;
         const callerBarId = _resolveDirectCallerAnchor(x, y, width, section, screen).anchor?.config?.id;
         if (routeToIsland("notificationcenter", screen, false, section, callerBarId))
@@ -466,6 +480,12 @@ Singleton {
     }
 
     function closeNotificationCenter() {
+        if (forwardNotificationCenterRequest("close", ""))
+            return;
+        if (uiRole === "panel") {
+            notificationCenterPopout?.close();
+            return;
+        }
         if (_externalShellCall("transient-ui", "invoke", ["notificationCenter", "close", ""]))
             return;
         if (closeIslandActivity("notificationcenter"))
@@ -478,7 +498,9 @@ Singleton {
     }
 
     function toggleNotificationCenter(x, y, width, section, screen) {
-        if (_externalAnchoredTransientUiCall("notificationCenter", "toggle", x, y, width, section, screen, "notifications", "", "click", "notificationcenter"))
+        if (routeNotificationCenterRequest("toggle", x, y, width, section, screen, "notifications", "", "click", "notificationcenter"))
+            return;
+        if (uiRole !== "panel" && _externalAnchoredTransientUiCall("notificationCenter", "toggle", x, y, width, section, screen, "notifications", "", "click", "notificationcenter"))
             return;
         const callerBarId = _resolveDirectCallerAnchor(x, y, width, section, screen).anchor?.config?.id;
         if (routeToIsland("notificationcenter", screen, true, section, callerBarId))

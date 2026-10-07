@@ -130,6 +130,9 @@ Item {
     }
 
     function invokeTransientUi(surface, action, arg) {
+        if (surface === "notificationCenter" && PopoutService.forwardNotificationCenterRequest(action, arg))
+            return true;
+
         const anchor = transientAnchorFromArgument(surface, arg, action);
         if (action !== "close" && (!anchor.screen || !anchor.trigger))
             return false;

@@ -780,7 +780,7 @@ Item {
 
         NotificationCenterButton {
             id: notificationButton
-            hasUnread: NotificationService.notifications.length > 0 && NotificationService.unreadCount > 0
+            hasUnread: NotificationService.notifications.length > 0 && NotificationService.unreadCount > 0 && !notificationButton.isActive
             isActive: PopoutService.notificationCenterLoader?.item ? PopoutService.notificationCenterLoader?.item.shouldBeVisible : false
             widgetThickness: surfaceContext.widgetThickness
             barThickness: surfaceContext.thickness

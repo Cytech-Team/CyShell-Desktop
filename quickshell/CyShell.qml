@@ -422,7 +422,8 @@ Item {
         active: false
 
         Component.onCompleted: {
-            PopoutService.notificationCenterLoader = notificationCenterLoader;
+            if (!PopoutService.externalNotificationCenterOwner)
+                PopoutService.notificationCenterLoader = notificationCenterLoader;
         }
 
         NotificationCenterPopout {
