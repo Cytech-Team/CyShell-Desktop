@@ -84,7 +84,7 @@ set_layout() {
     return 0
   fi
 
-  for i in {1..25}; do
+  for _ in {1..25}; do
     sleep 0.02
     if value="$(real_layout)" && [[ "$value" == "$target" ]]; then
       save_layout "$value"
