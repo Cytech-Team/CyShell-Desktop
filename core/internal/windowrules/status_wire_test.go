@@ -80,16 +80,16 @@ func TestDMSRulesStatusValuesSurviveTheWire(t *testing.T) {
 
 func TestDMSRulesStatusFromCarriesEveryField(t *testing.T) {
 	got := DMSRulesStatusFrom(configfrag.Status{
-		Exists:          true,
-		Included:        true,
-		IncludePosition: 2,
-		TotalIncludes:   3,
+		Exists:              true,
+		Included:            true,
+		IncludePosition:     2,
+		TotalIncludes:       3,
 		EntriesAfterCyShell: 7,
-		Effective:       true,
-		OverriddenBy:    7,
-		StatusMessage:   "DMS window rules are active",
-		ConfigFormat:    "lua",
-		ReadOnly:        true,
+		Effective:           true,
+		OverriddenBy:        7,
+		StatusMessage:       "DMS window rules are active",
+		ConfigFormat:        "lua",
+		ReadOnly:            true,
 	})
 
 	want := DMSRulesStatus{
