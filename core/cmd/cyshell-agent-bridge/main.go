@@ -124,9 +124,9 @@ func readDesktopState(socketPath string) (desktopState, error) {
 	if computerUseErr != nil {
 		errs["computer_use"] = computerUseErr.Error()
 		computerUse = map[string]any{
-			"backend": "cyshell-built-in",
-			"ready":   false,
-			"error":   computerUseErr.Error(),
+			"backend":                            "cyshell-built-in",
+			"ready":                              false,
+			"error":                              computerUseErr.Error(),
 			"legacy_anyapp_doctor_authoritative": false,
 		}
 	}
@@ -167,15 +167,15 @@ func readComputerUseState(socketPath string) (map[string]any, error) {
 		return nil, fmt.Errorf("CyShell window_list returned %T, expected a list", value)
 	}
 	return map[string]any{
-		"backend": "cyshell-built-in",
-		"ready": true,
-		"window_count": len(windows),
-		"authoritative_window_backend": "CyShell window_list/window_control",
+		"backend":                            "cyshell-built-in",
+		"ready":                              true,
+		"window_count":                       len(windows),
+		"authoritative_window_backend":       "CyShell window_list/window_control",
 		"legacy_anyapp_doctor_authoritative": false,
 		"readiness": map[string]any{
 			"can_query_windows": true,
 			"can_focus_windows": true,
-			"can_focus_apps": true,
+			"can_focus_apps":    true,
 		},
 		"note": "CyShell owns native window targeting. Legacy Any App doctor windowing fields describe only the transitional accessibility helper and are not authoritative for CyShell Built-in readiness.",
 	}, nil
