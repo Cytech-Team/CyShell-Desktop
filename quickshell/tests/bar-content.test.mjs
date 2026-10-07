@@ -38,10 +38,11 @@ test("focus discovery prefers native output, then recent interaction and active 
         AqueousService: { available: true, focusedOutput: "second" }, Hyprland: { focusedMonitor: { name: "second" } },
         NiriService: { currentOutput: "second" }, I3: { workspaces: { values: [{ focused: true, monitor: { name: "second" } }] } },
         MangoService: { activeOutput: "second" }, Quickshell: { screens: [{ name: "first" }, { name: "second" }] },
+        WlrOutputService: { wlrOutputAvailable: false, getOutput: () => null }, SettingsData: { primaryDisplayName: "" },
         ToplevelManager: { toplevels: { values: [] } }, sortedToplevels: [],
         lastInteractionScreenName: "", lastInteractionScreenTimestamp: 0, Date
     });
-    for (const name of ["_screenExists", "_recentInteractionScreenName", "_activeToplevelScreenName", "getFocusedScreenName", "getFocusedScreen"])
+    for (const name of ["_screenExists", "getPrimaryScreenName", "getPrimaryScreen", "_recentInteractionScreenName", "_activeToplevelScreenName", "getFocusedScreenName", "getFocusedScreen"])
         vm.runInContext(method(source, name), context);
 
     assert.equal(context.getFocusedScreenName(), "");
