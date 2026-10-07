@@ -329,6 +329,7 @@ func checkEnvironmentVars() []checkResult {
 		results = append(results, checkQtPlatformThemePlugin("QT_QPA_PLATFORMTHEME_QT6")...)
 	}
 	results = append(results, checkEnvVar("QS_ICON_THEME")...)
+	results = append(results, checkXDGMenuPrefix()...)
 	if matugen.QtengineActive() {
 		results = append(results, checkQtenginePlugin()...)
 	}
