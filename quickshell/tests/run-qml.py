@@ -61,7 +61,10 @@ def main():
     args = parser.parse_args()
     if args.jobs < 1:
         parser.error("--jobs must be positive")
-    selected = args.suites or ["widgets", "media", "qt", "logic"]
+    # CyShell is Labwc-only. The inherited widgets/media harness boots Niri and
+    # still encodes DMS compositor assumptions, so keep those suites opt-in
+    # until they are rewritten against the native Labwc/CyShell test harness.
+    selected = args.suites or ["qt", "logic"]
     commands = {
         "widgets": [sys.executable, "quickshell/tests/run-surface-fixture.py", "--suite", "quickshell/tests/qml/bar-content.qml", "quickshell/tests/qml/frame-bar-flip.qml", "quickshell/tests/qml/instance-routing.qml", "quickshell/tests/qml/font-weights.qml", "quickshell/tests/qml/theme-selected-container.qml", "quickshell/tests/qml/theme-accents.qml", "quickshell/tests/qml/clipboard-preview.qml", "quickshell/tests/qml/launcher-plugin-instances.qml", "quickshell/tests/qml/island-launcher-focus.qml", "quickshell/tests/qml/workspace-switcher.qml", "quickshell/tests/qml/focused-app.qml", "quickshell/tests/qml/slider-wheel.qml", "quickshell/tests/qml/control-center-sizes.qml", "quickshell/tests/qml/dash-navigation.qml", "quickshell/tests/qml/grid-edit-layout.qml", "quickshell/tests/qml/settings-scroll.qml"],
         "media": [sys.executable, "quickshell/tests/run-surface-fixture.py", "--suite", "quickshell/tests/qml/media-presentation.qml", "quickshell/tests/qml/media-playback.qml", "quickshell/tests/qml/media-artwork.qml", "quickshell/tests/qml/media-lyrics.qml", "--mpris", "--artwork"],
