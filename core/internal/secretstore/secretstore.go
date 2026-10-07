@@ -59,7 +59,7 @@ func (s *Store) Close() {
 
 func (s *Store) Search(attributes map[string]string) (unlocked, locked []dbus.ObjectPath, err error) {
 	if s == nil || s.service == nil {
-		return nil, nil, fmt.Errorf("Secret Service is not open")
+		return nil, nil, fmt.Errorf("secret service is not open")
 	}
 	call := s.service.Call(serviceIface+".SearchItems", 0, attributes)
 	if call.Err != nil {
@@ -135,7 +135,7 @@ func (s *Store) Set(attributes map[string]string, label, value string) error {
 		return nil
 	}
 	if promptPath == "/" {
-		return fmt.Errorf("Secret Service did not create an item")
+		return fmt.Errorf("secret service did not create an item")
 	}
 	return s.runPrompt(promptPath)
 }
@@ -217,7 +217,7 @@ func (s *Store) runPrompt(prompt dbus.ObjectPath) error {
 			}
 			if len(signal.Body) > 0 {
 				if dismissed, ok := signal.Body[0].(bool); ok && dismissed {
-					return fmt.Errorf("Secret Service prompt was dismissed")
+					return fmt.Errorf("secret service prompt was dismissed")
 				}
 			}
 			return nil
