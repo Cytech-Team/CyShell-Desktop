@@ -377,6 +377,11 @@ ShellRoot {
                 root.dash.setBarContext(0, 0);
                 settle();
                 const integratedNav = bar();
+                // QtTest sends key events through the TestCase's window. Move
+                // the case into the dashboard surface before exercising its
+                // integrated keyboard navigation.
+                tester.parent = root.dash.contentLoader.item;
+                settle();
                 integratedNav.forceActiveFocus(Qt.TabFocusReason);
                 const start = root.dash.currentTabId;
                 keyClick(Qt.Key_Right);

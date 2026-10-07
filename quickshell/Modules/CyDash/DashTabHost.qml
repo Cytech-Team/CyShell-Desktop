@@ -38,10 +38,6 @@ FocusScope {
                 enter();
             return;
         }
-        // A previously selected page can retain FocusScope.focus after it is
-        // hidden. Clear it as the page leaves so re-enabling that host cannot
-        // steal keyboard focus from the dashboard navigation bar.
-        focus = false;
         enterAnim.stop();
         if (!loader.item || !DashMetrics.animationsEnabled) {
             opacity = 0;
@@ -129,9 +125,7 @@ FocusScope {
 
         anchors.fill: parent
         anchors.margins: root.contentPadding
-        // Loaded pages should not claim focus merely because their host becomes
-        // current. Dashboard navigation/content entry assigns focus explicitly.
-        focus: false
+        focus: true
         active: root.isCurrent || root.animatingOut
         asynchronous: root.entry?.tab?.async === true
         sourceComponent: DashRegistry.tabComponentFor(root.entry?.id ?? "")

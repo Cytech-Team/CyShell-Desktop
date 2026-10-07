@@ -685,10 +685,10 @@ func jsoncChildIndent(data []byte, object *jsoncNode) (string, string) {
 
 func insertJSONCProperty(data []byte, object *jsoncNode, key, value string) ([]byte, error) {
 	if object == nil || object.kind != '{' {
-		return nil, errors.New("JSON value is not an object")
+		return nil, errors.New("json value is not an object")
 	}
 	if _, existing := jsoncPropertyAt(object, key); existing != nil {
-		return nil, fmt.Errorf("JSON property %q already exists", key)
+		return nil, fmt.Errorf("json property %q already exists", key)
 	}
 	quotedKey, _ := json.Marshal(key)
 	propertyIndent, closeIndent := jsoncChildIndent(data, object)
@@ -713,19 +713,19 @@ func insertJSONCProperty(data []byte, object *jsoncNode, key, value string) ([]b
 
 func removeJSONCProperty(data []byte, object *jsoncNode, index int) ([]byte, error) {
 	if object == nil || object.kind != '{' || index < 0 || index >= len(object.properties) {
-		return nil, errors.New("JSON property is unavailable")
+		return nil, errors.New("json property is unavailable")
 	}
 	property := object.properties[index]
 	start, end := property.keyStart, property.value.end
 	if index < len(object.properties)-1 {
 		if property.comma < 0 {
-			return nil, errors.New("JSON property separator is unavailable")
+			return nil, errors.New("json property separator is unavailable")
 		}
 		end = property.comma + 1
 	} else if index > 0 {
 		separator := object.properties[index-1].comma
 		if separator < 0 {
-			return nil, errors.New("JSON property separator is unavailable")
+			return nil, errors.New("json property separator is unavailable")
 		}
 		start = separator
 		if property.comma >= 0 {
@@ -735,7 +735,7 @@ func removeJSONCProperty(data []byte, object *jsoncNode, index int) ([]byte, err
 		end = property.comma + 1
 	}
 	if start > end || end > len(data) {
-		return nil, errors.New("JSON property range is invalid")
+		return nil, errors.New("json property range is invalid")
 	}
 	result := make([]byte, 0, len(data)-(end-start))
 	result = append(result, data[:start]...)
@@ -1096,16 +1096,16 @@ func (m *Manager) SetAgentClientConnected(clientID string, connected bool) (Inte
 		return IntegrationState{}, fmt.Errorf("unsupported Agent client %q", clientID)
 	}
 	if !state.Installed {
-		return IntegrationState{}, errors.New("Agent client is not installed")
+		return IntegrationState{}, errors.New("agent client is not installed")
 	}
 	if !state.Supported {
-		return IntegrationState{}, fmt.Errorf("Agent client config is unavailable: %s", state.Reason)
+		return IntegrationState{}, fmt.Errorf("agent client config is unavailable: %s", state.Reason)
 	}
 	if connected == state.Connected {
 		return m.IntegrationState(), nil
 	}
 	if connected && !state.CanConnect {
-		return IntegrationState{}, errors.New("CyShell MCP executable is not installed")
+		return IntegrationState{}, errors.New("cyShell MCP executable is not installed")
 	}
 	if !connected && !state.CanDisconnect {
 		return m.IntegrationState(), nil
@@ -1125,7 +1125,7 @@ func (m *Manager) SetAgentClientConnected(clientID string, connected bool) (Inte
 	case agentClientOpenCode:
 		path, reason := openCodeConfigPath()
 		if reason != "" {
-			return IntegrationState{}, fmt.Errorf("OpenCode config is unavailable: %s", reason)
+			return IntegrationState{}, fmt.Errorf("openCode config is unavailable: %s", reason)
 		}
 		entry := map[string]any{"type": "local", "command": []string{mcpPath}}
 		if err := modifyJSONCClientConfig(path, []string{"mcp", "servers"}, openCodeServerID, entry, agentClientOpenCode, mcpPath, connected); err != nil {
@@ -1149,12 +1149,12 @@ func (m *Manager) SetAgentClientConnected(clientID string, connected bool) (Inte
 
 func runCodexMCPCommandError(codexPath, action, serverID string, mcpPath ...string) error {
 	if codexPath == "" {
-		return errors.New("Codex CLI is not installed")
+		return errors.New("codex CLI is not installed")
 	}
 	args := []string{"mcp", action, serverID}
 	if action == "add" {
 		if len(mcpPath) != 1 || mcpPath[0] == "" {
-			return errors.New("CyShell MCP executable is not installed")
+			return errors.New("cyShell MCP executable is not installed")
 		}
 		args = append(args, "--", mcpPath[0])
 	}
@@ -1317,13 +1317,13 @@ func (m *Manager) writeTunnelCredentials(tunnelID, apiKey string, clear bool) er
 		return nil
 	}
 	if tunnelID == "" || apiKey == "" {
-		return errors.New("Tunnel ID and control-plane API key must be provided together")
+		return errors.New("tunnel ID and control-plane API key must be provided together")
 	}
 	if !strings.HasPrefix(tunnelID, "tunnel_") {
-		return errors.New("Tunnel ID must start with tunnel_")
+		return errors.New("tunnel ID must start with tunnel_")
 	}
 	if strings.ContainsAny(tunnelID, "\r\n") || strings.ContainsAny(apiKey, "\r\n") {
-		return errors.New("Tunnel credentials contain an invalid newline")
+		return errors.New("tunnel credentials contain an invalid newline")
 	}
 	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
 		return err
