@@ -8,7 +8,7 @@ import test from "node:test";
 
 test("shell staging and archives exclude tests and preserve runtime assets", t => {
     const root = fileURLToPath(new URL("../../", import.meta.url));
-    const temporary = mkdtempSync(join(tmpdir(), "dms-shell-embed-"));
+    const temporary = mkdtempSync(join(tmpdir(), "cyshell-shell-embed-"));
     t.after(() => rmSync(temporary, { recursive: true, force: true }));
     const source = join(temporary, "source");
     const dist = join(temporary, "dist");
@@ -32,7 +32,7 @@ test("shell staging and archives exclude tests and preserve runtime assets", t =
         assert.equal(existsSync(join(dist, path)), false, path);
     for (const path of included)
         assert.equal(readFileSync(join(dist, path), "utf8"), path);
-    assert.match(readFileSync(join(dist, ".dankrev"), "utf8"), /^[a-f0-9]{16}\n$/);
+    assert.match(readFileSync(join(dist, ".cyshellrev"), "utf8"), /^[a-f0-9]{16}\n$/);
 
     const archive = join(temporary, "shell.tar");
     execFileSync("tar", ["-C", source, "--exclude=.qmlls.ini", "--exclude-from=" + join(root, "scripts/shell-test-excludes.txt"), "-chf", archive, "."]);
