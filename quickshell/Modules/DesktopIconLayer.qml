@@ -546,7 +546,7 @@ Variants {
                 },
                 {
                     type: "item",
-                    text: I18n.tr("Display settings"),
+                    text: I18n.tr("Display Settings"),
                     icon: "display_settings",
                     action: () => PopoutService.openSettingsWithTab("display_config")
                 },

@@ -423,7 +423,7 @@ Item {
                     spacing: Theme.spacingS
 
                     CyButton {
-                        text: AgentIntegrationService.busy ? I18n.tr("Saving…") : I18n.tr("Save & start")
+                        text: AgentIntegrationService.busy ? I18n.tr("Saving...") : I18n.tr("Save & Start")
                         iconName: "save"
                         enabled: !AgentIntegrationService.busy
                             && (AgentIntegrationService.tunnelConfigured

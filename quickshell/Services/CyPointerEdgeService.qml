@@ -28,5 +28,4 @@ Item {
         }
     }
 
-    Component.onCompleted: console.info("CyPointerEdgeService: native CyShell service loaded")
 }

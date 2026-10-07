@@ -3,7 +3,7 @@ import QtQuick
 import Quickshell
 
 Singleton {
-    function showContextMenu(...args) { console.debug("Noctalia PanelService.showContextMenu compatibility stub"); }
+    function showContextMenu(...args) {}
     function closeContextMenu(...args) {}
     function getPanel(...args) { return null; }
 }

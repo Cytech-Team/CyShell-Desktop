@@ -412,7 +412,7 @@ Item {
 
             SettingsRow {
                 title: I18n.tr("System details")
-                subtitle: aboutTab.deviceInformationLoading ? I18n.tr("Loading…") : (aboutTab.deviceInformationFailed ? I18n.tr("Could not load device information") : I18n.tr("Provided by CyShell Core"))
+                subtitle: aboutTab.deviceInformationLoading ? I18n.tr("Loading...") : (aboutTab.deviceInformationFailed ? I18n.tr("Could not load device information") : I18n.tr("Provided by CyShell Core"))
 
                 CyActionButton {
                     iconName: "refresh"

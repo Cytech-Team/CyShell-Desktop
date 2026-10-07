@@ -10,6 +10,18 @@ import time
 
 repo = Path(__file__).resolve().parents[2]
 
+# CyShell is Labwc-only. These inherited DMS suites exercise compositor
+# backends and fixtures that CyShell intentionally no longer ships. Keep them
+# in-tree for reference until the inherited modules are fully deleted, but do
+# not count them as CyShell regression coverage.
+LEGACY_COMPOSITOR_LOGIC_TESTS = {
+    "compositor-capabilities.test.mjs",
+    "config-include.test.mjs",
+    "output-model.test.mjs",
+    "window-model.test.mjs",
+    "workspace-model.test.mjs",
+}
+
 
 def qml_test_runner():
     override = os.environ.get("QMLTESTRUNNER")
@@ -53,7 +65,7 @@ def main():
     commands = {
         "widgets": [sys.executable, "quickshell/tests/run-surface-fixture.py", "--suite", "quickshell/tests/qml/bar-content.qml", "quickshell/tests/qml/frame-bar-flip.qml", "quickshell/tests/qml/instance-routing.qml", "quickshell/tests/qml/font-weights.qml", "quickshell/tests/qml/theme-selected-container.qml", "quickshell/tests/qml/theme-accents.qml", "quickshell/tests/qml/clipboard-preview.qml", "quickshell/tests/qml/launcher-plugin-instances.qml", "quickshell/tests/qml/island-launcher-focus.qml", "quickshell/tests/qml/workspace-switcher.qml", "quickshell/tests/qml/focused-app.qml", "quickshell/tests/qml/slider-wheel.qml", "quickshell/tests/qml/control-center-sizes.qml", "quickshell/tests/qml/dash-navigation.qml", "quickshell/tests/qml/grid-edit-layout.qml", "quickshell/tests/qml/settings-scroll.qml"],
         "media": [sys.executable, "quickshell/tests/run-surface-fixture.py", "--suite", "quickshell/tests/qml/media-presentation.qml", "quickshell/tests/qml/media-playback.qml", "quickshell/tests/qml/media-artwork.qml", "quickshell/tests/qml/media-lyrics.qml", "--mpris", "--artwork"],
-        "logic": ["node", "--test", *sorted(str(path.relative_to(repo)) for path in (repo / "quickshell/tests").glob("*.test.mjs"))],
+        "logic": ["node", "--test", *sorted(str(path.relative_to(repo)) for path in (repo / "quickshell/tests").glob("*.test.mjs") if path.name not in LEGACY_COMPOSITOR_LOGIC_TESTS)],
     }
     if "qt" in selected:
         commands["qt"] = [qml_test_runner(), "-input", "quickshell/tests", "-o", "-,txt"]

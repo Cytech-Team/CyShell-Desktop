@@ -1404,7 +1404,7 @@ Item {
     }
 
     function transformFileResult(file) {
-        return Transform.transformFileResult(file, I18n.tr("Open"), I18n.tr("Open folder"), I18n.tr("Copy path"), I18n.tr("Open in terminal"));
+        return Transform.transformFileResult(file, I18n.tr("Open"), I18n.tr("Open folder"), I18n.tr("Copy path"), I18n.tr("Open in Terminal"));
     }
 
     function transformClipboardEntry(entry) {

@@ -36,16 +36,16 @@ test("migration preserves a new value and does not rerun", () => {
 });
 
 test("parse and sparse serialization use the same new default", () => {
-    const root = { settingsConfigVersion: 25 };
-    store.parse(root, {});
-    assert.equal(root.radiusStrength, 50);
+    const root = { settingsConfigVersion: 29 };
+    store.parse(root, { configVersion: 29 });
+    assert.equal(root.radiusStrength, 31);
     assert.equal("radiusStrength" in store.toJson(root), false);
-    store.parse(root, { radiusStrength: 60 });
+    store.parse(root, { configVersion: 29, radiusStrength: 60 });
     assert.equal(store.toJson(root).radiusStrength, 60);
     assert.equal("cornerRadius" in store.toJson(root), false);
-    store.parse(root, { radiusStrength: 200 });
+    store.parse(root, { configVersion: 29, radiusStrength: 200 });
     assert.equal(root.radiusStrength, 100);
-    store.parse(root, { radiusStrength: "bad" });
+    store.parse(root, { configVersion: 29, radiusStrength: "bad" });
     assert.equal(root.radiusStrength, 50);
 });
 

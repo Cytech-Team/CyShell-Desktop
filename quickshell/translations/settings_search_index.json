@@ -1936,15 +1936,14 @@
       "components",
       "dock",
       "general",
+      "independent",
       "modules",
       "optional",
       "panel",
       "pins",
-      "shared",
       "standalone",
-      "statusbar",
+      "surface",
       "taskbar",
-      "topbar",
       "widgets"
     ],
     "icon": "dock_to_bottom"
@@ -2036,6 +2035,7 @@
     "page": "system",
     "category": "System & integrations",
     "keywords": [
+      "agent",
       "clipboard",
       "cliphist",
       "copy",
@@ -8116,7 +8116,7 @@
     "optionFile": "RunningAppsOptions.qml"
   },
   {
-    "section": "barWidgetOption:AppsDockOptions.qml:8",
+    "section": "barWidgetOption:AppsDockOptions.qml:7",
     "label": "Configured per surface",
     "tabIndex": 22,
     "keywords": [],
@@ -8140,7 +8140,7 @@
     "optionFile": "RunningAppsOptions.qml"
   },
   {
-    "section": "barWidgetOption:AppsDockOptions.qml:3",
+    "section": "barWidgetOption:AppsDockOptions.qml:2",
     "label": "Current workspace",
     "tabIndex": 22,
     "keywords": [],
@@ -8228,7 +8228,7 @@
     "optionFile": "WorkspaceSwitcherOptions.qml"
   },
   {
-    "section": "barWidgetOption:AppsDockOptions.qml:4",
+    "section": "barWidgetOption:AppsDockOptions.qml:3",
     "label": "Group by app",
     "tabIndex": 22,
     "keywords": [],
@@ -8412,7 +8412,7 @@
     "optionFile": "ClockOptions.qml"
   },
   {
-    "section": "barWidgetOption:AppsDockOptions.qml:6",
+    "section": "barWidgetOption:AppsDockOptions.qml:5",
     "label": "Restore special workspace",
     "tabIndex": 22,
     "keywords": [],
@@ -8444,16 +8444,8 @@
     "optionFile": "MusicOptions.qml"
   },
   {
-    "section": "barWidgetOption:AppsDockOptions.qml:5",
+    "section": "barWidgetOption:AppsDockOptions.qml:4",
     "label": "Separate pinned and running apps",
-    "tabIndex": 22,
-    "keywords": [],
-    "runtimeType": "barWidgetOption",
-    "optionFile": "AppsDockOptions.qml"
-  },
-  {
-    "section": "barWidgetOption:AppsDockOptions.qml:2",
-    "label": "Shared Apps system",
     "tabIndex": 22,
     "keywords": [],
     "runtimeType": "barWidgetOption",
@@ -8612,7 +8604,7 @@
     "optionFile": "WorkspaceSwitcherOptions.qml"
   },
   {
-    "section": "barWidgetOption:AppsDockOptions.qml:7",
+    "section": "barWidgetOption:AppsDockOptions.qml:6",
     "label": "Surface appearance",
     "tabIndex": 22,
     "keywords": [],
@@ -9421,7 +9413,9 @@
     "tabIndex": 29,
     "category": "Audio",
     "keywords": [
+      "apps",
       "audio",
+      "calls",
       "device",
       "devices",
       "headphones",
@@ -9434,7 +9428,8 @@
       "volume"
     ],
     "parentLabel": "Sound & media",
-    "icon": "mic"
+    "icon": "mic",
+    "description": "Used as the microphone for apps and calls."
   },
   {
     "section": "audioOutputDevices",
@@ -9452,10 +9447,12 @@
       "pipewire",
       "sound",
       "speaker",
+      "system",
       "volume"
     ],
     "parentLabel": "Sound & media",
-    "icon": "volume_up"
+    "icon": "volume_up",
+    "description": "Used for app and system sound."
   },
   {
     "section": "audioShowStreamDevices",
@@ -10296,13 +10293,17 @@
       "applications",
       "apps",
       "browser",
+      "code",
       "default",
       "documents",
+      "files",
       "floating",
       "handlers",
+      "markdown",
       "matching",
       "mime",
       "office",
+      "opens",
       "pdf",
       "program",
       "programs",
@@ -10313,7 +10314,8 @@
       "window"
     ],
     "parentLabel": "Applications",
-    "icon": "edit_document"
+    "icon": "edit_document",
+    "description": "Opens text, code, and Markdown files"
   },
   {
     "section": "defaultAppsInternet",
@@ -10329,10 +10331,14 @@
       "email",
       "floating",
       "handlers",
+      "html",
       "internet",
+      "links",
       "mail",
       "matching",
       "mime",
+      "opens",
+      "pages",
       "program",
       "programs",
       "rules",
@@ -10341,7 +10347,8 @@
       "window"
     ],
     "parentLabel": "Applications",
-    "icon": "public"
+    "icon": "public",
+    "description": "Opens web links and HTML pages"
   },
   {
     "section": "defaultAppsMultimedia",
@@ -10353,14 +10360,17 @@
       "applications",
       "apps",
       "browser",
+      "common",
       "default",
       "floating",
+      "formats",
       "handlers",
       "image",
       "matching",
       "mime",
       "multimedia",
       "music",
+      "opens",
       "player",
       "program",
       "programs",
@@ -10371,7 +10381,8 @@
       "window"
     ],
     "parentLabel": "Applications",
-    "icon": "movie"
+    "icon": "movie",
+    "description": "Opens common image formats"
   },
   {
     "section": "defaultAppsUtilities",
@@ -10387,10 +10398,13 @@
       "editor",
       "file",
       "floating",
+      "folders",
       "handlers",
+      "locations",
       "manager",
       "matching",
       "mime",
+      "opens",
       "program",
       "programs",
       "rules",
@@ -10399,7 +10413,8 @@
       "window"
     ],
     "parentLabel": "Applications",
-    "icon": "terminal"
+    "icon": "terminal",
+    "description": "Opens folders and file locations"
   },
   {
     "section": "_tab_35",
@@ -11627,12 +11642,17 @@
       "delay",
       "input",
       "keyboard",
+      "lock",
       "numlock",
       "rate",
-      "repeat"
+      "repeat",
+      "session",
+      "starts",
+      "turn"
     ],
     "parentLabel": "Input",
     "icon": "settings",
+    "description": "Turn Num Lock on when the session starts.",
     "conditionKey": "isNiri"
   },
   {
@@ -11659,29 +11679,22 @@
     "tabIndex": 45,
     "category": "Keyboard",
     "keywords": [
-      "comma",
-      "empty",
+      "another",
       "input",
       "keyboard",
       "language",
       "layout",
       "layouts",
-      "leave",
-      "list",
-      "names",
-      "separated",
-      "settings",
-      "system",
       "xkb"
     ],
     "parentLabel": "Input",
     "icon": "keyboard",
-    "description": "Comma-separated list of layout names. Leave empty to use the system keyboard settings.",
+    "description": "Add a keyboard layout for another language.",
     "conditionKey": "isNiri"
   },
   {
     "section": "keyboardNumlock",
-    "label": "Num Lock at startup",
+    "label": "Num Lock",
     "tabIndex": 45,
     "category": "Keyboard",
     "keywords": [
@@ -11690,9 +11703,13 @@
       "lock",
       "num",
       "numlock",
-      "startup"
+      "session",
+      "starts",
+      "startup",
+      "turn"
     ],
     "parentLabel": "Input",
+    "description": "Turn Num Lock on when the session starts.",
     "conditionKey": "isNiri"
   },
   {
@@ -14444,7 +14461,7 @@
   },
   {
     "section": "userProfile",
-    "label": "Profile",
+    "label": "User account",
     "tabIndex": 60,
     "category": "Users & accounts",
     "keywords": [
@@ -14670,11 +14687,14 @@
       "agent",
       "desktop",
       "embedded",
+      "integrations",
       "permissions",
       "runtime",
-      "semantic"
+      "semantic",
+      "system"
     ],
     "icon": "smart_toy",
+    "parentLabel": "System & integrations",
     "description": "Embedded AI runtime, semantic desktop access, permissions"
   },
   {
@@ -14688,15 +14708,18 @@
       "control",
       "desktop",
       "display",
+      "integrations",
       "isolated",
       "keep",
       "login",
       "remote",
       "screen",
       "start",
+      "system",
       "virtual",
       "workspace"
     ],
+    "parentLabel": "System & integrations",
     "icon": "developer_board",
     "description": "Start the isolated Agent desktop at login and keep it available for AI control"
   },
@@ -14716,14 +14739,17 @@
       "fallback",
       "http",
       "inside",
+      "integrations",
       "keeps",
       "local",
       "loopback",
       "mcp",
       "secure",
+      "system",
       "tunnel",
       "uses"
     ],
+    "parentLabel": "System & integrations",
     "icon": "lan",
     "description": "Local keeps CyCom inside CyShell. ChatGPT Tunnel uses Secure MCP Tunnel. Local API exposes loopback HTTP."
   },
@@ -14736,11 +14762,14 @@
       "access",
       "agent",
       "control",
+      "integrations",
       "permission",
       "permissions",
       "privacy",
-      "scope"
+      "scope",
+      "system"
     ],
+    "parentLabel": "System & integrations",
     "icon": "admin_panel_settings"
   },
   {
@@ -14763,6 +14792,7 @@
       "every",
       "everything",
       "full access",
+      "integrations",
       "model",
       "per app",
       "permissions",
@@ -14771,8 +14801,10 @@
       "rules",
       "same",
       "session",
+      "system",
       "time"
     ],
+    "parentLabel": "System & integrations",
     "icon": "app_registration",
     "description": "Same model as ChatGPT: ask every time, approve low-risk actions automatically, allow everything, or use your custom rules."
   },
@@ -14791,13 +14823,16 @@
       "compatible",
       "endpoint",
       "gemini",
+      "integrations",
       "key",
       "model",
       "native",
       "ollama",
       "openai",
-      "provider"
+      "provider",
+      "system"
     ],
+    "parentLabel": "System & integrations",
     "icon": "psychology",
     "description": "Use native Anthropic or Gemini APIs, or any OpenAI-compatible endpoint"
   },
@@ -14814,10 +14849,13 @@
       "cycom",
       "cyshell",
       "embedded",
+      "integrations",
       "mcp",
       "runtime",
+      "system",
       "tool"
     ],
+    "parentLabel": "System & integrations",
     "icon": "smart_toy",
     "description": "Allow AI clients to use the embedded CyCom tool runtime"
   },
@@ -14830,11 +14868,34 @@
       "agent",
       "control",
       "emergency",
+      "integrations",
       "kill",
       "permission",
-      "stop"
+      "stop",
+      "system"
     ],
+    "parentLabel": "System & integrations",
     "icon": "emergency"
+  },
+  {
+    "section": "externalAgentApps",
+    "label": "External Agent apps",
+    "tabIndex": 63,
+    "category": "Agent",
+    "keywords": [
+      "agent",
+      "apps",
+      "codex",
+      "external",
+      "integration",
+      "integrations",
+      "mcp",
+      "opencode",
+      "system",
+      "vscode"
+    ],
+    "parentLabel": "System & integrations",
+    "icon": "extension"
   },
   {
     "section": "agentKeyboardControl",
@@ -14846,10 +14907,13 @@
       "control",
       "emergency",
       "hotkey",
+      "integrations",
       "keyboard",
       "shortcut",
-      "stop"
+      "stop",
+      "system"
     ],
+    "parentLabel": "System & integrations",
     "icon": "keyboard"
   },
   {
@@ -14861,13 +14925,16 @@
       "agent",
       "context",
       "desktop",
+      "integrations",
       "native",
       "semantic",
       "settings",
+      "system",
       "ui",
       "windows",
       "workspaces"
     ],
+    "parentLabel": "System & integrations",
     "icon": "account_tree"
   },
   {
@@ -14881,9 +14948,12 @@
       "audit",
       "calls",
       "history",
+      "integrations",
       "recent",
+      "system",
       "tool"
     ],
+    "parentLabel": "System & integrations",
     "icon": "history"
   },
   {
@@ -14895,11 +14965,14 @@
       "action",
       "actions",
       "agent",
+      "integrations",
       "receipt",
       "rollback",
+      "system",
       "undo",
       "undoable"
     ],
+    "parentLabel": "System & integrations",
     "icon": "undo"
   },
   {

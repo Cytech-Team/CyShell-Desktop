@@ -25,7 +25,6 @@ const ENUM_EXCEPTIONS = {
     textRenderQuality: { initializer: "SettingsData.TextRenderQuality.Default", value: 0 },
     acSuspendBehavior: { initializer: "SettingsData.SuspendBehavior.Suspend", value: 0 },
     batterySuspendBehavior: { initializer: "SettingsData.SuspendBehavior.Suspend", value: 0 },
-    notificationPopupPosition: { initializer: "SettingsData.Position.Top", value: 0 },
     osdPosition: { initializer: "SettingsData.Position.BottomCenter", value: 5 }
 };
 
