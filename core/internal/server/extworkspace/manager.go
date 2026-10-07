@@ -264,7 +264,7 @@ func (m *Manager) Activate(selector string) error {
 
 func (m *Manager) request(fn func() error) error {
 	if m.post == nil {
-		return fmt.Errorf("Wayland dispatcher unavailable")
+		return fmt.Errorf("wayland dispatcher unavailable")
 	}
 	done := make(chan error, 1)
 	m.post(func() { done <- fn() })

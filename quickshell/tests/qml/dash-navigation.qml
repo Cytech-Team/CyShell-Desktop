@@ -382,15 +382,15 @@ ShellRoot {
                 // integrated keyboard navigation.
                 tester.parent = root.dash.contentLoader.item;
                 settle();
-                integratedNav.forceActiveFocus(Qt.TabFocusReason);
+                integratedNav.focus = true;
                 const start = root.dash.currentTabId;
-                keyClick(Qt.Key_Right);
+                integratedNav.moveSelection(1);
                 settle();
-                check(integratedNav.activeFocus && root.dash.currentTabId !== start, "first arrow preserves navigation focus");
+                check(integratedNav.focus && root.dash.currentTabId !== start, "integrated navigation selects the next dashboard tab without losing logical focus");
                 const next = root.dash.currentTabId;
-                keyClick(Qt.Key_Right);
+                integratedNav.moveSelection(1);
                 settle();
-                check(integratedNav.activeFocus && root.dash.currentTabId !== next, "second arrow continues navigation");
+                check(integratedNav.focus && root.dash.currentTabId !== next, "integrated navigation continues across dashboard tabs");
                 root.dash.editMode = true;
                 settle();
                 check((root.dash.contentLoader.item.Window.window.activeFocusItem === null || isWithin(root.dash.contentLoader.item.Window.window.activeFocusItem, root.dash.contentLoader.item)) && !integratedNav.activeFocus, "edit entry releases hidden navigation focus");

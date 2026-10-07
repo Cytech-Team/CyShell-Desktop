@@ -256,7 +256,7 @@ CyPopout {
             implicitHeight: horizontalChromeHeight + pages.implicitHeight + DashMetrics.contentPadding * 2
             readonly property real horizontalChromeHeight: root.verticalNavigation ? 0 : (root.showTabs ? tabBar.implicitHeight : Theme.minimumTouchTargetSize) + DashMetrics.contentGap
             readonly property bool ready: pages.ready
-            readonly property bool navigationFocused: tabBar.activeFocus
+            readonly property bool navigationFocused: tabBar.activeFocus || tabBar.focus
             focus: true
 
             readonly property bool panelResizing: panelResizer.resizing
