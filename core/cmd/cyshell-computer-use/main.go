@@ -416,7 +416,7 @@ func (b *backend) clickTool(args map[string]any) (any, error) {
 		y += r.Y
 	}
 
-	button := 1
+	var button int
 	switch strings.ToLower(stringArg(args, "button", "left")) {
 	case "left", "":
 		button = 1
