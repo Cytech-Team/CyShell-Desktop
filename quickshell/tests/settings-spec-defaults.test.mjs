@@ -20,7 +20,7 @@ for (const line of settingsData.split("\n")) {
 
 const ENUM_EXCEPTIONS = {
     motionEffect: { initializer: "SettingsData.AnimationEffect.Standard", value: 0 },
-    fontWeight: { initializer: "Font.Normal", value: 400 },
+    fontWeight: { initializer: "Font.Medium", value: 500 },
     textRenderType: { initializer: "SettingsData.TextRenderType.Qt", value: 0 },
     textRenderQuality: { initializer: "SettingsData.TextRenderQuality.Default", value: 0 },
     acSuspendBehavior: { initializer: "SettingsData.SuspendBehavior.Suspend", value: 0 },
