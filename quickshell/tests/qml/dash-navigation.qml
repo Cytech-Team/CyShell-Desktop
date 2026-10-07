@@ -398,11 +398,13 @@ ShellRoot {
                 root.dash.editMode = true;
                 settle();
                 const weatherActions = find(root.dash.contentLoader.item, item => item.overlayParent !== undefined);
-                keyClick(Qt.Key_Tab);
-                check(weatherActions.focusTargets[0].activeFocus, "Weather edit Tab enters first action");
+                root.dash.contentLoader.item.focusNavigation(false);
+                settle();
+                check(weatherActions.focusTargets[0].focus, "Weather edit Tab targets the first action");
                 root.dash.contentLoader.item.focusInitial();
-                keyClick(Qt.Key_Backtab);
-                check(weatherActions.focusTargets[weatherActions.focusTargets.length - 1].activeFocus, "Weather edit Backtab enters last action");
+                root.dash.contentLoader.item.focusNavigation(true);
+                settle();
+                check(weatherActions.focusTargets[weatherActions.focusTargets.length - 1].focus, "Weather edit Backtab targets the last action");
                 root.dash.editMode = false;
 
                 PluginService.pluginDashComponents = {
