@@ -26,22 +26,22 @@ func TestDefaultDiscoveryConfig(t *testing.T) {
 			name:           "default with no XDG vars",
 			configHome:     "",
 			configDirs:     "",
-			expectedCount:  1,
+			expectedCount:  2,
 			checkFirstPath: true,
 		},
 		{
 			name:           "with XDG_CONFIG_HOME set",
 			configHome:     "/custom/config",
 			configDirs:     "",
-			expectedCount:  1,
+			expectedCount:  2,
 			checkFirstPath: true,
-			firstPath:      "/custom/config/DankMaterialShell/cheatsheets",
+			firstPath:      "/custom/config/CyShell/cheatsheets",
 		},
 		{
 			name:          "with XDG_CONFIG_DIRS set",
 			configHome:    "/home/user/.config",
 			configDirs:    "/etc/xdg:/opt/config",
-			expectedCount: 3,
+			expectedCount: 6,
 		},
 	}
 
