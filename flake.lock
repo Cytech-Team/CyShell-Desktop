@@ -3,11 +3,11 @@
     "dank-qml-common": {
       "flake": false,
       "locked": {
-        "lastModified": 1791240669,
-        "narHash": "sha256-FDz6XoE1oA9mZXz1SPqYrS6Y2kGitKHHfy1o71Q0ezk=",
+        "lastModified": 1791380313,
+        "narHash": "sha256-mUx5QbJylCgF8HgjwpIzHXmUQkIqdDgNWMEtTrlnzM4=",
         "owner": "Cytech-Team",
         "repo": "CyShell-QML-Common",
-        "rev": "374626d7f951c6e8f73c1a1cf69b4728379e0e25",
+        "rev": "55216381c8cb90305cb573afbc914eb372a2e80d",
         "type": "github"
       },
       "original": {
