@@ -50,13 +50,13 @@ func (m *Manager) applyAgentWorkspaceDisplayConfig(requireActive bool) error {
 	active, display := agentWorkspaceSocketState()
 	if !active {
 		if requireActive {
-			return fmt.Errorf("Agent Workspace is not running")
+			return fmt.Errorf("agent workspace is not running")
 		}
 		return nil
 	}
 	binary, err := exec.LookPath("wlr-randr")
 	if err != nil {
-		return fmt.Errorf("Agent Workspace display control requires wlr-randr: %w", err)
+		return fmt.Errorf("agent workspace display control requires wlr-randr: %w", err)
 	}
 	width, height, refresh, scale := m.AgentWorkspaceDisplayConfig()
 	mode := fmt.Sprintf("%dx%d@%.3fHz", width, height, refresh)
@@ -162,7 +162,7 @@ func (m *Manager) SetUseAgentWorkspace(enabled bool) error {
 
 func (m *Manager) SetAgentWorkspaceEnabled(enabled bool) error {
 	if runtime.GOOS != "linux" {
-		return fmt.Errorf("Agent Workspace service control is only available on Linux")
+		return fmt.Errorf("agent workspace service control is only available on Linux")
 	}
 
 	action := "disable"

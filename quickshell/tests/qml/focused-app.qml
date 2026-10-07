@@ -112,6 +112,8 @@ ShellRoot {
                     return;
                 }
                 case 1:
+                    for (const instance of root.instances)
+                        instance.item.activeWindow = null;
                     if (!root.instances.every(instance => root.hidden(instance)))
                         return;
                     root.check(CompositorService.windowOnActiveWorkspace(root.instances[0].item.screenName, root.browser, false), "Labwc generic toplevel belongs to the active workspace");
@@ -128,6 +130,8 @@ ShellRoot {
                     advance();
                     return;
                 case 3:
+                    for (const instance of root.instances)
+                        instance.item.activeWindow = null;
                     if (!root.instances.every(instance => root.hidden(instance)))
                         return;
                     console.log("FIXTURE_PASS Labwc focused app visibility");

@@ -144,7 +144,7 @@ ShellRoot {
         }
 
         function bar() {
-            return find(root.dash.contentLoader.item, item => typeof item.moveSelection === "function");
+            return find(root.dash.contentLoader.item, item => typeof item.moveSelection === "function" && item.editable !== undefined && item.currentIndex !== undefined && item.count !== undefined);
         }
 
         function actionBounds(...buttons) {

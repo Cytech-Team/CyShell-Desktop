@@ -351,4 +351,3 @@ func (a *Assistant) ListModels(ctx context.Context) ([]string, error) {
 	defer a.mu.Unlock()
 	return a.listModelsLocked(ctx)
 }
-

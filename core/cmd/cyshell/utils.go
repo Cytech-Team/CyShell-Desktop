@@ -28,4 +28,3 @@ func isReadOnlyCommand(args []string) bool {
 	}
 	return false
 }
-
