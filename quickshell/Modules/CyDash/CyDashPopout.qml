@@ -617,6 +617,7 @@ CyPopout {
 
                         CyNavigationBar {
                             id: tabBar
+                            objectName: "dashTabBar"
 
                             width: parent.width
                             height: parent.height
@@ -635,8 +636,12 @@ CyPopout {
                                     return;
                                 const keepNavigationFocus = tabBar.activeFocus;
                                 root.currentTabId = id;
-                                if (keepNavigationFocus && tabBar.visible)
-                                    tabBar.forceActiveFocus(Qt.OtherFocusReason);
+                                if (keepNavigationFocus) {
+                                    Qt.callLater(() => {
+                                        if (tabBar.visible)
+                                            tabBar.forceActiveFocus(Qt.OtherFocusReason);
+                                    });
+                                }
                             }
                         }
 

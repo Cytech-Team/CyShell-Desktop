@@ -144,7 +144,7 @@ ShellRoot {
         }
 
         function bar() {
-            return find(root.dash.contentLoader.item, item => typeof item.moveSelection === "function" && item.editable !== undefined && item.currentIndex !== undefined && item.count !== undefined);
+            return find(root.dash.contentLoader.item, item => item.objectName === "dashTabBar");
         }
 
         function actionBounds(...buttons) {
@@ -380,9 +380,11 @@ ShellRoot {
                 integratedNav.forceActiveFocus(Qt.TabFocusReason);
                 const start = root.dash.currentTabId;
                 keyClick(Qt.Key_Right);
+                settle();
                 check(integratedNav.activeFocus && root.dash.currentTabId !== start, "first arrow preserves navigation focus");
                 const next = root.dash.currentTabId;
                 keyClick(Qt.Key_Right);
+                settle();
                 check(integratedNav.activeFocus && root.dash.currentTabId !== next, "second arrow continues navigation");
                 root.dash.editMode = true;
                 settle();
