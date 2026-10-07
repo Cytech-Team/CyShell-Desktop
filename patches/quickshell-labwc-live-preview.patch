@@ -4,7 +4,7 @@ index 97c4209..9cd4a8b 100644
 +++ b/src/wayland/screencopy/CMakeLists.txt
 @@ -12,6 +12,12 @@ qt_add_qml_module(quickshell-wayland-screencopy
  install_qml_module(quickshell-wayland-screencopy)
- 
+
  set(SCREENCOPY_MODULES)
 +set(SCREENCOPY_ICC_TOPLEVEL OFF)
 +
@@ -12,7 +12,7 @@ index 97c4209..9cd4a8b 100644
 +	set(SCREENCOPY_ICC_TOPLEVEL ON)
 +	target_link_libraries(quickshell-wayland-screencopy PRIVATE quickshell-wayland-toplevel-management)
 +endif()
- 
+
  if (SCREENCOPY_ICC)
  	add_subdirectory(image_copy_capture)
 diff --git a/src/wayland/screencopy/build.hpp.in b/src/wayland/screencopy/build.hpp.in
@@ -34,7 +34,7 @@ index 39bc3fc..133fa16 100644
 @@ -1,15 +1,22 @@
  #include "image_copy_capture.hpp"
  #include <cstdint>
- 
+
 +#include <private/qwaylanddisplay_p.h>
 +#include <private/qwaylandintegration_p.h>
  #include <private/qwaylandscreen_p.h>
@@ -53,7 +53,7 @@ index 39bc3fc..133fa16 100644
 +#include <wayland-ext-foreign-toplevel-list-v1-client-protocol.h>
  #include <wayland-ext-image-copy-capture-v1-client-protocol.h>
  #include <wayland-util.h>
- 
+
 @@ -181,6 +188,18 @@
  void IccScreencopyContext::ext_image_copy_capture_frame_v1_failed(uint32_t reason) {
  	switch (static_cast<IccCaptureFrame::failure_reason>(reason)) {
@@ -78,7 +78,7 @@ index 39bc3fc..133fa16 100644
 @@ -229,4 +239,138 @@ ScreencopyContext* IccOutputSourceManager::captureOutput(QScreen* screen, bool p
  	);
  }
- 
+
 +IccForeignToplevelHandle::IccForeignToplevelHandle(::ext_foreign_toplevel_handle_v1* handle) {
 +	this->init(handle);
 +}
@@ -220,7 +220,7 @@ index 93ba36c..0080007 100644
 +++ b/src/wayland/screencopy/image_copy_capture/image_copy_capture.hpp
 @@ -1,6 +1,10 @@
  #pragma once
- 
+
 +#include <qobject.h>
  #include <qscreen.h>
 +#include <qstring.h>
@@ -232,7 +232,7 @@ index 93ba36c..0080007 100644
 @@ -33,4 +37,77 @@ private:
  	explicit IccOutputSourceManager();
  };
- 
+
 +class IccForeignToplevelHandle
 +    : public QObject
 +    , public QtWayland::ext_foreign_toplevel_handle_v1 {
@@ -314,7 +314,7 @@ index 37ef038..70df5df 100644
 @@ -16,8 +16,11 @@
  #include "wlr_screencopy/wlr_screencopy.hpp"
  #endif
- 
+
 -#if SCREENCOPY_HYPRLAND_TOPLEVEL
 +#if SCREENCOPY_ICC_TOPLEVEL || SCREENCOPY_HYPRLAND_TOPLEVEL
  #include "../toplevel/qml.hpp"
@@ -323,7 +323,7 @@ index 37ef038..70df5df 100644
 +#if SCREENCOPY_HYPRLAND_TOPLEVEL
  #include "hyprland_screencopy/hyprland_screencopy.hpp"
  #endif
- 
+
 @@ -41,12 +44,33 @@ ScreencopyContext* ScreencopyManager::createContext(QObject* object, bool paintC
  			}
  		}
@@ -361,7 +361,7 @@ index 37ef038..70df5df 100644
 +#endif
  #endif
  	}
- 
+
 diff --git a/src/wayland/screencopy/view.hpp b/src/wayland/screencopy/view.hpp
 index d2b304e..3669acc 100644
 --- a/src/wayland/screencopy/view.hpp
@@ -383,13 +383,13 @@ diff --git a/src/wayland/buffer/manager.hpp b/src/wayland/buffer/manager.hpp
 @@ -100,6 +100,10 @@ class WlBufferSwapchain {
  	[[nodiscard]] WlBuffer*
  	createBackbuffer(const WlBufferRequest& request, bool* newBuffer = nullptr);
- 
+
  	void swapBuffers() { this->presentSecondBuffer = !this->presentSecondBuffer; }
 +	void discardBackbuffer() {
 +		auto& buffer = this->presentSecondBuffer ? this->buffer1 : this->buffer2;
 +		buffer.reset();
 +	}
- 
+
  	[[nodiscard]] WlBuffer* backbuffer() const {
 
 diff --git a/src/wayland/buffer/dmabuf.cpp b/src/wayland/buffer/dmabuf.cpp
@@ -402,7 +402,7 @@ diff --git a/src/wayland/buffer/dmabuf.cpp b/src/wayland/buffer/dmabuf.cpp
 +	{
 +		return false;
 +	}
- 
+
  	auto matchingFormat = std::ranges::find_if(request.dmabuf.formats, [this](const auto& format) {
 
 diff --git a/src/wayland/screencopy/image_copy_capture/image_copy_capture_p.hpp b/src/wayland/screencopy/image_copy_capture/image_copy_capture_p.hpp
