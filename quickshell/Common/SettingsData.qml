@@ -605,7 +605,7 @@ Singleton {
     property string fontFamily: Spec.SPEC.fontFamily.def
     property string monoFontFamily: Spec.SPEC.monoFontFamily.def
     property string displayFontFamily: Spec.SPEC.displayFontFamily.def
-    property int fontWeight: Font.Normal
+    property int fontWeight: Font.Medium
     property real fontScale: Spec.SPEC.fontScale.def
     property int textRenderType: SettingsData.TextRenderType.Qt
     property int textRenderQuality: SettingsData.TextRenderQuality.Default
