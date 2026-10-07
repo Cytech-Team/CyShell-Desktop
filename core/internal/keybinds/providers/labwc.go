@@ -254,9 +254,7 @@ func canonicalLabwcAction(action labwcXMLAction) string {
 	if strings.TrimSpace(value) != "" {
 		parts = append(parts, strings.TrimSpace(value))
 	}
-	for _, option := range labwcExtraActionOptions(action, strings.ToLower(name)) {
-		parts = append(parts, option)
-	}
+	parts = append(parts, labwcExtraActionOptions(action, strings.ToLower(name))...)
 	return strings.Join(parts, " ")
 }
 
