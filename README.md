@@ -1,4 +1,19 @@
-# CyShell Desktop
+<!-- CYTECH_README_REFRESH:START -->
+<div align="center">
+
+<a href="https://github.com/Cytech-Team/CyShell-Desktop"><img width="100%" alt="CyShell Desktop banner" src="https://capsule-render.vercel.app/api?type=waving&color=0:0B1220,100:17BEBB&height=210&section=header&text=CyShell%20Desktop&fontSize=43&fontColor=ffffff&fontAlignY=36&desc=An%20agent-native%20Wayland%20shell%20for%20Labwc&descAlignY=59&descSize=16"></a>
+
+<img alt="PROJECT: Linux Desktop" src="https://img.shields.io/badge/PROJECT-Linux%20Desktop-17BEBB?style=flat-square&labelColor=0B1220&color=17BEBB"> <img alt="STACK: Go · Quickshell" src="https://img.shields.io/badge/STACK-Go%20%C2%B7%20Quickshell-17BEBB?style=flat-square&labelColor=0B1220&color=17BEBB">
+
+<p><strong>An agent-native Wayland shell for Labwc</strong></p>
+
+<a href="https://github.com/Cytech-Team/CyShell-Desktop/releases">Releases</a> · <a href="https://github.com/Cytech-Team/CyShell-Desktop/issues">Issues</a> · <a href="https://github.com/Cytech-Team/CyShell-Desktop">Source</a>
+
+</div>
+
+<!-- CYTECH_README_REFRESH:END -->
+
+---
 
 <p align="center">
   <img src="quickshell/assets/cyshell.png" width="180" alt="CyShell Desktop logo">
