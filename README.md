@@ -3,6 +3,8 @@
 
 <a href="https://github.com/Cytech-Team/CyShell-Desktop"><img width="100%" alt="CyShell Desktop banner" src="https://capsule-render.vercel.app/api?type=waving&color=0:0B1220,100:17BEBB&height=210&section=header&text=CyShell%20Desktop&fontSize=43&fontColor=ffffff&fontAlignY=36&desc=An%20agent-native%20Wayland%20shell%20for%20Labwc&descAlignY=59&descSize=16"></a>
 
+<p><img src="quickshell/assets/cyshell.png" alt="CyShell-Desktop logo" width="136" /></p>
+
 <img alt="PROJECT: Linux Desktop" src="https://img.shields.io/badge/PROJECT-Linux%20Desktop-17BEBB?style=flat-square&labelColor=0B1220&color=17BEBB"> <img alt="STACK: Go · Quickshell" src="https://img.shields.io/badge/STACK-Go%20%C2%B7%20Quickshell-17BEBB?style=flat-square&labelColor=0B1220&color=17BEBB">
 
 <p><strong>An agent-native Wayland shell for Labwc</strong></p>
@@ -15,9 +17,7 @@
 
 ---
 
-<p align="center">
-  <img src="quickshell/assets/cyshell.png" width="180" alt="CyShell Desktop logo">
-</p>
+
 
 **CyShell Desktop** is an agent-native Wayland desktop shell by **Cytech Team Development**, built exclusively for **Labwc** and designed around deep desktop integration, semantic control, and safe automation.
 
@@ -91,3 +91,19 @@ CyShell preserves the upstream license and attribution from [AvengeMedia/DankMat
 - Repository: [Cytech-Team/CyShell-Desktop](https://github.com/Cytech-Team/CyShell-Desktop)
 - Development branch: `cyshell-dev`
 - Maintained by **Cytech Team Development**
+
+---
+
+<!-- CYTECH_STAR_HISTORY:START -->
+
+## Star History
+
+<a href="https://star-history.dera.page/#Cytech-Team/CyShell-Desktop&type=date&legend=top-left">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://star-history.dera.page/svg?repos=Cytech-Team/CyShell-Desktop&type=date&legend=top-left&theme=dark" />
+    <source media="(prefers-color-scheme: light)" srcset="https://star-history.dera.page/svg?repos=Cytech-Team/CyShell-Desktop&type=date&legend=top-left" />
+    <img alt="GitHub star history for Cytech-Team/CyShell-Desktop" src="https://star-history.dera.page/svg?repos=Cytech-Team/CyShell-Desktop&type=date&legend=top-left" width="800" />
+  </picture>
+</a>
+
+<!-- CYTECH_STAR_HISTORY:END -->
