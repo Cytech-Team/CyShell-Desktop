@@ -98,12 +98,14 @@ CyShell preserves the upstream license and attribution from [AvengeMedia/DankMat
 
 ## Star History
 
-<a href="https://star-history.dera.page/#Cytech-Team/CyShell-Desktop&type=date&legend=top-left">
+<a href="https://github.com/Cytech-Team/CyShell-Desktop/stargazers">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://star-history.dera.page/svg?repos=Cytech-Team/CyShell-Desktop&type=date&legend=top-left&theme=dark" />
-    <source media="(prefers-color-scheme: light)" srcset="https://star-history.dera.page/svg?repos=Cytech-Team/CyShell-Desktop&type=date&legend=top-left" />
-    <img alt="GitHub star history for Cytech-Team/CyShell-Desktop" src="https://star-history.dera.page/svg?repos=Cytech-Team/CyShell-Desktop&type=date&legend=top-left" width="800" />
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/Cytech-Team/CyShell-Desktop/refs/heads/cyshell-dev/assets/star-history-dark.svg" />
+    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Cytech-Team/CyShell-Desktop/refs/heads/cyshell-dev/assets/star-history-light.svg" />
+    <img alt="Star history for Cytech-Team/CyShell-Desktop" src="https://raw.githubusercontent.com/Cytech-Team/CyShell-Desktop/refs/heads/cyshell-dev/assets/star-history-light.svg" width="1100" />
   </picture>
 </a>
+
+<sub>Updated automatically from GitHub's dated stargazers. Only currently starred accounts are included.</sub>
 
 <!-- CYTECH_STAR_HISTORY:END -->
